@@ -1,0 +1,22 @@
+#pragma once
+#if !defined(__MITSUBA_DS_STRUCTURES_GMM_H_)
+#define __MITSUBA_DS_STRUCTURES_GMM_H_
+
+#include <mitsuba/ds/ds.h>
+#include <Eigen/Core>
+
+MTS_NAMESPACE_BEGIN
+
+struct MTS_EXPORT_CORE GMM : public DataStructure {
+    ~GMM() { }
+
+    DataStructure* construct() override;
+
+    void wipe() override;
+
+    DSType type() override;
+};
+
+MTS_NAMESPACE_END
+
+#endif /* __MITSUBA_DS_STRUCTURES_GMM_H_ */

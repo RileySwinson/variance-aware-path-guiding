@@ -48,6 +48,16 @@ libcore_objects = [
         'tls.cpp', 'ssemath.cpp', 'spline.cpp', 'track.cpp'
 ]
 
+# Add datastructures used for dscompare here
+data_structures = [
+        'd_tree.cpp',
+        'gmm.cpp',
+        'spherical_harmonics.cpp',
+        'tile_coding.cpp'       
+]
+
+libcore_objects.extend([('ds/' + ds) for ds in data_structures])
+
 # Add some platform-specific components
 if sys.platform == 'darwin':
         coreEnv_osx = coreEnv.Clone()
