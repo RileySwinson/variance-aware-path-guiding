@@ -622,7 +622,7 @@ void computeShadingFrameDerivative(const Vector &n, const Vector &dpdu, const Ve
     dv.t = cross(dndv, s) + cross(n, dv.s);
 
     du.n = dndu;
-    dv.n = dndv;
+    dv.n = dndv; 
 }
 
 Point2 toSphericalCoordinates(const Vector &v) {
