@@ -2,7 +2,7 @@
   <img src="https://i.imgur.com/Xzvloc7.png" alt="logo" width="500"/>
 </p>
 
-> ⚠️ The plugin is in active development and therefore subject to rapid change. Things may change suddenly and without notice, so please be aware that new commits could possibly render a previously working environment unusable. ⚠️
+> ⚠️ The plugin is in active development and therefore subject to rapid change. Things may break suddenly and without notice, so please be aware that new commits could possibly render a previously functioning environment unusable. ⚠️
 
 # DS::compare
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
@@ -47,7 +47,7 @@ For instructions on how to run the plugin itself, please refer to the [**How to 
 
 ### Approach 2: Native Environment
 
-Compiling Mitsuba manually is possible, however quite cumbersome due to outdated libraries and incompatibilities. Please refer to the [Mitsuba documentation](https://www.mitsuba-renderer.org/releases/current/documentation.pdf) to find out how to build Mitsuba on your own OS.
+Compiling Mitsuba manually is possible, however quite cumbersome due to outdated libraries and incompatibilities. Please refer to the [Mitsuba documentation](https://www.mitsuba-renderer.org/releases/current/documentation.pdf) to find out how to build Mitsuba in your own OS.
 
 ## Plugin Structure
 
