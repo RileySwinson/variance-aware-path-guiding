@@ -13,13 +13,41 @@
 **DS::compare** is a utility plugin written for the [Mitsuba Renderer](https://github.com/mitsuba-renderer/mitsuba) to assess the effectivity of data structures in a path guiding context. To this end, this plugin samples spherical environment maps, stores the samples in a data structure of choice, and uses this information to approximate a guiding distribution. Using various metrics, the quality of a reconstructed environment map is then analyzed, allowing us to draw conclusions about the respective data structure.
 <br>
 <br>
-Please keep in mind that this plugin only assesses the directional component of the path guiding process.
+Please keep in mind that this plugin only considers the directional component of the path guiding process.
 
 ## Getting Started
 
 ### Approach 1: Docker
 
+**Step 1:** Install docker on your host device and create an image from a pre-existing Mitsuba 0.6 dockerfile. The dockerfile used for this project can be found [here](https://github.com/xehoth/mitsuba-docker).
+Assuming the command is run from within the folder with the dockerfile:
+```
+docker build -t <your-image-name> .
+```
+
+**Step 2:** Clone this project:
+```
+git clone https://github.com/GitThirteen/mitsuba-comparer.git
+```
+
+**Step 3:** Attach the project on your local device to a fresh docker container via a [*bind mount*](https://docs.docker.com/storage/bind-mounts/):
+```
+docker run -it --name <your-container-name> -v <host-path>:/home/mitsuba <your-image-name>
+```
+The `-v <host-path>:<container-path>` flag specifies where Docker should mount the local host directory inside the container. For more information please refer to the Docker documentation. Alternatively, a [*docker volume*](https://docs.docker.com/storage/volumes/) may be used instead. (Untested.)
+
+**Step 4:** At this point, development should be possible by simply running
+```
+docker start <container-name>
+docker attach <container-name>
+```
+It is highly suggested to develop locally and only use the console attached to the Docker container for running plugin commands, as the syncing between Docker and local environment slows down things like IntelliSense, linters, and other tools immensely. It is also suggested to **not** run this plugin via a bind mount for <ins>production purposes</ins> (e.g., scientific evaluations).
+
+For instructions on how to run the plugin itself, please refer to the [**How to Use**](#how-to-use) section.
+
 ### Approach 2: Native Environment
+
+Compiling Mitsuba manually is possible, however quite cumbersome due to outdated libraries and incompatibilities. Please refer to the [Mitsuba documentation](https://www.mitsuba-renderer.org/releases/current/documentation.pdf) to find out how to build Mitsuba on your own OS.
 
 ## Plugin Structure
 
@@ -29,6 +57,7 @@ The plugin system is structured as follows:<br>
 `include/ds/*` - Plugin headers (Utility, data structures, etc.)<br>
 `src/libcore/ds/*` - Data structure impl.<br>
 
+<a name="how-to-use"></a>
 ## How to Use
 
 ### General Usage
