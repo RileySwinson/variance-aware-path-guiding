@@ -92,11 +92,11 @@ The environment maps must either be `.hdr` or `.exr` files. Other file formats a
 
 ### Adding a Data Structure
 #### Implementation
-As the plugin itself uses an intrinsic plugin system for data structures, adding a custom data structure to the already existing ones is fairly easy. Data structures in ds::compare are divided into a `.cpp` and `.h` file, located in `src/libcore/ds` and `include/mitsuba/ds/structures` respectively. Each data structure must extend the `DataStructure` base class and mark itself as visible to the compiler via `MTS_EXPORT_CORE`.
+As the plugin itself uses a plugin-esque system for data structures, adding a custom data structure to the already existing ones is fairly easy. Data structures in ds::compare are divided into a `.cpp` and `.h` file, located in `src/libcore/ds` and `include/mitsuba/ds/structures` respectively. Each data structure must extend the `DataStructure` base class and mark itself as visible to the compiler via `MTS_EXPORT_CORE` like this:
 ```cpp
 struct MTS_EXPORT_CORE MyDataStructure : public DataStructure { ...
 ```
-and implement all functions marked as pure virtual. The plugin will be interacting with the data structure solely through these functions. For more information about each virtual function, take a look at the `ds.h` file located in `include/mitsuba/ds`.
+Furthermore, the class must implement all functions marked as pure virtual in the base class. The plugin will be interacting with the data structure solely through these functions. For more information about each virtual function, take a look at the `ds.h` file located in `include/mitsuba/ds`.
 
 #### Registration
 Both implementation (`.cpp`) and header file (`.h`) must be registered in Mitsuba and the ds::compare system for it to be visible.
