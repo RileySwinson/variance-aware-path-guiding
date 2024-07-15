@@ -10,7 +10,7 @@ MTS_NAMESPACE_BEGIN
 struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
     ~DirectionalTree() { }
 
-    DataStructure* construct(DSInitData& init_data) override;
+    void construct(DSInitData& init_data) override;
 
     void store(Sample& sample) override;
 

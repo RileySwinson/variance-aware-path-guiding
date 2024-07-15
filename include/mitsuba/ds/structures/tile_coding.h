@@ -10,7 +10,7 @@ MTS_NAMESPACE_BEGIN
 struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     ~TileCoding() { }
 
-    DataStructure* construct(DSInitData& init_data) override;
+    void construct(DSInitData& init_data) override;
 
     void store(Sample& sample) override;
 

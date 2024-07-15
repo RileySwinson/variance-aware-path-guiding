@@ -49,8 +49,8 @@ struct MTS_EXPORT_CORE Sample {
 struct MTS_EXPORT_CORE DataStructure {
     virtual ~DataStructure() { }
 
-    /// Calls all relevant functions and constructs the data structure in such a way that it is ready-to-use for data storage.
-    virtual DataStructure* construct(DSInitData& init_data) = 0;
+    /// Calls all relevant functions and initializes the data structure in such a way that it is ready-to-use for data storage.
+    virtual void construct(DSInitData& init_data) = 0;
 
     /// Stores a sample into the data structure.
     virtual void store(Sample& sample) = 0;

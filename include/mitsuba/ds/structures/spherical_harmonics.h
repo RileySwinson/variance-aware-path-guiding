@@ -407,7 +407,7 @@ public:
 
     ~SphericalHarmonics() { };
 
-    DataStructure* construct(DSInitData& init_data) override;
+    void construct(DSInitData& init_data) override;
 
     void store(Sample& sample) override;
     

@@ -24,7 +24,7 @@ MTS_NAMESPACE_BEGIN
 
 Float *SphericalHarmonics::m_normalization = NULL;
 
-SphericalHarmonics::SphericalHarmonics(Stream *stream) {
+SphericalHarmonics::SphericalHarmonics(Stream* stream) {
     m_bands = stream->readInt();
     unsigned int size = m_bands*m_bands;
     m_coeffs.resize(size);
@@ -32,10 +32,10 @@ SphericalHarmonics::SphericalHarmonics(Stream *stream) {
         m_coeffs[i] = stream->readFloat();
 }
 
-DataStructure* SphericalHarmonics::construct(DSInitData& init_data)
+void SphericalHarmonics::construct(DSInitData& init_data)
 {
-    this->sampler = new SphericalHarmonicsSampler(this->getBands(), 12);
-    return new SphericalHarmonics(init_data.sh_bands);
+    *this = SphericalHarmonics(init_data.sh_bands);
+    this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, 12);
 }
 
 void SphericalHarmonics::store(Sample& sample)
@@ -44,8 +44,9 @@ void SphericalHarmonics::store(Sample& sample)
     {
         for (int m = -l; m <= l; ++m)
         {
-            float basis = this->eval(sample.phi, sample.theta);
-            operator()(l, m) += sample.luminance * basis; 
+            std::cout << "wee" << std::endl;
+            float basis = this->eval(sample.theta, sample.phi);
+            operator()(l, m) += sample.luminance * basis;
         }
     }
     this->normalize();
@@ -68,7 +69,7 @@ Sample SphericalHarmonics::sample(Point2& pos)
 
 void SphericalHarmonics::wipe()
 {
-    return; // TODO
+    this->clear();
 }
 
 DSType SphericalHarmonics::type()
@@ -76,7 +77,7 @@ DSType SphericalHarmonics::type()
     return DSType::DS_SphericalHarmonics;
 }
 
-void SphericalHarmonics::serialize(Stream *stream) const {
+void SphericalHarmonics::serialize(Stream* stream) const {
     stream->writeInt(m_bands);
     for (size_t i=0; i<(size_t) m_coeffs.size(); ++i)
         stream->writeFloat(m_coeffs[i]);
