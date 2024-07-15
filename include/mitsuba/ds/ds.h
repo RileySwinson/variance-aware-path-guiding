@@ -55,6 +55,9 @@ struct MTS_EXPORT_CORE DataStructure {
     /// Stores a sample into the data structure.
     virtual void store(Sample& sample) = 0;
 
+    /// Obtain a sample from the underlying approximation that is stored in the data structure.
+    virtual Sample sample(Point2& pos) = 0;
+
     /// Clears the entire data structure such that it is back to its initial, empty state.
     virtual void wipe() = 0;
 

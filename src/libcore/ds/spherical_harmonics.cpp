@@ -34,6 +34,7 @@ SphericalHarmonics::SphericalHarmonics(Stream *stream) {
 
 DataStructure* SphericalHarmonics::construct(DSInitData& init_data)
 {
+    this->sampler = new SphericalHarmonicsSampler(this->getBands(), 12);
     return new SphericalHarmonics(init_data.sh_bands);
 }
 
@@ -47,6 +48,22 @@ void SphericalHarmonics::store(Sample& sample)
             operator()(l, m) += sample.luminance * basis; 
         }
     }
+    this->normalize();
+}
+
+Sample SphericalHarmonics::sample(Point2& pos)
+{
+    if (pos.x < 0 || pos.y < 0 || pos.x > 1 || pos.y > 1)
+    {
+        SLog(EError, "Sample out of bounds!");
+    }
+
+    Sample sample = {
+        .luminance = this->sampler->warp(*this, pos),
+        .phi = pos.x,
+        .theta = pos.y
+    };
+    return sample;
 }
 
 void SphericalHarmonics::wipe()

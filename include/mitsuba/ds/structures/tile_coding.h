@@ -13,6 +13,8 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     DataStructure* construct(DSInitData& init_data) override;
 
     void store(Sample& sample) override;
+
+    Sample sample(Point2& pos) override;
     
     void wipe() override;
 

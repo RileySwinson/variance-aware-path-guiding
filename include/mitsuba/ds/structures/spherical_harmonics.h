@@ -29,6 +29,7 @@ MTS_NAMESPACE_BEGIN
 /* Precompute normalization coefficients for the first 10 bands */
 #define SH_NORMTBL_SIZE 10
 
+struct SphericalHarmonicsSampler;
 struct SphericalHarmonics;
 
 /**
@@ -409,6 +410,8 @@ public:
     DataStructure* construct(DSInitData& init_data) override;
 
     void store(Sample& sample) override;
+    
+    Sample sample(Point2& pos) override;
 
     void wipe() override;
 
@@ -423,6 +426,7 @@ private:
     int m_bands;
     Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
     static Float *m_normalization;
+    ref<SphericalHarmonicsSampler> sampler = nullptr;
 };
 
 inline Float dot(const SphericalHarmonics &v1, const SphericalHarmonics &v2) {

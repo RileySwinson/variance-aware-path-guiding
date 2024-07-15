@@ -12,6 +12,16 @@ void TileCoding::store(Sample& sample)
     return;
 }
 
+Sample TileCoding::sample(Point2& pos)
+{
+    Sample sample;
+    sample.luminance = 0.0f;
+    sample.phi = 0.0f;
+    sample.theta = 0.0f;
+
+    return sample;
+}
+
 void TileCoding::wipe()
 {
     return;

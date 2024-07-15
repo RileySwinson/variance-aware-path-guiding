@@ -22,7 +22,7 @@ struct EnvironmentMap {
 	ref<Bitmap> bitmap;
 	std::string filename;
 
-	//std::vector<std::pair<Point2i, Spectrum>> sampled_points;
+	std::vector<std::pair<Point2i, Spectrum>> sampled_points;
 
 	Sample sample(Point2f& sample)
 	{
@@ -45,7 +45,7 @@ struct EnvironmentMap {
 		);
 
 		/* UNCOMMENT FOR SAMPLE VISUALIZATION */
-		//sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
+		sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
 
 		Sample sample_data = {
 			.luminance = this->bitmap->getPixel(uv).getLuminance(),
@@ -141,45 +141,58 @@ public:
 				});
 			}
 
-			
+			/* Sample approximated guiding distribution */
+			ref<Bitmap> bm = new Bitmap(*envmap.bitmap.get());
+			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
+			{
+				Point2f rnd(random->nextFloat(), random->nextFloat());
+				// Spherical harmonics for now
+				auto sh = cluster.obtain(DSType::DS_SphericalHarmonics);
+				Sample sample = sh->sample(rnd);
 
-			cluster.for_each([&](DataStructure* ds) {
-				// TODO:
-				// [X] Importance sampling
-				// [ ] Spherical harmonics
-				// [ ] Generate envmap from that
-				// [ ] RMSE for now
-				// [ ] Store image
+				Point2i pt(sample.phi * bm->getWidth(), sample.theta * bm->getHeight());
+				Spectrum px = bm->getPixel(pt);
 
-				/* UNCOMMENT FOR SAMPLE VISUALIZATION */
-				/*
-				for (int y = 0; y < envmap.bitmap->getHeight(); ++y)
+				px[0] = sample.luminance * 255;
+				px[1] = sample.luminance * 255;
+				px[2] = sample.luminance * 255;
+
+				bm->setPixel(pt, px);
+			}
+
+			// TODO:
+			// [X] Importance sampling
+			// [ ] Spherical harmonics
+			// [ ] Generate envmap from that
+			// [ ] RMSE for now
+			// [ ] Store image
+
+			for (int y = 0; y < envmap.bitmap->getHeight(); ++y)
+			{
+				for (int x = 0; x < envmap.bitmap->getWidth(); ++x)
 				{
-					for (int x = 0; x < envmap.bitmap->getWidth(); ++x)
-					{
-						Point2i pt(x, y);
-						Spectrum px = envmap.bitmap->getPixel(pt);
-
-						px[0] = 0; px[1] = 0; px[2] = 0;
-						envmap.bitmap->setPixel(pt, px);
-					}
-				}
-
-				for (auto e_pair : envmap.sampled_points)
-				{
-					Point2i pt = e_pair.first;
+					Point2i pt(x, y);
 					Spectrum px = envmap.bitmap->getPixel(pt);
 
-					px[0] = e_pair.second.getLuminance();
-					px[1] = e_pair.second.getLuminance();
-					px[2] = e_pair.second.getLuminance();
-
+					px[0] = 0; px[1] = 0; px[2] = 0;
 					envmap.bitmap->setPixel(pt, px);
 				}
-				*/
-			});
+			}
+
+			for (auto e_pair : envmap.sampled_points)
+			{
+				Point2i pt = e_pair.first;
+				Spectrum px = envmap.bitmap->getPixel(pt);
+
+				px[0] = e_pair.second.getLuminance();
+				px[1] = e_pair.second.getLuminance();
+				px[2] = e_pair.second.getLuminance();
+
+				envmap.bitmap->setPixel(pt, px);
+			}
 
 			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "test.exr");
+			bm->write(Bitmap::EFileFormat::EOpenEXR, "test2.exr");
 			break;
 		}
 
