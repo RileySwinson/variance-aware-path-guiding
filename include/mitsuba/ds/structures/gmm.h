@@ -10,7 +10,9 @@ MTS_NAMESPACE_BEGIN
 struct MTS_EXPORT_CORE GMM : public DataStructure {
     ~GMM() { }
 
-    DataStructure* construct() override;
+    DataStructure* construct(DSInitData& init_data) override;
+
+    void store(Sample& sample) override;
 
     void wipe() override;
 

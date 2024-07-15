@@ -15,7 +15,6 @@ MTS_NAMESPACE_BEGIN
 struct Arguments {
 	std::string path = "";
 	bool noisify = false;
-	int sh_bands = 3;
 	uint32_t samples = 8192;
 };
 
@@ -24,20 +23,10 @@ struct EnvironmentMap {
 	std::string filename;
 
 	//std::vector<std::pair<Point2i, Spectrum>> sampled_points;
-	//int pt[10];
 
-	Spectrum sample(Point2f& sample)
+	Sample sample(Point2f& sample)
 	{
 		Vector dir = warp::squareToCosineHemisphere(sample);
-
-		/*for (int i = 0; i < 10; ++i)
-		{
-			if (dir.z < 0.1f * (i + 1))
-			{
-				pt[i]++;
-				break;
-			}
-		}*/
 
 		/* Transform to (hemi)spherical coordinates and normalize */
 		float phi = std::acos(dir.z);
@@ -58,8 +47,14 @@ struct EnvironmentMap {
 		/* UNCOMMENT FOR SAMPLE VISUALIZATION */
 		//sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
 
+		Sample sample_data = {
+			.luminance = this->bitmap->getPixel(uv).getLuminance(),
+			.phi = uv_norm.y,
+			.theta = uv_norm.x
+		};
+
 		/* Return found texel */
-		return this->bitmap->getPixel(uv);
+		return sample_data;
 	}
 
 	/// Noisifies the underlying bitmap via a custom Gaussian noise implementation
@@ -112,9 +107,10 @@ public:
 		// ^^^ ... append your data structures here as you please
 
 		/* Construct data structures as needed */
-		cluster.for_each([](DataStructure* ds) {
+		DSInitData init_data;
+		cluster.for_each([&](DataStructure* ds) {
 			if (ds->type() == DSType::DS_Invalid) return;
-			ds->construct();
+			ds->construct(init_data);
 		});
 
 		/* Initialize random generator */
@@ -134,7 +130,18 @@ public:
 				envmap.noisify();
 			}
 
-			//std::cout << envmap.filename << std::endl;
+			/* Generate N samples and store them into each data structure */
+			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
+			{
+				Point2f rnd(random->nextFloat(), random->nextFloat());
+				Sample sample = envmap.sample(rnd);
+
+				cluster.for_each([&](DataStructure* ds) {
+					ds->store(sample);
+				});
+			}
+
+			
 
 			cluster.for_each([&](DataStructure* ds) {
 				// TODO:
@@ -143,15 +150,6 @@ public:
 				// [ ] Generate envmap from that
 				// [ ] RMSE for now
 				// [ ] Store image
-
-				for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
-				{
-					Point2f rnd(random->nextFloat(), random->nextFloat());
-					Spectrum texel = envmap.sample(rnd);
-					float lum = texel.getLuminance();
-
-					// TODO: Store into Spherical Harmonics
-				}
 
 				/* UNCOMMENT FOR SAMPLE VISUALIZATION */
 				/*

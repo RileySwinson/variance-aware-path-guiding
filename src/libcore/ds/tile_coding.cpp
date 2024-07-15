@@ -2,9 +2,14 @@
 
 MTS_NAMESPACE_BEGIN
 
-DataStructure* TileCoding::construct()
+DataStructure* TileCoding::construct(DSInitData& init_data)
 {
     return this;
+}
+
+void TileCoding::store(Sample& sample)
+{
+    return;
 }
 
 void TileCoding::wipe()

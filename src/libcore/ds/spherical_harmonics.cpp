@@ -32,14 +32,26 @@ SphericalHarmonics::SphericalHarmonics(Stream *stream) {
         m_coeffs[i] = stream->readFloat();
 }
 
-DataStructure* SphericalHarmonics::construct()
+DataStructure* SphericalHarmonics::construct(DSInitData& init_data)
 {
-    return this;
+    return new SphericalHarmonics(init_data.sh_bands);
+}
+
+void SphericalHarmonics::store(Sample& sample)
+{
+    for (int l = 0; l < this->getBands(); ++l)
+    {
+        for (int m = -l; m <= l; ++m)
+        {
+            float basis = this->eval(sample.phi, sample.theta);
+            operator()(l, m) += sample.luminance * basis; 
+        }
+    }
 }
 
 void SphericalHarmonics::wipe()
 {
-    return;
+    return; // TODO
 }
 
 DSType SphericalHarmonics::type()

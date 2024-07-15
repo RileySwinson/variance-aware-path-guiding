@@ -2,9 +2,14 @@
 
 MTS_NAMESPACE_BEGIN
 
-DataStructure* GMM::construct()
+DataStructure* GMM::construct(DSInitData& init_data)
 {
     return this;
+}
+
+void GMM::store(Sample& sample)
+{
+    return;
 }
 
 void GMM::wipe()

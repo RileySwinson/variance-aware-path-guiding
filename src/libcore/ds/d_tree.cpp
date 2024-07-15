@@ -2,9 +2,14 @@
 
 MTS_NAMESPACE_BEGIN
 
-DataStructure* DirectionalTree::construct()
+DataStructure* DirectionalTree::construct(DSInitData& init_data)
 {
     return this;
+}
+
+void DirectionalTree::store(Sample& sample)
+{
+    return;
 }
 
 void DirectionalTree::wipe()

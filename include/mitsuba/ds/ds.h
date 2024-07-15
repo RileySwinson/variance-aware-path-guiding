@@ -25,6 +25,22 @@ enum MTS_EXPORT_CORE DSType {
 };
 
 /**
+ * Storage struct for the various parameters a data structure must need. This is passed
+ * into each construct(), where data structures can then individually fetch the needed information for initialization.
+ * If a value is missing, the missing value may be added by the user.
+ */
+struct MTS_EXPORT_CORE DSInitData {
+	int sh_bands = 3;
+};
+
+struct MTS_EXPORT_CORE Sample {
+    float luminance = 0.0f;
+    
+    float phi = 0.0f;
+    float theta = 0.0f;
+};
+
+/**
  * \brief Abstract base class for all data structures.
  * 
  * As the approach of the comparison framework itself is based on a plug-and-play plugin system, each new
@@ -34,7 +50,10 @@ struct MTS_EXPORT_CORE DataStructure {
     virtual ~DataStructure() { }
 
     /// Calls all relevant functions and constructs the data structure in such a way that it is ready-to-use for data storage.
-    virtual DataStructure* construct() = 0;
+    virtual DataStructure* construct(DSInitData& init_data) = 0;
+
+    /// Stores a sample into the data structure.
+    virtual void store(Sample& sample) = 0;
 
     /// Clears the entire data structure such that it is back to its initial, empty state.
     virtual void wipe() = 0;
