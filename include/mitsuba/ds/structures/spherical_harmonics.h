@@ -407,9 +407,13 @@ public:
 
     ~SphericalHarmonics() { };
 
-    void construct(DSInitData& init_data) override;
+    void construct(DSArguments& init_data) override;
+
+    void preprocess() override;
 
     void store(Sample& sample) override;
+
+    void postprocess() override;
     
     Sample sample(Point2& pos) override;
 
@@ -424,6 +428,11 @@ protected:
     static Float computeNormalization(int l, int m);
 private:
     int m_bands;
+
+    uint32_t m_num_samples;
+    uint32_t m_s_i = 0;
+    float m_h[2];
+
     Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
     static Float *m_normalization;
     ref<SphericalHarmonicsSampler> sampler = nullptr;

@@ -2,7 +2,12 @@
 
 MTS_NAMESPACE_BEGIN
 
-void DirectionalTree::construct(DSInitData& init_data)
+void DirectionalTree::construct(DSArguments& init_data)
+{
+    return;
+}
+
+void DirectionalTree::preprocess()
 {
     return;
 }
@@ -12,10 +17,15 @@ void DirectionalTree::store(Sample& sample)
     return;
 }
 
+void DirectionalTree::postprocess()
+{
+    return;
+}
+
 Sample DirectionalTree::sample(Point2& pos)
 {
     Sample sample;
-    sample.luminance = 0.0f;
+    sample.value = 0.0f;
     sample.phi = 0.0f;
     sample.theta = 0.0f;
 

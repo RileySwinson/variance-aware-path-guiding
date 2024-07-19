@@ -32,37 +32,92 @@ SphericalHarmonics::SphericalHarmonics(Stream* stream) {
         m_coeffs[i] = stream->readFloat();
 }
 
-void SphericalHarmonics::construct(DSInitData& init_data)
+void SphericalHarmonics::construct(DSArguments& init_data)
 {
     *this = SphericalHarmonics(init_data.sh_bands);
     this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, 12);
+    this->m_num_samples = init_data.samples;
+    this->staticInitialization();
+
+    this->m_h[0] = M_PI / init_data.samples;
+    this->m_h[1] = (2 * M_PI) / (2 * init_data.samples);
+}
+
+void SphericalHarmonics::preprocess()
+{
+    return;
 }
 
 void SphericalHarmonics::store(Sample& sample)
 {
+    float* sinPhi = (float*) alloca(sizeof(float) * m_bands);
+    float* cosPhi = (float*) alloca(sizeof(float) * m_bands);
+
+    float theta = sample.theta, cos_theta = std::cos(theta);
+    float phi = sample.phi;
+
+    std::cout << "theta: " << theta << " phi: " << phi << std::endl;
+
+    for (int m = 0; m < m_bands; ++m)
+    {
+        sinPhi[m] = std::sin((m+1)*phi);
+        cosPhi[m] = std::cos((m+1)*phi);
+    }
+
     for (int l = 0; l < this->getBands(); ++l)
     {
         for (int m = -l; m <= l; ++m)
         {
-            std::cout << "wee" << std::endl;
-            float basis = this->eval(sample.theta, sample.phi);
-            operator()(l, m) += sample.luminance * basis;
+            float coeff_val = SQRT_TWO * normalization(l, -m) * std::sin(-m * phi) * legendreP(l, -m, std::cos(theta));
+            if (m == 0) coeff_val = normalization(l, 0) * legendreP(l, 0, cos_theta);
+            if (m > 0) coeff_val = SQRT_TWO * normalization(l, m) * std::cos(m * phi) * legendreP(l, m, std::cos(theta));
+
+            operator()(l, m) += sample.value * coeff_val;
+
+            //float L = legendreP(l, m, cos_theta) * normalization(l, m);
+            //operator()(l, -m) += sample.value * SQRT_TWO * sinPhi[m-1] * L;
+            //operator()(l, m)  += sample.value * SQRT_TWO * cosPhi[m-1] * L;
+        }
+
+        //operator()(l, 0) += sample.value * legendreP(l, 0, cos_theta) * normalization(l, 0);
+    }
+}
+
+void SphericalHarmonics::postprocess()
+{
+    const double weight = 4.0 * M_PI;
+    for (int l = 0; l < this->getBands(); ++l)
+    {
+        for (int m = -l; m <= l; ++m)
+        {
+            operator()(l, m) *= (weight / this->m_num_samples);
         }
     }
+
     this->normalize();
+
+    for (int l = 0; l < this->getBands(); ++l)
+    {
+        for (int m = -l; m <= l; ++m)
+        {
+            std::cout << operator()(l, m) << std::endl;
+        }
+    }
 }
 
 Sample SphericalHarmonics::sample(Point2& pos)
 {
-    if (pos.x < 0 || pos.y < 0 || pos.x > 1 || pos.y > 1)
+    if (pos.x < 0 || pos.y < 0 || pos.x >= 1 || pos.y >= 1)
     {
         SLog(EError, "Sample out of bounds!");
     }
 
+    float pdf = this->sampler->warp(*this, pos);
+
     Sample sample = {
-        .luminance = this->sampler->warp(*this, pos),
-        .phi = pos.x,
-        .theta = pos.y
+        .value = pdf,
+        .phi = pos.y,
+        .theta = pos.x
     };
     return sample;
 }
@@ -97,6 +152,7 @@ bool SphericalHarmonics::isAzimuthallyInvariant() const {
 Float SphericalHarmonics::eval(Float theta, Float phi) const {
     Float result = 0;
     Float cosTheta = std::cos(theta);
+
     Float *sinPhi = (Float *) alloca(sizeof(Float)*m_bands),
           *cosPhi = (Float *) alloca(sizeof(Float)*m_bands);
 
@@ -114,6 +170,8 @@ Float SphericalHarmonics::eval(Float theta, Float phi) const {
 
         result += operator()(l, 0) * legendreP(l, 0, cosTheta) * normalization(l, 0);
     }
+
+    //std::cout << result << std::endl;
     return result;
 }
 
@@ -151,8 +209,9 @@ Float SphericalHarmonics::eval(const Vector &v) const {
     for (int l=0; l<m_bands; ++l) {
         for (int m=1; m<=l; ++m) {
             Float L = legendreP(l, m, cosTheta) * normalization(l, m);
+
             result += operator()(l, -m) * SQRT_TWO * sinPhi[m-1] * L;
-            result += operator()(l, m)  * SQRT_TWO * cosPhi[m-1] * L;
+            result += operator()(l, m) * SQRT_TWO * cosPhi[m-1] * L;
         }
 
         result += operator()(l, 0) * legendreP(l, 0, cosTheta) * normalization(l, 0);

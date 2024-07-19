@@ -12,12 +12,6 @@
 
 MTS_NAMESPACE_BEGIN
 
-struct Arguments {
-	std::string path = "";
-	bool noisify = false;
-	uint32_t samples = 8192;
-};
-
 struct EnvironmentMap {
 	ref<Bitmap> bitmap;
 	std::string filename;
@@ -29,13 +23,13 @@ struct EnvironmentMap {
 		Vector dir = warp::squareToCosineHemisphere(sample);
 
 		/* Transform to (hemi)spherical coordinates and normalize */
-		float phi = std::acos(dir.z);
-		float theta = std::atan2(dir.y, dir.x);
-		if (theta < 0) theta += 2 * M_PI;
+		float theta = std::acos(dir.z);
+		float phi = std::atan2(dir.y, dir.x);
+		if (phi < 0) phi += 2 * M_PI;
 
 		Point2f uv_norm(
-			theta * INV_TWOPI, // normalize theta into range [0.0, 1.0)
-			phi * INV_PI // normalize into range [0.0, 0.5)
+			phi * INV_TWOPI, 	// normalize phi into range [0.0, 1.0)
+			theta * INV_PI 		// normalize theta into range [0.0, 0.5)
 			// alt. for y: (1.0f - dir.z) * 0.5f // invert and halve (value is already in range [0.0, 1.0))
 		);
 
@@ -48,9 +42,9 @@ struct EnvironmentMap {
 		sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
 
 		Sample sample_data = {
-			.luminance = this->bitmap->getPixel(uv).getLuminance(),
-			.phi = uv_norm.y,
-			.theta = uv_norm.x
+			.value = this->bitmap->getPixel(uv).getLuminance(),
+			.phi = phi,
+			.theta = theta
 		};
 
 		/* Return found texel */
@@ -95,7 +89,7 @@ public:
 		/* Deal with CL arguments */
 		// TODO: use boost program options or the build in fetching stuff (see kdbench.cpp)
 		//this->args.path = boost::optional<std::string>(argv[1]).get_value_or("./data/tests/envmaps");
-		this->args.path = "./data/tests/envmaps/dativ.at";
+		this->args.path = "./data/tests/envmaps/hdrihaven";
 		this->args.noisify = true;
 
 		/* Register data structures */
@@ -107,10 +101,9 @@ public:
 		// ^^^ ... append your data structures here as you please
 
 		/* Construct data structures as needed */
-		DSInitData init_data;
 		cluster.for_each([&](DataStructure* ds) {
 			if (ds->type() == DSType::DS_Invalid) return;
-			ds->construct(init_data);
+			ds->construct(this->args);
 		});
 
 		/* Initialize random generator */
@@ -130,6 +123,11 @@ public:
 				envmap.noisify();
 			}
 
+			/* Optional: Preprocess whatever has to be preprocessed per data structure */
+			cluster.for_each([&](DataStructure* ds) {
+				ds->preprocess();
+			});
+
 			/* Generate N samples and store them into each data structure */
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
@@ -141,8 +139,25 @@ public:
 				});
 			}
 
+			/* Optional: Postprocess whatever has to be postprocessed per data structure */
+			cluster.for_each([&](DataStructure* ds) {
+				ds->postprocess();
+			});
+
+			
+			for (int y = 0; y < envmap.bitmap->getHeight(); ++y)
+			{
+				for (int x = 0; x < envmap.bitmap->getWidth(); ++x)
+				{
+					Point2i pt(x, y);
+					Spectrum px = envmap.bitmap->getPixel(pt);
+
+					px[0] = 0; px[1] = 0; px[2] = 0;
+					envmap.bitmap->setPixel(pt, px);
+				}
+			}
+
 			/* Sample approximated guiding distribution */
-			ref<Bitmap> bm = new Bitmap(*envmap.bitmap.get());
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
 				Point2f rnd(random->nextFloat(), random->nextFloat());
@@ -150,14 +165,20 @@ public:
 				auto sh = cluster.obtain(DSType::DS_SphericalHarmonics);
 				Sample sample = sh->sample(rnd);
 
-				Point2i pt(sample.phi * bm->getWidth(), sample.theta * bm->getHeight());
-				Spectrum px = bm->getPixel(pt);
+				//std::cout << sample.phi << " " << sample.theta << std::endl;
 
-				px[0] = sample.luminance * 255;
-				px[1] = sample.luminance * 255;
-				px[2] = sample.luminance * 255;
+				// Normalize
+				sample.phi *= INV_TWOPI;
+				sample.theta *= INV_PI;
 
-				bm->setPixel(pt, px);
+				Point2i pt(sample.phi * envmap.bitmap->getWidth(), sample.theta * envmap.bitmap->getHeight());
+				Spectrum px = envmap.bitmap->getPixel(pt);
+
+				px[0] = sample.value * 255;
+				px[1] = sample.value * 255;
+				px[2] = sample.value * 255;
+
+				envmap.bitmap->setPixel(pt, px);
 			}
 
 			// TODO:
@@ -167,7 +188,7 @@ public:
 			// [ ] RMSE for now
 			// [ ] Store image
 
-			for (int y = 0; y < envmap.bitmap->getHeight(); ++y)
+			/*for (int y = 0; y < envmap.bitmap->getHeight(); ++y)
 			{
 				for (int x = 0; x < envmap.bitmap->getWidth(); ++x)
 				{
@@ -192,7 +213,9 @@ public:
 			}
 
 			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "test.exr");
-			bm->write(Bitmap::EFileFormat::EOpenEXR, "test2.exr");
+			*/
+
+			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "test3.exr");
 			break;
 		}
 
@@ -201,7 +224,7 @@ public:
 
 	MTS_DECLARE_UTILITY()
 private:
-	Arguments args;
+	DSArguments args;
 
 	/**
 	 * 

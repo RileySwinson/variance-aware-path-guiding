@@ -2,7 +2,12 @@
 
 MTS_NAMESPACE_BEGIN
 
-void GMM::construct(DSInitData& init_data)
+void GMM::construct(DSArguments& init_data)
+{
+    return;
+}
+
+void GMM::preprocess()
 {
     return;
 }
@@ -12,10 +17,15 @@ void GMM::store(Sample& sample)
     return;
 }
 
+void GMM::postprocess()
+{
+    return;
+}
+
 Sample GMM::sample(Point2& pos)
 {
     Sample sample;
-    sample.luminance = 0.0f;
+    sample.value = 0.0f;
     sample.phi = 0.0f;
     sample.theta = 0.0f;
 

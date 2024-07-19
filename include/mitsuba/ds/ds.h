@@ -13,7 +13,7 @@ MTS_NAMESPACE_BEGIN
 /**
  * \brief Enum values for the respective data structures used in the dscompare plugin.
  * 
- * This enum provides identifiers required for both storage and identification in the \ref DSCluster.
+ * This enum provides identifiers required for both storage and identification in the DSCluster.
  * If a value is missing, the missing value may be added by the user.
  */
 enum MTS_EXPORT_CORE DSType {
@@ -29,12 +29,16 @@ enum MTS_EXPORT_CORE DSType {
  * into each construct(), where data structures can then individually fetch the needed information for initialization.
  * If a value is missing, the missing value may be added by the user.
  */
-struct MTS_EXPORT_CORE DSInitData {
-	int sh_bands = 3;
+struct MTS_EXPORT_CORE DSArguments {
+	std::string path = "";
+	bool noisify = false;
+	uint32_t samples = 8192;
+
+    int sh_bands = 8;
 };
 
 struct MTS_EXPORT_CORE Sample {
-    float luminance = 0.0f;
+    float value = 0.0f;
     
     float phi = 0.0f;
     float theta = 0.0f;
@@ -50,10 +54,16 @@ struct MTS_EXPORT_CORE DataStructure {
     virtual ~DataStructure() { }
 
     /// Calls all relevant functions and initializes the data structure in such a way that it is ready-to-use for data storage.
-    virtual void construct(DSInitData& init_data) = 0;
+    virtual void construct(DSArguments& init_data) = 0;
+
+    /// Performs operations after construction but before storage, if necessary.
+    virtual void preprocess() = 0;
 
     /// Stores a sample into the data structure.
     virtual void store(Sample& sample) = 0;
+
+    /// Performs operations after storage but before sampling, if necessary.
+    virtual void postprocess() = 0;
 
     /// Obtain a sample from the underlying approximation that is stored in the data structure.
     virtual Sample sample(Point2& pos) = 0;
