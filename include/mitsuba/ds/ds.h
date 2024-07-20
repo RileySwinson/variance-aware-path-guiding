@@ -34,7 +34,7 @@ struct MTS_EXPORT_CORE DSArguments {
 	bool noisify = false;
 	uint32_t samples = 8192;
 
-    int sh_bands = 8;
+    int sh_bands = 3;
 };
 
 struct MTS_EXPORT_CORE Sample {

@@ -34,13 +34,12 @@ SphericalHarmonics::SphericalHarmonics(Stream* stream) {
 
 void SphericalHarmonics::construct(DSArguments& init_data)
 {
+    SAssert(init_data.sh_bands > 0);
+
     *this = SphericalHarmonics(init_data.sh_bands);
     this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, 12);
     this->m_num_samples = init_data.samples;
     this->staticInitialization();
-
-    this->m_h[0] = M_PI / init_data.samples;
-    this->m_h[1] = (2 * M_PI) / (2 * init_data.samples);
 }
 
 void SphericalHarmonics::preprocess()
@@ -50,19 +49,20 @@ void SphericalHarmonics::preprocess()
 
 void SphericalHarmonics::store(Sample& sample)
 {
-    float* sinPhi = (float*) alloca(sizeof(float) * m_bands);
-    float* cosPhi = (float*) alloca(sizeof(float) * m_bands);
+    //float* sinPhi = (float*) alloca(sizeof(float) * m_bands);
+    //float* cosPhi = (float*) alloca(sizeof(float) * m_bands);
 
     float theta = sample.theta, cos_theta = std::cos(theta);
     float phi = sample.phi;
 
-    std::cout << "theta: " << theta << " phi: " << phi << std::endl;
-
-    for (int m = 0; m < m_bands; ++m)
+    /*for (int m = 0; m < m_bands; ++m)
     {
         sinPhi[m] = std::sin((m+1)*phi);
         cosPhi[m] = std::cos((m+1)*phi);
-    }
+    }*/
+
+    // See https://github.com/google/spherical-harmonics/blob/master/sh/spherical_harmonics.cc
+    // float weight = ((2.0 * M_PI / 1024) * (M_PI / 512)) * std::sin(theta);
 
     for (int l = 0; l < this->getBands(); ++l)
     {
@@ -72,35 +72,30 @@ void SphericalHarmonics::store(Sample& sample)
             if (m == 0) coeff_val = normalization(l, 0) * legendreP(l, 0, cos_theta);
             if (m > 0) coeff_val = SQRT_TWO * normalization(l, m) * std::cos(m * phi) * legendreP(l, m, std::cos(theta));
 
-            operator()(l, m) += sample.value * coeff_val;
-
-            //float L = legendreP(l, m, cos_theta) * normalization(l, m);
-            //operator()(l, -m) += sample.value * SQRT_TWO * sinPhi[m-1] * L;
-            //operator()(l, m)  += sample.value * SQRT_TWO * cosPhi[m-1] * L;
+            operator()(l, m) += sample.value * coeff_val; // * weight;
         }
-
-        //operator()(l, 0) += sample.value * legendreP(l, 0, cos_theta) * normalization(l, 0);
     }
 }
 
 void SphericalHarmonics::postprocess()
 {
-    const double weight = 4.0 * M_PI;
+    const double weight = (4.0 * M_PI) / this->m_num_samples;
     for (int l = 0; l < this->getBands(); ++l)
     {
         for (int m = -l; m <= l; ++m)
         {
-            operator()(l, m) *= (weight / this->m_num_samples);
+            operator()(l, m) *= weight;
         }
     }
 
+    this->addOffset(0.2); // SUPER IMPORTANT TODO, WHAT DO WE DO WITH THIS?
     this->normalize();
 
     for (int l = 0; l < this->getBands(); ++l)
     {
         for (int m = -l; m <= l; ++m)
         {
-            std::cout << operator()(l, m) << std::endl;
+            std::cout << operator()(l, m) << "\n";
         }
     }
 }
