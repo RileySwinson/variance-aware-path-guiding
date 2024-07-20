@@ -113,7 +113,7 @@ struct ErrorMetrics {
 		err /= bm1.getPixelCount() * CHANNELS;
 		return std::sqrt(err);
 	}
-}
+};
 
 typedef boost::optional<EnvironmentMap> OptionalEnvMap;
 typedef boost::program_options::options_description BoostOptions;
@@ -216,13 +216,6 @@ public:
 					bm->setPixel(pt, px);
 				}
 			}
-
-			// TODO:
-			// [X] Importance sampling
-			// [ ] Spherical harmonics
-			// [ ] Generate envmap from that
-			// [ ] RMSE for now
-			// [ ] Store image
 
 			ref<Bitmap> bm2 = new Bitmap(Bitmap::EPixelFormat::ERGB, Bitmap::EComponentFormat::EFloat32, envmap.bitmap->getSize(), 3, nullptr);
 
