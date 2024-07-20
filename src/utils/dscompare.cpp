@@ -7,8 +7,11 @@
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/clamp.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <vector>
+#include <unordered_map>
+#include <exception>
 
 MTS_NAMESPACE_BEGIN
 
@@ -30,7 +33,6 @@ struct EnvironmentMap {
 		Point2f uv_norm(
 			phi * INV_TWOPI, 	// normalize phi into range [0.0, 1.0)
 			theta * INV_PI 		// normalize theta into range [0.0, 0.5)
-			// alt. for y: (1.0f - dir.z) * 0.5f // invert and halve (value is already in range [0.0, 1.0))
 		);
 
 		Point2i uv(
@@ -81,16 +83,15 @@ struct EnvironmentMap {
 };
 
 typedef boost::optional<EnvironmentMap> OptionalEnvMap;
+typedef boost::program_options::options_description BoostOptions;
+typedef boost::program_options::variables_map BoostOptionsMap;
 
 class DSComparer : Utility {
 public:
 	int run(int argc, char** argv)
 	{
 		/* Deal with CL arguments */
-		// TODO: use boost program options or the build in fetching stuff (see kdbench.cpp)
-		//this->args.path = boost::optional<std::string>(argv[1]).get_value_or("./data/tests/envmaps");
-		this->args.path = "./data/tests/envmaps/hdrihaven";
-		this->args.noisify = true;
+		handle_clargs(argc, argv);
 
 		/* Register data structures */
 		DSCluster& cluster = DSCluster::get();
@@ -144,19 +145,9 @@ public:
 				ds->postprocess();
 			});
 
-			
-			for (int y = 0; y < envmap.bitmap->getHeight(); ++y)
-			{
-				for (int x = 0; x < envmap.bitmap->getWidth(); ++x)
-				{
-					Point2i pt(x, y);
-					Spectrum px = envmap.bitmap->getPixel(pt);
+			ref<Bitmap> bm = new Bitmap(Bitmap::EPixelFormat::ERGB, Bitmap::EComponentFormat::EFloat32, envmap.bitmap->getSize(), 3, nullptr);
 
-					px[0] = 0; px[1] = 0; px[2] = 0;
-					envmap.bitmap->setPixel(pt, px);
-				}
-			}
-
+			std::unordered_map<std::pair<int, int>, int, boost::hash<std::pair<int, int>>> s_map;
 			/* Sample approximated guiding distribution */
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
@@ -165,20 +156,32 @@ public:
 				auto sh = cluster.obtain(DSType::DS_SphericalHarmonics);
 				Sample sample = sh->sample(rnd);
 
-				//std::cout << sample.phi << " " << sample.theta << std::endl;
-
 				// Normalize
 				sample.phi *= INV_TWOPI;
 				sample.theta *= INV_PI;
 
 				Point2i pt(sample.phi * envmap.bitmap->getWidth(), sample.theta * envmap.bitmap->getHeight());
-				Spectrum px = envmap.bitmap->getPixel(pt);
+				Spectrum sampled_px = envmap.bitmap->getPixel(pt);
+				Spectrum px = bm->getPixel(pt);
+				px += (sampled_px * sample.value);
 
-				px[0] = sample.value * 255;
-				px[1] = sample.value * 255;
-				px[2] = sample.value * 255;
+				auto pair = std::make_pair(pt.x, pt.y);
+				s_map[pair]++;
 
-				envmap.bitmap->setPixel(pt, px);
+				bm->setPixel(pt, px);
+			}
+
+			for (int y = 0; y < bm->getHeight(); ++y)
+			{
+				for (int x = 0; x < bm->getWidth(); ++x)
+				{
+					Point2i pt(x, y);
+					auto pair = std::make_pair(pt.x, pt.y);
+					if (s_map.find(pair) == s_map.end()) continue;
+					Spectrum px = bm->getPixel(pt);
+					px /= s_map.at(pair);
+					bm->setPixel(pt, px);
+				}
 			}
 
 			// TODO:
@@ -187,6 +190,31 @@ public:
 			// [ ] Generate envmap from that
 			// [ ] RMSE for now
 			// [ ] Store image
+
+			ref<Bitmap> bm2 = new Bitmap(Bitmap::EPixelFormat::ERGB, Bitmap::EComponentFormat::EFloat32, envmap.bitmap->getSize(), 3, nullptr);
+
+			for (int y = 0; y < bm2->getHeight(); ++y)
+			{
+				for (int x = 0; x < bm2->getWidth(); ++x)
+				{
+					Point2i pt(x, y);
+					Spectrum px = bm2->getPixel(pt);
+
+					px[0] = 0; px[1] = 0; px[2] = 0;
+					bm2->setPixel(pt, px);
+				}
+			}
+
+			for (auto e_pair : envmap.sampled_points)
+			{
+				Point2i pt = e_pair.first;
+				Spectrum sampled_px = envmap.bitmap->getPixel(pt);
+				Spectrum px = bm2->getPixel(pt);
+
+				px = sampled_px;
+
+				bm2->setPixel(pt, px);
+			}
 
 			/*for (int y = 0; y < envmap.bitmap->getHeight(); ++y)
 			{
@@ -211,11 +239,11 @@ public:
 
 				envmap.bitmap->setPixel(pt, px);
 			}
-
-			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "test.exr");
 			*/
 
-			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "test3.exr");
+			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "original.exr");
+			bm->write(Bitmap::EFileFormat::EOpenEXR, "result.exr");
+			bm2->write(Bitmap::EFileFormat::EOpenEXR, "result2.exr");
 			break;
 		}
 
@@ -225,6 +253,34 @@ public:
 	MTS_DECLARE_UTILITY()
 private:
 	DSArguments args;
+
+	void handle_clargs(int argc, char** argv)
+	{
+		try
+		{
+			BoostOptions desc("Options/Arguments");
+			desc.add_options()
+				("help,h", "Display help text.")
+				("path,p", boost::program_options::value<std::string>(&this->args.path)->default_value("./data/tests/envmaps/"), "Path to envmap folder.")
+				("samples,s", boost::program_options::value<uint32_t>(&this->args.samples)->default_value(8192), "Sample count.")
+				("noisify,n", boost::program_options::value<bool>(&this->args.noisify)->default_value(false), "Noisify input envmap?")
+				("sh-bands,b", boost::program_options::value<int>(&this->args.sh_bands)->default_value(3), "Number of Spherical Harmonic bands.");
+
+			BoostOptionsMap op_map;
+			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);
+			boost::program_options::notify(op_map);
+
+			if (op_map.count("help"))
+			{
+				std::cout << desc << std::endl;
+				exit(EXIT_SUCCESS);
+			}
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << e.what() << std::endl;
+		}
+	}
 
 	/**
 	 * 
