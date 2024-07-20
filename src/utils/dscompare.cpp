@@ -82,6 +82,39 @@ struct EnvironmentMap {
 	}
 };
 
+struct ErrorMetrics {
+	static float RMSE(Bitmap& bm1, Bitmap& bm2)
+	{
+		SAssert(bm1.getSize() == bm2.getSize());
+
+		const int CHANNELS = 3;
+
+		float err = 0.0f;
+		for (int y = 0; y < bm1.getHeight(); ++y)
+		{
+			for (int x = 0; x < bm1.getWidth(); ++x)
+			{
+				Point2i pt(x, y);
+				float bm1_rgb[CHANNELS];
+				float bm2_rgb[CHANNELS];
+				bm1.getPixel(pt).toLinearRGB(bm1_rgb[0], bm1_rgb[1], bm1_rgb[2]);
+				bm2.getPixel(pt).toLinearRGB(bm2_rgb[0], bm2_rgb[1], bm2_rgb[2]);
+
+				float sum = 0.0f;
+				for (int i = 0; i < CHANNELS; ++i)
+				{
+					sum += (bm1_rgb[i] - bm2_rgb[i]) * (bm1_rgb[i] - bm2_rgb[i]);
+				}
+
+				err += sum;
+			}
+		}
+
+		err /= bm1.getPixelCount() * CHANNELS;
+		return std::sqrt(err);
+	}
+}
+
 typedef boost::optional<EnvironmentMap> OptionalEnvMap;
 typedef boost::program_options::options_description BoostOptions;
 typedef boost::program_options::variables_map BoostOptionsMap;
@@ -240,6 +273,9 @@ public:
 				envmap.bitmap->setPixel(pt, px);
 			}
 			*/
+
+			std::cout << "RMSE: " << ErrorMetrics::RMSE(*envmap.bitmap, *bm) << std::endl;
+			std::cout << "RMSE: " << ErrorMetrics::RMSE(*envmap.bitmap, *bm2) << std::endl;
 
 			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "original.exr");
 			bm->write(Bitmap::EFileFormat::EOpenEXR, "result.exr");
