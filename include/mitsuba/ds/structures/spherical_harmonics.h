@@ -428,7 +428,10 @@ protected:
     static Float computeNormalization(int l, int m);
 private:
     int m_bands;
-    uint32_t m_num_samples;
+    int m_num_samples;
+    static uint32_t m_sample_counter;
+    Eigen::VectorXf m_sample_values;
+    Eigen::MatrixXf m_basis_values;
 
     Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
     static Float *m_normalization;

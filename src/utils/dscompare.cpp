@@ -86,7 +86,13 @@ public:
 				nullptr
 			);
 
-			std::unordered_map<std::pair<int, int>, int, boost::hash<std::pair<int, int>>> s_map;
+			// Key: sample pos
+			// Value: sample values
+			std::unordered_map<
+				std::pair<int, int>, 
+				std::vector<float>, 
+				boost::hash<std::pair<int, int>>
+			> s_map;
 
 			/* Sample approximated guiding distribution */
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
@@ -101,14 +107,7 @@ public:
 				sample.theta *= INV_PI;
 
 				Point2i pt(sample.phi * envmap.bitmap->getWidth(), sample.theta * envmap.bitmap->getHeight());
-				Spectrum sampled_px = envmap.bitmap->getPixel(pt);
-				Spectrum px = bm->getPixel(pt);
-				px += (sampled_px * sample.value);
-
-				auto pair = std::make_pair(pt.x, pt.y);
-				s_map[pair]++;
-
-				bm->setPixel(pt, px);
+				s_map[std::pair<int, int>(pt.x, pt.y)].push_back(sample.value);
 			}
 
 			for (int y = 0; y < bm->getHeight(); ++y)
@@ -116,10 +115,21 @@ public:
 				for (int x = 0; x < bm->getWidth(); ++x)
 				{
 					Point2i pt(x, y);
-					auto pair = std::make_pair(pt.x, pt.y);
-					if (s_map.find(pair) == s_map.end()) continue;
+					auto entry = s_map.find(std::pair<int, int>(pt.x, pt.y));
+					if (entry == s_map.end()) continue;
+
+					float l = 0.0f;
+					int sample_count = entry->second.size();
+					for (int i = 0; i < sample_count; ++i)
+					{
+						float pdf = entry->second.at(i);
+						l += pdf / sample_count;
+					}
+
 					Spectrum px = bm->getPixel(pt);
-					px /= s_map.at(pair);
+					Spectrum sampled_px = envmap.bitmap->getPixel(pt);
+					
+					px = sampled_px * l;
 					bm->setPixel(pt, px);
 				}
 			}
