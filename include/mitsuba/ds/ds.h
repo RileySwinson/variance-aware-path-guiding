@@ -7,6 +7,7 @@
 #include <memory>
 #include <map>
 #include <functional>
+#include <mitsuba/ds/util.h>
 
 MTS_NAMESPACE_BEGIN
 
@@ -35,13 +36,6 @@ struct MTS_EXPORT_CORE DSArguments {
 	uint32_t samples = 8192;
 
     int sh_bands = 3;
-};
-
-struct MTS_EXPORT_CORE Sample {
-    float value = 0.0f;
-    
-    float phi = 0.0f;
-    float theta = 0.0f;
 };
 
 /**
