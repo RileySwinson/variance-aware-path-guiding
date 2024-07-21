@@ -70,10 +70,11 @@ struct EnvironmentMap {
 				Spectrum px = bitmap->getPixel(pt);
 				
 				float noise = random->nextFloat() * STD_DEV + MEAN;
-
+				
 				for (int channel = 0; channel < 3; ++channel)
 				{
-					px[channel] = ((px[channel] - noise) < 0.0f) ? 0.0f : (px[channel] - noise); // subtract, we want to have slightly darker pixels
+					px[channel] -= noise; 
+					if (px[channel] < 0.0f) px[channel] = 0.0f;
 				}
 
 				this->bitmap->setPixel(pt, px);
@@ -83,7 +84,7 @@ struct EnvironmentMap {
 };
 
 struct ErrorMetrics {
-	static float RMSE(Bitmap& bm1, Bitmap& bm2)
+	static float MSE(Bitmap& bm1, Bitmap& bm2)
 	{
 		SAssert(bm1.getSize() == bm2.getSize());
 
@@ -100,6 +101,7 @@ struct ErrorMetrics {
 				bm1.getPixel(pt).toLinearRGB(bm1_rgb[0], bm1_rgb[1], bm1_rgb[2]);
 				bm2.getPixel(pt).toLinearRGB(bm2_rgb[0], bm2_rgb[1], bm2_rgb[2]);
 
+				// Calculate error at given pixel by squaring the error
 				float sum = 0.0f;
 				for (int i = 0; i < CHANNELS; ++i)
 				{
@@ -110,8 +112,48 @@ struct ErrorMetrics {
 			}
 		}
 
+		// Divide by the pixel count
 		err /= bm1.getPixelCount() * CHANNELS;
-		return std::sqrt(err);
+		return err;
+	}
+
+	static float RMSE(Bitmap& bm1, Bitmap& bm2)
+	{
+		// Take the square root of MSE for RMSE
+		return std::sqrt(ErrorMetrics::MSE(bm1, bm2));
+	}
+
+	static float MAE(Bitmap& bm1, Bitmap& bm2)
+	{
+		SAssert(bm1.getSize() == bm2.getSize());
+
+		const int CHANNELS = 3;
+
+		float err = 0.0f;
+		for (int y = 0; y < bm1.getHeight(); ++y)
+		{
+			for (int x = 0; x < bm1.getWidth(); ++x)
+			{
+				Point2i pt(x, y);
+				float bm1_rgb[CHANNELS];
+				float bm2_rgb[CHANNELS];
+				bm1.getPixel(pt).toLinearRGB(bm1_rgb[0], bm1_rgb[1], bm1_rgb[2]);
+				bm2.getPixel(pt).toLinearRGB(bm2_rgb[0], bm2_rgb[1], bm2_rgb[2]);
+
+				// Calculate error at given pixel by taking the abs of the difference
+				float sum = 0.0f;
+				for (int i = 0; i < CHANNELS; ++i)
+				{
+					sum += std::abs(bm1_rgb[i] - bm2_rgb[i]);
+				}
+
+				err += sum;
+			}
+		}
+
+		// Divide by the pixel count
+		err /= bm1.getPixelCount() * CHANNELS;
+		return err;
 	}
 };
 
@@ -159,6 +201,7 @@ public:
 
 			/* Optional: Preprocess whatever has to be preprocessed per data structure */
 			cluster.for_each([&](DataStructure* ds) {
+				if (ds->type() == DSType::DS_Invalid) return;
 				ds->preprocess();
 			});
 
@@ -169,18 +212,27 @@ public:
 				Sample sample = envmap.sample(rnd);
 
 				cluster.for_each([&](DataStructure* ds) {
+					if (ds->type() == DSType::DS_Invalid) return;
 					ds->store(sample);
 				});
 			}
 
 			/* Optional: Postprocess whatever has to be postprocessed per data structure */
 			cluster.for_each([&](DataStructure* ds) {
+				if (ds->type() == DSType::DS_Invalid) return;
 				ds->postprocess();
 			});
 
-			ref<Bitmap> bm = new Bitmap(Bitmap::EPixelFormat::ERGB, Bitmap::EComponentFormat::EFloat32, envmap.bitmap->getSize(), 3, nullptr);
+			ref<Bitmap> bm = new Bitmap(
+				Bitmap::EPixelFormat::ERGB,
+				Bitmap::EComponentFormat::EFloat32,
+				envmap.bitmap->getSize(),
+				3,
+				nullptr
+			);
 
 			std::unordered_map<std::pair<int, int>, int, boost::hash<std::pair<int, int>>> s_map;
+
 			/* Sample approximated guiding distribution */
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
@@ -242,33 +294,8 @@ public:
 				bm2->setPixel(pt, px);
 			}
 
-			/*for (int y = 0; y < envmap.bitmap->getHeight(); ++y)
-			{
-				for (int x = 0; x < envmap.bitmap->getWidth(); ++x)
-				{
-					Point2i pt(x, y);
-					Spectrum px = envmap.bitmap->getPixel(pt);
-
-					px[0] = 0; px[1] = 0; px[2] = 0;
-					envmap.bitmap->setPixel(pt, px);
-				}
-			}
-
-			for (auto e_pair : envmap.sampled_points)
-			{
-				Point2i pt = e_pair.first;
-				Spectrum px = envmap.bitmap->getPixel(pt);
-
-				px[0] = e_pair.second.getLuminance();
-				px[1] = e_pair.second.getLuminance();
-				px[2] = e_pair.second.getLuminance();
-
-				envmap.bitmap->setPixel(pt, px);
-			}
-			*/
-
-			std::cout << "RMSE: " << ErrorMetrics::RMSE(*envmap.bitmap, *bm) << std::endl;
-			std::cout << "RMSE: " << ErrorMetrics::RMSE(*envmap.bitmap, *bm2) << std::endl;
+			std::cout << "RMSE: " << ErrorMetrics::RSME(*envmap.bitmap, *bm) << std::endl;
+			std::cout << "RMSE: " << ErrorMetrics::RSME(*envmap.bitmap, *bm2) << std::endl;
 
 			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "original.exr");
 			bm->write(Bitmap::EFileFormat::EOpenEXR, "result.exr");
