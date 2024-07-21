@@ -294,8 +294,8 @@ public:
 				bm2->setPixel(pt, px);
 			}
 
-			std::cout << "RMSE: " << ErrorMetrics::RSME(*envmap.bitmap, *bm) << std::endl;
-			std::cout << "RMSE: " << ErrorMetrics::RSME(*envmap.bitmap, *bm2) << std::endl;
+			std::cout << "RMSE: " << ErrorMetrics::RMSE(*envmap.bitmap, *bm) << std::endl;
+			std::cout << "RMSE: " << ErrorMetrics::RMSE(*envmap.bitmap, *bm2) << std::endl;
 
 			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "original.exr");
 			bm->write(Bitmap::EFileFormat::EOpenEXR, "result.exr");
