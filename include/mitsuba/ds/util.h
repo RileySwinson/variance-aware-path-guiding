@@ -34,7 +34,7 @@ struct MTS_EXPORT_CORE Sample {
 	{
 		std::string token;
 		in >> token;
-		
+
 		if (token == "cosine")
 		{
 			mode = Sample::Mode::Cosine;
@@ -59,6 +59,7 @@ struct MTS_EXPORT_CORE Sample {
 struct MTS_EXPORT_CORE EnvironmentMap {
 	ref<Bitmap> bitmap;
 	std::string filename;
+	bool precomputed = false;
 
 	std::vector<std::pair<Point2i, Spectrum>> sampled_points;
 
@@ -81,7 +82,6 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 			.filename = path.string()
 		};
 
-		envmap.precompute();
 		return envmap;
 	}
 
@@ -101,10 +101,29 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 		return { };
 	}
 
+	void precompute()
+	{
+		Float result = 0.0;
+		for (int y = 0; y < this->bitmap->getHeight(); ++y)
+		{
+			Float result_row = 0.0;
+			for (int x = 0; x < this->bitmap->getWidth(); ++x)
+			{
+				Point2i pt(x, y);
+				result_row += this->bitmap->getPixel(pt).getLuminance();
+			}
+			result += result_row;
+			this->row_avgs.push_back(result_row / bitmap->getWidth());
+		}
+		SAssert(result != 0);
+		this->bitmap_integral = result / (bitmap->getHeight() * bitmap->getWidth());
+		this->precomputed = true;
+	}
+
 	/// Noisifies the underlying bitmap via a custom Gaussian noise implementation
 	void noisify(float noise_perc = 0.2f)
 	{
-		if (this->bitmap_integral != 0 || this->row_avgs.size() != 0)
+		if (this->precomputed)
 		{
 			SLog(
 				ELogLevel::EError,
@@ -138,24 +157,6 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 		}
 	}
 private:
-	void precompute()
-	{
-		Float result = 0.0;
-		for (int y = 0; y < this->bitmap->getHeight(); ++y)
-		{
-			Float result_row = 0.0;
-			for (int x = 0; x < this->bitmap->getWidth(); ++x)
-			{
-				Point2i pt(x, y);
-				result_row += this->bitmap->getPixel(pt).getLuminance();
-			}
-			result += result_row;
-			this->row_avgs.push_back(result_row / bitmap->getWidth());
-		}
-		SAssert(result != 0);
-		this->bitmap_integral = result / (bitmap->getHeight() * bitmap->getWidth());
-	}
-
 	Sample sample_helper(Vector& dir)
 	{
 		/* Transform to (hemi)spherical coordinates */

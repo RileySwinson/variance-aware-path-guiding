@@ -49,10 +49,8 @@ public:
 			if (!fetched_envmap) continue;
 			
 			EnvironmentMap envmap = fetched_envmap.get();
-			if (this->args.noisify)
-			{
-				envmap.noisify();
-			}
+			if (this->args.noisify) envmap.noisify();
+			envmap.precompute();
 
 			/* Optional: Preprocess whatever has to be preprocessed per data structure */
 			cluster.for_each([&](DataStructure* ds) {
@@ -201,8 +199,6 @@ private:
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);
 			boost::program_options::notify(op_map);
-
-			std::cout << this->args.mode << std::endl;
 
 			if (op_map.count("help"))
 			{
