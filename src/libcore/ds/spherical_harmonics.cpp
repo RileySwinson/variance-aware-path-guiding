@@ -40,9 +40,10 @@ SphericalHarmonics::SphericalHarmonics(Stream* stream) {
 void SphericalHarmonics::construct(DSArguments& init_data)
 {
     SAssert(init_data.sh_bands > 0);
+    SAssert(init_data.sh_depth > 0);
 
     *this = SphericalHarmonics(init_data.sh_bands);
-    this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, 12);
+    this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, init_data.sh_depth);
     this->m_num_samples = init_data.samples;
     //this->m_sample_values = Eigen::VectorXf(init_data.samples);
     //this->m_basis_values = Eigen::MatrixXf(init_data.samples, this->getBands() * this->getBands());

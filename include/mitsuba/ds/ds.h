@@ -33,10 +33,11 @@ enum MTS_EXPORT_CORE DSType {
 struct MTS_EXPORT_CORE DSArguments {
 	std::string path = "";
 	bool noisify = false;
-    bool sample_envmap = false;
+    Sample::Mode mode = Sample::Mode::Cosine;
 	uint32_t samples = 8192;
 
     int sh_bands = 3;
+    int sh_depth = 12;
 };
 
 /**

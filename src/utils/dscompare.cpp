@@ -65,9 +65,7 @@ public:
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
 				Point2f rnd(random->nextFloat(), random->nextFloat());
-				Sample sample = (this->args.sample_envmap)
-					? envmap.sample_envmap(rnd) 
-					: envmap.sample_cosine(rnd);
+				Sample sample = envmap.sample(this->args.mode, rnd);
 
 				temp_sample_storage.push_back(sample);
 
@@ -195,13 +193,16 @@ private:
 				("help,h", "Display help text.")
 				("path,p", boost::program_options::value<std::string>(&this->args.path)->default_value("./data/tests/envmaps/"), "Path to envmap folder.")
 				("samples,s", boost::program_options::value<uint32_t>(&this->args.samples)->default_value(8192), "Sample count.")
-				("envmap-sampling,e", boost::program_options::value<bool>(&this->args.sample_envmap)->default_value(false), "Sample envmap? (default: cosine)")
+				("sample-mode,sm", boost::program_options::value<Sample::Mode>(&this->args.mode)->default_value(Sample::Mode::Cosine), "Envmap sampling mode.")
 				("noisify,n", boost::program_options::value<bool>(&this->args.noisify)->default_value(false), "Noisify input envmap?")
-				("sh-bands,b", boost::program_options::value<int>(&this->args.sh_bands)->default_value(3), "Number of Spherical Harmonic bands.");
+				("sh-bands,shb", boost::program_options::value<int>(&this->args.sh_bands)->default_value(3), "Number of Spherical Harmonic bands.")
+				("sh-depth,shd", boost::program_options::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);
 			boost::program_options::notify(op_map);
+
+			std::cout << this->args.mode << std::endl;
 
 			if (op_map.count("help"))
 			{

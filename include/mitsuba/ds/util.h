@@ -21,15 +21,39 @@ typedef boost::optional<EnvironmentMap> OptionalEnvMap;
 
 struct MTS_EXPORT_CORE Sample {
     Float value = 0.0f;
-    
     Float phi = 0.0f;
     Float theta = 0.0f;
-};
 
-enum SampleMode {
-	Native,
-	Cosine,
-	Sphere
+	enum Mode {
+		Cosine,
+		Native,
+		Sphere
+	};
+
+	friend std::istream& operator>>(std::istream& in, Sample::Mode& mode)
+	{
+		std::string token;
+		in >> token;
+		
+		if (token == "cosine")
+		{
+			mode = Sample::Mode::Cosine;
+			return in;
+		}
+		if (token == "native")
+		{
+			mode = Sample::Mode::Native;
+			return in;
+		}
+		if (token == "sphere")
+		{
+			mode = Sample::Mode::Sphere;
+			return in;
+		}
+
+		in.setstate(std::ios_base::failbit);
+		return in;
+	};
 };
 
 struct MTS_EXPORT_CORE EnvironmentMap {
@@ -61,18 +85,18 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 		return envmap;
 	}
 
-	Sample sample(SampleMode mode, Point2f& sample)
+	Sample sample(Sample::Mode mode, Point2f& sample)
 	{
 		switch(mode)
 		{
-			case SampleMode::Native: return sample_envmap(sample);
-			case SampleMode::Cosine: return sample_cosine(sample);
-			case SampleMode::Sphere: return sample_sphere(sample);
+			case Sample::Mode::Native: return sample_envmap(sample);
+			case Sample::Mode::Cosine: return sample_cosine(sample);
+			case Sample::Mode::Sphere: return sample_sphere(sample);
 		}
 
 		SLog(
-			ELogLevel::EError, 
-			"This part of the code should never be executed. If it did, you likely passed an invalid SampleMode to Sample sample(SampleMode, Point2f&)."
+			ELogLevel::EError,
+			"This part of the code should never be executed. If it did, you likely passed an invalid Sample::Mode to Sample sample(Sample::Mode, Point2f&)."
 		);
 		return { };
 	}
@@ -80,6 +104,14 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 	/// Noisifies the underlying bitmap via a custom Gaussian noise implementation
 	void noisify(float noise_perc = 0.2f)
 	{
+		if (this->bitmap_integral != 0 || this->row_avgs.size() != 0)
+		{
+			SLog(
+				ELogLevel::EError,
+				"An attempt was made to noisify after envmap precomputation. Make sure to noisify first and then precompute."
+			);
+		}
+
 		const float STD_DEV = 0.1f;
 		const float MEAN 	= 0.0f;
 		ref<Random> random = new Random();
