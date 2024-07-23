@@ -44,8 +44,8 @@ void SphericalHarmonics::construct(DSArguments& init_data)
     *this = SphericalHarmonics(init_data.sh_bands);
     this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, 12);
     this->m_num_samples = init_data.samples;
-    this->m_sample_values = Eigen::VectorXf(init_data.samples);
-    this->m_basis_values = Eigen::MatrixXf(init_data.samples, this->getBands() * this->getBands());
+    //this->m_sample_values = Eigen::VectorXf(init_data.samples);
+    //this->m_basis_values = Eigen::MatrixXf(init_data.samples, this->getBands() * this->getBands());
     this->staticInitialization();
 }
 
@@ -56,7 +56,7 @@ void SphericalHarmonics::preprocess()
 
 void SphericalHarmonics::store(Sample& sample)
 {
-    this->m_sample_values(SphericalHarmonics::m_sample_counter) = sample.value;
+    //this->m_sample_values(SphericalHarmonics::m_sample_counter) = sample.value;
 
     // TODO: Precompute remaining values
     float theta = sample.theta, cos_theta = std::cos(theta);
@@ -70,19 +70,19 @@ void SphericalHarmonics::store(Sample& sample)
             if (m == 0) coeff_val = normalization(l, 0) * legendreP(l, 0, cos_theta);
             if (m > 0) coeff_val = SQRT_TWO * normalization(l, m) * std::cos(m * phi) * legendreP(l, m, std::cos(theta));
 
-            int index = l * (l + 1) + m;
-            m_basis_values(SphericalHarmonics::m_sample_counter, index) = coeff_val;
+            //int index = l * (l + 1) + m;
+            //m_basis_values(SphericalHarmonics::m_sample_counter, index) = coeff_val;
 
-            //operator()(l, m) += sample.value * coeff_val;
+            operator()(l, m) += sample.value * coeff_val;
         }
     }
 
-    SphericalHarmonics::m_sample_counter++;
+    //SphericalHarmonics::m_sample_counter++;
 }
 
 void SphericalHarmonics::postprocess()
 {
-    /*const double weight = (4.0 * M_PI) / this->m_num_samples;
+    const double weight = (4.0 * M_PI) / this->m_num_samples;
     for (int l = 0; l < this->getBands(); ++l)
     {
         for (int m = -l; m <= l; ++m)
@@ -91,10 +91,10 @@ void SphericalHarmonics::postprocess()
         }
     }
 
-    this->normalize();*/
+    this->normalize();
 
     /* LEAST SQUARES APPROACH */
-    Eigen::VectorXf harmonics_svd = this->m_basis_values
+    /*Eigen::VectorXf harmonics_svd = this->m_basis_values
         .jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV)
         .solve(this->m_sample_values);
 
@@ -109,7 +109,7 @@ void SphericalHarmonics::postprocess()
         }
     }
 
-    this->normalize();
+    this->normalize();*/
 
     for (int l = 0; l < this->getBands(); ++l)
     {

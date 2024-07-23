@@ -47,7 +47,7 @@ public:
 
 			OptionalEnvMap fetched_envmap = EnvironmentMap::fetch(entry.path());
 			if (!fetched_envmap) continue;
-
+			
 			EnvironmentMap envmap = fetched_envmap.get();
 			if (this->args.noisify)
 			{
@@ -60,11 +60,16 @@ public:
 				ds->preprocess();
 			});
 
+			std::vector<Sample> temp_sample_storage;
 			/* Generate N samples and store them into each data structure */
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
 				Point2f rnd(random->nextFloat(), random->nextFloat());
-				Sample sample = envmap.sample(rnd);
+				Sample sample = (this->args.sample_envmap)
+					? envmap.sample_envmap(rnd) 
+					: envmap.sample_cosine(rnd);
+
+				temp_sample_storage.push_back(sample);
 
 				cluster.for_each([&](DataStructure* ds) {
 					if (ds->type() == DSType::DS_Invalid) return;
@@ -97,7 +102,13 @@ public:
 			/* Sample approximated guiding distribution */
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
-				Point2f rnd(random->nextFloat(), random->nextFloat());
+				//Point2f rnd(random->nextFloat(), random->nextFloat());
+				Sample s = temp_sample_storage.at(s_count);
+				Point2f rnd(
+					0.5 - s.phi * INV_TWOPI,
+					s.theta * INV_PI
+				);
+
 				// Spherical harmonics for now
 				auto sh = cluster.obtain(DSType::DS_SphericalHarmonics);
 				Sample sample = sh->sample(rnd);
@@ -184,6 +195,7 @@ private:
 				("help,h", "Display help text.")
 				("path,p", boost::program_options::value<std::string>(&this->args.path)->default_value("./data/tests/envmaps/"), "Path to envmap folder.")
 				("samples,s", boost::program_options::value<uint32_t>(&this->args.samples)->default_value(8192), "Sample count.")
+				("envmap-sampling,e", boost::program_options::value<bool>(&this->args.sample_envmap)->default_value(false), "Sample envmap? (default: cosine)")
 				("noisify,n", boost::program_options::value<bool>(&this->args.noisify)->default_value(false), "Noisify input envmap?")
 				("sh-bands,b", boost::program_options::value<int>(&this->args.sh_bands)->default_value(3), "Number of Spherical Harmonic bands.");
 

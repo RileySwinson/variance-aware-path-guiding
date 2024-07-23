@@ -20,10 +20,16 @@ struct ErrorMetrics;
 typedef boost::optional<EnvironmentMap> OptionalEnvMap;
 
 struct MTS_EXPORT_CORE Sample {
-    float value = 0.0f;
+    Float value = 0.0f;
     
-    float phi = 0.0f;
-    float theta = 0.0f;
+    Float phi = 0.0f;
+    Float theta = 0.0f;
+};
+
+enum SampleMode {
+	Native,
+	Cosine,
+	Sphere
 };
 
 struct MTS_EXPORT_CORE EnvironmentMap {
@@ -31,6 +37,9 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 	std::string filename;
 
 	std::vector<std::pair<Point2i, Spectrum>> sampled_points;
+
+	Float bitmap_integral;
+	std::vector<Float> row_avgs;
 
 	static OptionalEnvMap fetch(const boost::filesystem::path path)
 	{
@@ -48,39 +57,24 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 			.filename = path.string()
 		};
 
+		envmap.precompute();
 		return envmap;
 	}
 
-	Sample sample(Point2f& sample)
+	Sample sample(SampleMode mode, Point2f& sample)
 	{
-		Vector dir = warp::squareToCosineHemisphere(sample);
+		switch(mode)
+		{
+			case SampleMode::Native: return sample_envmap(sample);
+			case SampleMode::Cosine: return sample_cosine(sample);
+			case SampleMode::Sphere: return sample_sphere(sample);
+		}
 
-		/* Transform to (hemi)spherical coordinates and normalize */
-		float theta = std::acos(dir.z);
-		float phi = std::atan2(dir.y, dir.x);
-		if (phi < 0) phi += 2 * M_PI;
-
-		Point2f uv_norm(
-			phi * INV_TWOPI, 	// normalize phi into range [0.0, 1.0)
-			theta * INV_PI 		// normalize theta into range [0.0, 0.5)
+		SLog(
+			ELogLevel::EError, 
+			"This part of the code should never be executed. If it did, you likely passed an invalid SampleMode to Sample sample(SampleMode, Point2f&)."
 		);
-
-		Point2i uv(
-			uv_norm.x * this->bitmap->getWidth(),
-			uv_norm.y * this->bitmap->getHeight()
-		);
-
-		/* UNCOMMENT FOR SAMPLE VISUALIZATION */
-		sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
-
-		Sample sample_data = {
-			.value = this->bitmap->getPixel(uv).getLuminance(),
-			.phi = phi,
-			.theta = theta
-		};
-
-		/* Return found texel */
-		return sample_data;
+		return { };
 	}
 
 	/// Noisifies the underlying bitmap via a custom Gaussian noise implementation
@@ -110,6 +104,111 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 				this->bitmap->setPixel(pt, px);
 			}
 		}
+	}
+private:
+	void precompute()
+	{
+		Float result = 0.0;
+		for (int y = 0; y < this->bitmap->getHeight(); ++y)
+		{
+			Float result_row = 0.0;
+			for (int x = 0; x < this->bitmap->getWidth(); ++x)
+			{
+				Point2i pt(x, y);
+				result_row += this->bitmap->getPixel(pt).getLuminance();
+			}
+			result += result_row;
+			this->row_avgs.push_back(result_row / bitmap->getWidth());
+		}
+		SAssert(result != 0);
+		this->bitmap_integral = result / (bitmap->getHeight() * bitmap->getWidth());
+	}
+
+	Sample sample_helper(Vector& dir)
+	{
+		/* Transform to (hemi)spherical coordinates */
+		Float theta = std::acos(dir.z);
+		Float phi = std::atan2(dir.y, dir.x);
+
+		Point2f uv_norm(
+			0.5f - phi * INV_TWOPI, // normalize phi into range [0.0, 1.0)
+			theta * INV_PI 			// normalize theta into range [0.0, 0.5)
+		);
+
+		Point2i uv(
+			uv_norm.x * this->bitmap->getWidth(),
+			uv_norm.y * this->bitmap->getHeight()
+		);
+
+		/* UNCOMMENT FOR SAMPLE VISUALIZATION */
+		sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
+
+		Sample sample_data = {
+			.value = this->bitmap->getPixel(uv).getLuminance(),
+			.phi = phi,
+			.theta = theta
+		};
+
+		/* Return found texel */
+		return sample_data;
+	}
+
+	Sample sample_cosine(Point2f& sample)
+	{
+		Vector dir = warp::squareToCosineHemisphere(sample);
+		return sample_helper(dir);
+	}
+
+	Sample sample_sphere(Point2f& sample)
+	{
+		Vector dir = warp::squareToUniformSphere(sample);
+		return sample_helper(dir);
+	}
+
+	Sample sample_envmap(Point2f& sample)
+	{
+		Float prev_sum_y = 0.0f;
+		Float sum_y = 0.0f;
+		/* Iterate over rows until our sample is bigger than the respective avg. density */
+		int y = 0;
+		for (y = 0; y < this->row_avgs.size(); ++y)
+		{
+			sum_y += this->row_avgs.at(y) / this->bitmap_integral;
+			if ((sum_y / this->bitmap->getHeight()) >= sample.y) break;
+
+			prev_sum_y = sum_y;
+		}
+
+		Float prev_sum_x = 0.0f;
+		Float sum_x = 0.0f;
+		/* Iterate over entries in row until our sample is bigger than the respective value */
+		int x = 0;
+		for (x = 0; x < this->bitmap->getWidth(); ++x)
+		{
+			Point2i pt(x, y);
+			sum_x += this->bitmap->getPixel(pt).getLuminance() / this->row_avgs.at(y);
+			if ((sum_x / this->bitmap->getWidth()) >= sample.x) break;
+
+			prev_sum_x = sum_x;
+		}
+
+		Point2i uv(x, y);
+
+		/* UNCOMMENT FOR SAMPLE VISUALIZATION */
+		sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
+ 
+		Point2f uv_norm(
+			(Float) uv.x / this->bitmap->getWidth(),
+			(Float) uv.y / this->bitmap->getHeight()
+		);
+
+		Sample sample_data = {
+			.value = this->bitmap->getPixel(uv).getLuminance(),
+			.phi = 2 * M_PI * (0.5f - uv_norm.x),
+			.theta = M_PI * uv_norm.y
+		};
+		
+		return sample_data;
 	}
 };
 
