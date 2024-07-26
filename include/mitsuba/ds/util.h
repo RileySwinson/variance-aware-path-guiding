@@ -189,8 +189,8 @@ private:
 
 		Sample sample_data = {
 			.value = this->bitmap->getPixel(uv).getLuminance(),
-			.phi = phi + M_PI, // we want to move phi from [-pi, pi] to [0, 2pi]
-			.theta = theta
+			.phi = 2 * M_PI * uv_norm.x,
+			.theta = M_PI * uv_norm.y
 		};
 
 		/* Return found texel */
