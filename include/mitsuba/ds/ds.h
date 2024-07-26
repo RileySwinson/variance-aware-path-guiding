@@ -55,8 +55,8 @@ struct MTS_EXPORT_CORE DataStructure {
     /// Performs operations after construction but before storage, if necessary.
     virtual void preprocess() = 0;
 
-    /// Stores a sample into the data structure.
-    virtual void store(Sample& sample) = 0;
+    /// Stores a number of samples into the data structure.
+    virtual void store(std::vector<Sample>& samples) = 0;
 
     /// Performs operations after storage but before sampling, if necessary.
     virtual void postprocess() = 0;

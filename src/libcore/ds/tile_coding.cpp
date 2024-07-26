@@ -12,7 +12,7 @@ void TileCoding::preprocess()
     return;
 }
 
-void TileCoding::store(Sample& sample)
+void TileCoding::store(std::vector<Sample>& samples)
 {
     return;
 }

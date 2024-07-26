@@ -411,7 +411,7 @@ public:
 
     void preprocess() override;
 
-    void store(Sample& sample) override;
+    void store(std::vector<Sample>& samples) override;
 
     void postprocess() override;
     
@@ -429,7 +429,6 @@ protected:
 private:
     int m_bands;
     int m_num_samples;
-    static uint32_t m_sample_counter;
     Eigen::VectorXf m_sample_values;
     Eigen::MatrixXf m_basis_values;
 
@@ -437,7 +436,6 @@ private:
     static Float *m_normalization;
 
     ref<SphericalHarmonicsSampler> sampler = nullptr;
-    //ref<SphericalFunctor> func = nullptr;
 };
 
 inline Float dot(const SphericalHarmonics &v1, const SphericalHarmonics &v2) {

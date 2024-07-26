@@ -45,6 +45,7 @@ public:
 		{
 			if (boost::filesystem::is_directory(entry)) continue;
 
+			/* Fetch environment map */
 			OptionalEnvMap fetched_envmap = EnvironmentMap::fetch(entry.path());
 			if (!fetched_envmap) continue;
 			
@@ -52,40 +53,29 @@ public:
 			if (this->args.noisify) envmap.noisify();
 			envmap.precompute();
 
-			/* Optional: Preprocess whatever has to be preprocessed per data structure */
-			cluster.for_each([&](DataStructure* ds) {
-				if (ds->type() == DSType::DS_Invalid) return;
-				ds->preprocess();
-			});
-
-			std::vector<Sample> temp_sample_storage;
-			/* Generate N samples and store them into each data structure */
+			/* Generate random samples and store them so they can be reused per data structure */
+			std::vector<Sample> samples;
 			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
-				Point2f rnd(random->nextFloat(), random->nextFloat());
-				Sample sample = envmap.sample(this->args.mode, rnd);
+				Point2f coords(random->nextFloat(), random->nextFloat());
+				Sample sample = envmap.sample(this->args.mode, coords);
 
-				temp_sample_storage.push_back(sample);
-
-				cluster.for_each([&](DataStructure* ds) {
-					if (ds->type() == DSType::DS_Invalid) return;
-					ds->store(sample);
-				});
+				samples.push_back(sample);
 			}
 
-			/* Optional: Postprocess whatever has to be postprocessed per data structure */
+			/* Iterate over data structures... */
 			cluster.for_each([&](DataStructure* ds) {
 				if (ds->type() == DSType::DS_Invalid) return;
+				
+				/* Optional: Preprocess whatever has to be preprocessed per data structure */
+				ds->preprocess();
+				/* Store samples into the data structure */
+				ds->store(samples);
+				/* Optional: Postprocess whatever has to be postprocessed per data structure */
 				ds->postprocess();
 			});
 
-			ref<Bitmap> bm = new Bitmap(
-				Bitmap::EPixelFormat::ERGB,
-				Bitmap::EComponentFormat::EFloat32,
-				envmap.bitmap->getSize(),
-				3,
-				nullptr
-			);
+			ref<Bitmap> bm = envmap.gen_empty_bitmap();
 
 			// Key: sample pos
 			// Value: sample values
@@ -95,7 +85,7 @@ public:
 				boost::hash<std::pair<int, int>>
 			> s_map;
 
-			for (int y = 0; y < envmap.bitmap->getHeight(); y += 2)
+			/*for (int y = 0; y < envmap.bitmap->getHeight(); y += 2)
 			{
 				for (int x = 0; x < envmap.bitmap->getWidth(); x += 2) {
 					Point2f rnd(
@@ -111,15 +101,13 @@ public:
 
 					float result = sh->eval(rnd.x, rnd.y);
 
-					std::cout << result << std::endl;
-
 					Point2i pt(x, y);
 					s_map[std::pair<int, int>(pt.x, pt.y)].push_back(result);
 				}
-			}
+			}*/
 
 			/* Sample approximated guiding distribution */
-			/*for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
+			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
 			{
 				Point2f rnd(random->nextFloat(), random->nextFloat());
 
@@ -133,7 +121,7 @@ public:
 
 				Point2i pt(u * envmap.bitmap->getWidth(), v * envmap.bitmap->getHeight());
 				s_map[std::pair<int, int>(pt.x, pt.y)].push_back(sample.value);
-			}*/
+			}
 
 			for (int y = 0; y < bm->getHeight(); ++y)
 			{
@@ -154,13 +142,13 @@ public:
 					Spectrum px = bm->getPixel(pt);
 					Spectrum sampled_px = envmap.bitmap->getPixel(pt);
 					
-					//px = sampled_px * l;
-					px[0] = 255 * l; px[1] = 255 * l; px[2] = 255 * l;
+					px = sampled_px * l;
+					//px[0] = 255 * l; px[1] = 255 * l; px[2] = 255 * l;
 					bm->setPixel(pt, px);
 				}
 			}
 
-			ref<Bitmap> bm2 = new Bitmap(Bitmap::EPixelFormat::ERGB, Bitmap::EComponentFormat::EFloat32, envmap.bitmap->getSize(), 3, nullptr);
+			ref<Bitmap> bm2 = envmap.gen_empty_bitmap();
 
 			for (int y = 0; y < bm2->getHeight(); ++y)
 			{

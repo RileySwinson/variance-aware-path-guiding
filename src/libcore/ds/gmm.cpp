@@ -12,7 +12,7 @@ void GMM::preprocess()
     return;
 }
 
-void GMM::store(Sample& sample)
+void GMM::store(std::vector<Sample>& samples)
 {
     return;
 }

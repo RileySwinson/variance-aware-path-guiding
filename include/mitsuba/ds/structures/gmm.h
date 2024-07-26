@@ -14,7 +14,7 @@ struct MTS_EXPORT_CORE GMM : public DataStructure {
 
     void preprocess() override;
 
-    void store(Sample& sample) override;
+    void store(std::vector<Sample>& samples) override;
 
     void postprocess() override;
 

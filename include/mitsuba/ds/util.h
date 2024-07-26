@@ -79,7 +79,7 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 
 		EnvironmentMap envmap = {
 			.bitmap = new Bitmap(path.string()),
-			.filename = path.string()
+			.filename = path.filename().string()
 		};
 
 		return envmap;
@@ -118,6 +118,17 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 		SAssert(result != 0);
 		this->bitmap_integral = result / (bitmap->getHeight() * bitmap->getWidth());
 		this->precomputed = true;
+	}
+
+	/// Generates an empty bitmap with the same params as this one
+	ref<Bitmap> gen_empty_bitmap()
+	{
+		Bitmap::EPixelFormat px_format = this->bitmap->getPixelFormat();
+		Bitmap::EComponentFormat cmp_format = this->bitmap->getComponentFormat();
+		Vector2i size = this->bitmap->getSize();
+		std::size_t channels = this->bitmap->getChannelCount();
+
+		return new Bitmap(px_format, cmp_format, size, channels, nullptr);
 	}
 
 	/// Noisifies the underlying bitmap via a custom Gaussian noise implementation

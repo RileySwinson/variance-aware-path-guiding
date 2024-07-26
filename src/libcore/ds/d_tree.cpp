@@ -12,7 +12,7 @@ void DirectionalTree::preprocess()
     return;
 }
 
-void DirectionalTree::store(Sample& sample)
+void DirectionalTree::store(std::vector<Sample>& samples)
 {
     return;
 }

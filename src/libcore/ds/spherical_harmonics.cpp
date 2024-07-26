@@ -26,8 +26,7 @@
 
 MTS_NAMESPACE_BEGIN
 
-Float *SphericalHarmonics::m_normalization = NULL;
-uint32_t SphericalHarmonics::m_sample_counter = 0;
+Float* SphericalHarmonics::m_normalization = NULL;
 
 SphericalHarmonics::SphericalHarmonics(Stream* stream) {
     m_bands = stream->readInt();
@@ -55,36 +54,50 @@ void SphericalHarmonics::preprocess()
     return;
 }
 
-void SphericalHarmonics::store(Sample& sample)
+void SphericalHarmonics::store(std::vector<Sample>& samples)
 {
-    //this->m_sample_values(SphericalHarmonics::m_sample_counter) = sample.value;
+    SAssert(samples.size() == this->m_num_samples);
 
-    // TODO: Precompute remaining values
-    float theta = sample.theta, cos_theta = std::cos(theta);
-    float phi = sample.phi;
+    std::size_t total_bands = getBands();
+    std::size_t total_samples = this->m_num_samples;
 
-    for (int l = 0; l < getBands(); ++l)
+    for (std::size_t s_i = 0; s_i < total_samples; ++s_i)
     {
-        for (int m = -l; m <= l; ++m)
+        Sample sample = samples.at(s_i);
+        //this->m_sample_values(s_i) = sample.value;
+
+        Float theta = sample.theta, cos_theta = std::cos(theta);
+        Float phi = sample.phi;
+
+        std::cout << "SAMPLE" << "\n";
+        std::cout << "[theta] = " << theta << ", [phi] = " << phi << std::endl;
+
+        for (int l = 0; l < total_bands; ++l)
         {
-            float coeff_val = SQRT_TWO * normalization(l, -m) * std::sin(-m * phi) * legendreP(l, -m, std::cos(theta));
-            if (m == 0) coeff_val = normalization(l, 0) * legendreP(l, 0, cos_theta);
-            if (m > 0) coeff_val = SQRT_TWO * normalization(l, m) * std::cos(m * phi) * legendreP(l, m, std::cos(theta));
+            for (int m = -l; m <= l; ++m)
+            {
+                const Float factor1 = (m == 0) ? 1.0f : SQRT_TWO;
+                const Float factor2 = (m == 0) ? 1.0f : (m < 0) ? std::sin(-m * phi) : std::cos(m * phi);
+                const Float K = normalization(l, std::abs(m));
+                const Float P = legendreP(l, std::abs(m), cos_theta);
 
-            //int index = l * (l + 1) + m;
-            //m_basis_values(SphericalHarmonics::m_sample_counter, index) = coeff_val;
+                const Float coeff_val = factor1 * factor2 * K * P;
 
-            operator()(l, m) += sample.value * coeff_val;
+                //int index = l * (l + 1) + m;
+                //m_basis_values(s_i, index) = coeff_val;
+
+                operator()(l, m) += sample.value * coeff_val;
+            }
         }
     }
-
-    //SphericalHarmonics::m_sample_counter++;
 }
 
 void SphericalHarmonics::postprocess()
 {
+    std::size_t total_bands = getBands();
     const double weight = (4.0 * M_PI) / this->m_num_samples;
-    for (int l = 0; l < getBands(); ++l)
+
+    for (int l = 0; l < total_bands; ++l)
     {
         for (int m = -l; m <= l; ++m)
         {
@@ -101,8 +114,6 @@ void SphericalHarmonics::postprocess()
         .jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV)
         .solve(this->m_sample_values);
 
-    std::cout << harmonics_svd.cols() << ", " << harmonics_svd.rows() << std::endl;
-
     for (int l = 0; l < this->getBands(); ++l)
     {
         for (int m = -l; m <= l; ++m)
@@ -111,14 +122,6 @@ void SphericalHarmonics::postprocess()
             operator()(l, m) = harmonics_svd(index);
         }
     }*/
-
-    for (int l = 0; l < this->getBands(); ++l)
-    {
-        for (int m = -l; m <= l; ++m)
-        {
-            std::cout << operator()(l, m) << "\n";
-        }
-    }
 }
 
 Sample SphericalHarmonics::sample(Point2& pos)
@@ -141,7 +144,6 @@ Sample SphericalHarmonics::sample(Point2& pos)
 void SphericalHarmonics::wipe()
 {
     this->clear();
-    SphericalHarmonics::m_sample_counter = 0;
 }
 
 DSType SphericalHarmonics::type()
