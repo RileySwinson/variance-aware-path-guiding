@@ -38,7 +38,7 @@ SphericalHarmonics::SphericalHarmonics(Stream* stream) {
 }
 
 void SphericalHarmonics::construct(DSArguments& init_data)
-{
+{ 
     SAssert(init_data.sh_bands > 0);
     SAssert(init_data.sh_depth > 0);
 
@@ -46,8 +46,8 @@ void SphericalHarmonics::construct(DSArguments& init_data)
     this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, init_data.sh_depth);
     this->m_num_samples = init_data.samples;
     //this->m_sample_values = Eigen::VectorXf(init_data.samples);
-    //this->m_basis_values = Eigen::MatrixXf(init_data.samples, this->getBands() * this->getBands());
-    this->staticInitialization();
+    //this->m_basis_values = Eigen::MatrixXf(init_data.samples, getBands() * getBands());
+    staticInitialization();
 }
 
 void SphericalHarmonics::preprocess()
@@ -63,7 +63,7 @@ void SphericalHarmonics::store(Sample& sample)
     float theta = sample.theta, cos_theta = std::cos(theta);
     float phi = sample.phi;
 
-    for (int l = 0; l < this->getBands(); ++l)
+    for (int l = 0; l < getBands(); ++l)
     {
         for (int m = -l; m <= l; ++m)
         {
@@ -84,7 +84,7 @@ void SphericalHarmonics::store(Sample& sample)
 void SphericalHarmonics::postprocess()
 {
     const double weight = (4.0 * M_PI) / this->m_num_samples;
-    for (int l = 0; l < this->getBands(); ++l)
+    for (int l = 0; l < getBands(); ++l)
     {
         for (int m = -l; m <= l; ++m)
         {
@@ -92,7 +92,9 @@ void SphericalHarmonics::postprocess()
         }
     }
 
-    this->normalize();
+    Float min = findMinimum(64);
+    if (min < 0) addOffset(Epsilon - min);
+    normalize();
 
     /* LEAST SQUARES APPROACH */
     /*Eigen::VectorXf harmonics_svd = this->m_basis_values
@@ -108,9 +110,7 @@ void SphericalHarmonics::postprocess()
             int index = l * (l + 1) + m;
             operator()(l, m) = harmonics_svd(index);
         }
-    }
-
-    this->normalize();*/
+    }*/
 
     for (int l = 0; l < this->getBands(); ++l)
     {
@@ -188,11 +188,10 @@ Float SphericalHarmonics::eval(Float theta, Float phi) const {
         result += operator()(l, 0) * legendreP(l, 0, cosTheta) * normalization(l, 0);
     }
 
-    //std::cout << result << std::endl;
     return result;
 }
 
-Float SphericalHarmonics::findMinimum(int res = 32) const {
+Float SphericalHarmonics::findMinimum(int res) const {
     Float hExt = (Float) M_PI / res, hInt = (2 * (Float) M_PI)/(res*2);
     Float minimum = std::numeric_limits<Float>::infinity();
 

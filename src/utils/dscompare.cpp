@@ -95,27 +95,45 @@ public:
 				boost::hash<std::pair<int, int>>
 			> s_map;
 
-			/* Sample approximated guiding distribution */
-			for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
+			for (int y = 0; y < envmap.bitmap->getHeight(); y += 2)
 			{
-				//Point2f rnd(random->nextFloat(), random->nextFloat());
-				Sample s = temp_sample_storage.at(s_count);
-				Point2f rnd(
-					0.5 - s.phi * INV_TWOPI,
-					s.theta * INV_PI
-				);
+				for (int x = 0; x < envmap.bitmap->getWidth(); x += 2) {
+					Point2f rnd(
+						((float) y / envmap.bitmap->getHeight()) * M_PI,
+						((float) x / envmap.bitmap->getWidth()) * (2 * M_PI)
+					);
+
+					Point2f rnd2((float) x / envmap.bitmap->getWidth(), (float) y / envmap.bitmap->getHeight());
+
+					// Spherical harmonics for now
+					auto ds = cluster.obtain(DSType::DS_SphericalHarmonics);
+					SphericalHarmonics* sh = dynamic_cast<SphericalHarmonics*>(ds);
+
+					float result = sh->eval(rnd.x, rnd.y);
+
+					std::cout << result << std::endl;
+
+					Point2i pt(x, y);
+					s_map[std::pair<int, int>(pt.x, pt.y)].push_back(result);
+				}
+			}
+
+			/* Sample approximated guiding distribution */
+			/*for (uint32_t s_count = 0; s_count < this->args.samples; ++s_count)
+			{
+				Point2f rnd(random->nextFloat(), random->nextFloat());
 
 				// Spherical harmonics for now
 				auto sh = cluster.obtain(DSType::DS_SphericalHarmonics);
 				Sample sample = sh->sample(rnd);
 
 				// Normalize
-				sample.phi *= INV_TWOPI;
-				sample.theta *= INV_PI;
+				float u = sample.phi * INV_TWOPI;
+				float v = sample.theta * INV_PI;
 
-				Point2i pt(sample.phi * envmap.bitmap->getWidth(), sample.theta * envmap.bitmap->getHeight());
+				Point2i pt(u * envmap.bitmap->getWidth(), v * envmap.bitmap->getHeight());
 				s_map[std::pair<int, int>(pt.x, pt.y)].push_back(sample.value);
-			}
+			}*/
 
 			for (int y = 0; y < bm->getHeight(); ++y)
 			{
@@ -136,7 +154,8 @@ public:
 					Spectrum px = bm->getPixel(pt);
 					Spectrum sampled_px = envmap.bitmap->getPixel(pt);
 					
-					px = sampled_px * l;
+					//px = sampled_px * l;
+					px[0] = 255 * l; px[1] = 255 * l; px[2] = 255 * l;
 					bm->setPixel(pt, px);
 				}
 			}

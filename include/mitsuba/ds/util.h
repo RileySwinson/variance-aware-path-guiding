@@ -178,7 +178,7 @@ private:
 
 		Sample sample_data = {
 			.value = this->bitmap->getPixel(uv).getLuminance(),
-			.phi = phi,
+			.phi = phi + M_PI, // we want to move phi from [-pi, pi] to [0, 2pi]
 			.theta = theta
 		};
 
@@ -200,7 +200,6 @@ private:
 
 	Sample sample_envmap(Point2f& sample)
 	{
-		Float prev_sum_y = 0.0f;
 		Float sum_y = 0.0f;
 		/* Iterate over rows until our sample is bigger than the respective avg. density */
 		int y = 0;
@@ -208,11 +207,8 @@ private:
 		{
 			sum_y += this->row_avgs.at(y) / this->bitmap_integral;
 			if ((sum_y / this->bitmap->getHeight()) >= sample.y) break;
-
-			prev_sum_y = sum_y;
 		}
 
-		Float prev_sum_x = 0.0f;
 		Float sum_x = 0.0f;
 		/* Iterate over entries in row until our sample is bigger than the respective value */
 		int x = 0;
@@ -221,8 +217,6 @@ private:
 			Point2i pt(x, y);
 			sum_x += this->bitmap->getPixel(pt).getLuminance() / this->row_avgs.at(y);
 			if ((sum_x / this->bitmap->getWidth()) >= sample.x) break;
-
-			prev_sum_x = sum_x;
 		}
 
 		Point2i uv(x, y);
@@ -237,7 +231,7 @@ private:
 
 		Sample sample_data = {
 			.value = this->bitmap->getPixel(uv).getLuminance(),
-			.phi = 2 * M_PI * (0.5f - uv_norm.x),
+			.phi = 2 * M_PI * uv_norm.x,
 			.theta = M_PI * uv_norm.y
 		};
 		

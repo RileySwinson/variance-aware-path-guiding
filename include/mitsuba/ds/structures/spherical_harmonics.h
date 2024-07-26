@@ -282,7 +282,7 @@ public:
     Matrix3x3 mu2() const;
 
     /// Brute-force search for the minimum value over the sphere
-    Float findMinimum(int res) const;
+    Float findMinimum(int res = 32) const;
 
     /// Add a constant value
     void addOffset(Float value);
