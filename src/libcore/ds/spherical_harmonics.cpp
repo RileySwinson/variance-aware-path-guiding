@@ -43,7 +43,7 @@ void SphericalHarmonics::construct(DSArguments& init_data)
 
     *this = SphericalHarmonics(init_data.sh_bands);
     this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, init_data.sh_depth);
-    this->m_num_samples = init_data.samples;
+    this->m_num_samples = init_data.samples_learning;
     //this->m_sample_values = Eigen::VectorXf(init_data.samples);
     //this->m_basis_values = Eigen::MatrixXf(init_data.samples, getBands() * getBands());
     staticInitialization();
@@ -68,9 +68,6 @@ void SphericalHarmonics::store(std::vector<Sample>& samples)
 
         Float theta = sample.theta, cos_theta = std::cos(theta);
         Float phi = sample.phi;
-
-        std::cout << "SAMPLE" << "\n";
-        std::cout << "[theta] = " << theta << ", [phi] = " << phi << std::endl;
 
         for (int l = 0; l < total_bands; ++l)
         {

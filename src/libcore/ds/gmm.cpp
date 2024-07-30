@@ -39,7 +39,7 @@ void GMM::wipe()
 
 DSType GMM::type()
 {
-    return DSType::DS_GaussianMixture;
+    return DSType::DS_Invalid;
 }
 
 MTS_NAMESPACE_END

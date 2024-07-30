@@ -11,6 +11,8 @@
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
 
+#include <array>
+
 MTS_NAMESPACE_BEGIN
 
 struct Sample;
@@ -58,7 +60,7 @@ struct MTS_EXPORT_CORE Sample {
 
 struct MTS_EXPORT_CORE EnvironmentMap {
 	ref<Bitmap> bitmap;
-	std::string filename;
+	std::array<std::string, 2> path;
 	bool precomputed = false;
 
 	std::vector<std::pair<Point2i, Spectrum>> sampled_points;
@@ -66,7 +68,7 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 	Float bitmap_integral;
 	std::vector<Float> row_avgs;
 
-	static OptionalEnvMap fetch(const boost::filesystem::path path)
+	static OptionalEnvMap fetch(const boost::filesystem::path& path)
 	{
 		if (path.extension() != ".exr" && path.extension() != ".hdr")
 		{
@@ -79,13 +81,13 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 
 		EnvironmentMap envmap = {
 			.bitmap = new Bitmap(path.string()),
-			.filename = path.filename().string()
+			.path = { path.parent_path().filename().string(), path.stem().string() }
 		};
 
 		return envmap;
 	}
 
-	Sample sample(Sample::Mode mode, Point2f& sample)
+	Sample sample(const Sample::Mode mode, const Point2f& sample)
 	{
 		switch(mode)
 		{
@@ -132,7 +134,7 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 	}
 
 	/// Noisifies the underlying bitmap via a custom Gaussian noise implementation
-	void noisify(float noise_perc = 0.2f)
+	void noisify(const float noise_perc = 0.2f)
 	{
 		if (this->precomputed)
 		{
@@ -168,7 +170,7 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 		}
 	}
 private:
-	Sample sample_helper(Vector& dir)
+	Sample sample_helper(const Vector& dir)
 	{
 		/* Transform to (hemi)spherical coordinates */
 		Float theta = std::acos(dir.z);
@@ -197,19 +199,19 @@ private:
 		return sample_data;
 	}
 
-	Sample sample_cosine(Point2f& sample)
+	Sample sample_cosine(const Point2f& sample)
 	{
 		Vector dir = warp::squareToCosineHemisphere(sample);
 		return sample_helper(dir);
 	}
 
-	Sample sample_sphere(Point2f& sample)
+	Sample sample_sphere(const Point2f& sample)
 	{
 		Vector dir = warp::squareToUniformSphere(sample);
 		return sample_helper(dir);
 	}
 
-	Sample sample_envmap(Point2f& sample)
+	Sample sample_envmap(const Point2f& sample)
 	{
 		Float sum_y = 0.0f;
 		/* Iterate over rows until our sample is bigger than the respective avg. density */
@@ -251,7 +253,7 @@ private:
 };
 
 struct MTS_EXPORT_CORE ErrorMetrics {
-	static float MSE(Bitmap& bm1, Bitmap& bm2)
+	static float MSE(const Bitmap& bm1, const Bitmap& bm2)
 	{
 		SAssert(bm1.getSize() == bm2.getSize());
 
@@ -284,13 +286,13 @@ struct MTS_EXPORT_CORE ErrorMetrics {
 		return err;
 	}
 
-	static float RMSE(Bitmap& bm1, Bitmap& bm2)
+	static float RMSE(const Bitmap& bm1, const Bitmap& bm2)
 	{
 		// Take the square root of MSE for RMSE
 		return std::sqrt(ErrorMetrics::MSE(bm1, bm2));
 	}
 
-	static float MAE(Bitmap& bm1, Bitmap& bm2)
+	static float MAE(const Bitmap& bm1, const Bitmap& bm2)
 	{
 		SAssert(bm1.getSize() == bm2.getSize());
 

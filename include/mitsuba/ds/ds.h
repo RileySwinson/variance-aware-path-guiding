@@ -34,9 +34,10 @@ struct MTS_EXPORT_CORE DSArguments {
 	std::string path = "";
 	bool noisify = false;
     Sample::Mode mode = Sample::Mode::Cosine;
-	uint32_t samples = 8192;
+	uint32_t samples_learning = 1024;
+    uint32_t samples_guiding = 524288;
 
-    int sh_bands = 3;
+    int sh_bands = 5;
     int sh_depth = 12;
 };
 

@@ -39,7 +39,7 @@ void TileCoding::wipe()
 
 DSType TileCoding::type()
 {
-    return DSType::DS_TileCoding;
+    return DSType::DS_Invalid;
 }
 
 MTS_NAMESPACE_END
