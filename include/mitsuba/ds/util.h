@@ -130,7 +130,19 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 		Vector2i size = this->bitmap->getSize();
 		std::size_t channels = this->bitmap->getChannelCount();
 
-		return new Bitmap(px_format, cmp_format, size, channels, nullptr);
+		ref<Bitmap> bm = new Bitmap(px_format, cmp_format, size, channels, NULL);
+		for (int y = 0; y < size.y; ++y)
+		{
+			for (int x = 0; x < size.x; ++x)
+			{
+				Point2i pt(x, y);
+				Spectrum px = bm->getPixel(pt);
+				px[0] = 0; px[1] = 0; px[2] = 0;
+				bm->setPixel(pt, px);
+			}
+		}
+		
+		return bm;
 	}
 
 	/// Noisifies the underlying bitmap via a custom Gaussian noise implementation
