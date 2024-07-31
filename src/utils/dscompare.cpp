@@ -25,6 +25,7 @@ public:
 
 		/* Register data structures */
 		DSCluster& cluster = DSCluster::get();
+		cluster.attach(new Unidirectional());
 		cluster.attach(new SphericalHarmonics());
 		cluster.attach(new TileCoding());
 		cluster.attach(new DirectionalTree());

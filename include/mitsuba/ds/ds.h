@@ -18,6 +18,7 @@ MTS_NAMESPACE_BEGIN
  * If a value is missing, the missing value may be added by the user.
  */
 enum MTS_EXPORT_CORE DSType {
+    DS_Unidirectional,
     DS_GaussianMixture,
     DS_TileCoding,
     DS_SphericalHarmonics,

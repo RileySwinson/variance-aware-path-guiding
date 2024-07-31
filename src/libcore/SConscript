@@ -53,7 +53,8 @@ data_structures = [
         'd_tree.cpp',
         'gmm.cpp',
         'spherical_harmonics.cpp',
-        'tile_coding.cpp'       
+        'tile_coding.cpp',
+        'unidir.cpp'       
 ]
 
 libcore_objects.extend([('ds/' + ds) for ds in data_structures])
