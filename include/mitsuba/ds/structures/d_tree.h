@@ -276,6 +276,7 @@ struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
 private:
     InternalDTree building;
     InternalDTree sampling;
+    std::vector<Sample> l_sample_storage;
 
     AdamOptimizer bsdfSamplingFractionOptimizer{0.01f};
 

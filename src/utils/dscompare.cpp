@@ -124,6 +124,7 @@ public:
 						Spectrum sampled_px = envmap.bitmap->getPixel(pt);
 						
 						px = sampled_px * l;
+						//px[0] = 255 * l; px[1] = 255 * l; px[2] = 255 * l;
 						bm->setPixel(pt, px);
 					}
 				}

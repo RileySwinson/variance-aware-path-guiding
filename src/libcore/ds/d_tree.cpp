@@ -573,23 +573,49 @@ void DirectionalTree::preprocess()
 
 void DirectionalTree::store(std::vector<Sample>& samples)
 {
-    for (Sample& sample : samples)
+    // As Müller et al.'s D-Trees require multiple iterations, we first store our sample contingent
+    // into a vector based on a geometric series, then use these samples in the postprocessing step
+    // to build the actual tree.
+
+    auto total_samples = samples.size();
+    for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
-        const Float cos_theta = std::cos(sample.theta);
-        const Float phi = sample.phi;
+        Sample sample = samples.at(s_i);
 
         Point2 p(
-            0.5 * (cos_theta + 1), // ???
-            INV_TWOPI * phi
+            0.5 * (std::cos(sample.theta) + 1),
+            INV_TWOPI * sample.phi
         );
 
-        building.recordIrradiance(p, sample.value, 1, EDirectionalFilter::ENearest);
+        sample.theta = p.x;
+        sample.phi = p.y;
+
+        this->l_sample_storage.push_back(sample);
     }
 }
 
 void DirectionalTree::postprocess()
 {
-    reset(20, 0.01f);
+    // Müller et al. states that the geometric series uses twice as many samples as in the previous
+    // iteration. We therefore iterate over all stored samples, building and resetting when we hit a threshold.
+    // We start with 1 sample and go from there.
+
+    size_t t = 1;
+
+    auto total_samples = this->l_sample_storage.size();
+    for (size_t s_i = 0; s_i < total_samples; ++s_i)
+    {
+        Sample sample = this->l_sample_storage.at(s_i);
+        building.recordIrradiance(Point2(sample.theta, sample.phi), sample.value, 1, EDirectionalFilter::ENearest);
+
+        if ((s_i == t - 1) && (total_samples - t >= t))
+        {
+            build();
+            reset(20, 0.01f);
+            t *= 2;
+        }
+    }
+
     build();
 
     //std::cout << "depth: " << sampling.depth() << std::endl;
@@ -620,8 +646,8 @@ Sample DirectionalTree::sample(Point2& pos)
 
 void DirectionalTree::wipe()
 {
-    // TODO
-    return;
+    building = InternalDTree();
+    this->l_sample_storage.clear();
 }
 
 DSType DirectionalTree::type()
