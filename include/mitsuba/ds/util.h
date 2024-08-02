@@ -10,6 +10,7 @@
 
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/clamp.hpp>
 
 #include <array>
 
@@ -63,8 +64,6 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 	std::array<std::string, 2> path;
 	bool precomputed = false;
 
-	std::vector<std::pair<Point2i, Spectrum>> sampled_points;
-
 	Float bitmap_integral;
 	std::vector<Float> row_avgs;
 
@@ -87,7 +86,7 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 		return envmap;
 	}
 
-	Sample sample(const Sample::Mode mode, const Point2f& sample)
+	Sample sample(const Sample::Mode mode, const Point2& sample)
 	{
 		switch(mode)
 		{
@@ -98,7 +97,7 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 
 		SLog(
 			ELogLevel::EError,
-			"This part of the code should never be executed. If it did, you likely passed an invalid Sample::Mode to Sample sample(Sample::Mode, Point2f&)."
+			"This part of the code should never be executed. If it did, you likely passed an invalid Sample::Mode to Sample sample(Sample::Mode, Point2&)."
 		);
 		return { };
 	}
@@ -137,7 +136,7 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 			{
 				Point2i pt(x, y);
 				Spectrum px = bm->getPixel(pt);
-				px[0] = 0; px[1] = 0; px[2] = 0;
+				px[0] = px[1] = px[2] = 0;
 				bm->setPixel(pt, px);
 			}
 		}
@@ -188,18 +187,15 @@ private:
 		Float theta = std::acos(dir.z);
 		Float phi = std::atan2(dir.y, dir.x);
 
-		Point2f uv_norm(
-			0.5f - phi * INV_TWOPI, // normalize phi into range [0.0, 1.0)
-			theta * INV_PI 			// normalize theta into range [0.0, 0.5)
+		Point2 uv_norm(
+			boost::algorithm::clamp(0.5f - phi * INV_TWOPI, 0, 1 - Epsilon), // normalize phi into range [0.0, 1.0)
+			boost::algorithm::clamp(theta * INV_PI, 0, 0.5 - Epsilon)		 // normalize theta into range [0.0, 0.5)
 		);
 
 		Point2i uv(
 			uv_norm.x * this->bitmap->getWidth(),
 			uv_norm.y * this->bitmap->getHeight()
 		);
-
-		/* UNCOMMENT FOR SAMPLE VISUALIZATION */
-		sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
 
 		Sample sample_data = {
 			.value = this->bitmap->getPixel(uv).getLuminance(),
@@ -211,19 +207,19 @@ private:
 		return sample_data;
 	}
 
-	Sample sample_cosine(const Point2f& sample)
+	Sample sample_cosine(const Point2& sample)
 	{
 		Vector dir = warp::squareToCosineHemisphere(sample);
 		return sample_helper(dir);
 	}
 
-	Sample sample_sphere(const Point2f& sample)
+	Sample sample_sphere(const Point2& sample)
 	{
 		Vector dir = warp::squareToUniformSphere(sample);
 		return sample_helper(dir);
 	}
 
-	Sample sample_envmap(const Point2f& sample)
+	Sample sample_envmap(const Point2& sample)
 	{
 		Float sum_y = 0.0f;
 		/* Iterate over rows until our sample is bigger than the respective avg. density */
@@ -233,6 +229,10 @@ private:
 			sum_y += this->row_avgs.at(y) / this->bitmap_integral;
 			if ((sum_y / this->bitmap->getHeight()) >= sample.y) break;
 		}
+
+		// In case (sum_y / height) is smaller than sample.y (happens with samples *very* close to 1), we just subtract by 1.
+		// As it would land on the very last pixel anyways, we're not introducing any bias here.
+		if (y == this->bitmap->getHeight()) y -= 1;
 
 		Float sum_x = 0.0f;
 		/* Iterate over entries in row until our sample is bigger than the respective value */
@@ -244,12 +244,11 @@ private:
 			if ((sum_x / this->bitmap->getWidth()) >= sample.x) break;
 		}
 
+		if (x == this->bitmap->getWidth()) x -= 1;
+
 		Point2i uv(x, y);
 
-		/* UNCOMMENT FOR SAMPLE VISUALIZATION */
-		sampled_points.push_back(std::pair<Point2i, Spectrum>(uv, this->bitmap->getPixel(uv)));
- 
-		Point2f uv_norm(
+		Point2 uv_norm(
 			(Float) uv.x / this->bitmap->getWidth(),
 			(Float) uv.y / this->bitmap->getHeight()
 		);
