@@ -59,7 +59,7 @@ public:
 			uint32_t samples_learning = this->args.samples_learning;
 			for (uint32_t s_i = 0; s_i < samples_learning; ++s_i)
 			{
-				Point2f coords(random->nextFloat(), random->nextFloat());
+				Point2 coords(random->nextFloat(), random->nextFloat());
 				Sample sample = envmap.sample(this->args.mode, coords);
 
 				samples.push_back(sample);
@@ -89,7 +89,7 @@ public:
 				uint32_t samples_guiding = this->args.samples_guiding;
 				for (uint32_t s_i = 0; s_i < samples_guiding; ++s_i)
 				{
-					Point2f rnd(random->nextFloat(), random->nextFloat());
+					Point2 rnd(random->nextFloat(), random->nextFloat());
 					Sample sample = ds->sample(rnd);
 
 					// Normalize
@@ -124,7 +124,7 @@ public:
 						Spectrum sampled_px = envmap.bitmap->getPixel(pt);
 						
 						px = sampled_px * l;
-						//px[0] = 255 * l; px[1] = 255 * l; px[2] = 255 * l;
+						//px[0] = px[1] = px[2] = 255 * l;
 						bm->setPixel(pt, px);
 					}
 				}
