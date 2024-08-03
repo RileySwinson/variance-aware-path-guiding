@@ -92,6 +92,11 @@ public:
     /// Attaches a data structure instance to the cluster.
     bool attach(DataStructure* ds)
     {
+        if (ds->type() == DSType::DS_Invalid) 
+        {
+            SLog(EWarn, "Attempting to store data structure with type 'DS_Invalid' -- ignoring.");
+            return false;
+        }
         return m_map.emplace(ds->type(), ds).second;
     }
 
@@ -104,6 +109,11 @@ public:
      */
     bool attach(const DSType type, DataStructure* ds)
     {
+        if (type == DSType::DS_Invalid || ds->type() == DSType::DS_Invalid) 
+        {
+            SLog(EWarn, "Attempting to store data structure with type 'DS_Invalid' -- ignoring.");
+            return false;
+        }
         return m_map.emplace(type, ds).second;
     }
 
@@ -127,6 +137,27 @@ public:
         {
             F(it->second);
         } 
+    }
+
+    /// Returns the number of data structures stored within the cluster.
+    int size()
+    {
+        return this->m_map.size();
+    }
+
+    /// Returns the "largest" enum value in the cluster. If the cluster is empty, -1 is returned.
+    int largest()
+    {
+        int largest = -1;
+        if (this->m_map.empty()) return largest;
+
+        for (DSIter it = this->m_map.begin(); it != this->m_map.end(); ++it)
+        {
+            auto key = it->first;
+            if (key > largest) largest = key;
+        }
+
+        return largest;
     }
 
     /// Reverts the cluster back to its blank state.

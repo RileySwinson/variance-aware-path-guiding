@@ -34,7 +34,6 @@ public:
 
 		/* Construct data structures as needed */
 		cluster.for_each([&](DataStructure* ds) {
-			if (ds->type() == DSType::DS_Invalid) return;
 			ds->construct(this->args);
 		});
 
@@ -65,12 +64,21 @@ public:
 				samples.push_back(sample);
 			}
 
+			/* Create folder for final output */
+			const std::string base_name = "./data/results";
+			const std::string folder_name = envmap.path.at(0);
+			const std::string envmap_file_name = envmap.path.at(1);
+			
+			const std::string folder_path = base_name + "/" + folder_name + "/" + envmap_file_name;
+			boost::filesystem::create_directories(folder_path);
+
+			/* Initialize error metrics storage */
+			std::vector<std::vector<float>> err_storage(cluster.largest() + 1);
+
 			Log(EInfo, "Comparing data structures for envmap '%s'...", (envmap.path.at(0) + "/" + envmap.path.at(1)).c_str());
 
 			/* Iterate over data structures... */
 			cluster.for_each([&](DataStructure* ds) {
-				if (ds->type() == DSType::DS_Invalid) return;
-				
 				/* Optional: Preprocess whatever has to be preprocessed per data structure */
 				ds->preprocess();
 				/* Store samples into the data structure */
@@ -129,32 +137,12 @@ public:
 					}
 				}
 
-				/* Create folder for storage */
-				const std::string base_name = "./data/results";
-				const std::string folder_name = envmap.path.at(0);
-				const std::string envmap_file_name = envmap.path.at(1);
-				
-				const std::string folder_path = base_name + "/" + folder_name + "/" + envmap_file_name;
-				if (!boost::filesystem::is_directory(folder_path))
-				{
-					boost::filesystem::create_directories(folder_path);
-				}
-
-				/* Compute metrics and write them into a .txt file */
-				auto err_mse = ErrorMetrics::MSE(*envmap.bitmap, *bm);
-				auto err_mae = ErrorMetrics::MAE(*envmap.bitmap, *bm);
-				auto err_rmse = ErrorMetrics::RMSE(*envmap.bitmap, *bm);
-
-				std::ofstream output;
-				const std::string metrics_file_name = "results.csv";
-				const std::string output_path = folder_path + "/" + metrics_file_name;
-				output.open(output_path, std::ios::out | std::ios::app);
-
-				if (boost::filesystem::is_empty(output_path)) 
-				{
-					output << ",MSE,RMSE,MAE,\n";
-				}
-				output << "" + std::to_string(ds->type()) + "," + std::to_string(err_mse) + "," + std::to_string(err_rmse) + "," + std::to_string(err_mae) + ",\n";
+				/* Compute metrics and store them */
+				err_storage.at(ds->type()) = std::vector<float>{
+					ErrorMetrics::MSE(*envmap.bitmap, *bm),
+					ErrorMetrics::MAE(*envmap.bitmap, *bm),
+					ErrorMetrics::RMSE(*envmap.bitmap, *bm)
+				};
 
 				/* Write envmap bitmap to .exr file */
 				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
@@ -163,6 +151,31 @@ public:
 				/* Wipe data structure to clean state for further usage */
 				ds->wipe();
 			});
+
+			/* Create metrics.csv and fill it */
+			std::ofstream output;
+			const std::string metrics_file_name = "metrics.csv";
+			const std::string output_path = folder_path + "/" + metrics_file_name;
+			output.open(output_path, std::ios::out);
+			
+			output << ",MSE,RMSE,MAE,\n";
+
+			std::string res;
+			for (int i = 0; i < err_storage.size(); ++i)
+			{
+				res += "" + std::to_string(i) + ",";
+
+				const auto metrics = err_storage.at(i);
+				if (metrics.empty())
+					res += ",,,";
+				else
+					for (const auto metric : metrics)
+						res += std::to_string(metric) + ",";
+
+				res += "\n";
+			}
+
+			output << res;
 
 			/*for (int y = 0; y < envmap.bitmap->getHeight(); y += 2)
 			{
@@ -185,64 +198,6 @@ public:
 					s_map[std::pair<int, int>(pt.x, pt.y)].push_back(result);
 				}
 			}*/
-
-			/*for (int y = 0; y < bm->getHeight(); ++y)
-			{
-				for (int x = 0; x < bm->getWidth(); ++x)
-				{
-					Point2i pt(x, y);
-					auto entry = s_map.find(std::pair<int, int>(pt.x, pt.y));
-					if (entry == s_map.end()) continue;
-
-					float l = 0.0f;
-					int sample_count = entry->second.size();
-					for (int i = 0; i < sample_count; ++i)
-					{
-						float pdf = entry->second.at(i);
-						l += pdf / sample_count;
-					}
-
-					Spectrum px = bm->getPixel(pt);
-					Spectrum sampled_px = envmap.bitmap->getPixel(pt);
-					
-					px = sampled_px * l;
-					// px[0] = 255 * l; px[1] = 255 * l; px[2] = 255 * l; // ONLY USE WITH COMMENTED LOOP
-					bm->setPixel(pt, px);
-				}
-			}*/
-
-			/*ref<Bitmap> bm2 = envmap.gen_empty_bitmap();
-
-			for (int y = 0; y < bm2->getHeight(); ++y)
-			{
-				for (int x = 0; x < bm2->getWidth(); ++x)
-				{
-					Point2i pt(x, y);
-					Spectrum px = bm2->getPixel(pt);
-
-					px[0] = 0; px[1] = 0; px[2] = 0;
-					bm2->setPixel(pt, px);
-				}
-			}
-
-			for (auto e_pair : envmap.sampled_points)
-			{
-				Point2i pt = e_pair.first;
-				Spectrum sampled_px = envmap.bitmap->getPixel(pt);
-				Spectrum px = bm2->getPixel(pt);
-
-				px = sampled_px;
-
-				bm2->setPixel(pt, px);
-			}
-
-			std::cout << "RMSE: " << ErrorMetrics::RMSE(*envmap.bitmap, *bm) << std::endl;
-			std::cout << "RMSE: " << ErrorMetrics::RMSE(*envmap.bitmap, *bm2) << std::endl;
-
-			envmap.bitmap->write(Bitmap::EFileFormat::EOpenEXR, "original.exr");
-			bm->write(Bitmap::EFileFormat::EOpenEXR, "result.exr");
-			bm2->write(Bitmap::EFileFormat::EOpenEXR, "result2.exr");
-			break;*/
 		}
 
 		return 0;
@@ -258,12 +213,15 @@ private:
 		{
 			BoostOptions desc("Options/Arguments");
 			desc.add_options()
+				// Utility
 				("help,h", "Display help text.")
+				// General
 				("path,p", boost::program_options::value<std::string>(&this->args.path)->default_value("./data/tests/envmaps/"), "Path to envmap folder.")
 				("samples-learning,sl", boost::program_options::value<uint32_t>(&this->args.samples_learning)->default_value(1024), "Envmap sample count.")
 				("samples-guiding,sg", boost::program_options::value<uint32_t>(&this->args.samples_guiding)->default_value(524288), "Reconstruction sample count.")
 				("sample-mode,sm", boost::program_options::value<Sample::Mode>(&this->args.mode)->default_value(Sample::Mode::Cosine), "Envmap sampling mode.")
 				("noisify,n", boost::program_options::value<bool>(&this->args.noisify)->default_value(false), "Noisify input envmap?")
+				// Spherical Harmonics
 				("sh-bands,shb", boost::program_options::value<int>(&this->args.sh_bands)->default_value(5), "Number of Spherical Harmonic bands.")
 				("sh-depth,shd", boost::program_options::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.");
 
