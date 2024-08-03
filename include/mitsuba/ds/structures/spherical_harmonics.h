@@ -429,13 +429,9 @@ protected:
 private:
     int m_bands;
     int m_num_samples;
-    Eigen::VectorXf m_sample_values;
-    Eigen::MatrixXf m_basis_values;
-
-    Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
     static Float *m_normalization;
-
     ref<SphericalHarmonicsSampler> sampler = nullptr;
+    Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
 };
 
 inline Float dot(const SphericalHarmonics &v1, const SphericalHarmonics &v2) {

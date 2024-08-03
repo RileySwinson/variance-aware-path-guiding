@@ -12,21 +12,6 @@
 MTS_NAMESPACE_BEGIN
 
 /**
- * \brief Enum values for the respective data structures used in the dscompare plugin.
- * 
- * This enum provides identifiers required for both storage and identification in the DSCluster.
- * If a value is missing, the missing value may be added by the user.
- */
-enum MTS_EXPORT_CORE DSType {
-    DS_Unidirectional,
-    DS_GaussianMixture,
-    DS_TileCoding,
-    DS_SphericalHarmonics,
-    DS_DTree,
-    DS_Invalid
-};
-
-/**
  * Storage struct for the various parameters a data structure must need. This is passed
  * into each construct(), where data structures can then individually fetch the needed information for initialization.
  * If a value is missing, the missing value may be added by the user.
@@ -40,6 +25,21 @@ struct MTS_EXPORT_CORE DSArguments {
 
     int sh_bands = 5;
     int sh_depth = 12;
+};
+
+/**
+ * \brief Enum values for the respective data structures used in the dscompare plugin.
+ * 
+ * This enum provides identifiers required for both storage and identification in the DSCluster.
+ * If a value is missing, the missing value may be added by the user.
+ */
+enum MTS_EXPORT_CORE DSType {
+    DS_Invalid = -1,
+    DS_Unidirectional,
+    DS_GaussianMixture,
+    DS_TileCoding,
+    DS_SphericalHarmonics,
+    DS_DTree,
 };
 
 /**
@@ -94,7 +94,7 @@ public:
     {
         if (ds->type() == DSType::DS_Invalid) 
         {
-            SLog(EWarn, "Attempting to store data structure with type 'DS_Invalid' -- ignoring.");
+            SLog(EWarn, "Attempting to attach data structure with type 'DS_Invalid' -- ignoring.");
             return false;
         }
         return m_map.emplace(ds->type(), ds).second;
@@ -111,7 +111,7 @@ public:
     {
         if (type == DSType::DS_Invalid || ds->type() == DSType::DS_Invalid) 
         {
-            SLog(EWarn, "Attempting to store data structure with type 'DS_Invalid' -- ignoring.");
+            SLog(EWarn, "Attempting to attach data structure with type 'DS_Invalid' -- ignoring.");
             return false;
         }
         return m_map.emplace(type, ds).second;
