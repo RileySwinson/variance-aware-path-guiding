@@ -242,6 +242,7 @@ struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
     Vector sample() const;
 
     Float pdf(const Vector& dir) const;
+    Float pdf(const Point2& uv) const;
 
     int depth() const;
 
