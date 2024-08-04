@@ -86,10 +86,10 @@ public:
 				/* Optional: Postprocess whatever has to be postprocessed per data structure */
 				ds->postprocess();
 
-				/* Samples will be stored in a map with key = sample, value = vector of sampled luminances */
+				/* Samples will be stored in a map with key = pos, value = sample vector */
 				std::unordered_map<
 					std::pair<int, int>, 
-					std::vector<float>, 
+					std::vector<Sample>, 
 					boost::hash<std::pair<int, int>>
 				> s_map;
 
@@ -105,7 +105,8 @@ public:
 					float v = sample.theta * INV_PI;
 
 					Point2i pt(u * envmap.bitmap->getWidth(), v * envmap.bitmap->getHeight());
-					s_map[std::pair<int, int>(pt.x, pt.y)].push_back(sample.value);
+					//sample.value = envmap.bitmap->getPixel(pt).getLuminance();
+					s_map[std::pair<int, int>(pt.x, pt.y)].push_back(sample);
 				}
 
 				/* Generate writable envmap with same properties as input envmap */
@@ -120,19 +121,29 @@ public:
 						auto entry = s_map.find(std::pair<int, int>(pt.x, pt.y));
 						if (entry == s_map.end()) continue;
 
-						float l = 0.0f;
-						int sample_count = entry->second.size();
-						for (int i = 0; i < sample_count; ++i)
-						{
-							float pdf = entry->second.at(i);
-							l += pdf / sample_count;
-						}
-
 						Spectrum px = bm->getPixel(pt);
 						Spectrum sampled_px = envmap.bitmap->getPixel(pt);
-						
-						px = sampled_px * l;
-						//px[0] = px[1] = px[2] = 255 * l;
+						std::vector<Sample> samples = entry->second;
+
+						Float base_value = 0.9;
+						Float noise_factor = base_value + ((1 - base_value) * random->nextFloat());
+
+						for (int channel = 0; channel < envmap.bitmap->getChannelCount(); ++channel)
+						{
+							Float value = sampled_px[channel];
+							value *= noise_factor;
+							if (value < 0) value = 0;
+							
+							Float l = 0;
+							for (const auto& sample : samples)
+							{
+								l += value * (1 / sample.pdf); // f(x) * w(x) ... w(x) = 1 / pdf
+							}
+
+							l /= samples.size(); // (1 / N) * sum(...)
+							px[channel] = l;
+						}
+
 						bm->setPixel(pt, px);
 					}
 				}

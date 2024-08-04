@@ -610,7 +610,7 @@ void DirectionalTree::postprocess()
     for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
         Sample sample = this->l_sample_storage.at(s_i);
-        building.recordIrradiance(Point2(sample.theta, sample.phi), sample.value, INV_FOURPI, EDirectionalFilter::ENearest);
+        building.recordIrradiance(Point2(sample.theta, sample.phi), sample.value, sample.pdf, EDirectionalFilter::ENearest);
 
         //optimizeBsdfSamplingFraction()
 
@@ -631,7 +631,7 @@ void DirectionalTree::postprocess()
 
 Sample DirectionalTree::sample(Point2& pos)
 {
-    // We ignore the sample we pass in and instead use the internal sample/) function.
+    // We ignore the sample we pass in and instead use the internal sample() function.
     Point2 coords = sampling.sample();
     
     Float theta = std::acos(2 * coords.x - 1);
@@ -645,9 +645,10 @@ Sample DirectionalTree::sample(Point2& pos)
     );
 
     Sample sample = {
-        .value = pdf,
-        .phi = phi,
-        .theta = theta
+        .value = 0,
+        .pdf = pdf,
+        .theta = theta,
+        .phi = phi
     };
     return sample;
 }

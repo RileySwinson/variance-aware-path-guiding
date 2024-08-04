@@ -111,9 +111,10 @@ Sample SphericalHarmonics::sample(Point2& pos)
     float pdf = this->sampler->warp(*this, pos);
 
     Sample sample = {
-        .value = pdf,
-        .phi = pos.y,
-        .theta = pos.x
+        .value = 0,
+        .pdf = pdf,
+        .theta = pos.x,
+        .phi = pos.y
     };
     return sample;
 }

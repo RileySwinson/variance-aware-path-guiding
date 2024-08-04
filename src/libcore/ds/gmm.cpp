@@ -26,6 +26,7 @@ Sample GMM::sample(Point2& pos)
 {
     Sample sample;
     sample.value = 0.0f;
+    sample.pdf = 0.0f;
     sample.phi = 0.0f;
     sample.theta = 0.0f;
 

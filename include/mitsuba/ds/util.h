@@ -23,9 +23,11 @@ struct ErrorMetrics;
 typedef boost::optional<EnvironmentMap> OptionalEnvMap;
 
 struct MTS_EXPORT_CORE Sample {
-    Float value = 0.0f;
-    Float phi = 0.0f;
-    Float theta = 0.0f;
+    Float value = 0;
+	Float pdf = 0;
+
+	Float theta = 0;
+    Float phi = 0;
 
 	enum Mode {
 		Cosine,
@@ -181,15 +183,21 @@ struct MTS_EXPORT_CORE EnvironmentMap {
 		}
 	}
 private:
-	Sample sample_helper(const Vector& dir)
+	Sample sample_helper(const Vector& dir, const Sample::Mode mode)
 	{
 		/* Transform to (hemi)spherical coordinates */
 		Float theta = std::acos(dir.z);
 		Float phi = std::atan2(dir.y, dir.x);
 
+		Float theta_clamp = (mode == Sample::Mode::Cosine) 
+			? (0.5 - Epsilon) 
+			: (1 - Epsilon);
+
 		Point2 uv_norm(
-			boost::algorithm::clamp(0.5f - phi * INV_TWOPI, 0, 1 - Epsilon), // normalize phi into range [0.0, 1.0)
-			boost::algorithm::clamp(theta * INV_PI, 0, 0.5 - Epsilon)		 // normalize theta into range [0.0, 0.5)
+			// normalize phi into range [0.0, 1.0)
+			boost::algorithm::clamp(0.5f - phi * INV_TWOPI, 0, 1 - Epsilon),
+			// normalize theta into range [0.0, 0.5) if cosine, otherwise [0.0, 1.0)
+			boost::algorithm::clamp(theta * INV_PI, 0, theta_clamp)
 		);
 
 		Point2i uv(
@@ -199,8 +207,9 @@ private:
 
 		Sample sample_data = {
 			.value = this->bitmap->getPixel(uv).getLuminance(),
-			.phi = 2 * M_PI * uv_norm.x,
-			.theta = M_PI * uv_norm.y
+			.pdf = (mode == Sample::Mode::Cosine) ? INV_TWOPI : INV_FOURPI,
+			.theta = M_PI * uv_norm.y,
+			.phi = 2 * M_PI * uv_norm.x
 		};
 
 		/* Return found texel */
@@ -210,13 +219,13 @@ private:
 	Sample sample_cosine(const Point2& sample)
 	{
 		Vector dir = warp::squareToCosineHemisphere(sample);
-		return sample_helper(dir);
+		return sample_helper(dir, Sample::Mode::Cosine);
 	}
 
 	Sample sample_sphere(const Point2& sample)
 	{
 		Vector dir = warp::squareToUniformSphere(sample);
-		return sample_helper(dir);
+		return sample_helper(dir, Sample::Mode::Sphere);
 	}
 
 	Sample sample_envmap(const Point2& sample)
@@ -253,10 +262,12 @@ private:
 			(Float) uv.y / this->bitmap->getHeight()
 		);
 
+		Float lum = this->bitmap->getPixel(uv).getLuminance();
 		Sample sample_data = {
-			.value = this->bitmap->getPixel(uv).getLuminance(),
-			.phi = 2 * M_PI * uv_norm.x,
-			.theta = M_PI * uv_norm.y
+			.value = lum,
+			.pdf = lum / this->row_avgs.at(uv.y) / this->bitmap->getWidth(),
+			.theta = M_PI * uv_norm.y,
+			.phi = 2 * M_PI * uv_norm.x
 		};
 		
 		return sample_data;
