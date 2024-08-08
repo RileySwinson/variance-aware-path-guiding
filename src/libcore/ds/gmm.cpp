@@ -33,6 +33,11 @@ Sample GMM::sample(Point2& pos)
     return sample;
 }
 
+Float GMM::eval(Point2& pos)
+{
+    return 0;
+}
+
 void GMM::wipe()
 {
     return;

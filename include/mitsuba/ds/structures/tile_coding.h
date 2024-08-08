@@ -19,10 +19,15 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     void postprocess() override;
 
     Sample sample(Point2& pos) override;
+
+    Float eval(Point2& pos) override;
     
     void wipe() override;
 
     DSType type() override;
+private:
+    std::vector<Float> m_tilings[4];
+    int m_tiles = 64;
 };
 
 MTS_NAMESPACE_END

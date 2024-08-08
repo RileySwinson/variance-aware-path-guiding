@@ -50,7 +50,7 @@ public:
 			if (!fetched_envmap) continue;
 			
 			EnvironmentMap envmap = fetched_envmap.get();
-			if (this->args.noisify) envmap.noisify();
+			if (this->args.envmap_noise) envmap.noisify();
 			envmap.precompute();
 
 			/* Generate random samples and store them so they can be reused per data structure */
@@ -60,8 +60,21 @@ public:
 			{
 				Point2 coords(random->nextFloat(), random->nextFloat());
 				Sample sample = envmap.sample(this->args.mode, coords);
+				if (this->args.samples_noise) sample.noisify();
 
 				samples.push_back(sample);
+			}
+
+			EnvironmentMap kek = envmap.deep_copy(true);
+
+			for (Sample s : samples)
+			{
+				Point2 uv = Converter::spherical_to_uv(Point2(s.phi, s.theta));
+				Point2i pt(uv.x * envmap.bitmap->getWidth(), uv.y * envmap.bitmap->getHeight());
+
+				Spectrum px = kek.bitmap->getPixel(pt);
+				px[0] = px[1] = px[2] = s.value;
+				kek.bitmap->setPixel(pt, px);
 			}
 
 			/* Create folder for final output */
@@ -72,10 +85,25 @@ public:
 			const std::string folder_path = base_name + "/" + folder_name + "/" + envmap_file_name;
 			boost::filesystem::create_directories(folder_path);
 
+			/* Generate bitmap for ground truth PDF */
+			Float max = 0;
+			EnvironmentMap gt = envmap
+				.deep_copy(true)
+				.map([&](Point2i coords, Spectrum& px) {
+					Float lum = envmap.bitmap->getPixel(coords).getLuminance();
+					for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = lum;
+					if (lum > max) max = lum;
+				})
+				.normalize(max);
+
+			/* Write envmap to .exr file */
+			gt.write(folder_path + "/base.exr");
+			kek.write(folder_path + "/test.exr");
+
 			/* Initialize error metrics storage */
 			std::vector<std::vector<float>> err_storage(cluster.largest() + 1);
 
-			Log(EInfo, "Comparing data structures for envmap '%s'...", (envmap.path.at(0) + "/" + envmap.path.at(1)).c_str());
+			Log(EInfo, "Comparing data structures for envmap '%s'...", (folder_name + "/" + envmap_file_name).c_str());
 
 			/* Iterate over data structures... */
 			cluster.for_each([&](DataStructure* ds) {
@@ -86,78 +114,30 @@ public:
 				/* Optional: Postprocess whatever has to be postprocessed per data structure */
 				ds->postprocess();
 
-				/* Samples will be stored in a map with key = pos, value = sample vector */
-				std::unordered_map<
-					std::pair<int, int>, 
-					std::vector<Sample>, 
-					boost::hash<std::pair<int, int>>
-				> s_map;
-
-				/* Sample approximated guiding distribution */
-				uint32_t samples_guiding = this->args.samples_guiding;
-				for (uint32_t s_i = 0; s_i < samples_guiding; ++s_i)
-				{
-					Point2 rnd(random->nextFloat(), random->nextFloat());
-					Sample sample = ds->sample(rnd);
-
-					// Normalize
-					float u = sample.phi * INV_TWOPI;
-					float v = sample.theta * INV_PI;
-
-					Point2i pt(u * envmap.bitmap->getWidth(), v * envmap.bitmap->getHeight());
-					//sample.value = envmap.bitmap->getPixel(pt).getLuminance();
-					s_map[std::pair<int, int>(pt.x, pt.y)].push_back(sample);
-				}
-
 				/* Generate writable envmap with same properties as input envmap */
-				ref<Bitmap> bm = envmap.gen_empty_bitmap();
+				Vector2i dims = envmap.bitmap->getSize();
+				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
 
-				/* Fill envmap */
-				for (int y = 0; y < bm->getHeight(); ++y)
-				{
-					for (int x = 0; x < bm->getWidth(); ++x)
-					{
-						Point2i pt(x, y);
-						auto entry = s_map.find(std::pair<int, int>(pt.x, pt.y));
-						if (entry == s_map.end()) continue;
+				Float max = 0;
+				EnvironmentMap em = envmap
+					.deep_copy(true)
+					.map([&](Point2i coords, Spectrum& px) {
+						Point2 norm((Float) coords.x / dims.x, (Float) coords.y / dims.y);
+						Float density = ds->eval(norm);
+						for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = density;
+						if (density > max) max = density;
+					})
+					.normalize(max);
 
-						Spectrum px = bm->getPixel(pt);
-						Spectrum sampled_px = envmap.bitmap->getPixel(pt);
-						std::vector<Sample> samples = entry->second;
-
-						Float base_value = 0.9;
-						Float noise_factor = base_value + ((1 - base_value) * random->nextFloat());
-
-						for (int channel = 0; channel < envmap.bitmap->getChannelCount(); ++channel)
-						{
-							Float value = sampled_px[channel];
-							value *= noise_factor;
-							if (value < 0) value = 0;
-							
-							Float l = 0;
-							for (const auto& sample : samples)
-							{
-								l += value * (1 / sample.pdf); // f(x) * w(x) ... w(x) = 1 / pdf
-							}
-
-							l /= samples.size(); // (1 / N) * sum(...)
-							px[channel] = l;
-						}
-
-						bm->setPixel(pt, px);
-					}
-				}
+				/* Write envmap to .exr file */
+				em.write(envmap_path);
 
 				/* Compute metrics and store them */
 				err_storage.at(ds->type()) = std::vector<float>{
-					ErrorMetrics::MSE(*envmap.bitmap, *bm),
-					ErrorMetrics::MAE(*envmap.bitmap, *bm),
-					ErrorMetrics::RMSE(*envmap.bitmap, *bm)
+					ErrorMetrics::MSE(*gt.bitmap, *em.bitmap),
+					ErrorMetrics::MAE(*gt.bitmap, *em.bitmap),
+					ErrorMetrics::RMSE(*gt.bitmap, *em.bitmap)
 				};
-
-				/* Write envmap bitmap to .exr file */
-				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
-				bm->write(Bitmap::EFileFormat::EOpenEXR, envmap_path);
 
 				/* Wipe data structure to clean state for further usage */
 				ds->wipe();
@@ -188,25 +168,64 @@ public:
 
 			output << res;
 
-			/*for (int y = 0; y < envmap.bitmap->getHeight(); y += 2)
+			/* Samples will be stored in a map with key = pos, value = sample vector */
+			/*std::unordered_map<
+				std::pair<int, int>, 
+				std::vector<Sample>, 
+				boost::hash<std::pair<int, int>>
+			> s_map;*/
+
+			/* Sample approximated guiding distribution */
+			/*uint32_t samples_guiding = this->args.samples_guiding;
+			for (uint32_t s_i = 0; s_i < samples_guiding; ++s_i)
 			{
-				for (int x = 0; x < envmap.bitmap->getWidth(); x += 2)
+				Point2 rnd(random->nextFloat(), random->nextFloat());
+				Sample sample = ds->sample(rnd);
+
+				// Normalize
+				Point2 sph(sample.phi, sample.theta);
+				Point2 uv = (this->args.mode == Sample::Mode::Cosine)
+					? Converter::cosine_to_uv(sph)
+					: Converter::sphere_to_uv(sph);
+
+				Point2i pt(uv.x * envmap.bitmap->getWidth(), uv.y * envmap.bitmap->getHeight());
+				s_map[std::pair<int, int>(pt.x, pt.y)].push_back(sample);
+			}*/
+
+			/* Fill envmap */
+			/*for (int y = 0; y < bm->getHeight(); ++y)
+			{
+				for (int x = 0; x < bm->getWidth(); ++x)
 				{
-					Point2f rnd(
-						((float) y / envmap.bitmap->getHeight()) * M_PI,
-						((float) x / envmap.bitmap->getWidth()) * (2 * M_PI)
-					);
-
-					Point2f rnd2((float) x / envmap.bitmap->getWidth(), (float) y / envmap.bitmap->getHeight());
-
-					// Spherical harmonics for now
-					auto ds = cluster.obtain(DSType::DS_DTree);
-					SphericalHarmonics* sh = dynamic_cast<SphericalHarmonics*>(ds);
-
-					float result = sh->eval(rnd.x, rnd.y);
-
 					Point2i pt(x, y);
-					s_map[std::pair<int, int>(pt.x, pt.y)].push_back(result);
+					auto entry = s_map.find(std::pair<int, int>(pt.x, pt.y));
+					if (entry == s_map.end()) continue;
+
+					Point2 pt_norm((Float) x / bm->getWidth(), (Float) y / bm->getHeight());
+					Spectrum pixel = bm->getPixel(pt);
+					Float p_x = envmap.pdf(this->args.mode, pt_norm);
+					std::vector<Sample> pixel_samples = entry->second;
+
+					//Float base_value = 0.9;
+					//Float noise_factor = base_value + ((1 - base_value) * random->nextFloat());
+
+					for (int channel = 0; channel < envmap.bitmap->getChannelCount(); ++channel)
+					{
+						Float f_x = envmap.bitmap->getPixel(pt)[channel];
+						//fx *= noise_factor;
+						//if (fx < 0) fx = 0;
+						
+						Float I = 0;
+						for (const auto& sample : pixel_samples)
+						{
+							I += f_x * (p_x / sample.pdf); // f(x) * (p(x) / q(x)) ... p(x) = initial pdf; q(x) = pdf used for sampling
+						}
+
+						I /= pixel_samples.size(); // (1 / N) * sum(...)
+						pixel[channel] = I;
+					}
+
+					bm->setPixel(pt, pixel);
 				}
 			}*/
 		}
@@ -231,7 +250,9 @@ private:
 				("samples-learning,sl", boost::program_options::value<uint32_t>(&this->args.samples_learning)->default_value(1024), "Envmap sample count.")
 				("samples-guiding,sg", boost::program_options::value<uint32_t>(&this->args.samples_guiding)->default_value(524288), "Reconstruction sample count.")
 				("sample-mode,sm", boost::program_options::value<Sample::Mode>(&this->args.mode)->default_value(Sample::Mode::Cosine), "Envmap sampling mode.")
-				("noisify,n", boost::program_options::value<bool>(&this->args.noisify)->default_value(false), "Noisify input envmap?")
+				// Noise
+				("noisy-envmap,ne", boost::program_options::value<bool>(&this->args.envmap_noise)->default_value(false), "Noisify input envmap?")
+				("noisy-samples,ns", boost::program_options::value<bool>(&this->args.samples_noise)->default_value(false), "Noisify learning samples?")
 				// Spherical Harmonics
 				("sh-bands,shb", boost::program_options::value<int>(&this->args.sh_bands)->default_value(5), "Number of Spherical Harmonic bands.")
 				("sh-depth,shd", boost::program_options::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.");

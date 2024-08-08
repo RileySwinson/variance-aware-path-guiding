@@ -4,9 +4,6 @@
 #define __MITSUBA_DS_DS_H_
 
 #include <mitsuba/mitsuba.h>
-#include <memory>
-#include <map>
-#include <functional>
 #include <mitsuba/ds/util.h>
 
 MTS_NAMESPACE_BEGIN
@@ -18,10 +15,12 @@ MTS_NAMESPACE_BEGIN
  */
 struct MTS_EXPORT_CORE DSArguments {
 	std::string path = "";
-	bool noisify = false;
     Sample::Mode mode = Sample::Mode::Cosine;
 	uint32_t samples_learning = 1024;
     uint32_t samples_guiding = 524288;
+
+    bool envmap_noise = false;
+    bool samples_noise = false;
 
     int sh_bands = 5;
     int sh_depth = 12;
@@ -63,13 +62,16 @@ struct MTS_EXPORT_CORE DataStructure {
     /// Performs operations after storage but before sampling, if necessary.
     virtual void postprocess() = 0;
 
-    /// Obtain a sample from the underlying approximation that is stored in the data structure.
+    /// Obtains a sample from the underlying approximation that is stored in the data structure.
     virtual Sample sample(Point2& pos) = 0;
+
+    /// Evaluates the underlying sampling pdf at a given position in the domain [0, 1)^2.
+    virtual Float eval(Point2& pos) = 0;
 
     /// Clears the entire data structure such that it is back to its initial, empty state.
     virtual void wipe() = 0;
 
-    /// \brief Returns the type of the data structure, see \ref DSType.
+    /// Returns the type of the data structure, see DSType.
     virtual DSType type() = 0;
 };
 

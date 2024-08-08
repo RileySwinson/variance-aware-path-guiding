@@ -578,24 +578,9 @@ void DirectionalTree::preprocess()
 void DirectionalTree::store(std::vector<Sample>& samples)
 {
     // As Müller et al.'s D-Trees require multiple iterations, we first store our sample contingent
-    // into a vector based on a geometric series, then use these samples in the postprocessing step
-    // to build the actual tree.
+    // into a vector, then use these samples in the postprocessing step to build the actual tree.
 
-    auto total_samples = samples.size();
-    for (size_t s_i = 0; s_i < total_samples; ++s_i)
-    {
-        Sample sample = samples.at(s_i);
-
-        Point2 p(
-            0.5 * (std::cos(sample.theta) + 1),
-            INV_TWOPI * sample.phi
-        );
-
-        sample.theta = p.x;
-        sample.phi = p.y;
-
-        this->l_sample_storage.push_back(sample);
-    }
+    this->l_sample_storage = samples;
 }
 
 void DirectionalTree::postprocess()
@@ -610,10 +595,13 @@ void DirectionalTree::postprocess()
     for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
         Sample sample = this->l_sample_storage.at(s_i);
-        building.recordIrradiance(Point2(sample.theta, sample.phi), sample.value, sample.pdf, EDirectionalFilter::ENearest);
+        Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
 
-        //optimizeBsdfSamplingFraction()
+        building.recordIrradiance(uv, sample.value, 1, EDirectionalFilter::ENearest);
 
+        // Important: Müller et al. don't state what to do if there's less than half the samples left in total than
+        // in the previous learning iteration for learning with a fixed sample contingent. In this specific case we
+        // decide that these samples should belong to the same, final learning iteration.
         if ((s_i == t - 1) && (total_samples - t >= t))
         {
             build();
@@ -623,10 +611,6 @@ void DirectionalTree::postprocess()
     }
 
     build();
-
-    //std::cout << "depth: " << sampling.depth() << std::endl;
-    //std::cout << "nodes: " << sampling.numNodes() << std::endl;
-    //std::cout << "mean: " << sampling.mean() << std::endl;
 }
 
 Sample DirectionalTree::sample(Point2& pos)
@@ -651,6 +635,11 @@ Sample DirectionalTree::sample(Point2& pos)
         .phi = phi
     };
     return sample;
+}
+
+Float DirectionalTree::eval(Point2& pos)
+{
+    return sampling.pdf(pos);
 }
 
 void DirectionalTree::wipe()

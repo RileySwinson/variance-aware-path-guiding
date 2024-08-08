@@ -4,7 +4,10 @@ MTS_NAMESPACE_BEGIN
 
 void TileCoding::construct(DSArguments& init_data)
 {
-    return;
+    for (auto tiling : this->m_tilings)
+    {
+        tiling.resize(this->m_tiles * this->m_tiles);
+    }
 }
 
 void TileCoding::preprocess()
@@ -30,6 +33,11 @@ Sample TileCoding::sample(Point2& pos)
     sample.theta = 0.0f;
 
     return sample;
+}
+
+Float TileCoding::eval(Point2& pos)
+{
+    return 0;
 }
 
 void TileCoding::wipe()

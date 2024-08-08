@@ -20,6 +20,8 @@ struct MTS_EXPORT_CORE GMM : public DataStructure {
 
     Sample sample(Point2& pos) override;
 
+    Float eval(Point2& pos) override;
+
     void wipe() override;
 
     DSType type() override;

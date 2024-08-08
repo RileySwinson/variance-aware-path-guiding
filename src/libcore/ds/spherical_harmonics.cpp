@@ -77,7 +77,7 @@ void SphericalHarmonics::store(std::vector<Sample>& samples)
                 const Float P = legendreP(l, std::abs(m), cos_theta);
 
                 const Float coeff_val = factor1 * factor2 * K * P;
-                operator()(l, m) += sample.value * coeff_val;
+                operator()(l, m) += sample.value * sample.pdf * coeff_val;
             }
         }
     }
@@ -117,6 +117,12 @@ Sample SphericalHarmonics::sample(Point2& pos)
         .phi = pos.y
     };
     return sample;
+}
+
+Float SphericalHarmonics::eval(Point2& pos)
+{
+    Point2 coords = Converter::uv_to_spherical(pos);
+    return eval(coords.y, coords.x);
 }
 
 void SphericalHarmonics::wipe()
