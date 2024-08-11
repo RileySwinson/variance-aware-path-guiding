@@ -7,6 +7,13 @@
 
 MTS_NAMESPACE_BEGIN
 
+struct Tile {
+    Float value = 0;
+    int entries = 0;
+};
+
+typedef std::vector<Tile> Tiling;
+
 struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     ~TileCoding() { }
 
@@ -26,8 +33,12 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
 
     DSType type() override;
 private:
-    std::vector<Float> m_tilings[4];
-    int m_tiles = 64;
+    std::vector<Tiling> tilings;
+    std::vector<Float> guiding_map;
+    int m_tiling_count = 4;
+    Point2i m_tiling_dims; // x = width, y = height
+
+    Float pdf(Point2& pos);
 };
 
 MTS_NAMESPACE_END

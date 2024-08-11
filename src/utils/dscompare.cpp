@@ -255,7 +255,12 @@ private:
 				("noisy-samples,ns", boost::program_options::value<bool>(&this->args.samples_noise)->default_value(false), "Noisify learning samples?")
 				// Spherical Harmonics
 				("sh-bands,shb", boost::program_options::value<int>(&this->args.sh_bands)->default_value(5), "Number of Spherical Harmonic bands.")
-				("sh-depth,shd", boost::program_options::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.");
+				("sh-depth,shd", boost::program_options::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.")
+				// DTree (TODO)
+				// TileCoding
+				("tilings,t", boost::program_options::value<int>(&this->args.tilings)->default_value(4), "Number of tilings.")
+				("tiles-x,tx", boost::program_options::value<int>(&this->args.tiles_x)->default_value(8), "Number of tiles in x direction.")
+				("tiles-y,ty", boost::program_options::value<int>(&this->args.tiles_y)->default_value(4), "Number of tiles in y direction.");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);

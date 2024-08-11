@@ -4,10 +4,16 @@ MTS_NAMESPACE_BEGIN
 
 void TileCoding::construct(DSArguments& init_data)
 {
-    for (auto tiling : this->m_tilings)
-    {
-        tiling.resize(this->m_tiles * this->m_tiles);
-    }
+    SAssert(init_data.tilings > 0 && init_data.tiles_x > 0 && init_data.tiles_y > 0);
+
+    this->m_tiling_count = init_data.tilings;
+    this->m_tiling_dims = Point2i(init_data.tiles_x, init_data.tiles_y);
+
+    // Allocate space for tile coding. We only have to do this once as .clear()
+    // in the postprocess step leaves the capacity of the underlying vector intact.
+    tilings.resize(this->m_tiling_count);
+    for (auto& tiling : this->tilings)
+        tiling.resize(this->m_tiling_dims.x * this->m_tiling_dims.y);
 }
 
 void TileCoding::preprocess()
@@ -17,37 +23,160 @@ void TileCoding::preprocess()
 
 void TileCoding::store(std::vector<Sample>& samples)
 {
-    return;
+    // Calculate offset
+    Float tile_width = 1.0 / this->m_tiling_dims.x;
+    Float tile_height = 1.0 / this->m_tiling_dims.y;
+
+    Float overhead = 1.0 / this->m_tiling_count;
+    if (this->m_tiling_count == 1) overhead = 0; // No offset shenanigans if we only have a single tile. Just span it over the whole thing.
+
+    Point2 offset(tile_width * overhead, tile_height * overhead);
+
+    // Precompute mapping ranges and factors
+    std::vector<Point2> start_vals(this->m_tiling_count);
+    std::vector<Float> x_slopes(this->m_tiling_count);
+    std::vector<Float> y_slopes(this->m_tiling_count);
+    for (int i = 0; i < this->m_tiling_count; ++i)
+    {
+        Point2 x_new(0 - (i * offset.x), 1 + ((this->m_tiling_count - 1 - i) * offset.x));
+        Point2 y_new(0 - ((this->m_tiling_count - 1 - i) * offset.y), 1 + (i * offset.y));
+    
+        Float slope_x = 1.0 / (x_new.y - x_new.x);
+        Float slope_y = 1.0 / (y_new.y - y_new.x);
+
+        start_vals.at(i) = Point2(x_new.x, y_new.x);
+        x_slopes.at(i) = slope_x;
+        y_slopes.at(i) = slope_y;
+    }
+
+    // Store samples by mapping (sample range & offset) -> [0, 1) -> [0, dim(axis))
+    for (const auto& sample : samples)
+    {
+        Point2 uv = Converter::spherical_to_uv(Point2f(sample.phi, sample.theta));
+
+        for (int t_i = 0; t_i < this->m_tiling_count; ++t_i)
+        {
+            Tiling& tiling = this->tilings.at(t_i);
+
+            Float warped_x = x_slopes.at(t_i) * (uv.x - start_vals.at(t_i).x);
+            Float warped_y = y_slopes.at(t_i) * (uv.y - start_vals.at(t_i).y);
+
+            Point2i index(
+                warped_x * this->m_tiling_dims.x,
+                warped_y * this->m_tiling_dims.y
+            );
+
+            int i = (index.y * this->m_tiling_dims.x) + index.x;
+            Tile& tile = tiling.at(i);
+            tile.value += sample.value;
+            tile.entries++;
+        }
+    }
 }
 
 void TileCoding::postprocess()
 {
+    // Smush tilings to a single map
+    int x = this->m_tiling_dims.x * this->m_tiling_count;
+    int y = this->m_tiling_dims.y * this->m_tiling_count;
+    int total_overhead = this->m_tiling_count - 1;
+
+    int inner_x = (x - total_overhead);
+    int inner_y = (y - total_overhead);
+    int map_size = inner_x * inner_y;
+
+    this->guiding_map.resize(map_size);
+
+    for (int i = 0; i < map_size; ++i)
+    {
+        const int pos_x = i % inner_x;
+        const int pos_y = i / inner_x;
+
+        Float sum = 0;
+        const Point2i base(0, total_overhead);
+        for (int t_i = 0; t_i < this->tilings.size(); ++t_i)
+        {
+            const Tiling& tiling = this->tilings.at(t_i);
+
+            const Point2i pos(
+                (base.x + t_i) + pos_x,
+                (base.y - t_i) + pos_y
+            );
+
+            const int t_x = pos.x / this->m_tiling_count;
+            const int t_y = pos.y / this->m_tiling_count;
+
+            Tile tile = tiling.at((t_y * this->m_tiling_dims.x) + t_x);
+            if (tile.entries == 0) continue;
+
+            sum += tile.value / tile.entries;
+        }
+
+        this->guiding_map.at(i) = sum / this->m_tiling_count;
+    }
+
+    // Find biggest value and remove pdf = 0
+    Float biggest = 0;
+    for (Float& value : this->guiding_map)
+    {
+        if (value > biggest) biggest = value;
+        if (value == 0) value = Epsilon;
+    }
+
+    // Normalize
+    for (Float& value : this->guiding_map)
+        value /= biggest;
+
     return;
 }
 
 Sample TileCoding::sample(Point2& pos)
 {
-    Sample sample;
-    sample.value = 0.0f;
-    sample.phi = 0.0f;
-    sample.theta = 0.0f;
+    // TODO: sampling (like in envmap sampling...)
+
+    Sample sample = {
+        .value = 0,
+        .pdf = pdf(pos),
+        .theta = 0,
+        .phi = 0
+    };
 
     return sample;
 }
 
 Float TileCoding::eval(Point2& pos)
 {
-    return 0;
+    return pdf(pos);
 }
 
 void TileCoding::wipe()
 {
-    return;
+    // Clear tilings by filling each tile with an empty tile
+    Tile t = { .value = 0, .entries = 0 };
+    for (auto& tiling : this->tilings)
+        std::fill(tiling.begin(), tiling.end(), t);
+
+    // Reset guiding map (keep space so no new allocation is needed!)
+    std::fill(this->guiding_map.begin(), this->guiding_map.end(), 0);
 }
 
 DSType TileCoding::type()
 {
-    return DSType::DS_Invalid;
+    return DSType::DS_TileCoding;
+}
+
+Float TileCoding::pdf(Point2& pos)
+{
+    int x = this->m_tiling_dims.x * this->m_tiling_count;
+    int y = this->m_tiling_dims.y * this->m_tiling_count;
+    int total_overhead = this->m_tiling_count - 1;
+
+    Point2i index(
+        pos.x * (x - total_overhead),
+        pos.y * (y - total_overhead)
+    );
+
+    return this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
 }
 
 MTS_NAMESPACE_END

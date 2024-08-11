@@ -24,6 +24,10 @@ struct MTS_EXPORT_CORE DSArguments {
 
     int sh_bands = 5;
     int sh_depth = 12;
+
+    int tilings = 4;
+    int tiles_x = 8;
+    int tiles_y = 4;
 };
 
 /**
