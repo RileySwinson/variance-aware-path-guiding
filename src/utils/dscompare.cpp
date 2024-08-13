@@ -65,17 +65,17 @@ public:
 				samples.push_back(sample);
 			}
 
-			EnvironmentMap kek = envmap.deep_copy(true);
+			/*EnvironmentMap sm = envmap.deep_copy(true);
 
 			for (Sample s : samples)
 			{
 				Point2 uv = Converter::spherical_to_uv(Point2(s.phi, s.theta));
 				Point2i pt(uv.x * envmap.bitmap->getWidth(), uv.y * envmap.bitmap->getHeight());
 
-				Spectrum px = kek.bitmap->getPixel(pt);
+				Spectrum px = sm.bitmap->getPixel(pt);
 				px[0] = px[1] = px[2] = s.value;
-				kek.bitmap->setPixel(pt, px);
-			}
+				sm.bitmap->setPixel(pt, px);
+			}*/
 
 			/* Create folder for final output */
 			const std::string base_name = "./data/results";
@@ -98,7 +98,7 @@ public:
 
 			/* Write envmap to .exr file */
 			gt.write(folder_path + "/base.exr");
-			kek.write(folder_path + "/test.exr");
+			//sm.write(folder_path + "/samples.exr");
 
 			/* Initialize error metrics storage */
 			std::vector<std::vector<float>> err_storage(cluster.largest() + 1);
@@ -230,6 +230,7 @@ public:
 			}*/
 		}
 
+		cluster.clear();
 		return 0;
 	}
 

@@ -8,6 +8,7 @@ void TileCoding::construct(DSArguments& init_data)
 
     this->m_tiling_count = init_data.tilings;
     this->m_tiling_dims = Point2i(init_data.tiles_x, init_data.tiles_y);
+    this->m_mode = init_data.mode;
 
     // Allocate space for tile coding. We only have to do this once as .clear()
     // in the postprocess step leaves the capacity of the underlying vector intact.
@@ -76,7 +77,7 @@ void TileCoding::store(std::vector<Sample>& samples)
 
 void TileCoding::postprocess()
 {
-    // Smush tilings to a single map
+    /* Smush tilings to a single map */
     int x = this->m_tiling_dims.x * this->m_tiling_count;
     int y = this->m_tiling_dims.y * this->m_tiling_count;
     int total_overhead = this->m_tiling_count - 1;
@@ -86,6 +87,9 @@ void TileCoding::postprocess()
     int map_size = inner_x * inner_y;
 
     this->guiding_map.resize(map_size);
+
+    // Track the biggest value for normalization
+    Float biggest = 0;
 
     for (int i = 0; i < map_size; ++i)
     {
@@ -112,36 +116,71 @@ void TileCoding::postprocess()
             sum += tile.value / tile.entries;
         }
 
+        Float result = sum / this->m_tiling_count;
+        if (result == 0 && this->m_mode != Sample::Mode::Cosine) result = Epsilon; // We want to make sure no value is actually 0
+        if (result > biggest) biggest = result;
+
         this->guiding_map.at(i) = sum / this->m_tiling_count;
     }
 
-    // Find biggest value and remove pdf = 0
-    Float biggest = 0;
-    for (Float& value : this->guiding_map)
+    /* Normalize & Precompute averages */
+    this->m_row_avgs.resize(inner_y);
+
+    Float result = 0;
+    Float result_row = 0;
+    for (int i = 0; i < this->guiding_map.size(); ++i)
     {
-        if (value > biggest) biggest = value;
-        if (value == 0) value = Epsilon;
+        Float& value = this->guiding_map.at(i);
+        value /= biggest; // Normalize first
+
+        result_row += value;
+        if (i != 0 && (i % inner_y == 0))
+        {
+            result += result_row / inner_x;
+            this->m_row_avgs.at(i) = result_row;
+            result_row = 0;
+        }
     }
 
-    // Normalize
-    for (Float& value : this->guiding_map)
-        value /= biggest;
-
-    return;
+    this->m_integral = result / map_size;
 }
 
-Sample TileCoding::sample(Point2& pos)
+Sample TileCoding::sample(Point2& sample)
 {
-    // TODO: sampling (like in envmap sampling...)
+    int total_overhead = this->m_tiling_count - 1;
+    int x_len = (this->m_tiling_dims.x * this->m_tiling_count) - total_overhead;
+    int y_len = this->m_row_avgs.size();
 
-    Sample sample = {
+    Float sum_y = 0;
+    int y = 0;
+    for (y = 0; y < y_len; ++y)
+    {
+        sum_y += this->m_row_avgs.at(y) / this->m_integral;
+        if (sum_y / y_len >= sample.y) break;
+    }
+    if (y == y_len) y -= 1;
+
+    Float sum_x = 0;
+    int x = 0;
+    for (x = 0; x < x_len; ++x)
+    {
+        int i = (y * x_len) + x;
+        sum_x = this->guiding_map.at(i) / this->m_row_avgs.at(y);
+        if (sum_x / x_len >= sample.x) break;
+    }
+    if (x == x_len) x -= 1;
+
+    Point2 uv((Float) x / x_len, (Float) y / y_len);
+    Point2 spherical = Converter::uv_to_spherical(uv);
+
+    Sample sample_data = {
         .value = 0,
-        .pdf = pdf(pos),
-        .theta = 0,
-        .phi = 0
+        .pdf = pdf(uv),
+        .theta = spherical.y,
+        .phi = spherical.x
     };
 
-    return sample;
+    return sample_data;
 }
 
 Float TileCoding::eval(Point2& pos)

@@ -347,7 +347,7 @@ private:
 
 	Sample sample_envmap(const Point2& sample)
 	{
-		Float sum_y = 0.0f;
+		Float sum_y = 0;
 		/* Iterate over rows until our sample is bigger than the respective avg. density */
 		int y = 0;
 		for (y = 0; y < this->row_avgs.size(); ++y)
@@ -360,7 +360,7 @@ private:
 		// As it would land on the very last pixel anyways, we're not introducing any bias here.
 		if (y == this->bitmap->getHeight()) y -= 1;
 
-		Float sum_x = 0.0f;
+		Float sum_x = 0;
 		/* Iterate over entries in row until our sample is bigger than the respective value */
 		int x = 0;
 		for (x = 0; x < this->bitmap->getWidth(); ++x)
@@ -378,11 +378,7 @@ private:
 			(Float) uv.y / this->bitmap->getHeight()
 		);
 
-		// TODO: Verify
-		Point2 spherical(
-			2 * M_PI * uv_norm.x,
-			M_PI * uv_norm.y
-		);
+		Point2 spherical = Converter::uv_to_spherical(uv_norm);
 
 		Sample sample_data = {
 			.value = this->bitmap->getPixel(uv).getLuminance(),
