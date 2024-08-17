@@ -3,8 +3,7 @@
 #if !defined(__DSCOMPARE_DS_H_)
 #define __DSCOMPARE_DS_H_
 
-#include <mitsuba/mitsuba.h>
-#include <ds-compare/util.h>
+#include <ds-compare/util/_util.h>
 
 MTS_NAMESPACE_BEGIN
 

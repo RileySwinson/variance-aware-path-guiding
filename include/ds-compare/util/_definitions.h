@@ -1,0 +1,25 @@
+// This file contains definitions (e.g., includes, macros, etc.) that are to be included by each util file in this folder.
+
+#pragma once
+
+#if !defined(__DSCOMPARE_UTIL_DEFINITIONS_H_)
+#define __DSCOMPARE_UTIL_DEFINITIONS_H_
+
+#include <mitsuba/mitsuba.h>
+#include <mitsuba/core/bitmap.h>
+#include <mitsuba/core/warp.h>
+#include <mitsuba/core/random.h>
+
+#include <boost/algorithm/clamp.hpp>
+#include <boost/optional.hpp>
+#include <boost/filesystem.hpp>
+
+#include <random>
+#include <array>
+#include <functional>
+
+#if !defined(DS_COMPARE)
+    #define DS_COMPARE MTS_IMPORT
+#endif
+
+#endif /* __DSCOMPARE_UTIL_DEFINITIONS_H_ */
