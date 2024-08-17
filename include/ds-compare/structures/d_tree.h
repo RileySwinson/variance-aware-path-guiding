@@ -190,7 +190,7 @@ private:
 };
 
 struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
-    static ref<RandomGen> random;
+    static RandomGen randomGen;
 
     ~DirectionalTree() { }
 
@@ -254,6 +254,12 @@ struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
 
     void dump(BlobWriter& blob, const Point& p, const Vector& size) const;
 private:
+    // Hyperparams (we're only interested in the directional ones)
+    DTreeParams::EBsdfSamplingFractionLoss param_sampling_frac_loss;   // default = ENone
+    DTreeParams::EDirectionalFilter        param_dir_filter;           // default = ENearest
+    Float                                  param_d_tree_thresh;        // default = 0.01
+
+    // Internal storage
     InternalDTree building;
     InternalDTree sampling;
     std::vector<Sample> l_sample_storage;
@@ -279,11 +285,6 @@ private:
     private:
         std::atomic_flag m_mutex;
     } m_lock;
-
-    // Hyperparams (we're only interested in the directional ones)
-    DTreeParams::EBsdfSamplingFractionLoss param_sampling_frac_loss;   // default = ENone
-    DTreeParams::EDirectionalFilter        param_dir_filter;           // default = ENearest
-    Float                                  param_d_tree_thresh;        // default = 0.01
 };
 
 MTS_NAMESPACE_END

@@ -7,9 +7,7 @@
 #include <boost/algorithm/clamp.hpp>
 #include <boost/functional/hash.hpp>
 
-#include <vector>
 #include <unordered_map>
-#include <exception>
 
 MTS_NAMESPACE_BEGIN
 
