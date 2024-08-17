@@ -25,9 +25,13 @@ struct MTS_EXPORT_CORE DSArguments {
     int sh_bands = 5;
     int sh_depth = 12;
 
+    DTreeParams::EBsdfSamplingFractionLoss dt_frac_loss = DTreeParams::EBsdfSamplingFractionLoss::ENone;
+    DTreeParams::EDirectionalFilter dt_dir_filter = DTreeParams::EDirectionalFilter::ENearest;
+    Float dt_threshold = 0.01;
+
     int tilings = 4;
-    int tiles_x = 8;
-    int tiles_y = 4;
+    int tiles_x = 16;
+    int tiles_y = 16;
 };
 
 /**

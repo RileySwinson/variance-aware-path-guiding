@@ -258,11 +258,14 @@ private:
 				// Spherical Harmonics
 				("sh-bands,shb", boost::program_options::value<int>(&this->args.sh_bands)->default_value(5), "Number of Spherical Harmonic bands.")
 				("sh-depth,shd", boost::program_options::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.")
-				// DTree (TODO)
+				// DTree
+				("dt-fracloss,dtfl", boost::program_options::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt_frac_loss)->default_value(DTreeParams::EBsdfSamplingFractionLoss::ENone), "Loss function during gradient descent.")
+				("dt-dirfilter,dtdf", boost::program_options::value<DTreeParams::EDirectionalFilter>(&this->args.dt_dir_filter)->default_value(DTreeParams::EDirectionalFilter::ENearest), "Directional filter for splatting radiance samples.")
+				("dt-threshold,dtt", boost::program_options::value<Float>(&this->args.dt_threshold)->default_value(0.01), "Threshold for subdividing leaf nodes (percentage).")
 				// TileCoding
 				("tilings,t", boost::program_options::value<int>(&this->args.tilings)->default_value(4), "Number of tilings.")
-				("tiles-x,tx", boost::program_options::value<int>(&this->args.tiles_x)->default_value(8), "Number of tiles in x direction.")
-				("tiles-y,ty", boost::program_options::value<int>(&this->args.tiles_y)->default_value(4), "Number of tiles in y direction.");
+				("tiles-x,tx", boost::program_options::value<int>(&this->args.tiles_x)->default_value(16), "Number of tiles in x direction.")
+				("tiles-y,ty", boost::program_options::value<int>(&this->args.tiles_y)->default_value(16), "Number of tiles in y direction.");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);

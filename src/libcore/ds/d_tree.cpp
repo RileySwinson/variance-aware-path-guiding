@@ -285,12 +285,12 @@ Float InternalDTree::mean() const {
     return factor * m_atomic.sum;
 }
 
-void InternalDTree::recordIrradiance(Point2 p, Float irradiance, Float statisticalWeight, EDirectionalFilter directionalFilter) {
+void InternalDTree::recordIrradiance(Point2 p, Float irradiance, Float statisticalWeight, DTreeParams::EDirectionalFilter directionalFilter) {
     if (std::isfinite(statisticalWeight) && statisticalWeight > 0) {
         addToAtomicFloat(m_atomic.statisticalWeight, statisticalWeight);
 
         if (std::isfinite(irradiance) && irradiance > 0) {
-            if (directionalFilter == EDirectionalFilter::ENearest) {
+            if (directionalFilter == DTreeParams::EDirectionalFilter::ENearest) {
                 m_nodes[0].record(p, irradiance * statisticalWeight, m_nodes);
             } else {
                 int depth = depthAt(p);
@@ -431,7 +431,7 @@ void InternalDTree::build() {
 
 ref<RandomGen> DirectionalTree::random = new RandomGen();
 
-void DirectionalTree::record(const DTreeRecord& rec, EDirectionalFilter directionalFilter, EBsdfSamplingFractionLoss bsdfSamplingFractionLoss) {
+void DirectionalTree::record(const DTreeRecord& rec, DTreeParams::EDirectionalFilter directionalFilter, DTreeParams::EBsdfSamplingFractionLoss bsdfSamplingFractionLoss) {
     if (!rec.isDelta) {
         Float irradiance = rec.radiance / rec.woPdf;
 
@@ -450,8 +450,8 @@ void DirectionalTree::record(const DTreeRecord& rec, EDirectionalFilter directio
         building.recordIrradiance(p, irradiance, rec.statisticalWeight, directionalFilter);
     }
 
-    if (bsdfSamplingFractionLoss != EBsdfSamplingFractionLoss::ENone && rec.product > 0) {
-        optimizeBsdfSamplingFraction(rec, bsdfSamplingFractionLoss == EBsdfSamplingFractionLoss::EKL ? 1.0f : 2.0f);
+    if (bsdfSamplingFractionLoss != DTreeParams::EBsdfSamplingFractionLoss::ENone && rec.product > 0) {
+        optimizeBsdfSamplingFraction(rec, bsdfSamplingFractionLoss == DTreeParams::EBsdfSamplingFractionLoss::EKL ? 1.0f : 2.0f);
     }
 }
 
@@ -567,7 +567,9 @@ void DirectionalTree::dump(BlobWriter& blob, const Point& p, const Vector& size)
 
 void DirectionalTree::construct(DSArguments& init_data)
 {
-    return;
+    this->param_sampling_frac_loss = init_data.dt_frac_loss;
+    this->param_dir_filter = init_data.dt_dir_filter;
+    this->param_d_tree_thresh = init_data.dt_threshold;
 }
 
 void DirectionalTree::preprocess()
@@ -597,7 +599,7 @@ void DirectionalTree::postprocess()
         Sample sample = this->l_sample_storage.at(s_i);
         Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
 
-        building.recordIrradiance(uv, sample.value, 1, EDirectionalFilter::ENearest);
+        building.recordIrradiance(uv, sample.value, 1, this->param_dir_filter);
 
         // Important: Müller et al. don't state what to do if there's less than half the samples left in total than
         // in the previous learning iteration for learning with a fixed sample contingent. In this specific case we
@@ -605,10 +607,10 @@ void DirectionalTree::postprocess()
         if ((s_i == t - 1) && (total_samples - t >= t))
         {
             build();
-            reset(20, 0.01f);
+            reset(20, this->param_d_tree_thresh);
             //if (depth == 4) return;
-            t *= 2;
             //depth++;
+            t *= 2;
         }
     }
 

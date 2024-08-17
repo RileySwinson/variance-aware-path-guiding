@@ -15,29 +15,6 @@
 
 MTS_NAMESPACE_BEGIN
 
-enum class MTS_EXPORT_CORE ESampleCombination {
-    EDiscard,
-    EDiscardWithAutomaticBudget,
-    EInverseVariance,
-};
-
-enum class MTS_EXPORT_CORE EBsdfSamplingFractionLoss {
-    ENone,
-    EKL,
-    EVariance,
-};
-
-enum class MTS_EXPORT_CORE ESpatialFilter {
-    ENearest,
-    EStochasticBox,
-    EBox,
-};
-
-enum class MTS_EXPORT_CORE EDirectionalFilter {
-    ENearest,
-    EBox,
-};
-
 struct MTS_EXPORT_CORE DTreeRecord {
     Vector d;
     Float radiance, product;
@@ -165,7 +142,7 @@ public:
 
     Float mean() const;
 
-    void recordIrradiance(Point2 p, Float irradiance, Float statisticalWeight, EDirectionalFilter directionalFilter);
+    void recordIrradiance(Point2 p, Float irradiance, Float statisticalWeight, DTreeParams::EDirectionalFilter directionalFilter);
 
     Float pdf(Point2 p) const;
 
@@ -235,7 +212,7 @@ struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
 
     /* PPG funcs from here */
 
-    void record(const DTreeRecord& rec, EDirectionalFilter directionalFilter, EBsdfSamplingFractionLoss bsdfSamplingFractionLoss);
+    void record(const DTreeRecord& rec, DTreeParams::EDirectionalFilter directionalFilter, DTreeParams::EBsdfSamplingFractionLoss bsdfSamplingFractionLoss);
 
     void build();
 
@@ -302,6 +279,11 @@ private:
     private:
         std::atomic_flag m_mutex;
     } m_lock;
+
+    // Hyperparams (we're only interested in the directional ones)
+    DTreeParams::EBsdfSamplingFractionLoss param_sampling_frac_loss;   // default = ENone
+    DTreeParams::EDirectionalFilter        param_dir_filter;           // default = ENearest
+    Float                                  param_d_tree_thresh;        // default = 0.01
 };
 
 MTS_NAMESPACE_END
