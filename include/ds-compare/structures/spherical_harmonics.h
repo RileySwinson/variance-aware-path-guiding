@@ -17,10 +17,10 @@
 */
 
 #pragma once
-#if !defined(__MITSUBA_DS_STRUCTURES_SPHERICAL_HARMONICS_H_)
-#define __MITSUBA_DS_STRUCTURES_SPHERICAL_HARMONICS_H_
+#if !defined(__DSCOMPARE_STRUCTURES_SPHERICAL_HARMONICS_H_)
+#define __DSCOMPARE_STRUCTURES_SPHERICAL_HARMONICS_H_
 
-#include <mitsuba/ds/ds.h>
+#include <ds-compare/ds.h>
 #include <mitsuba/core/quad.h>
 #include <Eigen/Core>
 
@@ -504,4 +504,4 @@ protected:
 
 MTS_NAMESPACE_END
 
-#endif /* __MITSUBA_DS_STRUCTURES_SPHERICAL_HARMONICS_H_ */
+#endif /* __DSCOMPARE_STRUCTURES_SPHERICAL_HARMONICS_H_ */

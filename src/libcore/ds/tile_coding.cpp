@@ -1,4 +1,4 @@
-#include <mitsuba/ds/structures/tile_coding.h>
+#include <ds-compare/structures/tile_coding.h>
 
 MTS_NAMESPACE_BEGIN
 

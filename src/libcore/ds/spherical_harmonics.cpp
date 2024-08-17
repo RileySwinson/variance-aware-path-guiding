@@ -16,7 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <mitsuba/ds/structures/spherical_harmonics.h>
+#include <ds-compare/structures/spherical_harmonics.h>
 #include <mitsuba/core/transform.h>
 
 #include <boost/math/special_functions/factorials.hpp>

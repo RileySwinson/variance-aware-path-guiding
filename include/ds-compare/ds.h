@@ -1,10 +1,10 @@
 #pragma once
 
-#if !defined(__MITSUBA_DS_DS_H_)
-#define __MITSUBA_DS_DS_H_
+#if !defined(__DSCOMPARE_DS_H_)
+#define __DSCOMPARE_DS_H_
 
 #include <mitsuba/mitsuba.h>
-#include <mitsuba/ds/util.h>
+#include <ds-compare/util.h>
 
 MTS_NAMESPACE_BEGIN
 
@@ -195,4 +195,4 @@ private:
 
 MTS_NAMESPACE_END
 
-#endif /* __MITSUBA_DS_DS_H_ */
+#endif /* __DSCOMPARE_DS_H_ */

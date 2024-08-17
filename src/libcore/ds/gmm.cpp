@@ -1,4 +1,4 @@
-#include <mitsuba/ds/structures/gmm.h>
+#include <ds-compare/structures/gmm.h>
 
 MTS_NAMESPACE_BEGIN
 

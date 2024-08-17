@@ -1,4 +1,4 @@
-#include <mitsuba/ds/structures/unidir.h>
+#include <ds-compare/structures/unidir.h>
 
 MTS_NAMESPACE_BEGIN
 

@@ -1,8 +1,8 @@
 #pragma once
-#if !defined(__MITSUBA_DS_STRUCTURES_D_TREE_H_)
-#define __MITSUBA_DS_STRUCTURES_D_TREE_H_
+#if !defined(__DSCOMPARE_STRUCTURES_D_TREE_H_)
+#define __DSCOMPARE_STRUCTURES_D_TREE_H_
 
-#include <mitsuba/ds/ds.h>
+#include <ds-compare/ds.h>
 #include <Eigen/Core>
 
 #include <array>
@@ -288,4 +288,4 @@ private:
 
 MTS_NAMESPACE_END
 
-#endif /* __MITSUBA_DS_STRUCTURES_D_TREE_H_ */
+#endif /* __DSCOMPARE_STRUCTURES_D_TREE_H_ */

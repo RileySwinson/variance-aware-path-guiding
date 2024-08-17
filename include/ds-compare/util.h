@@ -1,7 +1,7 @@
 #pragma once 
 
-#if !defined(__MITSUBA_DS_UTIL_H_)
-#define __MITSUBA_DS_UTIL_H_
+#if !defined(__DSCOMPARE_UTIL_H_)
+#define __DSCOMPARE_UTIL_H_
 
 #include <mitsuba/mitsuba.h>
 #include <mitsuba/core/warp.h>
@@ -531,4 +531,4 @@ struct MTS_EXPORT_CORE StatTrak { /* TODO */ };
 
 MTS_NAMESPACE_END
 
-#endif /* __MITSUBA_DS_UTIL_H_ */
+#endif /* __DSCOMPARE_UTIL_H_ */

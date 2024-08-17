@@ -1,4 +1,4 @@
-#include <mitsuba/ds/structures/d_tree.h>
+#include <ds-compare/structures/d_tree.h>
 
 MTS_NAMESPACE_BEGIN
 

@@ -1,7 +1,7 @@
 #include <mitsuba/render/util.h>
 #include <mitsuba/core/plugin.h>
 
-#include <mitsuba/ds/include.h>
+#include <ds-compare/include.h>
 
 #include <boost/program_options.hpp>
 #include <boost/algorithm/clamp.hpp>
