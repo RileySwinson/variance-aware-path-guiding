@@ -329,6 +329,9 @@ private:
 			.phi = phi
 		};
 
+		// Hacky, but we need to ensure that pdf != 0, which happens in infinitesimal cases in our envmaps like uv.u = 0.
+		if (sample_data.pdf == 0) sample_data.pdf = Epsilon;
+
 		/* Return found texel */
 		return sample_data;
 	}

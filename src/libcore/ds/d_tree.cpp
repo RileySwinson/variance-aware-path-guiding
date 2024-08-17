@@ -590,7 +590,7 @@ void DirectionalTree::postprocess()
     // We start with 1 sample and go from there.
 
     size_t t = 1;
-
+    //int depth = 0;
     auto total_samples = this->l_sample_storage.size();
     for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
@@ -606,7 +606,9 @@ void DirectionalTree::postprocess()
         {
             build();
             reset(20, 0.01f);
+            //if (depth == 4) return;
             t *= 2;
+            //depth++;
         }
     }
 

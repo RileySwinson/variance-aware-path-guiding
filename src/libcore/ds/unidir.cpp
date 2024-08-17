@@ -32,15 +32,17 @@ Sample Unidirectional::sample(Point2& pos)
 
     Float theta = std::acos(dir.z);
     Float phi = std::atan2(dir.y, dir.x);
-    if (phi < 0) phi += 2 * M_PI;
+    while (phi < 0) phi += 2 * M_PI;
 
     //Float pdf = (this->sample_mode == Sample::Mode::Cosine)
     //    ? INV_PI * std::cos(theta)
     //    : INV_FOURPI;
 
+    Point2 spherical(phi, theta);
+
     Sample sample;
     sample.value = 0;
-    sample.pdf = 0;
+    sample.pdf = pdf(spherical);
     sample.phi = phi;
     sample.theta = theta;
 
@@ -50,14 +52,7 @@ Sample Unidirectional::sample(Point2& pos)
 Float Unidirectional::eval(Point2& pos)
 {
     Point2 coords = Converter::uv_to_spherical(pos);
-
-    //Float width = (0.5 * M_PI / 256) * (2 * M_PI / 1024);
-    //Float width = (M_PI / 512) * (2 * M_PI / 1024);
-
-    if (this->sample_mode == Sample::Mode::Cosine)
-        return std::max((Float) 0, INV_PI * std::cos(coords.y) * std::sin(coords.y));
-
-    return (INV_FOURPI * std::sin(coords.y));
+    return pdf(coords);
 }
 
 void Unidirectional::wipe()
@@ -68,6 +63,18 @@ void Unidirectional::wipe()
 DSType Unidirectional::type()
 {
     return DSType::DS_Unidirectional;
+}
+
+Float Unidirectional::pdf(Point2& coords)
+{
+    // Returning Epsilon is arguably hacky, but we need to ensure that the pdf != 0 at any position, which unfortunately
+    // isn't the case for infinitesimal cases like when coords.y is 0, as the envmap is converging towards a single point there.
+    if (coords.y == 0) return Epsilon;
+
+    if (this->sample_mode == Sample::Mode::Cosine)
+        return std::max((Float) 0, INV_PI * std::cos(coords.y) * std::sin(coords.y));
+
+    return INV_FOURPI * std::sin(coords.y);
 }
 
 MTS_NAMESPACE_END

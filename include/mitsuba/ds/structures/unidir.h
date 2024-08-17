@@ -29,6 +29,9 @@ struct MTS_EXPORT_CORE Unidirectional : public DataStructure {
 private:
     Sample::Mode sample_mode;
     ref<Random> random = new Random();
+
+    /// Takes a position in spherical coordinates [phi, theta] and returns the pdf at that position.
+    Float pdf(Point2& pos);
 };
 
 MTS_NAMESPACE_END

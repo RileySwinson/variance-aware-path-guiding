@@ -124,7 +124,7 @@ void TileCoding::postprocess()
     }
 
     /* Normalize & Precompute averages */
-    this->m_row_avgs.resize(inner_y);
+    this->m_row_avgs.reserve(inner_y);
 
     Float result = 0;
     Float result_row = 0;
@@ -136,8 +136,9 @@ void TileCoding::postprocess()
         result_row += value;
         if (i != 0 && (i % inner_y == 0))
         {
+            this->m_row_avgs.push_back(result_row);
+
             result += result_row / inner_x;
-            this->m_row_avgs.at(i) = result_row;
             result_row = 0;
         }
     }

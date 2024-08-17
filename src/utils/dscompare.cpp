@@ -56,6 +56,7 @@ public:
 			/* Generate random samples and store them so they can be reused per data structure */
 			std::vector<Sample> samples;
 			uint32_t samples_learning = this->args.samples_learning;
+			samples.reserve(samples_learning);
 			for (uint32_t s_i = 0; s_i < samples_learning; ++s_i)
 			{
 				Point2 coords(random->nextFloat(), random->nextFloat());
