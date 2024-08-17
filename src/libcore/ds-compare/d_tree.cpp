@@ -166,13 +166,13 @@ Point2 QuadTreeNode::sample(const std::vector<QuadTreeNode>& nodes) const {
 
     // Should only happen when there are numerical instabilities.
     if (!(total > 0.0f)) {
-        return DirectionalTree::random->next2D();
+        return DirectionalTree::randomGen.next2D();
     }
 
     Float boundary = partial / total;
     Point2 origin = Point2{0.0f, 0.0f};
 
-    Float sample = DirectionalTree::random->next1D();
+    Float sample = DirectionalTree::randomGen.next1D();
 
     if (sample < boundary) {
         SAssert(partial > 0);
@@ -196,7 +196,7 @@ Point2 QuadTreeNode::sample(const std::vector<QuadTreeNode>& nodes) const {
     }
 
     if (isLeaf(index)) {
-        return origin + 0.5f * DirectionalTree::random->next2D();
+        return origin + 0.5f * DirectionalTree::randomGen.next2D();
     } else {
         return origin + 0.5f * nodes[child(index)].sample(nodes);
     }
@@ -323,7 +323,7 @@ int InternalDTree::depth() const {
 
 Point2 InternalDTree::sample() const {
     if (!(mean() > 0)) {
-        return DirectionalTree::random->next2D();
+        return DirectionalTree::randomGen.next2D();
     }
 
     Point2 res = m_nodes[0].sample(m_nodes);
@@ -429,7 +429,7 @@ void InternalDTree::build() {
 /* DirectionalTree */
 /* =============== */
 
-ref<RandomGen> DirectionalTree::random = new RandomGen();
+RandomGen DirectionalTree::randomGen = RandomGen();
 
 void DirectionalTree::record(const DTreeRecord& rec, DTreeParams::EDirectionalFilter directionalFilter, DTreeParams::EBsdfSamplingFractionLoss bsdfSamplingFractionLoss) {
     if (!rec.isDelta) {
@@ -606,15 +606,15 @@ void DirectionalTree::postprocess()
         // decide that these samples should belong to the same, final learning iteration.
         if ((s_i == t - 1) && (total_samples - t >= t))
         {
-            build();
             reset(20, this->param_d_tree_thresh);
+            build();
             //if (depth == 4) return;
             //depth++;
-            t *= 2;
+            t += 2 * t;
         }
     }
 
-    build();
+    //build();
 }
 
 Sample DirectionalTree::sample(Point2& pos)
