@@ -54,7 +54,8 @@ data_structures = [
         'gmm.cpp',
         'spherical_harmonics.cpp',
         'tile_coding.cpp',
-        'unidir.cpp'       
+        'unidir.cpp',
+        'vmfm.cpp'
 ]
 
 libcore_objects.extend([('ds-compare/' + ds) for ds in data_structures])

@@ -606,15 +606,15 @@ void DirectionalTree::postprocess()
         // decide that these samples should belong to the same, final learning iteration.
         if ((s_i == t - 1) && (total_samples - t >= t))
         {
-            reset(20, this->param_d_tree_thresh);
             build();
+            reset(20, this->param_d_tree_thresh);
             //if (depth == 4) return;
             //depth++;
             t += 2 * t;
         }
     }
 
-    //build();
+    build();
 }
 
 Sample DirectionalTree::sample(Point2& pos)

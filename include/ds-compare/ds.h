@@ -46,6 +46,7 @@ enum MTS_EXPORT_CORE DSType {
     DS_TileCoding,
     DS_SphericalHarmonics,
     DS_DTree,
+    DS_VMFMixture
 };
 
 /**
