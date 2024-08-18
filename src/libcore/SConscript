@@ -57,7 +57,7 @@ data_structures = [
         'unidir.cpp'       
 ]
 
-libcore_objects.extend([('ds/' + ds) for ds in data_structures])
+libcore_objects.extend([('ds-compare/' + ds) for ds in data_structures])
 
 # Add some platform-specific components
 if sys.platform == 'darwin':
