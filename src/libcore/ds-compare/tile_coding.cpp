@@ -120,7 +120,7 @@ void TileCoding::postprocess()
         if (result == 0 && this->m_mode != Sample::Mode::Cosine) result = Epsilon; // We want to make sure no value is actually 0
         if (result > biggest) biggest = result;
 
-        this->guiding_map.at(i) = sum / this->m_tiling_count;
+        this->guiding_map.at(i) = result;
     }
 
     /* Normalize & Precompute averages */
