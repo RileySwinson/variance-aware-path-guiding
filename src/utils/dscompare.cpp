@@ -264,7 +264,9 @@ private:
 				// TileCoding
 				("tilings,t", boost::program_options::value<int>(&this->args.tilings)->default_value(4), "Number of tilings.")
 				("tiles-x,tx", boost::program_options::value<int>(&this->args.tiles_x)->default_value(16), "Number of tiles in x direction.")
-				("tiles-y,ty", boost::program_options::value<int>(&this->args.tiles_y)->default_value(16), "Number of tiles in y direction.");
+				("tiles-y,ty", boost::program_options::value<int>(&this->args.tiles_y)->default_value(16), "Number of tiles in y direction.")
+				// VMM
+				("vmm-components,vc", boost::program_options::value<uint32_t>(&this->args.vmf_components)->default_value(8), "Number of initial VMM components.");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);

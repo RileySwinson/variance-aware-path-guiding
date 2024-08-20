@@ -4,7 +4,8 @@ MTS_NAMESPACE_BEGIN
 
 void VMFM::construct(DSArguments& init_data)
 {
-    VMMFactoryProperties props; // TODO: Alter properties
+    VMMFactoryProperties props;
+    props.numInitialComponents = init_data.vmf_components;
 
     this->factory = VMMFactory(props);
     samples.reserve(init_data.samples_learning);

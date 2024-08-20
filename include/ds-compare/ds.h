@@ -31,6 +31,8 @@ struct MTS_EXPORT_CORE DSArguments {
     int tilings = 4;
     int tiles_x = 16;
     int tiles_y = 16;
+
+    uint32_t vmf_components = 8;
 };
 
 /**
