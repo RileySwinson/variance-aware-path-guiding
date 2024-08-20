@@ -261,6 +261,7 @@ private:
 				("dt-fracloss,dtfl", boost::program_options::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt_frac_loss)->default_value(DTreeParams::EBsdfSamplingFractionLoss::ENone), "Loss function during gradient descent.")
 				("dt-dirfilter,dtdf", boost::program_options::value<DTreeParams::EDirectionalFilter>(&this->args.dt_dir_filter)->default_value(DTreeParams::EDirectionalFilter::ENearest), "Directional filter for splatting radiance samples.")
 				("dt-threshold,dtt", boost::program_options::value<Float>(&this->args.dt_threshold)->default_value(0.01), "Threshold for subdividing leaf nodes (percentage).")
+				("dt-iter,dti", boost::program_options::value<int>(&this->args.dt_iterations)->default_value(-1), "Stop after nth iteration, starting at 0 (-1 to disable).")
 				// TileCoding
 				("tilings,t", boost::program_options::value<int>(&this->args.tilings)->default_value(4), "Number of tilings.")
 				("tiles-x,tx", boost::program_options::value<int>(&this->args.tiles_x)->default_value(16), "Number of tiles in x direction.")

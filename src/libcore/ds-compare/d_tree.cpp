@@ -567,9 +567,12 @@ void DirectionalTree::dump(BlobWriter& blob, const Point& p, const Vector& size)
 
 void DirectionalTree::construct(DSArguments& init_data)
 {
+    SAssert(init_data.dt_iterations >= -1);
+
     this->param_sampling_frac_loss = init_data.dt_frac_loss;
     this->param_dir_filter = init_data.dt_dir_filter;
     this->param_d_tree_thresh = init_data.dt_threshold;
+    this->param_max_iter = init_data.dt_iterations;
 }
 
 void DirectionalTree::preprocess()
@@ -592,7 +595,7 @@ void DirectionalTree::postprocess()
     // We start with 1 sample and go from there.
 
     size_t t = 1;
-    //int depth = 0;
+    int depth = 0;
     auto total_samples = this->l_sample_storage.size();
     for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
@@ -608,9 +611,10 @@ void DirectionalTree::postprocess()
         {
             build();
             reset(20, this->param_d_tree_thresh);
-            //if (depth == 4) return;
-            //depth++;
             t += 2 * t;
+
+            if (depth == this->param_max_iter) break;
+            depth++;
         }
     }
 

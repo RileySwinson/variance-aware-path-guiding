@@ -258,6 +258,7 @@ private:
     DTreeParams::EBsdfSamplingFractionLoss param_sampling_frac_loss;   // default = ENone
     DTreeParams::EDirectionalFilter        param_dir_filter;           // default = ENearest
     Float                                  param_d_tree_thresh;        // default = 0.01
+    int                                    param_max_iter;             // default = -1 (disabled)
 
     // Internal storage
     InternalDTree building;
