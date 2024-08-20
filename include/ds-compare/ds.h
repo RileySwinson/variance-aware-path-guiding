@@ -28,6 +28,7 @@ struct MTS_EXPORT_CORE DSArguments {
     DTreeParams::EDirectionalFilter dt_dir_filter = DTreeParams::EDirectionalFilter::ENearest;
     Float dt_threshold = 0.01;
     int dt_iterations = -1;
+    int dt_max_depth = 20;
 
     int tilings = 4;
     int tiles_x = 16;

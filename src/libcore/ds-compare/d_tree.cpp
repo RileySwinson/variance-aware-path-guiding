@@ -573,6 +573,7 @@ void DirectionalTree::construct(DSArguments& init_data)
     this->param_dir_filter = init_data.dt_dir_filter;
     this->param_d_tree_thresh = init_data.dt_threshold;
     this->param_max_iter = init_data.dt_iterations;
+    this->param_max_depth = init_data.dt_max_depth;
 }
 
 void DirectionalTree::preprocess()
@@ -595,7 +596,7 @@ void DirectionalTree::postprocess()
     // We start with 1 sample and go from there.
 
     size_t t = 1;
-    int depth = 0;
+    int i = 0;
     auto total_samples = this->l_sample_storage.size();
     for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
@@ -610,11 +611,11 @@ void DirectionalTree::postprocess()
         if ((s_i == t - 1) && (total_samples - t >= t))
         {
             build();
-            reset(20, this->param_d_tree_thresh);
+            reset(this->param_max_depth, this->param_d_tree_thresh);
             t += 2 * t;
 
-            if (depth == this->param_max_iter) break;
-            depth++;
+            if (i == this->param_max_iter) break;
+            i++;
         }
     }
 
