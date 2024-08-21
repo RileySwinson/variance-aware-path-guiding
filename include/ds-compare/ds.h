@@ -14,6 +14,7 @@ MTS_NAMESPACE_BEGIN
  */
 struct MTS_EXPORT_CORE DSArguments {
 	std::string path = "";
+    std::string result_path = "";
     Sample::Mode mode = Sample::Mode::Cosine;
 	uint32_t samples_learning = 1024;
     uint32_t samples_guiding = 524288;

@@ -65,20 +65,8 @@ public:
 				samples.push_back(sample);
 			}
 
-			/*EnvironmentMap sm = envmap.deep_copy(true);
-
-			for (Sample s : samples)
-			{
-				Point2 uv = Converter::spherical_to_uv(Point2(s.phi, s.theta));
-				Point2i pt(uv.x * envmap.bitmap->getWidth(), uv.y * envmap.bitmap->getHeight());
-
-				Spectrum px = sm.bitmap->getPixel(pt);
-				px[0] = px[1] = px[2] = s.value;
-				sm.bitmap->setPixel(pt, px);
-			}*/
-
 			/* Create folder for final output */
-			const std::string base_name = "./data/results";
+			const std::string base_name = this->args.result_path;
 			const std::string folder_name = envmap.path.at(0);
 			const std::string envmap_file_name = envmap.path.at(1);
 			
@@ -98,7 +86,6 @@ public:
 
 			/* Write envmap to .exr file */
 			gt.write(folder_path + "/base.exr");
-			//sm.write(folder_path + "/samples.exr");
 
 			/* Initialize error metrics storage */
 			std::vector<std::vector<float>> err_storage(cluster.largest() + 1);
@@ -248,6 +235,7 @@ private:
 				("help,h", "Display help text.")
 				// General
 				("path,p", boost::program_options::value<std::string>(&this->args.path)->default_value("./data/tests/envmaps/"), "Path to envmap folder.")
+				("result-path,rp", boost::program_options::value<std::string>(&this->args.result_path)->default_value("./data/results"), "Path to output folder.")
 				("samples-learning,sl", boost::program_options::value<uint32_t>(&this->args.samples_learning)->default_value(1024), "Envmap sample count.")
 				("samples-guiding,sg", boost::program_options::value<uint32_t>(&this->args.samples_guiding)->default_value(524288), "Reconstruction sample count.")
 				("sample-mode,sm", boost::program_options::value<Sample::Mode>(&this->args.mode)->default_value(Sample::Mode::Cosine), "Envmap sampling mode.")
