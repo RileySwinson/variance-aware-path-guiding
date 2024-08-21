@@ -422,6 +422,8 @@ public:
     void wipe() override;
 
     DSType type() override;
+
+    std::string name() override;
 protected:
     /// Helper function for rotation() -- computes a diagonal block based on the previous level
     static void rotationBlock(const SphericalHarmonicsRotation::Matrix &M1, const SphericalHarmonicsRotation::Matrix &Mp, SphericalHarmonicsRotation::Matrix &Mn);

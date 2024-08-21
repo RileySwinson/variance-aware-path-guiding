@@ -205,6 +205,11 @@ DSType TileCoding::type()
     return DSType::DS_TileCoding;
 }
 
+std::string TileCoding::name()
+{
+    return "Tile Coding";
+}
+
 Float TileCoding::pdf(Point2& pos)
 {
     int x = this->m_tiling_dims.x * this->m_tiling_count;

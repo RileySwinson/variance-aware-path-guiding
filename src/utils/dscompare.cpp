@@ -92,8 +92,14 @@ public:
 			Log(EInfo, "Comparing data structures for envmap '%s'...", (folder_name + "/" + envmap_file_name).c_str());
 
 			/* Iterate over data structures... */
+			uint8_t curr_i = 1;
 			cluster.for_each([&](DataStructure* ds) {
 				if (ds->is_in(this->args.blacklist)) return;
+
+				Log(EInfo, "[%s] | Active structure: '%s' (%i)",
+					(std::to_string(curr_i) + "/" + std::to_string(cluster.size())).c_str(),
+					ds->name().c_str(), ds->type()
+				);
 
 				/* Optional: Preprocess whatever has to be preprocessed per data structure */
 				ds->preprocess();
@@ -129,6 +135,8 @@ public:
 
 				/* Wipe data structure to clean state for further usage */
 				ds->wipe();
+
+				curr_i++;
 			});
 
 			/* Create metrics.csv and fill it */

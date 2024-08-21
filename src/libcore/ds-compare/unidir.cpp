@@ -61,6 +61,11 @@ DSType Unidirectional::type()
     return DSType::DS_Unidirectional;
 }
 
+std::string Unidirectional::name()
+{
+    return "Unidirectional";
+}
+
 Float Unidirectional::pdf(Point2& coords)
 {
     // Returning Epsilon is arguably hacky, but we need to ensure that the pdf != 0 at any position, which unfortunately

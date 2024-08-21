@@ -662,4 +662,9 @@ DSType DirectionalTree::type()
     return DSType::DS_DTree;
 }
 
+std::string DirectionalTree::name()
+{
+    return "D-Tree";
+}
+
 MTS_NAMESPACE_END

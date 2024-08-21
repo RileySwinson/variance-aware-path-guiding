@@ -135,6 +135,11 @@ DSType SphericalHarmonics::type()
     return DSType::DS_SphericalHarmonics;
 }
 
+std::string SphericalHarmonics::name()
+{
+    return "Spherical Harmonics";
+}
+
 void SphericalHarmonics::serialize(Stream* stream) const {
     stream->writeInt(m_bands);
     for (size_t i=0; i<(size_t) m_coeffs.size(); ++i)

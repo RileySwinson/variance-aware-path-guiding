@@ -66,6 +66,11 @@ void VMFM::wipe()
     this->samples.clear();
 }
 
+std::string VMFM::name()
+{
+    return "Von-Mises-Fisher Mixture";
+}
+
 DSType VMFM::type()
 {
     return DSType::DS_VMFMixture;

@@ -51,7 +51,6 @@ libcore_objects = [
 # Add datastructures used for dscompare here
 data_structures = [
         'd_tree.cpp',
-        'gmm.cpp',
         'spherical_harmonics.cpp',
         'tile_coding.cpp',
         'unidir.cpp',

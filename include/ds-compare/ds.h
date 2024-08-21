@@ -13,14 +13,13 @@ MTS_NAMESPACE_BEGIN
  * This enum provides identifiers required for both storage and identification in the DSCluster.
  * If a value is missing, the missing value may be added by the user.
  */
-    enum MTS_EXPORT_CORE DSType {
+enum DS_COMPARE DSType {
     DS_Invalid = -1,
     DS_Unidirectional,
-    DS_GaussianMixture,
-    DS_TileCoding,
     DS_SphericalHarmonics,
     DS_DTree,
-    DS_VMFMixture
+    DS_VMFMixture,
+    DS_TileCoding
 };
 
 /**
@@ -28,7 +27,7 @@ MTS_NAMESPACE_BEGIN
  * into each construct(), where data structures can then individually fetch the needed information for initialization.
  * If a value is missing, the missing value may be added by the user.
  */
-struct MTS_EXPORT_CORE DSArguments {
+struct DS_COMPARE DSArguments {
 	std::string path = "";
     std::string result_path = "";
     Sample::Mode mode = Sample::Mode::Cosine;
@@ -61,7 +60,7 @@ struct MTS_EXPORT_CORE DSArguments {
  * As the approach of the comparison framework itself is based on a plug-and-play plugin system, each new
  * data structure must extend this class and implement the pure virtual methods to be usable within the comparison framework.
  */
-struct MTS_EXPORT_CORE DataStructure {
+struct DS_COMPARE DataStructure {
     virtual ~DataStructure() { }
 
     /// Calls all relevant functions and initializes the data structure in such a way that it is ready-to-use for data storage.
@@ -88,12 +87,15 @@ struct MTS_EXPORT_CORE DataStructure {
     /// Returns the type of the data structure, see DSType.
     virtual DSType type() = 0;
 
+    /// Returns the name of the data structure.
+    virtual std::string name() = 0;
+
     /* ==== Miscellaneous ==== */
 
     inline bool is_in(std::vector<int>& blacklist)
     {
         if (blacklist.empty()) return false;
-        return (std::find(blacklist.begin(), blacklist.end(), (int) type()) != blacklist.end());
+        return (std::find(blacklist.begin(), blacklist.end(), type()) != blacklist.end());
     }
 };
 
@@ -102,7 +104,7 @@ struct MTS_EXPORT_CORE DataStructure {
  * 
  * A singleton responsible 
  */
-class MTS_EXPORT_CORE DSCluster {
+class DS_COMPARE DSCluster {
 public:
     typedef std::map<DSType, DataStructure*>::iterator DSIter;
 
@@ -111,7 +113,7 @@ public:
     {
         static DSCluster instance;
         return instance;
-    };
+    }
 
     /// Attaches a data structure instance to the cluster.
     bool attach(DataStructure* ds)
