@@ -27,7 +27,6 @@ public:
 		cluster.attach(new SphericalHarmonics());
 		cluster.attach(new TileCoding());
 		cluster.attach(new DirectionalTree());
-		cluster.attach(new GMM());
 		cluster.attach(new VMFM());
 		// ^^^ ... append your data structures here as you please
 
