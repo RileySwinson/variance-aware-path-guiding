@@ -154,67 +154,6 @@ public:
 			}
 
 			output << res;
-
-			/* Samples will be stored in a map with key = pos, value = sample vector */
-			/*std::unordered_map<
-				std::pair<int, int>, 
-				std::vector<Sample>, 
-				boost::hash<std::pair<int, int>>
-			> s_map;*/
-
-			/* Sample approximated guiding distribution */
-			/*uint32_t samples_guiding = this->args.samples_guiding;
-			for (uint32_t s_i = 0; s_i < samples_guiding; ++s_i)
-			{
-				Point2 rnd(random->nextFloat(), random->nextFloat());
-				Sample sample = ds->sample(rnd);
-
-				// Normalize
-				Point2 sph(sample.phi, sample.theta);
-				Point2 uv = (this->args.mode == Sample::Mode::Cosine)
-					? Converter::cosine_to_uv(sph)
-					: Converter::sphere_to_uv(sph);
-
-				Point2i pt(uv.x * envmap.bitmap->getWidth(), uv.y * envmap.bitmap->getHeight());
-				s_map[std::pair<int, int>(pt.x, pt.y)].push_back(sample);
-			}*/
-
-			/* Fill envmap */
-			/*for (int y = 0; y < bm->getHeight(); ++y)
-			{
-				for (int x = 0; x < bm->getWidth(); ++x)
-				{
-					Point2i pt(x, y);
-					auto entry = s_map.find(std::pair<int, int>(pt.x, pt.y));
-					if (entry == s_map.end()) continue;
-
-					Point2 pt_norm((Float) x / bm->getWidth(), (Float) y / bm->getHeight());
-					Spectrum pixel = bm->getPixel(pt);
-					Float p_x = envmap.pdf(this->args.mode, pt_norm);
-					std::vector<Sample> pixel_samples = entry->second;
-
-					//Float base_value = 0.9;
-					//Float noise_factor = base_value + ((1 - base_value) * random->nextFloat());
-
-					for (int channel = 0; channel < envmap.bitmap->getChannelCount(); ++channel)
-					{
-						Float f_x = envmap.bitmap->getPixel(pt)[channel];
-						//fx *= noise_factor;
-						//if (fx < 0) fx = 0;
-						
-						Float I = 0;
-						for (const auto& sample : pixel_samples)
-						{
-							I += f_x * (p_x / sample.pdf); // f(x) * (p(x) / q(x)) ... p(x) = initial pdf; q(x) = pdf used for sampling
-						}
-
-						I /= pixel_samples.size(); // (1 / N) * sum(...)
-						pixel[channel] = I;
-					}
-
-					bm->setPixel(pt, pixel);
-				}
-			}*/
 		}
 
 		cluster.clear();
