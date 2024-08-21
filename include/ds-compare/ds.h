@@ -8,6 +8,22 @@
 MTS_NAMESPACE_BEGIN
 
 /**
+ * \brief Enum values for the respective data structures used in the dscompare plugin.
+ *
+ * This enum provides identifiers required for both storage and identification in the DSCluster.
+ * If a value is missing, the missing value may be added by the user.
+ */
+    enum MTS_EXPORT_CORE DSType {
+    DS_Invalid = -1,
+    DS_Unidirectional,
+    DS_GaussianMixture,
+    DS_TileCoding,
+    DS_SphericalHarmonics,
+    DS_DTree,
+    DS_VMFMixture
+};
+
+/**
  * Storage struct for the various parameters a data structure must need. This is passed
  * into each construct(), where data structures can then individually fetch the needed information for initialization.
  * If a value is missing, the missing value may be added by the user.
@@ -18,6 +34,7 @@ struct MTS_EXPORT_CORE DSArguments {
     Sample::Mode mode = Sample::Mode::Cosine;
 	uint32_t samples_learning = 1024;
     uint32_t samples_guiding = 524288;
+    std::vector<int> blacklist;
 
     bool envmap_noise = false;
     bool samples_noise = false;
@@ -36,22 +53,6 @@ struct MTS_EXPORT_CORE DSArguments {
     int tiles_y = 16;
 
     uint32_t vmf_components = 8;
-};
-
-/**
- * \brief Enum values for the respective data structures used in the dscompare plugin.
- * 
- * This enum provides identifiers required for both storage and identification in the DSCluster.
- * If a value is missing, the missing value may be added by the user.
- */
-enum MTS_EXPORT_CORE DSType {
-    DS_Invalid = -1,
-    DS_Unidirectional,
-    DS_GaussianMixture,
-    DS_TileCoding,
-    DS_SphericalHarmonics,
-    DS_DTree,
-    DS_VMFMixture
 };
 
 /**
@@ -86,6 +87,14 @@ struct MTS_EXPORT_CORE DataStructure {
 
     /// Returns the type of the data structure, see DSType.
     virtual DSType type() = 0;
+
+    /* ==== Miscellaneous ==== */
+
+    inline bool is_in(std::vector<int>& blacklist)
+    {
+        if (blacklist.empty()) return false;
+        return (std::find(blacklist.begin(), blacklist.end(), (int) type()) != blacklist.end());
+    }
 };
 
 /**

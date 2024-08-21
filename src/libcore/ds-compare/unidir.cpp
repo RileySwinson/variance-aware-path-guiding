@@ -34,10 +34,6 @@ Sample Unidirectional::sample(Point2& pos)
     Float phi = std::atan2(dir.y, dir.x);
     while (phi < 0) phi += 2 * M_PI;
 
-    //Float pdf = (this->sample_mode == Sample::Mode::Cosine)
-    //    ? INV_PI * std::cos(theta)
-    //    : INV_FOURPI;
-
     Point2 spherical(phi, theta);
 
     Sample sample;

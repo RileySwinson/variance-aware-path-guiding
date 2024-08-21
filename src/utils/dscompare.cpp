@@ -94,6 +94,8 @@ public:
 
 			/* Iterate over data structures... */
 			cluster.for_each([&](DataStructure* ds) {
+				if (ds->is_in(this->args.blacklist)) return;
+
 				/* Optional: Preprocess whatever has to be preprocessed per data structure */
 				ds->preprocess();
 				/* Store samples into the data structure */
@@ -157,7 +159,7 @@ public:
 		}
 
 		cluster.clear();
-		return 0;
+		return EXIT_SUCCESS;
 	}
 
 	MTS_DECLARE_UTILITY()
@@ -166,6 +168,8 @@ private:
 
 	void handle_clargs(int argc, char** argv)
 	{
+		namespace p_opt = boost::program_options;
+
 		try
 		{
 			BoostOptions desc("Options/Arguments");
@@ -173,29 +177,30 @@ private:
 				// Utility
 				("help,h", "Display help text.")
 				// General
-				("path,p", boost::program_options::value<std::string>(&this->args.path)->default_value("./data/tests/envmaps/"), "Path to envmap folder.")
-				("result-path,rp", boost::program_options::value<std::string>(&this->args.result_path)->default_value("./data/results"), "Path to output folder.")
-				("samples-learning,sl", boost::program_options::value<uint32_t>(&this->args.samples_learning)->default_value(1024), "Envmap sample count.")
-				("samples-guiding,sg", boost::program_options::value<uint32_t>(&this->args.samples_guiding)->default_value(524288), "Reconstruction sample count.")
-				("sample-mode,sm", boost::program_options::value<Sample::Mode>(&this->args.mode)->default_value(Sample::Mode::Cosine), "Envmap sampling mode.")
+				("path,p", p_opt::value<std::string>(&this->args.path)->default_value("./data/tests/envmaps/"), "Path to envmap folder.")
+				("result-path,rp", p_opt::value<std::string>(&this->args.result_path)->default_value("./data/results"), "Path to output folder.")
+				("samples-learning,sl", p_opt::value<uint32_t>(&this->args.samples_learning)->default_value(1024), "Envmap sample count.")
+				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.samples_guiding)->default_value(524288), "Reconstruction sample count.")
+				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.mode)->default_value(Sample::Mode::Cosine), "Envmap sampling mode.")
+				("blacklist,b", p_opt::value<std::vector<int>>(&this->args.blacklist)->multitoken(), "List of data structure indices that won't be run.")
 				// Noise
-				("noisy-envmap,ne", boost::program_options::value<bool>(&this->args.envmap_noise)->default_value(false), "Noisify input envmap?")
-				("noisy-samples,ns", boost::program_options::value<bool>(&this->args.samples_noise)->default_value(false), "Noisify learning samples?")
+				("noisy-envmap,ne", p_opt::value<bool>(&this->args.envmap_noise)->default_value(false), "Noisify input envmap?")
+				("noisy-samples,ns", p_opt::value<bool>(&this->args.samples_noise)->default_value(false), "Noisify learning samples?")
 				// Spherical Harmonics
-				("sh-bands,shb", boost::program_options::value<int>(&this->args.sh_bands)->default_value(5), "Number of Spherical Harmonic bands.")
-				("sh-depth,shd", boost::program_options::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.")
+				("sh-bands,shb", p_opt::value<int>(&this->args.sh_bands)->default_value(5), "Number of Spherical Harmonic bands.")
+				("sh-depth,shd", p_opt::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.")
 				// DTree
-				("dt-fracloss,dtl", boost::program_options::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt_frac_loss)->default_value(DTreeParams::EBsdfSamplingFractionLoss::ENone), "Loss function during gradient descent.")
-				("dt-dirfilter,dtf", boost::program_options::value<DTreeParams::EDirectionalFilter>(&this->args.dt_dir_filter)->default_value(DTreeParams::EDirectionalFilter::ENearest), "Directional filter for splatting radiance samples.")
-				("dt-threshold,dtt", boost::program_options::value<Float>(&this->args.dt_threshold)->default_value(0.01), "Threshold for subdividing leaf nodes (percentage).")
-				("dt-iter,dti", boost::program_options::value<int>(&this->args.dt_iterations)->default_value(-1), "Stop after nth iteration, starting at 0 (-1 to disable).")
-				("dt-max-depth,dtd", boost::program_options::value<int>(&this->args.dt_max_depth)->default_value(20), "Maximum depth.")
+				("dt-fracloss,dtl", p_opt::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt_frac_loss)->default_value(DTreeParams::EBsdfSamplingFractionLoss::ENone), "Loss function during gradient descent.")
+				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt_dir_filter)->default_value(DTreeParams::EDirectionalFilter::ENearest), "Directional filter for splatting radiance samples.")
+				("dt-threshold,dtt", p_opt::value<Float>(&this->args.dt_threshold)->default_value(0.01), "Threshold for subdividing leaf nodes (percentage).")
+				("dt-iter,dti", p_opt::value<int>(&this->args.dt_iterations)->default_value(-1), "Stop after nth iteration, starting at 0 (-1 to disable).")
+				("dt-max-depth,dtd", p_opt::value<int>(&this->args.dt_max_depth)->default_value(20), "Maximum depth.")
 				// TileCoding
-				("tilings,t", boost::program_options::value<int>(&this->args.tilings)->default_value(4), "Number of tilings.")
-				("tiles-x,tx", boost::program_options::value<int>(&this->args.tiles_x)->default_value(16), "Number of tiles in x direction.")
-				("tiles-y,ty", boost::program_options::value<int>(&this->args.tiles_y)->default_value(16), "Number of tiles in y direction.")
+				("tilings,t", p_opt::value<int>(&this->args.tilings)->default_value(4), "Number of tilings.")
+				("tiles-x,tx", p_opt::value<int>(&this->args.tiles_x)->default_value(16), "Number of tiles in x direction.")
+				("tiles-y,ty", p_opt::value<int>(&this->args.tiles_y)->default_value(16), "Number of tiles in y direction.")
 				// VMM
-				("vmm-components,vc", boost::program_options::value<uint32_t>(&this->args.vmf_components)->default_value(8), "Number of initial VMM components.");
+				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf_components)->default_value(8), "Number of initial VMM components.");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);
