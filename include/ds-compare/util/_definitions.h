@@ -17,6 +17,10 @@
 #include <random>
 #include <array>
 #include <functional>
+#include <unordered_map>
+#include <ctime>
+#include <ratio>
+#include <chrono>
 
 #if !defined(DS_COMPARE)
     #define DS_COMPARE MTS_IMPORT

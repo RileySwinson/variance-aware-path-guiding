@@ -38,6 +38,10 @@ public:
 		/* Initialize random generator */
 		ref<Random> random = new Random();
 
+		/* Initialize error metrics storage */
+		StatTrak& tracker = StatTrak::get();
+		tracker.reserve(cluster.largest() + 1);
+
 		/* Iterate over all environment maps */
 		for (const auto& entry : boost::filesystem::recursive_directory_iterator(this->args.path))
 		{
@@ -72,7 +76,7 @@ public:
 			const std::string folder_path = base_name + "/" + folder_name + "/" + envmap_file_name;
 			boost::filesystem::create_directories(folder_path);
 
-			/* Generate bitmap for ground truth PDF */
+			/* Generate bitmap for ground truth PDF & write to file */
 			Float max = 0;
 			EnvironmentMap gt = envmap
 				.deep_copy(true)
@@ -83,11 +87,7 @@ public:
 				})
 				.normalize(max);
 
-			/* Write envmap to .exr file */
 			gt.write(folder_path + "/base.exr");
-
-			/* Initialize error metrics storage */
-			std::vector<std::vector<float>> err_storage(cluster.largest() + 1);
 
 			Log(EInfo, "Comparing data structures for envmap '%s'...", (folder_name + "/" + envmap_file_name).c_str());
 
@@ -101,6 +101,9 @@ public:
 					ds->name().c_str(), ds->type()
 				);
 
+				tracker.follow(ds->type());
+				tracker.timer_start("storage");
+
 				/* Optional: Preprocess whatever has to be preprocessed per data structure */
 				ds->preprocess();
 				/* Store samples into the data structure */
@@ -108,11 +111,11 @@ public:
 				/* Optional: Postprocess whatever has to be postprocessed per data structure */
 				ds->postprocess();
 
-				/* Generate writable envmap with same properties as input envmap */
-				Vector2i dims = envmap.bitmap->getSize();
-				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
+				tracker.timer_end("storage");
 
+				/* Evaluate function approximation per pixel and store the results in a new envmap */
 				Float max = 0;
+				Vector2i dims = envmap.bitmap->getSize();
 				EnvironmentMap em = envmap
 					.deep_copy(true)
 					.map([&](Point2i coords, Spectrum& px) {
@@ -124,14 +127,13 @@ public:
 					.normalize(max);
 
 				/* Write envmap to .exr file */
+				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
 				em.write(envmap_path);
 
 				/* Compute metrics and store them */
-				err_storage.at(ds->type()) = std::vector<float>{
-					ErrorMetrics::MSE(*gt.bitmap, *em.bitmap),
-					ErrorMetrics::MAE(*gt.bitmap, *em.bitmap),
-					ErrorMetrics::RMSE(*gt.bitmap, *em.bitmap)
-				};
+				tracker.store(RMSE, ErrorMetrics::RMSE(*gt.bitmap, *em.bitmap));
+				tracker.store(MSE, ErrorMetrics::MSE(*gt.bitmap, *em.bitmap));
+				tracker.store(MAE, ErrorMetrics::MAE(*gt.bitmap, *em.bitmap));
 
 				/* Wipe data structure to clean state for further usage */
 				ds->wipe();
@@ -139,33 +141,16 @@ public:
 				curr_i++;
 			});
 
-			/* Create metrics.csv and fill it */
-			std::ofstream output;
+			/* Create metrics.csv */
 			const std::string metrics_file_name = "metrics.csv";
 			const std::string output_path = folder_path + "/" + metrics_file_name;
-			output.open(output_path, std::ios::out);
-			
-			output << ",MSE,RMSE,MAE,\n";
 
-			std::string res;
-			for (int i = 0; i < err_storage.size(); ++i)
-			{
-				res += "" + std::to_string(i) + ",";
-
-				const auto metrics = err_storage.at(i);
-				if (metrics.empty())
-					res += ",,,";
-				else
-					for (const auto metric : metrics)
-						res += std::to_string(metric) + ",";
-
-				res += "\n";
-			}
-
-			output << res;
+			tracker.write(output_path);
+			tracker.reset();
 		}
 
 		cluster.clear();
+		tracker.clear();
 		return EXIT_SUCCESS;
 	}
 

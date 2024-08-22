@@ -13,7 +13,7 @@ MTS_NAMESPACE_BEGIN
  * This enum provides identifiers required for both storage and identification in the DSCluster.
  * If a value is missing, the missing value may be added by the user.
  */
-enum DS_COMPARE DSType {
+enum DS_COMPARE DSType : int {
     DS_Invalid = -1,
     DS_Unidirectional,
     DS_SphericalHarmonics,
