@@ -4,32 +4,32 @@
 #define __DSCOMPARE_UTIL_ERRORMETRICS_H_
 
 #include <ds-compare/util/_definitions.h>
+#include <ds-compare/util/envmap.h>
 
 MTS_NAMESPACE_BEGIN
 
 struct DS_COMPARE ErrorMetrics {
-	static float MSE(const Bitmap& bm1, const Bitmap& bm2)
+	static float MSE(const EnvironmentMap& em1, const EnvironmentMap& em2)
 	{
-		SAssert(bm1.getSize() == bm2.getSize());
+		SAssert(em1.bitmap->getSize() == em2.bitmap->getSize());
 
-		const int CHANNELS = 3;
+		const Vector2i size = em1.bitmap->getSize();
+		const int channels = em1.bitmap->getChannelCount();
 
 		float err = 0.0f;
-		for (int y = 0; y < bm1.getHeight(); ++y)
+		for (int y = 0; y < size.y; ++y)
 		{
-			for (int x = 0; x < bm1.getWidth(); ++x)
+			for (int x = 0; x < size.x; ++x)
 			{
-				Point2i pt(x, y);
-				float bm1_rgb[CHANNELS];
-				float bm2_rgb[CHANNELS];
-				bm1.getPixel(pt).toLinearRGB(bm1_rgb[0], bm1_rgb[1], bm1_rgb[2]);
-				bm2.getPixel(pt).toLinearRGB(bm2_rgb[0], bm2_rgb[1], bm2_rgb[2]);
+				const Point2i pt(x, y);
+				Point3 em1_rgb = em1.get_pixel_rgb(pt);
+				Point3 em2_rgb = em2.get_pixel_rgb(pt);
 
 				// Calculate error at given pixel by squaring the error
 				float sum = 0.0f;
-				for (int i = 0; i < CHANNELS; ++i)
+				for (int i = 0; i < channels; ++i)
 				{
-					sum += (bm1_rgb[i] - bm2_rgb[i]) * (bm1_rgb[i] - bm2_rgb[i]);
+					sum += (em1_rgb[i] - em2_rgb[i]) * (em1_rgb[i] - em2_rgb[i]);
 				}
 
 				err += sum;
@@ -37,38 +37,44 @@ struct DS_COMPARE ErrorMetrics {
 		}
 
 		// Divide by the pixel count
-		err /= bm1.getPixelCount() * CHANNELS;
+		err /= em1.bitmap->getPixelCount() * channels;
 		return err;
 	}
 
-	static float RMSE(const Bitmap& bm1, const Bitmap& bm2)
+	static float RMSE(const EnvironmentMap& em1, const EnvironmentMap& em2)
 	{
 		// Take the square root of MSE for RMSE
-		return std::sqrt(ErrorMetrics::MSE(bm1, bm2));
+		return std::sqrt(ErrorMetrics::MSE(em1, em1));
 	}
 
-	static float MAE(const Bitmap& bm1, const Bitmap& bm2)
+	static float PSNR(const EnvironmentMap& em1, const EnvironmentMap& em2)
 	{
-		SAssert(bm1.getSize() == bm2.getSize());
+		// We assume the image is normalized (for now)!
+		const double MAX = 1.0;
+		return 20 * std::log10(MAX) - 10 * std::log10(ErrorMetrics::MSE(em1, em2));
+	}
 
-		const int CHANNELS = 3;
+	static float MAE(const EnvironmentMap& em1, const EnvironmentMap& em2)
+	{
+		SAssert(em1.bitmap->getSize() == em2.bitmap->getSize());
+
+		const Vector2i size = em1.bitmap->getSize();
+		const int channels = em1.bitmap->getChannelCount();
 
 		float err = 0.0f;
-		for (int y = 0; y < bm1.getHeight(); ++y)
+		for (int y = 0; y < size.y; ++y)
 		{
-			for (int x = 0; x < bm1.getWidth(); ++x)
+			for (int x = 0; x < size.x; ++x)
 			{
-				Point2i pt(x, y);
-				float bm1_rgb[CHANNELS];
-				float bm2_rgb[CHANNELS];
-				bm1.getPixel(pt).toLinearRGB(bm1_rgb[0], bm1_rgb[1], bm1_rgb[2]);
-				bm2.getPixel(pt).toLinearRGB(bm2_rgb[0], bm2_rgb[1], bm2_rgb[2]);
+				const Point2i pt(x, y);
+				Point3 em1_rgb = em1.get_pixel_rgb(pt);
+				Point3 em2_rgb = em2.get_pixel_rgb(pt);
 
 				// Calculate error at given pixel by taking the abs of the difference
 				float sum = 0.0f;
-				for (int i = 0; i < CHANNELS; ++i)
+				for (int i = 0; i < channels; ++i)
 				{
-					sum += std::abs(bm1_rgb[i] - bm2_rgb[i]);
+					sum += std::abs(em1_rgb[i] - em2_rgb[i]);
 				}
 
 				err += sum;
@@ -76,7 +82,7 @@ struct DS_COMPARE ErrorMetrics {
 		}
 
 		// Divide by the pixel count
-		err /= bm1.getPixelCount() * CHANNELS;
+		err /= em1.bitmap->getPixelCount() * channels;
 		return err;
 	}
 

@@ -61,8 +61,8 @@ struct DS_COMPARE EnvironmentMap {
 			Float result_row = 0.0;
 			for (int x = 0; x < this->bitmap->getWidth(); ++x)
 			{
-				Point2i pt(x, y);
-				result_row += this->bitmap->getPixel(pt).getLuminance();
+				const Point2i pt(x, y);
+				result_row += get_pixel_luminance(pt);
 			}
 			result += result_row;
 			this->row_avgs.push_back(result_row / bitmap->getWidth());
@@ -74,48 +74,91 @@ struct DS_COMPARE EnvironmentMap {
 		this->precomputed = true;
 	}
 
+	/// Get rgb color information at the specified position (x, y).
+	inline Point3 get_pixel_rgb(const Point2i& pos) const
+	{
+		const Vector2i& size = this->bitmap->getSize();
+		const int channels = this->bitmap->getChannelCount();
+
+		SAssertEx(pos.x >= 0 && pos.x < size.x && pos.y >= 0 && pos.y < size.y, "EnvironmentMap::get_pixel_rgb(): out of bounds!");
+		SAssertEx(channels == 3, "Envmap should have 3 channels!");
+		SAssertEx(this->bitmap->getBytesPerComponent() == 4, "Envmap isn't float32!");
+
+		size_t offset = ((size_t) pos.x + size.x * (size_t) pos.y) * channels;
+		const float* data = this->bitmap->getFloat32Data();
+
+		return Point3(
+			data[offset],
+			data[offset + 1],
+			data[offset + 2]
+		);
+	}
+	
+	/// Get the luminance at a specified position (x, y).
+	inline Float get_pixel_luminance(const Point2i& pos) const
+	{
+		Point3 rgb = get_pixel_rgb(pos);
+		return rgb[0] * 0.212671f + rgb[1] * 0.715160f + rgb[2] * 0.072169f;
+	}
+
+	/// Set rgb color information at the specified position (x, y).
+	inline void set_pixel_rgb(const Point2i& pos, const Point3& rgb)
+	{
+		const Vector2i& size = this->bitmap->getSize();
+		const int channels = this->bitmap->getChannelCount();
+
+		SAssertEx(pos.x >= 0 && pos.x < size.x && pos.y >= 0 && pos.y < size.y, "EnvironmentMap::get_pixel_rgb(): out of bounds!");
+		SAssertEx(channels == 3, "Envmap should have 3 channels!");
+		SAssertEx(this->bitmap->getBytesPerComponent() == 4, "Envmap isn't float32!");
+
+		size_t offset = ((size_t) pos.x + size.x * (size_t) pos.y) * channels;
+		float* data = this->bitmap->getFloat32Data();
+
+		data[offset]	 = (float) rgb[0];
+		data[offset + 1] = (float) rgb[1];
+		data[offset + 2] = (float) rgb[2];
+	}
+
 	/// Generates an envmap with the same params as this one
 	EnvironmentMap deep_copy(bool empty = false)
 	{
-		Bitmap::EPixelFormat px_format = this->bitmap->getPixelFormat();
-		Bitmap::EComponentFormat cmp_format = this->bitmap->getComponentFormat();
-		Vector2i size = this->bitmap->getSize();
-		std::size_t channels = this->bitmap->getChannelCount();
+		const Bitmap::EPixelFormat px_format = this->bitmap->getPixelFormat();
+		const Bitmap::EComponentFormat cmp_format = this->bitmap->getComponentFormat();
+		const Vector2i size = this->bitmap->getSize();
+		const std::size_t channels = this->bitmap->getChannelCount();
 
-		ref<Bitmap> bm = new Bitmap(px_format, cmp_format, size, channels, NULL);
+		EnvironmentMap envmap;
+		envmap.bitmap = new Bitmap(px_format, cmp_format, size, channels, NULL);
+
 		for (int y = 0; y < size.y; ++y)
 		{
 			for (int x = 0; x < size.x; ++x)
 			{
 				Point2i pt(x, y);
-				Spectrum px = bm->getPixel(pt);
 
-				for (int c = 0; c < channels; ++c)
-					px[c] = empty ? 0 : this->bitmap->getPixel(pt)[c];
+				Point3 px(0, 0, 0);
+				if (!empty) px = get_pixel_rgb(pt);
 
-				bm->setPixel(pt, px);
+				envmap.set_pixel_rgb(pt, px);
 			}
 		}
-
-		EnvironmentMap envmap;
-		envmap.bitmap = bm;
 		
 		return envmap;
 	}
 
-	EnvironmentMap& map(std::function<void(Point2i coords, Spectrum& px)> F)
+	EnvironmentMap& map(std::function<void(Point2i coords, Point3& px)> F)
 	{
 		Vector2i size = this->bitmap->getSize();
 		for (int y = 0; y < size.y; ++y)
 		{
 			for (int x = 0; x < size.x; ++x)
 			{
-				Point2i pt(x, y);
-				Spectrum px = this->bitmap->getPixel(pt);
+				const Point2i pt(x, y);
+				Point3 px = get_pixel_rgb(pt);
 
 				F(pt, px); // do something with px...
 
-				this->bitmap->setPixel(pt, px);
+				set_pixel_rgb(pt, px);
 			}
 		}
 
@@ -130,12 +173,11 @@ struct DS_COMPARE EnvironmentMap {
 			if (v_i != 0 && (v_i % this->bitmap->getWidth()) == 0) y += 1;
 
 			Point2i pt(v_i % this->bitmap->getWidth(), y);
-			Spectrum px = this->bitmap->getPixel(pt);
 
-			for (int c = 0; c < this->bitmap->getChannelCount(); ++c)
-				px[c] /= max;
+			Point3 px = get_pixel_rgb(pt);
+			px /= max;
 
-			this->bitmap->setPixel(pt, px);
+			set_pixel_rgb(pt, px);
 		}
 
 		return *this;
@@ -170,7 +212,7 @@ struct DS_COMPARE EnvironmentMap {
 				pos.y * this->bitmap->getHeight()
 			);
 
-			Float px_lum = this->bitmap->getPixel(uv).getLuminance();
+			Float px_lum = get_pixel_luminance(uv);
 			Float total_lum = this->bitmap_integral * this->bitmap->getPixelCount();
 			return (px_lum / total_lum);
 		}
@@ -199,8 +241,8 @@ struct DS_COMPARE EnvironmentMap {
 			{
 				if (random->nextFloat() >= noise_perc) continue; // only alter a pixel with a certain chance
 
-				auto pt = Point2i(x, y);
-				Spectrum px = bitmap->getPixel(pt);
+				const auto pt = Point2i(x, y);
+				Point3 px = get_pixel_rgb(pt);
 				
 				float noise = random->nextFloat() * STD_DEV + MEAN;
 				
@@ -210,7 +252,7 @@ struct DS_COMPARE EnvironmentMap {
 					if (px[channel] < 0.0f) px[channel] = 0.0f;
 				}
 
-				this->bitmap->setPixel(pt, px);
+				set_pixel_rgb(pt, px);
 			}
 		}
 	}
@@ -230,7 +272,7 @@ private:
 		);
 
 		Sample sample_data = {
-			.value = this->bitmap->getPixel(uv).getLuminance(),
+			.value = get_pixel_luminance(uv),
 			.pdf = pdf(mode, uv_norm),
 			.theta = theta,
 			.phi = phi
@@ -275,8 +317,8 @@ private:
 		int x = 0;
 		for (x = 0; x < this->bitmap->getWidth(); ++x)
 		{
-			Point2i pt(x, y);
-			sum_x += this->bitmap->getPixel(pt).getLuminance() / this->row_avgs.at(y);
+			const Point2i pt(x, y);
+			sum_x += get_pixel_luminance(pt) / this->row_avgs.at(y);
 			if ((sum_x / this->bitmap->getWidth()) >= sample.x) break;
 		}
 
@@ -291,7 +333,7 @@ private:
 		Point2 spherical = Converter::uv_to_spherical(uv_norm);
 
 		Sample sample_data = {
-			.value = this->bitmap->getPixel(uv).getLuminance(),
+			.value = get_pixel_luminance(uv),
 			.pdf = pdf(Sample::Mode::Native, uv_norm),
 			.theta = spherical.y,
 			.phi = spherical.x

@@ -80,8 +80,8 @@ public:
 			Float max = 0;
 			EnvironmentMap gt = envmap
 				.deep_copy(true)
-				.map([&](Point2i coords, Spectrum& px) {
-					Float lum = envmap.bitmap->getPixel(coords).getLuminance();
+				.map([&](Point2i coords, Point3& px) {
+					Float lum = envmap.get_pixel_luminance(coords);
 					for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = lum;
 					if (lum > max) max = lum;
 				})
@@ -119,7 +119,7 @@ public:
 
 				EnvironmentMap em = envmap
 					.deep_copy(true)
-					.map([&](Point2i coords, Spectrum& px) {
+					.map([&](Point2i coords, Point3& px) {
 						Point2 norm((Float) coords.x / dims.x, (Float) coords.y / dims.y);
 						Float density = ds->eval(norm);
 						for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = density;
@@ -132,9 +132,10 @@ public:
 				em.write(envmap_path);
 
 				/* Compute metrics and store them */
-				tracker.store(RMSE, ErrorMetrics::RMSE(*gt.bitmap, *em.bitmap));
-				tracker.store(MSE, ErrorMetrics::MSE(*gt.bitmap, *em.bitmap));
-				tracker.store(MAE, ErrorMetrics::MAE(*gt.bitmap, *em.bitmap));
+				tracker.store(RMSE, ErrorMetrics::RMSE(gt, em));
+				tracker.store(PSNR, ErrorMetrics::PSNR(gt, em));
+				tracker.store(MSE, ErrorMetrics::MSE(gt, em));
+				tracker.store(MAE, ErrorMetrics::MAE(gt, em));
 
 				/* Wipe data structure to clean state for further usage */
 				ds->wipe();
