@@ -34,6 +34,7 @@ struct DS_COMPARE EnvironmentMap {
 			.path = { path.parent_path().filename().string(), path.stem().string() }
 		};
 
+		EnvironmentMap::validate(envmap);
 		return envmap;
 	}
 
@@ -69,7 +70,7 @@ struct DS_COMPARE EnvironmentMap {
 		}
 
 		SAssert(result != 0);
-
+		
 		this->bitmap_integral = result / bitmap->getPixelCount();
 		this->precomputed = true;
 	}
@@ -340,6 +341,26 @@ private:
 		};
 		
 		return sample_data;
+	}
+
+	static void validate(EnvironmentMap& envmap)
+	{
+		const Bitmap::EPixelFormat pf = envmap.bitmap->getPixelFormat();
+		const Bitmap::EComponentFormat cf = envmap.bitmap->getComponentFormat();
+
+		if (pf == Bitmap::EPixelFormat::ERGB && cf == Bitmap::EComponentFormat::EFloat32) return;
+
+		const Bitmap::EPixelFormat px_format = Bitmap::EPixelFormat::ERGB;
+		const Bitmap::EComponentFormat cmp_format = Bitmap::EComponentFormat::EFloat32;
+		const Vector2i size = envmap.bitmap->getSize();
+		const std::size_t channels = 3;
+
+		ref<Bitmap> bm = new Bitmap(px_format, cmp_format, size, channels, NULL);
+		envmap.bitmap->convert(bm);
+		envmap.bitmap = bm;
+
+		SAssert(envmap.bitmap->getChannelCount() == 3);
+		SAssert(envmap.bitmap->getBytesPerComponent() == 4);
 	}
 };
 
