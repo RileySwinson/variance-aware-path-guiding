@@ -42,8 +42,11 @@ void SphericalHarmonics::construct(DSArguments& init_data)
     SAssert(init_data.sh_depth > 0);
 
     *this = SphericalHarmonics(init_data.sh_bands);
+
     this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, init_data.sh_depth);
     this->m_num_samples = init_data.samples_learning;
+    this->m_sample_mode = init_data.mode;
+    this->m_use_offset = init_data.sh_use_offset;
 
     staticInitialization();
 }
@@ -96,8 +99,12 @@ void SphericalHarmonics::postprocess()
         }
     }
 
-    Float min = findMinimum(64);
-    if (min < 0) addOffset(Epsilon - min);
+    if (this->m_use_offset)
+    {
+        Float min = findMinimum(64);
+        if (min < 0) addOffset(Epsilon - min);
+    }
+    
     normalize();
 }
 
@@ -109,6 +116,7 @@ Sample SphericalHarmonics::sample(Point2& pos)
     }
 
     float pdf = this->sampler->warp(*this, pos);
+    if (pdf <= 0) pdf = Epsilon;
 
     Sample sample = {
         .value = 0,
@@ -122,7 +130,7 @@ Sample SphericalHarmonics::sample(Point2& pos)
 Float SphericalHarmonics::eval(Point2& pos)
 {
     Point2 coords = Converter::uv_to_spherical(pos);
-    return eval(coords.y, coords.x);
+    return std::max(Epsilon, eval(coords.y, coords.x));
 }
 
 void SphericalHarmonics::wipe()
@@ -185,6 +193,8 @@ Float SphericalHarmonics::eval(Float theta, Float phi) const {
 Float SphericalHarmonics::findMinimum(int res) const {
     Float hExt = (Float) M_PI / res, hInt = (2 * (Float) M_PI)/(res*2);
     Float minimum = std::numeric_limits<Float>::infinity();
+
+    if (this->m_sample_mode == Sample::Mode::Cosine) hExt *= 0.5;
 
     for (int i=0; i<=res; ++i) {
         Float theta = hExt*i;

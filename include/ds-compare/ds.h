@@ -40,6 +40,7 @@ struct DS_COMPARE DSArguments {
 
     int sh_bands = 5;
     int sh_depth = 12;
+    bool sh_use_offset = true;
 
     DTreeParams::EBsdfSamplingFractionLoss dt_frac_loss = DTreeParams::EBsdfSamplingFractionLoss::ENone;
     DTreeParams::EDirectionalFilter dt_dir_filter = DTreeParams::EDirectionalFilter::ENearest;

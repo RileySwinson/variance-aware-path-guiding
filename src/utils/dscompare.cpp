@@ -117,8 +117,6 @@ public:
 				Float max = 0;
 				Vector2i dims = envmap.bitmap->getSize();
 
-				tracker.timer_start("eval()");
-
 				EnvironmentMap em = envmap
 					.deep_copy(true)
 					.map([&](Point2i coords, Spectrum& px) {
@@ -128,8 +126,6 @@ public:
 						if (density > max) max = density;
 					})
 					.normalize(max);
-
-				tracker.timer_end("eval()");
 
 				/* Write envmap to .exr file */
 				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
@@ -154,8 +150,9 @@ public:
 			tracker.reset();
 		}
 
-		cluster.clear();
 		tracker.clear();
+		cluster.clear();
+		
 		return EXIT_SUCCESS;
 	}
 
@@ -186,6 +183,7 @@ private:
 				// Spherical Harmonics
 				("sh-bands,shb", p_opt::value<int>(&this->args.sh_bands)->default_value(5), "Number of Spherical Harmonic bands.")
 				("sh-depth,shd", p_opt::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.")
+				("sh-use-offset,sho", p_opt::value<bool>(&this->args.sh_use_offset)->default_value(true), "Apply offset to SHs?")
 				// DTree
 				("dt-fracloss,dtl", p_opt::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt_frac_loss)->default_value(DTreeParams::EBsdfSamplingFractionLoss::ENone), "Loss function during gradient descent.")
 				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt_dir_filter)->default_value(DTreeParams::EDirectionalFilter::ENearest), "Directional filter for splatting radiance samples.")

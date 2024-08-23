@@ -433,6 +433,8 @@ protected:
 private:
     int m_bands;
     int m_num_samples;
+    Sample::Mode m_sample_mode;
+    bool m_use_offset;
     static Float *m_normalization;
     ref<SphericalHarmonicsSampler> sampler = nullptr;
     Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
