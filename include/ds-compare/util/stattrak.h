@@ -198,8 +198,8 @@ struct DS_COMPARE StatTrak {
     StatTrak(StatTrak const&)       = delete;
     void operator=(StatTrak const&) = delete;
 private:
-    typedef ErrorMap = std::map<ErrorMetric, Float>;
-    typedef TimesMap = std::map<std::string, TimeMeasure>;
+    using ErrorMap = std::map<ErrorMetric, Float>;
+    using TimesMap = std::map<std::string, TimeMeasure>;
 
     struct StatData {
         ErrorMap m_errors;
