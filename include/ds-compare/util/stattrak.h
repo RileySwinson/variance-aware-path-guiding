@@ -169,11 +169,11 @@ struct DS_COMPARE StatTrak {
         output << header;
 
         /* Iterate over all entries and accumulate the stored data into an output string */
-        std::vector<std::string> segments(this->m_data.size());
+        std::string res = "";
         for (const auto& entry : this->m_data)
         {
             DSType type = entry.first;
-            std::string res = std::to_string(type) + ",";
+            res += std::to_string(type) + ",";
 
             const auto& errors = entry.second.m_errors;
             const auto& times = entry.second.m_times;
@@ -189,30 +189,27 @@ struct DS_COMPARE StatTrak {
                 res += (times.find(header) != times.end()) ? std::to_string(get_duration(header, type)) + "," : ",";
             }
             res += "\n";
-            
-            segments.at(type) = res;
         }
 
-        for (const std::string& segment : segments)
-        {
-            output << (!segment.empty() ? segment : "\n");
-        }
-
+        output << res;
         output.close();
     }
 
     StatTrak(StatTrak const&)       = delete;
     void operator=(StatTrak const&) = delete;
 private:
+    typedef ErrorMap = std::map<ErrorMetric, Float>;
+    typedef TimesMap = std::map<std::string, TimeMeasure>;
+
     struct StatData {
-        std::unordered_map<ErrorMetric, Float> m_errors;
-        std::unordered_map<std::string, TimeMeasure> m_times;
+        ErrorMap m_errors;
+        TimesMap m_times;
     };
 
     DSType m_active;
-    std::unordered_map<DSType, StatData> m_data;
+    std::map<DSType, StatData> m_data;
 
-    std::chrono::duration<Float> get_duration_helper(const std::unordered_map<std::string, TimeMeasure>& times, const std::string& identifier)
+    std::chrono::duration<Float> get_duration_helper(const TimesMap& times, const std::string& identifier)
     {
         auto it = times.find(identifier);
         if (it == times.end())
@@ -222,7 +219,7 @@ private:
         return std::chrono::duration_cast<std::chrono::duration<Float>>(tm.end - tm.start);
     }
 
-    Float get_error_helper(const std::unordered_map<ErrorMetric, Float>& errors, const ErrorMetric metric)
+    Float get_error_helper(const ErrorMap& errors, const ErrorMetric metric)
     {
         auto it = errors.find(metric);
         if (it == errors.end())

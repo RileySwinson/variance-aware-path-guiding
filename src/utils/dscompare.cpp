@@ -102,7 +102,7 @@ public:
 				);
 
 				tracker.follow(ds->type());
-				tracker.timer_start("storage");
+				tracker.timer_start("store()");
 
 				/* Optional: Preprocess whatever has to be preprocessed per data structure */
 				ds->preprocess();
@@ -111,11 +111,14 @@ public:
 				/* Optional: Postprocess whatever has to be postprocessed per data structure */
 				ds->postprocess();
 
-				tracker.timer_end("storage");
+				tracker.timer_end("store()");
 
 				/* Evaluate function approximation per pixel and store the results in a new envmap */
 				Float max = 0;
 				Vector2i dims = envmap.bitmap->getSize();
+
+				tracker.timer_start("eval()");
+
 				EnvironmentMap em = envmap
 					.deep_copy(true)
 					.map([&](Point2i coords, Spectrum& px) {
@@ -125,6 +128,8 @@ public:
 						if (density > max) max = density;
 					})
 					.normalize(max);
+
+				tracker.timer_end("eval()");
 
 				/* Write envmap to .exr file */
 				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
