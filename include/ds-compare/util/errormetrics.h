@@ -44,7 +44,7 @@ struct DS_COMPARE ErrorMetrics {
 	static float RMSE(const EnvironmentMap& em1, const EnvironmentMap& em2)
 	{
 		// Take the square root of MSE for RMSE
-		return std::sqrt(ErrorMetrics::MSE(em1, em1));
+		return std::sqrt(ErrorMetrics::MSE(em1, em2));
 	}
 
 	static float PSNR(const EnvironmentMap& em1, const EnvironmentMap& em2)
