@@ -43,6 +43,7 @@ mitsuba.*.log
 *.exr
 *.hdr
 *.mip
+*.csv
 
 # Misc
 .externalToolBuilders
