@@ -593,14 +593,15 @@ void DirectionalTree::postprocess()
 {
     // Müller et al. states that the geometric series uses twice as many samples as in the previous
     // iteration. We therefore iterate over all stored samples, building and resetting when we hit a threshold.
-    // We start with 1 sample and go from there.
+    // We start with 4 samples and go from there.
 
-    size_t t = 1;
+    size_t t = 4;
     int i = 0;
     auto total_samples = this->l_sample_storage.size();
+
     for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
-        Sample sample = this->l_sample_storage.at(s_i);
+        Sample& sample = this->l_sample_storage.at(s_i);
         Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
 
         building.recordIrradiance(uv, sample.value, 1, this->param_dir_filter);
@@ -611,10 +612,12 @@ void DirectionalTree::postprocess()
         if ((s_i == t - 1) && (total_samples - t >= t))
         {
             build();
-            reset(this->param_max_depth, this->param_d_tree_thresh);
+            
             t += 2 * t;
-
             if (i == this->param_max_iter) break;
+
+            reset(this->param_max_depth, this->param_d_tree_thresh);
+
             i++;
         }
     }
