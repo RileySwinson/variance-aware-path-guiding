@@ -80,7 +80,7 @@ DSType VMFM::type()
 
 int VMFM::memory()
 {
-    return 0;
+    return sizeof(this->vmm);
 }
 
 MTS_NAMESPACE_END

@@ -9,11 +9,12 @@ MTS_NAMESPACE_BEGIN
 
 enum DS_COMPARE DSType : int;
 
-enum DS_COMPARE ErrorMetric : int {
+enum DS_COMPARE MeasureMetric : int {
     RMSE,
     PSNR,
     MSE,
-    MAE
+    MAE,
+    Memory
 };
 
 struct TimeMeasure {
@@ -42,7 +43,7 @@ struct DS_COMPARE StatTrak {
         this->m_active = ds;
     }
 
-    void store(ErrorMetric ds, Float value)
+    void store(MeasureMetric metric, Float value)
     {
         auto it = this->m_data.find(this->m_active);
         if (it == this->m_data.end())
@@ -50,7 +51,7 @@ struct DS_COMPARE StatTrak {
             this->m_data[this->m_active];
         }
         
-        this->m_data.at(this->m_active).m_errors.emplace(ds, value);
+        this->m_data.at(this->m_active).m_errors.emplace(metric, value);
     }
 
     /// Resets all entries for each envmap within the tracker back to 0.
@@ -129,7 +130,7 @@ struct DS_COMPARE StatTrak {
     }
 
     /// Obtain the error for the currently assigned data structure.
-    Float get_error(const ErrorMetric metric)
+    Float get_error(const MeasureMetric metric)
     {
         auto it = this->m_data.find(this->m_active);
         if (it == this->m_data.end())
@@ -142,7 +143,7 @@ struct DS_COMPARE StatTrak {
     }
 
     /// Obtain the error for the specified data structure.
-    Float get_error(const DSType ds, const ErrorMetric metric)
+    Float get_error(const DSType ds, const MeasureMetric metric)
     {
         auto data_it = this->m_data.find(ds);
         if (data_it == this->m_data.end())
@@ -163,7 +164,7 @@ struct DS_COMPARE StatTrak {
         output.open(path, std::ios::out);
 
         /* Initialize header with errors + time measurements */
-        std::string header = ",RMSE,PSNR,MSE,MAE,";
+        std::string header = ",RMSE,PSNR,MSE,MAE,Memory,";
         const auto& f_times = this->m_data.begin()->second.m_times;
         std::vector<std::string> time_headers;
         for (const auto& value : f_times)
@@ -192,6 +193,9 @@ struct DS_COMPARE StatTrak {
             res += (errors.find(MSE) != errors.end())  ? std::to_string(get_error(type, MSE)) + ","  : ",";
             res += (errors.find(MAE) != errors.end())  ? std::to_string(get_error(type, MAE)) + ","  : ",";
 
+            // Memory
+            res += (errors.find(Memory) != errors.end()) ? std::to_string(get_error(type, Memory)) + "," : ",";
+
             // Time
             for (const auto& header : time_headers)
             {
@@ -207,7 +211,7 @@ struct DS_COMPARE StatTrak {
     StatTrak(StatTrak const&)       = delete;
     void operator=(StatTrak const&) = delete;
 private:
-    using ErrorMap = std::map<ErrorMetric, Float>;
+    using ErrorMap = std::map<MeasureMetric, Float>;
     using TimesMap = std::map<std::string, std::vector<TimeMeasure>>;
 
     struct StatData {
@@ -260,7 +264,7 @@ private:
         return total_duration;
     }
 
-    Float get_error_helper(const ErrorMap& errors, const ErrorMetric metric)
+    Float get_error_helper(const ErrorMap& errors, const MeasureMetric metric)
     {
         auto it = errors.find(metric);
         if (it == errors.end())

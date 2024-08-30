@@ -37,6 +37,10 @@ public:
 
 		/* Initialize random generator */
 		ref<Random> random = new Random();
+		//Properties props("halton");
+		//ref<Sampler> det_sampler = static_cast<Sampler*>(PluginManager::getInstance()->createObject(MTS_CLASS(Sampler), props));
+		//det_sampler->configure();
+		//det_sampler->generate(Point2i(0));
 
 		/* Initialize error metrics storage */
 		StatTrak& tracker = StatTrak::get();
@@ -59,6 +63,7 @@ public:
 			std::vector<Sample> samples;
 			uint32_t samples_learning = this->args.samples_learning;
 			samples.reserve(samples_learning);
+
 			for (uint32_t s_i = 0; s_i < samples_learning; ++s_i)
 			{
 				Point2 coords(random->nextFloat(), random->nextFloat());
@@ -127,6 +132,8 @@ public:
 					})
 					.normalize(max);
 
+				//if (ds->type() == DS_VMFMixture) std::cout << (static_cast<VMFM*>(ds))->name() << "\n";
+
 				/* Write envmap to .exr file */
 				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
 				em.write(envmap_path);
@@ -136,6 +143,8 @@ public:
 				tracker.store(PSNR, ErrorMetrics::PSNR(gt, em));
 				tracker.store(MSE, ErrorMetrics::MSE(gt, em));
 				tracker.store(MAE, ErrorMetrics::MAE(gt, em));
+
+				tracker.store(Memory, ds->memory());
 
 				/* Wipe data structure to clean state for further usage */
 				ds->wipe();
@@ -196,7 +205,7 @@ private:
 				("tiles-x,tx", p_opt::value<int>(&this->args.tiles_x)->default_value(16), "Number of tiles in x direction.")
 				("tiles-y,ty", p_opt::value<int>(&this->args.tiles_y)->default_value(16), "Number of tiles in y direction.")
 				// VMM
-				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf_components)->default_value(8), "Number of initial VMM components.");
+				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf_components)->default_value(16), "Number of initial VMM components.");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);
