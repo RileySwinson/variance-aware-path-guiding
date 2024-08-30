@@ -224,4 +224,12 @@ Float TileCoding::pdf(Point2& pos)
     return this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
 }
 
+int TileCoding::memory()
+{
+    auto tilings_size = sizeof(this->tilings) + sizeof(Tiling) * this->tilings.capacity();
+    auto map_size = sizeof(this->guiding_map) + sizeof(Float) * this->guiding_map.capacity();
+
+    return tilings_size + map_size;
+}
+
 MTS_NAMESPACE_END

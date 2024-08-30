@@ -28,6 +28,8 @@ struct MTS_EXPORT_CORE Unidirectional : public DataStructure {
 
     std::string name() override;
 
+    int memory() override;
+
 private:
     Sample::Mode sample_mode;
     ref<Random> random = new Random();

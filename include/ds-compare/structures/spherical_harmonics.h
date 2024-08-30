@@ -424,6 +424,9 @@ public:
     DSType type() override;
 
     std::string name() override;
+
+    int memory() override;
+
 protected:
     /// Helper function for rotation() -- computes a diagonal block based on the previous level
     static void rotationBlock(const SphericalHarmonicsRotation::Matrix &M1, const SphericalHarmonicsRotation::Matrix &Mp, SphericalHarmonicsRotation::Matrix &Mn);
@@ -435,9 +438,11 @@ private:
     int m_num_samples;
     Sample::Mode m_sample_mode;
     bool m_use_offset;
-    static Float *m_normalization;
-    ref<SphericalHarmonicsSampler> sampler = nullptr;
+
+    static Float* m_normalization;
     Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
+
+    ref<SphericalHarmonicsSampler> sampler = nullptr;
 };
 
 inline Float dot(const SphericalHarmonics &v1, const SphericalHarmonics &v2) {
@@ -476,6 +481,9 @@ public:
     /// Return information on the size of the precomputed tables
     std::string toString() const;
 
+    /// Return the number of bytes used.
+    int get_memory_footprint() const;
+
     MTS_DECLARE_CLASS()
 protected:
     /// Virtual destructor
@@ -500,10 +508,10 @@ protected:
 protected:
     int m_bands;
     int m_depth;
-    Float ***m_phiMap;
-    Float ***m_legendreMap;
+    Float*** m_phiMap;
+    Float*** m_legendreMap;
     int m_dataSize;
-    Float *m_normalization;
+    Float* m_normalization;
 };
 
 MTS_NAMESPACE_END

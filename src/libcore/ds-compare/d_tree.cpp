@@ -670,4 +670,9 @@ std::string DirectionalTree::name()
     return "D-Tree";
 }
 
+int DirectionalTree::memory()
+{
+    return approxMemoryFootprint();
+}
+
 MTS_NAMESPACE_END

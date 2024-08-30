@@ -91,6 +91,9 @@ struct DS_COMPARE DataStructure {
     /// Returns the name of the data structure.
     virtual std::string name() = 0;
 
+    /// Obtains the approximate memory footprint for this data structure (in bytes).
+    virtual int memory() = 0;
+
     /* ==== Miscellaneous ==== */
 
     inline bool is_in(std::vector<int>& blacklist)

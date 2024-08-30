@@ -78,4 +78,9 @@ Float Unidirectional::pdf(Point2& coords)
     return INV_FOURPI * std::sin(coords.y);
 }
 
+int Unidirectional::memory()
+{
+    return 0; // Although this mock data structure has a size, in a real path tracing setting no data structure is used, hence we return 0.
+}
+
 MTS_NAMESPACE_END

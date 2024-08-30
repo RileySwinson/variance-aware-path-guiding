@@ -42,6 +42,8 @@ struct MTS_EXPORT_CORE VMFM : public DataStructure {
 
     std::string name() override;
 
+    int memory() override;
+
 private:
     VMMFactory factory;
     VMM8 vmm;

@@ -6,6 +6,8 @@ void VMFM::construct(DSArguments& init_data)
 {
     VMMFactoryProperties props;
     props.numInitialComponents = init_data.vmf_components;
+    props.maxKappa = 32768.0f;
+    props.rPriorWeight = 0.2f;
 
     this->factory = VMMFactory(props);
     samples.reserve(init_data.samples_learning);
@@ -20,7 +22,7 @@ void VMFM::store(std::vector<Sample>& input_samples)
 {
     for (const auto& sample : input_samples)
     {
-        Vector3 direction( // Perhaps has to be inverted, tba
+        Vector3 direction(
             std::sin(sample.theta) * std::cos(sample.phi),
             std::sin(sample.theta) * std::sin(sample.phi),
             std::cos(sample.theta)
@@ -74,6 +76,11 @@ std::string VMFM::name()
 DSType VMFM::type()
 {
     return DSType::DS_VMFMixture;
+}
+
+int VMFM::memory()
+{
+    return 0;
 }
 
 MTS_NAMESPACE_END

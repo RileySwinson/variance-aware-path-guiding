@@ -212,6 +212,8 @@ struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
 
     std::string name() override;
 
+    int memory() override;
+
     /* PPG funcs from here */
 
     void record(const DTreeRecord& rec, DTreeParams::EDirectionalFilter directionalFilter, DTreeParams::EBsdfSamplingFractionLoss bsdfSamplingFractionLoss);

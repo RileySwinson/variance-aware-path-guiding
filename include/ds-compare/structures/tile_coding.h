@@ -34,6 +34,9 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     DSType type() override;
 
     std::string name() override;
+
+    int memory() override;
+
 private:
     std::vector<Tiling> tilings;
     std::vector<Float> guiding_map;
