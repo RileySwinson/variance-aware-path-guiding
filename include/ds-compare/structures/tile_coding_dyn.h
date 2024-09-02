@@ -7,13 +7,12 @@
 MTS_NAMESPACE_BEGIN
 
 struct DynamicTile {
-    Float avg = 0;
-    std::vector<Sample*> samples;
-
-    std::array<DynamicTile*, 4> nodes;
+    Float value = 0;
+    std::array<uint32_t, 4> node_idx;
+    std::vector<uint32_t> sample_idx;
 };
 
-typedef std::vector<DynamicTile*> QuadTiling;
+typedef std::vector<DynamicTile> DynamicTiling;
 
 struct MTS_EXPORT_CORE DynamicTileCoding : public DataStructure {
     ~DynamicTileCoding() { }
@@ -39,14 +38,17 @@ struct MTS_EXPORT_CORE DynamicTileCoding : public DataStructure {
     int memory() override;
 
 private:
-    std::vector<QuadTiling> tilings;
+    std::vector<DynamicTiling> tilings;
+    std::vector<Sample> samples;
     std::vector<Float> guiding_map;
 
     int m_tiling_count = 4;
+    int m_tiling_dim = 16;
     int m_max_depth = 10;
     Float m_subdiv_thresh = 0.8;
-    Point2i m_tiling_dims; // x = width, y = height
     Sample::Mode m_mode;
+
+    Float m_highest = 0;
 
     Float pdf(Point2& pos);
 };

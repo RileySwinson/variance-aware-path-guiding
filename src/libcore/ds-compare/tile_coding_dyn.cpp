@@ -4,13 +4,19 @@ MTS_NAMESPACE_BEGIN
 
 void DynamicTileCoding::construct(DSArguments& init_data)
 {
-    // TODO
+    // TODO: Set values dynamically
+    // Note: Assert that dim must be floor(log2(dim)) == log2(dim), i.e., log2(dim) is an int
     this->m_mode = init_data.mode;
+
+    this->tilings.resize(this->m_tiling_count);
+    for (auto& tiling : this->tilings)
+    {
+        tiling.resize(this->m_tiling_dim * this->m_tiling_dim);
+    }
 }
 
 void DynamicTileCoding::preprocess()
 {
-    // TODO
     return;
 }
 

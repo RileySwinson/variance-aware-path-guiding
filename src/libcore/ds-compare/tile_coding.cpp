@@ -14,7 +14,9 @@ void TileCoding::construct(DSArguments& init_data)
     // in the postprocess step leaves the capacity of the underlying vector intact.
     tilings.resize(this->m_tiling_count);
     for (auto& tiling : this->tilings)
+    {
         tiling.resize(this->m_tiling_dims.x * this->m_tiling_dims.y);
+    }
 }
 
 void TileCoding::preprocess()
