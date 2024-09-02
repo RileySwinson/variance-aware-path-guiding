@@ -10,6 +10,8 @@
 #include <mitsuba/core/warp.h>
 #include <mitsuba/core/random.h>
 
+#include <Eigen/Core>
+
 #include <boost/algorithm/clamp.hpp>
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>

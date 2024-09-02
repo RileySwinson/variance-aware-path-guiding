@@ -3,7 +3,6 @@
 #define __DSCOMPARE_STRUCTURES_NONE_H_
 
 #include <ds-compare/ds.h>
-#include <Eigen/Core>
 
 MTS_NAMESPACE_BEGIN
 

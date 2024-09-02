@@ -6,7 +6,6 @@
 #include <pmm/VMMFactory.h>
 
 #include <ds-compare/ds.h>
-#include <Eigen/Core>
 
 MTS_NAMESPACE_BEGIN
 

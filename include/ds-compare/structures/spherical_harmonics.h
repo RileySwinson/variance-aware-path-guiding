@@ -22,7 +22,6 @@
 
 #include <ds-compare/ds.h>
 #include <mitsuba/core/quad.h>
-#include <Eigen/Core>
 
 MTS_NAMESPACE_BEGIN
 

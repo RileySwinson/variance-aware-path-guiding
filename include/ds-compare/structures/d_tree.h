@@ -3,13 +3,9 @@
 #define __DSCOMPARE_STRUCTURES_D_TREE_H_
 
 #include <ds-compare/ds.h>
-#include <Eigen/Core>
 
-#include <array>
 #include <atomic>
-#include <chrono>
 #include <fstream>
-#include <functional>
 #include <iomanip>
 #include <sstream>
 

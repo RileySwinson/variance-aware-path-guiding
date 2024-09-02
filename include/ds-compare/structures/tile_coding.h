@@ -3,7 +3,6 @@
 #define __DSCOMPARE_STRUCTURES_TILE_CODING_H_
 
 #include <ds-compare/ds.h>
-#include <Eigen/Core>
 
 MTS_NAMESPACE_BEGIN
 
@@ -14,7 +13,7 @@ struct Tile {
 
 typedef std::vector<Tile> Tiling;
 
-struct MTS_EXPORT_CORE TileCoding : public DataStructure {
+struct DS_COMPARE TileCoding : public DataStructure {
     ~TileCoding() { }
 
     void construct(DSArguments& init_data) override;
