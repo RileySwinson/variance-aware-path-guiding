@@ -1,20 +1,22 @@
 #pragma once
-#if !defined(__DSCOMPARE_STRUCTURES_TILE_CODING_H_)
-#define __DSCOMPARE_STRUCTURES_TILE_CODING_H_
+#if !defined(__DSCOMPARE_STRUCTURES_TILE_CODING_DYNAMIC_H_)
+#define __DSCOMPARE_STRUCTURES_TILE_CODING_DYNAMIC_H_
 
 #include <ds-compare/ds.h>
 
 MTS_NAMESPACE_BEGIN
 
-struct Tile {
-    Float value = 0;
-    int entries = 0;
+struct DynamicTile {
+    Float avg = 0;
+    std::vector<Sample*> samples;
+
+    std::array<DynamicTile*, 4> nodes;
 };
 
-typedef std::vector<Tile> Tiling;
+typedef std::vector<DynamicTile*> QuadTiling;
 
-struct MTS_EXPORT_CORE TileCoding : public DataStructure {
-    ~TileCoding() { }
+struct MTS_EXPORT_CORE DynamicTileCoding : public DataStructure {
+    ~DynamicTileCoding() { }
 
     void construct(DSArguments& init_data) override;
 
@@ -27,7 +29,7 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     Sample sample(Point2& pos) override;
 
     Float eval(Point2& pos) override;
-    
+
     void wipe() override;
 
     DSType type() override;
@@ -37,19 +39,18 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     int memory() override;
 
 private:
-    std::vector<Tiling> tilings;
+    std::vector<QuadTiling> tilings;
     std::vector<Float> guiding_map;
 
     int m_tiling_count = 4;
+    int m_max_depth = 10;
+    Float m_subdiv_thresh = 0.8;
     Point2i m_tiling_dims; // x = width, y = height
     Sample::Mode m_mode;
-    
-    Float m_integral = 0;
-    std::vector<Float> m_row_avgs;
 
     Float pdf(Point2& pos);
 };
 
 MTS_NAMESPACE_END
 
-#endif /* __DSCOMPARE_STRUCTURES_TILE_CODING_H_ */
+#endif /* __DSCOMPARE_STRUCTURES_TILE_CODING_DYNAMIC_H_ */

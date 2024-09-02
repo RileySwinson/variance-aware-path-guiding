@@ -26,6 +26,7 @@ public:
 		cluster.attach(new Unidirectional());
 		cluster.attach(new SphericalHarmonics());
 		cluster.attach(new TileCoding());
+		cluster.attach(new DynamicTileCoding());
 		cluster.attach(new DirectionalTree());
 		cluster.attach(new VMFM());
 		// ^^^ ... append your data structures here as you please
@@ -37,10 +38,6 @@ public:
 
 		/* Initialize random generator */
 		ref<Random> random = new Random();
-		//Properties props("halton");
-		//ref<Sampler> det_sampler = static_cast<Sampler*>(PluginManager::getInstance()->createObject(MTS_CLASS(Sampler), props));
-		//det_sampler->configure();
-		//det_sampler->generate(Point2i(0));
 
 		/* Initialize error metrics storage */
 		StatTrak& tracker = StatTrak::get();

@@ -19,7 +19,8 @@ enum DS_COMPARE DSType : int {
     DS_SphericalHarmonics,
     DS_DTree,
     DS_VMFMixture,
-    DS_TileCoding
+    DS_TileCoding,
+    DS_DynamicTileCoding
 };
 
 /**
