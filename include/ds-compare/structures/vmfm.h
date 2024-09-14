@@ -3,19 +3,32 @@
 #define __DSCOMPARE_STRUCTURES_VMFM_H_
 
 #include <pmm/DirectionalData.h>
-#include <pmm/VMMFactory.h>
+
+#include <mitsuba/guiding/GuidingDistributionFactoryVMM.h>
+#include <mitsuba/guiding/pathguidingmixturestatsfactory.h>
+#include <mitsuba/guiding/GuidingFieldFactory.h>
+#include <mitsuba/guiding/pathguidingmixturestats.h>
 
 #include <ds-compare/ds.h>
 
 MTS_NAMESPACE_BEGIN
 
+enum VMMMode {
+    Native,
+    Ruppert
+};
+
 // I mean, I get it. Ruppert et al. wanted this code to be as flexible as possible,
 // which is why everyone and their mom got a template. However, this makes dynamic
 // usage *very* painful. Here we go...
-using Scalar8 = ::lightpmm::Scalar8;
-using VMFKernel = ::lightpmm::VMFKernel<Scalar8>;
-using VMM8 = ::lightpmm::ParametricMixtureModel<VMFKernel, 8>;
-using VMMFactory = ::lightpmm::VMMFactory<VMM8>;
+using SSEScalar = ::lightpmm::Scalar4;
+using VMFKernel = ::lightpmm::VMFKernel<SSEScalar>;
+using VMM4 = ::lightpmm::ParametricMixtureModel<VMFKernel, 4>;
+using VMMStatistics = Guiding::PathGuidingMixtureStats<VMM4>;
+
+using VMMGuidingRegion = Guiding::GuidingRegion<VMM4, VMMStatistics>;
+using VMMNativeFactory = ::lightpmm::VMMFactory<VMM4>;
+using VMMRuppertFactory = Guiding::GuidingFieldFactory<VMM4, VMMStatistics>;
 
 using VMMFactoryProperties = ::lightpmm::VMMFactoryProperties;
 using VMMSample = ::lightpmm::DirectionalData;
@@ -44,8 +57,16 @@ struct MTS_EXPORT_CORE VMFM : public DataStructure {
     int memory() override;
 
 private:
-    VMMFactory factory;
-    VMM8 vmm;
+    VMMMode mode;
+
+    // Native factory + vmm
+    VMMNativeFactory factory_native;
+    VMM4 vmm_native;
+
+    // Ruppert factory + vmm
+    VMMRuppertFactory factory_ruppert;
+    VMMGuidingRegion vmm_ruppert;
+
     std::vector<VMMSample> samples;
 };
 

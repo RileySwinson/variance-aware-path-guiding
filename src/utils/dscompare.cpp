@@ -26,7 +26,7 @@ public:
 		cluster.attach(new Unidirectional());
 		cluster.attach(new SphericalHarmonics());
 		cluster.attach(new TileCoding());
-		cluster.attach(new DynamicTileCoding());
+		//cluster.attach(new DynamicTileCoding());
 		cluster.attach(new DirectionalTree());
 		cluster.attach(new VMFM());
 		// ^^^ ... append your data structures here as you please
@@ -128,8 +128,6 @@ public:
 						if (density > max) max = density;
 					})
 					.normalize(max);
-
-				//if (ds->type() == DS_VMFMixture) std::cout << (static_cast<VMFM*>(ds))->name() << "\n";
 
 				/* Write envmap to .exr file */
 				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
