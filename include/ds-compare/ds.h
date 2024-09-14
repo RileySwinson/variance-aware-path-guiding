@@ -29,17 +29,17 @@ enum DS_COMPARE DSType : int {
  * If a value is missing, the missing value may be added by the user.
  */
 struct DS_COMPARE DSArguments {
-	std::string path = "";
-    std::string result_path = "";
+	std::string path = "./data/tests/envmaps/";
+    std::string result_path = "./data/results";
     Sample::Mode mode = Sample::Mode::Cosine;
-	uint32_t samples_learning = 1024;
-    uint32_t samples_guiding = 524288;
+	uint32_t samples_learning = 16384;
+    uint32_t samples_guiding = 65536;
     std::vector<int> blacklist;
 
     bool envmap_noise = false;
     bool samples_noise = false;
 
-    int sh_bands = 5;
+    int sh_bands = 7;
     int sh_depth = 12;
     bool sh_use_offset = true;
 
@@ -53,7 +53,8 @@ struct DS_COMPARE DSArguments {
     int tiles_x = 16;
     int tiles_y = 16;
 
-    uint32_t vmf_components = 8;
+    uint32_t vmf_components = 16;
+    bool use_ruppert = false;
 };
 
 /**

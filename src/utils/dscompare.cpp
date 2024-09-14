@@ -176,31 +176,32 @@ private:
 				// Utility
 				("help,h", "Display help text.")
 				// General
-				("path,p", p_opt::value<std::string>(&this->args.path)->default_value("./data/tests/envmaps/"), "Path to envmap folder.")
-				("result-path,rp", p_opt::value<std::string>(&this->args.result_path)->default_value("./data/results"), "Path to output folder.")
-				("samples-learning,sl", p_opt::value<uint32_t>(&this->args.samples_learning)->default_value(1024), "Envmap sample count.")
-				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.samples_guiding)->default_value(524288), "Reconstruction sample count.")
-				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.mode)->default_value(Sample::Mode::Cosine), "Envmap sampling mode.")
+				("path,p", p_opt::value<std::string>(&this->args.path), "Path to envmap folder.")
+				("result-path,rp", p_opt::value<std::string>(&this->args.result_path), "Path to output folder.")
+				("samples-learning,sl", p_opt::value<uint32_t>(&this->args.samples_learning), "Envmap sample count.")
+				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.samples_guiding), "Reconstruction sample count.")
+				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.mode), "Envmap sampling mode.")
 				("blacklist,b", p_opt::value<std::vector<int>>(&this->args.blacklist)->multitoken(), "List of data structure indices that won't be run.")
 				// Noise
-				("noisy-envmap,ne", p_opt::value<bool>(&this->args.envmap_noise)->default_value(false), "Noisify input envmap?")
-				("noisy-samples,ns", p_opt::value<bool>(&this->args.samples_noise)->default_value(false), "Noisify learning samples?")
+				("noisy-envmap,ne", p_opt::value<bool>(&this->args.envmap_noise), "Noisify input envmap?")
+				("noisy-samples,ns", p_opt::value<bool>(&this->args.samples_noise), "Noisify learning samples?")
 				// Spherical Harmonics
-				("sh-bands,shb", p_opt::value<int>(&this->args.sh_bands)->default_value(5), "Number of Spherical Harmonic bands.")
-				("sh-depth,shd", p_opt::value<int>(&this->args.sh_depth)->default_value(12), "Depth of Spherical Harmonics.")
-				("sh-use-offset,sho", p_opt::value<bool>(&this->args.sh_use_offset)->default_value(true), "Apply offset to SHs?")
+				("sh-bands,shb", p_opt::value<int>(&this->args.sh_bands), "Number of Spherical Harmonic bands.")
+				("sh-depth,shd", p_opt::value<int>(&this->args.sh_depth), "Depth of Spherical Harmonics.")
+				("sh-use-offset,sho", p_opt::value<bool>(&this->args.sh_use_offset), "Apply offset to SHs?")
 				// DTree
-				("dt-fracloss,dtl", p_opt::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt_frac_loss)->default_value(DTreeParams::EBsdfSamplingFractionLoss::ENone), "Loss function during gradient descent.")
-				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt_dir_filter)->default_value(DTreeParams::EDirectionalFilter::ENearest), "Directional filter for splatting radiance samples.")
-				("dt-threshold,dtt", p_opt::value<Float>(&this->args.dt_threshold)->default_value(0.01), "Threshold for subdividing leaf nodes (percentage).")
-				("dt-iter,dti", p_opt::value<int>(&this->args.dt_iterations)->default_value(-1), "Stop after nth iteration, starting at 0 (-1 to disable).")
-				("dt-max-depth,dtd", p_opt::value<int>(&this->args.dt_max_depth)->default_value(20), "Maximum depth.")
+				("dt-fracloss,dtl", p_opt::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt_frac_loss), "Loss function during gradient descent.")
+				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt_dir_filter), "Directional filter for splatting radiance samples.")
+				("dt-threshold,dtt", p_opt::value<Float>(&this->args.dt_threshold), "Threshold for subdividing leaf nodes (percentage).")
+				("dt-iter,dti", p_opt::value<int>(&this->args.dt_iterations), "Stop after nth iteration, starting at 0 (-1 to disable).")
+				("dt-max-depth,dtd", p_opt::value<int>(&this->args.dt_max_depth), "Maximum depth.")
 				// TileCoding
-				("tilings,t", p_opt::value<int>(&this->args.tilings)->default_value(4), "Number of tilings.")
-				("tiles-x,tx", p_opt::value<int>(&this->args.tiles_x)->default_value(16), "Number of tiles in x direction.")
-				("tiles-y,ty", p_opt::value<int>(&this->args.tiles_y)->default_value(16), "Number of tiles in y direction.")
+				("tilings,t", p_opt::value<int>(&this->args.tilings), "Number of tilings.")
+				("tiles-x,tx", p_opt::value<int>(&this->args.tiles_x), "Number of tiles in x direction.")
+				("tiles-y,ty", p_opt::value<int>(&this->args.tiles_y), "Number of tiles in y direction.")
 				// VMM
-				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf_components)->default_value(16), "Number of initial VMM components.");
+				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf_components), "Number of initial VMM components.")
+				("vmm-mode,vr", p_opt::value<bool>(&this->args.use_ruppert), "Use ruppert implementation?");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);

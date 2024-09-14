@@ -13,11 +13,6 @@
 
 MTS_NAMESPACE_BEGIN
 
-enum VMMMode {
-    Native,
-    Ruppert
-};
-
 // I mean, I get it. Ruppert et al. wanted this code to be as flexible as possible,
 // which is why everyone and their mom got a template. However, this makes dynamic
 // usage *very* painful. Here we go...
@@ -57,7 +52,7 @@ struct MTS_EXPORT_CORE VMFM : public DataStructure {
     int memory() override;
 
 private:
-    VMMMode mode;
+    bool use_ruppert{ false };
 
     // Native factory + vmm
     VMMNativeFactory factory_native;

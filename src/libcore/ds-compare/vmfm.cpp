@@ -4,9 +4,16 @@ MTS_NAMESPACE_BEGIN
 
 void VMFM::construct(DSArguments& init_data)
 {
-    this->mode = VMMMode::Native;
+    this->use_ruppert = init_data.use_ruppert;
 
-    if (this->mode == VMMMode::Native)
+    if (this->use_ruppert)
+    {
+        Properties vmm_ruppert_props;
+        vmm_ruppert_props.setBoolean("parallaxCompensation", false);
+
+        this->factory_ruppert = VMMRuppertFactory(vmm_ruppert_props);
+    }
+    else
     {
         VMMFactoryProperties vmm_native_props;
         vmm_native_props.numInitialComponents = init_data.vmf_components;
@@ -14,14 +21,6 @@ void VMFM::construct(DSArguments& init_data)
         vmm_native_props.rPriorWeight = 0.2f;
 
         this->factory_native = VMMNativeFactory(vmm_native_props);
-    }
-
-    if (this->mode == VMMMode::Ruppert)
-    {
-        Properties vmm_ruppert_props;
-        vmm_ruppert_props.setBoolean("parallaxCompensation", false);
-
-        this->factory_ruppert = VMMRuppertFactory(vmm_ruppert_props);
     }
     
     samples.reserve(init_data.samples_learning);
@@ -50,11 +49,13 @@ void VMFM::store(std::vector<Sample>& input_samples)
 
 void VMFM::postprocess()
 {
-    if (this->mode == VMMMode::Native)
+    if (!this->use_ruppert)
+    {
         this->factory_native.fit(this->samples.begin(), this->samples.end(), this->vmm_native, true);
+        return;
+    }
 
-    if (this->mode == VMMMode::Ruppert)
-        this->factory_ruppert.fit(this->vmm_ruppert, this->samples);
+    this->factory_ruppert.fit(this->vmm_ruppert, this->samples);
 }
 
 Sample VMFM::sample(Point2& pos)
@@ -77,20 +78,23 @@ Float VMFM::eval(Point2& pos)
         std::cos(spherical.y)
     );
     
-    VMM4& vmm = (this->mode == VMMMode::Native) 
-        ? this->vmm_native 
-        : this->vmm_ruppert.distribution;
+    VMM4& vmm = (this->use_ruppert) 
+        ? this->vmm_ruppert.distribution
+        : this->vmm_native;
 
     return vmm.pdf(directional);
 }
 
 void VMFM::wipe()
 {
-    if (this->mode == VMMMode::Native)
-        this->vmm_native = VMM4();
-
-    if (this->mode == VMMMode::Ruppert)
+    if (this->use_ruppert)
+    {
         this->vmm_ruppert = VMMGuidingRegion();
+    } 
+    else
+    {
+        this->vmm_native = VMM4();
+    }
 
     this->samples.clear();
 }
