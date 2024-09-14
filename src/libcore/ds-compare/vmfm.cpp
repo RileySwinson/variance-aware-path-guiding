@@ -8,10 +8,14 @@ void VMFM::construct(DSArguments& init_data)
 
     if (this->use_ruppert)
     {
-        Properties vmm_ruppert_props;
-        vmm_ruppert_props.setBoolean("parallaxCompensation", false);
+        Properties props;
+        props.setSize("vmmFactory.numInitialComponents", init_data.vmf_components);
+        props.setFloat("vmmFactory.maxKappa", 32768.0f);
+        props.setFloat("vmmFactory.rPriorWeight", 0.2f);
+        props.setBoolean("parallaxCompensation", false);
+        props.setBoolean("safetyMerge", false);
 
-        this->factory_ruppert = VMMRuppertFactory(vmm_ruppert_props);
+        this->factory_ruppert = VMMRuppertFactory(props);
     }
     else
     {
@@ -42,7 +46,7 @@ void VMFM::store(std::vector<Sample>& input_samples)
         );
 
         this->samples.emplace_back(
-            VMMSample(Point3(), direction, sample.value, sample.pdf, 0.0f)
+            VMMSample(Point3(), direction, sample.value, sample.pdf, INFINITY)
         );
     }
 }
