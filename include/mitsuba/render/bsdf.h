@@ -37,159 +37,159 @@ MTS_NAMESPACE_BEGIN
  * \ingroup librender
  * \ingroup libpython
  */
-struct MTS_EXPORT_RENDER BSDFSamplingRecord {
-public:
-    /**
-     * \brief Given a surface interaction and an incident direction,
-     * construct a query record which can be used to sample an outgoing
-     * direction.
-     *
-     * By default, all components will be sampled irregardless of
-     * what measure they live on. For convenience, this function
-     * uses the local incident direction vector contained in the
-     * supplied intersection record. The mode of transport is
-     * set to \ref ERadiance -- the \ref mode fie
-     *
-     * \param its
-     *      An reference to the underlying intersection record
-     *
-     * \param sampler
-     *      A source of (pseudo-) random numbers. Note that this sampler
-     *      is only used when the scattering model for some reason needs
-     *      more than the two unformly distributed numbers supplied in
-     *      the \ref BSDF::sample() methods
-     *
-     * \param mode
-     *      The transported mode (\ref ERadiance or \ref EImportance)
-     */
-    explicit inline BSDFSamplingRecord(const Intersection &its, Sampler *sampler,
+    struct MTS_EXPORT_RENDER BSDFSamplingRecord {
+    public:
+        /**
+         * \brief Given a surface interaction and an incident direction,
+         * construct a query record which can be used to sample an outgoing
+         * direction.
+         *
+         * By default, all components will be sampled irregardless of
+         * what measure they live on. For convenience, this function
+         * uses the local incident direction vector contained in the
+         * supplied intersection record. The mode of transport is
+         * set to \ref ERadiance -- the \ref mode fie
+         *
+         * \param its
+         *      An reference to the underlying intersection record
+         *
+         * \param sampler
+         *      A source of (pseudo-) random numbers. Note that this sampler
+         *      is only used when the scattering model for some reason needs
+         *      more than the two unformly distributed numbers supplied in
+         *      the \ref BSDF::sample() methods
+         *
+         * \param mode
+         *      The transported mode (\ref ERadiance or \ref EImportance)
+         */
+        explicit inline BSDFSamplingRecord(const Intersection& its, Sampler* sampler,
             ETransportMode mode = ERadiance);
 
-    /**
-     * \brief Given a surface interaction an an incident/exitant direction
-     * pair (wi, wo), create a query record to evaluate the BSDF or its
-     * sampling density.
-     *
-     * For convenience, this function uses the local incident direction
-     * vector contained in the supplied intersection record.
-     *
-     * \param its
-     *      An reference to the underlying intersection record
-     * \param wo
-     *      An outgoing direction in local coordinates. This should
-     *      be a normalized direction vector that points \a away from
-     *      the scattering event.
-     * \param mode
-     *      The transported mode (\ref ERadiance or \ref EImportance)
-     */
-    inline BSDFSamplingRecord(const Intersection &its, const Vector &wo,
-        ETransportMode mode = ERadiance);
+        /**
+         * \brief Given a surface interaction an an incident/exitant direction
+         * pair (wi, wo), create a query record to evaluate the BSDF or its
+         * sampling density.
+         *
+         * For convenience, this function uses the local incident direction
+         * vector contained in the supplied intersection record.
+         *
+         * \param its
+         *      An reference to the underlying intersection record
+         * \param wo
+         *      An outgoing direction in local coordinates. This should
+         *      be a normalized direction vector that points \a away from
+         *      the scattering event.
+         * \param mode
+         *      The transported mode (\ref ERadiance or \ref EImportance)
+         */
+        inline BSDFSamplingRecord(const Intersection& its, const Vector& wo,
+            ETransportMode mode = ERadiance);
 
-    /**
-     * \brief Given a surface interaction an an incident/exitant direction
-     * pair (wi, wo), create a query record to evaluate the BSDF or its
-     * sampling density.
-     *
-     * \param its
-     *      An reference to the underlying intersection record
-     * \param wi
-     *      An incident direction in local coordinates. This should
-     *      be a normalized direction vector that points \a away from
-     *      the scattering event.
-     * \param wo
-     *      An outgoing direction in local coordinates. This should
-     *      be a normalized direction vector that points \a away from
-     *      the scattering event.
-     * \param mode
-     *      The transported mode (\ref ERadiance or \ref EImportance)
-     *
-     */
-    inline BSDFSamplingRecord(const Intersection &its,
-        const Vector &wi, const Vector &wo,
-        ETransportMode mode = ERadiance);
+        /**
+         * \brief Given a surface interaction an an incident/exitant direction
+         * pair (wi, wo), create a query record to evaluate the BSDF or its
+         * sampling density.
+         *
+         * \param its
+         *      An reference to the underlying intersection record
+         * \param wi
+         *      An incident direction in local coordinates. This should
+         *      be a normalized direction vector that points \a away from
+         *      the scattering event.
+         * \param wo
+         *      An outgoing direction in local coordinates. This should
+         *      be a normalized direction vector that points \a away from
+         *      the scattering event.
+         * \param mode
+         *      The transported mode (\ref ERadiance or \ref EImportance)
+         *
+         */
+        inline BSDFSamplingRecord(const Intersection& its,
+            const Vector& wi, const Vector& wo,
+            ETransportMode mode = ERadiance);
 
-    /**
-     * \brief Reverse the direction of light transport in the record
-     *
-     * This function essentially swaps \c wi and \c wo and adjusts
-     * \c mode appropriately, so that non-symmetric scattering
-     * models can be queried in the reverse direction.
-     */
-    inline void reverse();
+        /**
+         * \brief Reverse the direction of light transport in the record
+         *
+         * This function essentially swaps \c wi and \c wo and adjusts
+         * \c mode appropriately, so that non-symmetric scattering
+         * models can be queried in the reverse direction.
+         */
+        inline void reverse();
 
-    /// Return a string representation
-    std::string toString() const;
-public:
-    /// Reference to the underlying surface interaction
-    const Intersection &its;
+        /// Return a string representation
+        std::string toString() const;
+    public:
+        /// Reference to the underlying surface interaction
+        const Intersection& its;
 
-    /**
-     * \brief Pointer to a \ref Sampler instance (optional).
-     *
-     * Some BSDF implementations can significantly improve
-     * the quality of their importance sampling routines
-     * when having access to extra random numbers. This
-     * attribute provides a means of providing this
-     * capability to the BSDF.
-     */
-    Sampler *sampler;
+        /**
+         * \brief Pointer to a \ref Sampler instance (optional).
+         *
+         * Some BSDF implementations can significantly improve
+         * the quality of their importance sampling routines
+         * when having access to extra random numbers. This
+         * attribute provides a means of providing this
+         * capability to the BSDF.
+         */
+        Sampler* sampler;
 
-    /**
-     * \brief Normalized incident direction in local coordinates
-     *
-     * Mitsuba uses the convention that \c wi and \c wo
-     * point away from the scattering event
-     */
-    Vector wi;
+        /**
+         * \brief Normalized incident direction in local coordinates
+         *
+         * Mitsuba uses the convention that \c wi and \c wo
+         * point away from the scattering event
+         */
+        Vector wi;
 
-    /**
-     * \brief Normalized outgoing direction in local coordinates
-     *
-     * Mitsuba uses the convention that \c wi and \c wo
-     * point away from the scattering event
-     */
-    Vector wo;
+        /**
+         * \brief Normalized outgoing direction in local coordinates
+         *
+         * Mitsuba uses the convention that \c wi and \c wo
+         * point away from the scattering event
+         */
+        Vector wo;
 
-    /// Relative index of refraction in the sampled direction
-    Float eta;
+        /// Relative index of refraction in the sampled direction
+        Float eta;
 
-    /** \brief Transported mode (radiance or importance)
-     *
-     * This information is required for rendering with non-reciprocal
-     * BSDFs such as transmission through a dielectric material
-     */
-    ETransportMode mode;
+        /** \brief Transported mode (radiance or importance)
+         *
+         * This information is required for rendering with non-reciprocal
+         * BSDFs such as transmission through a dielectric material
+         */
+        ETransportMode mode;
 
-    /**
-     * \brief Bit mask containing the requested BSDF component types that
-     * should be sampled/evaluated.
-     *
-     * Set to \c BSDF::EAll by default. After sampling has been performed,
-     * the component type is stored inside \ref sampledType.
-     *
-     * \sa BSDF::EBSDFType
-     */
-    unsigned int typeMask;
+        /**
+         * \brief Bit mask containing the requested BSDF component types that
+         * should be sampled/evaluated.
+         *
+         * Set to \c BSDF::EAll by default. After sampling has been performed,
+         * the component type is stored inside \ref sampledType.
+         *
+         * \sa BSDF::EBSDFType
+         */
+        unsigned int typeMask;
 
-    /**
-     * \brief Integer value specifying the requested BSDF component index that
-     * should be sampled/evaluated (for multi-lobed BSDFs).
-     *
-     * After sampling has been performed, the component index is stored
-     * inside \ref sampledComponent.
-     */
-    int component;
+        /**
+         * \brief Integer value specifying the requested BSDF component index that
+         * should be sampled/evaluated (for multi-lobed BSDFs).
+         *
+         * After sampling has been performed, the component index is stored
+         * inside \ref sampledComponent.
+         */
+        int component;
 
-    /**
-     * \brief Stores the component type that was sampled by \ref BSDF::sample()
-     * \sa BSDF::EBSDFType
-     */
-    unsigned int sampledType;
+        /**
+         * \brief Stores the component type that was sampled by \ref BSDF::sample()
+         * \sa BSDF::EBSDFType
+         */
+        unsigned int sampledType;
 
-    /**
-     * \brief Stores the component index that was sampled by \ref BSDF::sample()
-     */
-    int sampledComponent;
+        /**
+         * \brief Stores the component index that was sampled by \ref BSDF::sample()
+         */
+        int sampledComponent;
 };
 
 
@@ -227,66 +227,85 @@ public:
         // =============================================================
 
         /// 'null' scattering event, i.e. particles do not undergo deflection
-        ENull                 = 0x00001,
+        ENull = 0x00001,
         /// Ideally diffuse reflection
-        EDiffuseReflection    = 0x00002,
+        EDiffuseReflection = 0x00002,
         /// Ideally diffuse transmission
-        EDiffuseTransmission  = 0x00004,
+        EDiffuseTransmission = 0x00004,
         /// Glossy reflection
-        EGlossyReflection     = 0x00008,
+        EGlossyReflection = 0x00008,
         /// Glossy transmission
-        EGlossyTransmission   = 0x00010,
+        EGlossyTransmission = 0x00010,
         /// Reflection into a discrete set of directions
-        EDeltaReflection      = 0x00020,
+        EDeltaReflection = 0x00020,
         /// Transmission into a discrete set of directions
-        EDeltaTransmission    = 0x00040,
+        EDeltaTransmission = 0x00040,
         /// Reflection into a 1D space of directions
-        EDelta1DReflection    = 0x00080,
+        EDelta1DReflection = 0x00080,
         /// Transmission into a 1D space of directions
-        EDelta1DTransmission  = 0x00100,
+        EDelta1DTransmission = 0x00100,
 
         // =============================================================
         //!                   Other lobe attributes
         // =============================================================
         /// The lobe is not invariant to rotation around the normal
-        EAnisotropic          = 0x01000,
+        EAnisotropic = 0x01000,
         /// The BSDF depends on the UV coordinates
-        ESpatiallyVarying     = 0x02000,
+        ESpatiallyVarying = 0x02000,
         /// Flags non-symmetry (e.g. transmission in dielectric materials)
-        ENonSymmetric         = 0x04000,
+        ENonSymmetric = 0x04000,
         /// Supports interactions on the front-facing side
-        EFrontSide            = 0x08000,
+        EFrontSide = 0x08000,
         /// Supports interactions on the back-facing side
-        EBackSide             = 0x10000,
+        EBackSide = 0x10000,
         /// Uses extra random numbers from the supplied sampler instance
-        EUsesSampler          = 0x20000
+        EUsesSampler = 0x20000,
+        /// The lobe is based on incident radiance rather than surface reflectance
+        EGuiding = 0x40000
     };
 
     /// Convenient combinations of flags from \ref EBSDFType
     enum ETypeCombinations {
         /// Any reflection component (scattering into discrete, 1D, or 2D set of directions)
-        EReflection   = EDiffuseReflection | EDeltaReflection
-            | EDelta1DReflection | EGlossyReflection,
+        EReflection = EDiffuseReflection | EDeltaReflection
+        | EDelta1DReflection | EGlossyReflection,
         /// Any transmission component (scattering into discrete, 1D, or 2D set of directions)
         ETransmission = EDiffuseTransmission | EDeltaTransmission
-            | EDelta1DTransmission | EGlossyTransmission | ENull,
+        | EDelta1DTransmission | EGlossyTransmission | ENull,
         /// Diffuse scattering into a 2D set of directions
-        EDiffuse      = EDiffuseReflection | EDiffuseTransmission,
+        EDiffuse = EDiffuseReflection | EDiffuseTransmission,
         /// Non-diffuse scattering into a 2D set of directions
-        EGlossy       = EGlossyReflection | EGlossyTransmission,
+        EGlossy = EGlossyReflection | EGlossyTransmission,
         /// Scattering into a 2D set of directions
-        ESmooth       = EDiffuse | EGlossy,
+        ESmooth = EDiffuse | EGlossy,
         /// Scattering into a discrete set of directions
-        EDelta        = ENull | EDeltaReflection | EDeltaTransmission,
+        EDelta = ENull | EDeltaReflection | EDeltaTransmission,
         /// Scattering into a 1D space of directions
-        EDelta1D      = EDelta1DReflection | EDelta1DTransmission,
+        EDelta1D = EDelta1DReflection | EDelta1DTransmission,
         /// Any kind of scattering
-        EAll          = EDiffuse | EGlossy | EDelta | EDelta1D
+        EAll = EDiffuse | EGlossy | EDelta | EDelta1D
     };
+
+    enum EBSDFModel {
+        EMSmoothDiffuse,
+        EMPhong,
+        EMTorrance,
+        EMConductor,
+        EMRoughConductor,
+        EMDielectric,
+        EMRoughDielectric,
+        EMPlastic,
+        EMRoughPlastic,
+        EMOther
+    };
+
+    inline EBSDFModel getModel() const {
+        return m_model;
+    }
 
     /// Return the number of components of this BSDF
     inline int getComponentCount() const {
-        return (int) m_components.size();
+        return (int)m_components.size();
     }
 
     /**
@@ -313,11 +332,14 @@ public:
     inline static EMeasure getMeasure(unsigned int componentType) {
         if (componentType & ESmooth) {
             return ESolidAngle;
-        } else if (componentType & EDelta) {
+        }
+        else if (componentType & EDelta) {
             return EDiscrete;
-        } else if (componentType & EDelta1D) {
+        }
+        else if (componentType & EDelta1D) {
             return ELength;
-        } else {
+        }
+        else {
             Log(EError, "getMeasure(): Invalid component type!");
             return ESolidAngle; // will never be reached
         }
@@ -334,11 +356,29 @@ public:
     }
 
     /// Return the diffuse reflectance value (if any)
-    virtual Spectrum getDiffuseReflectance(const Intersection &its) const;
+    virtual Spectrum getDiffuseReflectance(const Intersection& its) const;
 
     /// Return the specular reflectance value (if any)
-    virtual Spectrum getSpecularReflectance(const Intersection &its) const {
+    virtual Spectrum getSpecularReflectance(const Intersection& its) const {
         return Spectrum(0.0f);
+    }
+
+    virtual Float getGlossySamplingRate(const BSDFSamplingRecord& bRec) const {
+        if ((m_combinedType & EAll & ~EGlossy) == 0)
+            return 1.0f;
+
+        if (EXPECT_NOT_TAKEN(hasComponent(EGlossy)))
+            Log(EWarn, "getGlossySamplingRate not implemented in %s. Defaulting to 0.", getClass()->getName().c_str());
+        return 0.0f;
+    }
+
+    virtual Float getDeltaSamplingRate(const BSDFSamplingRecord& bRec) const {
+        if ((m_combinedType & EAll & ~EDelta) == 0)
+            return 1.0f;
+
+        if (EXPECT_NOT_TAKEN(hasComponent(EDelta)))
+            Log(EWarn, "getDeltaSamplingRate not implemented in %s. Defaulting to 0.", getClass()->getName().c_str());
+        return 0.0f;
     }
 
     /**
@@ -366,7 +406,7 @@ public:
      *         sample function instead.
      *
      */
-    virtual Spectrum sample(BSDFSamplingRecord &bRec, const Point2 &sample) const = 0;
+    virtual Spectrum sample(BSDFSamplingRecord& bRec, const Point2& sample) const = 0;
 
     /**
      * \brief Sample the BSDF and return the probability density \a and the
@@ -394,8 +434,8 @@ public:
      * \remark From Python, this function is is called using the syntax
      *         <tt>value, pdf = bsdf.sample(bRec, sample)</tt>
      */
-    virtual Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf,
-        const Point2 &sample) const = 0;
+    virtual Spectrum sample(BSDFSamplingRecord& bRec, Float& pdf,
+        const Point2& sample) const = 0;
 
     /**
      * \brief Evaluate the BSDF f(wi, wo) or its adjoint version f^{*}(wi, wo)
@@ -414,7 +454,7 @@ public:
      *     different measures. (E.g. a diffuse material with an
      *     ideally smooth dielectric coating).
      */
-    virtual Spectrum eval(const BSDFSamplingRecord &bRec,
+    virtual Spectrum eval(const BSDFSamplingRecord& bRec,
         EMeasure measure = ESolidAngle) const = 0;
 
     /**
@@ -437,7 +477,7 @@ public:
      *     different measures. (E.g. a diffuse material with an
      *     ideally smooth dielectric coating).
      */
-    virtual Float pdf(const BSDFSamplingRecord &bRec,
+    virtual Float pdf(const BSDFSamplingRecord& bRec,
         EMeasure measure = ESolidAngle) const = 0;
 
     /**
@@ -456,7 +496,7 @@ public:
      *
      * An infinite value indicates a component that is ideally diffuse
      */
-    virtual Float getRoughness(const Intersection &its, int index) const;
+    virtual Float getRoughness(const Intersection& its, int index) const;
 
     /**
      * \brief Sometimes, BSDF models make use of a perturbed frame for
@@ -465,7 +505,7 @@ public:
      *
      * By default, it returns <tt>its.shFrame</tt>
      */
-    virtual Frame getFrame(const Intersection &its) const;
+    virtual Frame getFrame(const Intersection& its) const;
 
     /**
      * \brief Sometimes, BSDF models make use of a perturbed frame for
@@ -473,8 +513,8 @@ public:
      * computes the derivative of this frame with respect to the UV
      * parameterization of the underlying shape.
      */
-    virtual void getFrameDerivative(const Intersection &its,
-            Frame &du, Frame &dv) const;
+    virtual void getFrameDerivative(const Intersection& its,
+        Frame& du, Frame& dv) const;
 
     // =============================================================
     //! @{ \name ConfigurableObject interface
@@ -484,27 +524,56 @@ public:
     virtual void configure();
 
     /// Add a child object
-    virtual void addChild(const std::string &string, ConfigurableObject *obj);
+    virtual void addChild(const std::string& string, ConfigurableObject* obj);
 
     /// Add an unnamed child
-    inline void addChild(ConfigurableObject *child) { addChild("", child); }
+    inline void addChild(ConfigurableObject* child) { addChild("", child); }
 
     /// Serialize this object to a stream
-    virtual void serialize(Stream *stream, InstanceManager *manager) const;
+    virtual void serialize(Stream* stream, InstanceManager* manager) const;
 
     /// Set the parent object
-    virtual void setParent(ConfigurableObject *parent);
+    virtual void setParent(ConfigurableObject* parent);
 
     //! @}
     // =============================================================
 
+    inline int getUID() const {
+        return m_uid;
+    }
+
+    inline void setUID(const int& uid) {
+        this->m_uid = uid;
+    }
+
+    virtual int numNestedBSDFs() const
+    {
+        return 0;
+    }
+
+    virtual ref<BSDF> getNestedBSDF(const int idx) const {
+        return nullptr;
+    }
+
+    virtual ref<Texture> getDiffuseReflectanceTexture() const {
+        return nullptr;
+    }
+
+    virtual ref<Texture> getSpecularReflectanceTexture() const {
+        return nullptr;
+    }
+
+    virtual ref<Texture> getRoughnessTexture() const {
+        return nullptr;
+    }
+
     MTS_DECLARE_CLASS()
 protected:
     /// Create a new BSDF instance
-    BSDF(const Properties &props);
+    BSDF(const Properties& props);
 
     /// Unserialize a BSDF instance
-    BSDF(Stream *stream, InstanceManager *manager);
+    BSDF(Stream* stream, InstanceManager* manager);
 
     /**
      * \brief Convenience function to ensure energy conservation
@@ -516,8 +585,8 @@ protected:
      * scaling factor chosen so that the desired maximum \c max
      * is abided) and prints a warning.
      */
-    Texture *ensureEnergyConservation(Texture *tex,
-        const std::string &paramName, Float max) const;
+    Texture* ensureEnergyConservation(Texture* tex,
+        const std::string& paramName, Float max) const;
 
     /**
      * \brief Convenience function to ensure energy conservation
@@ -529,9 +598,9 @@ protected:
      * scaling factor chosen so that the desired maximum \c max
      * is abided) and prints a warning.
      */
-    std::pair<Texture *, Texture *> ensureEnergyConservation(
-        Texture *tex1, Texture *tex2, const std::string &paramName1,
-        const std::string &paramName2, Float max) const;
+    std::pair<Texture*, Texture*> ensureEnergyConservation(
+        Texture* tex1, Texture* tex2, const std::string& paramName1,
+        const std::string& paramName2, Float max) const;
 
     /// Virtual destructor
     virtual ~BSDF();
@@ -540,6 +609,8 @@ protected:
     unsigned int m_combinedType;
     bool m_usesRayDifferentials;
     bool m_ensureEnergyConservation;
+    int m_uid{ -1 };
+    EBSDFModel m_model{ EBSDFModel::EMOther };
 };
 
 MTS_NAMESPACE_END
