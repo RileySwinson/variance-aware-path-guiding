@@ -86,8 +86,12 @@ public:
 					Float lum = envmap.get_pixel_luminance(coords);
 					for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = lum;
 					if (lum > max) max = lum;
-				})
-				.normalize(max);
+				});
+
+			if (this->args.normalize)
+			{
+				gt.normalize(max);
+			}
 
 			gt.write(folder_path + "/base.exr");
 
@@ -126,8 +130,12 @@ public:
 						Float density = ds->eval(norm);
 						for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = density;
 						if (density > max) max = density;
-					})
-					.normalize(max);
+					});
+
+				if (this->args.normalize)
+				{
+					em.normalize(max);
+				}
 
 				/* Write envmap to .exr file */
 				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
@@ -182,6 +190,7 @@ private:
 				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.samples_guiding), "Reconstruction sample count.")
 				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.mode), "Envmap sampling mode.")
 				("blacklist,b", p_opt::value<std::vector<int>>(&this->args.blacklist)->multitoken(), "List of data structure indices that won't be run.")
+				("normalize,n", p_opt::value<bool>(&this->args.normalize), "Normalize?")
 				// Noise
 				("noisy-envmap,ne", p_opt::value<bool>(&this->args.envmap_noise), "Noisify input envmap?")
 				("noisy-samples,ns", p_opt::value<bool>(&this->args.samples_noise), "Noisify learning samples?")

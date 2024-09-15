@@ -132,7 +132,7 @@ void TileCoding::postprocess()
     Float result_row = 0;
     for (int i = 0; i < this->guiding_map.size(); ++i)
     {
-        Float& value = this->guiding_map.at(i);
+        Float value = this->guiding_map.at(i);
         value /= biggest; // Normalize first
 
         result_row += value;
