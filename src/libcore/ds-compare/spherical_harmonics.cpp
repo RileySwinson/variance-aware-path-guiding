@@ -150,7 +150,8 @@ std::string SphericalHarmonics::name()
 
 int SphericalHarmonics::memory()
 {
-    return this->sampler->get_memory_footprint();
+    // number of coefficients * bytes in float + coefficient pointer size + 2 * bytes in int (#bands, #samples)
+    return this->m_coeffs.size() * sizeof(Float) + sizeof(this->m_coeffs) + 2 * sizeof(this->m_bands);
 }
 
 void SphericalHarmonics::serialize(Stream* stream) const {
@@ -515,10 +516,6 @@ std::string SphericalHarmonicsSampler::toString() const {
     oss << "SphericalHarmonicsSampler[bands=" << m_bands << ", depth=" << m_depth
         << ", size=" << (m_dataSize*sizeof(double))/1024 << " KiB]";
     return oss.str();
-}
-
-int SphericalHarmonicsSampler::get_memory_footprint() const {
-    return this->m_dataSize * sizeof(Float);
 }
 
 Float SphericalHarmonicsSampler::warp(const SphericalHarmonics &f, Point2 &sample) const {

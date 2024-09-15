@@ -480,9 +480,6 @@ public:
     /// Return information on the size of the precomputed tables
     std::string toString() const;
 
-    /// Return the number of bytes used.
-    int get_memory_footprint() const;
-
     MTS_DECLARE_CLASS()
 protected:
     /// Virtual destructor
