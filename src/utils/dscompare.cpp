@@ -96,7 +96,7 @@ public:
 			/* Iterate over data structures... */
 			uint8_t curr_i = 1;
 			cluster.for_each([&](DataStructure* ds) {
-				if (ds->is_in(this->args.blacklist)) return;
+				if (ds->is_in(this->args.blacklist.begin(), this->args.blacklist.end())) return;
 
 				Log(EInfo, "[%s] | Active structure: '%s' (%i)",
 					(std::to_string(curr_i) + "/" + std::to_string(cluster.size())).c_str(),

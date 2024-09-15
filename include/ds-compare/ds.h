@@ -98,10 +98,11 @@ struct DS_COMPARE DataStructure {
 
     /* ==== Miscellaneous ==== */
 
-    inline bool is_in(std::vector<int>& blacklist)
+    template<class Iterator>
+    inline bool is_in(Iterator start, Iterator end)
     {
-        if (blacklist.empty()) return false;
-        return (std::find(blacklist.begin(), blacklist.end(), type()) != blacklist.end());
+        if (start == end) return false;
+        return (std::find(start, end, type()) != end);
     }
 };
 
