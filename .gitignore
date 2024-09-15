@@ -39,6 +39,7 @@ Mitsuba.app
 # Imported geometry and some default output types
 /meshes
 /textures
+data/tests/*
 mitsuba.*.log
 *.exr
 *.hdr
