@@ -141,7 +141,7 @@ public:
         TScalar e = lightpmm::exp(kappa*t);
         PMM_ASSERT(lightpmm::is_entirely_finite(e));
         return norm * e;
-     }
+    }
 
     PMM_INLINE Vector3 sample(const uint32_t idx, const Point2 random) const
     {

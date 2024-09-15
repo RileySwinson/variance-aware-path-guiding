@@ -46,7 +46,7 @@ void VMFM::store(std::vector<Sample>& input_samples)
         );
 
         this->samples.emplace_back(
-            VMMSample(Point3(), direction, sample.value, sample.pdf, INFINITY)
+            VMMSample(Point3(), direction, sample.value, sample.pdf, Epsilon)
         );
     }
 }
@@ -115,8 +115,17 @@ DSType VMFM::type()
 
 int VMFM::memory()
 {
-    // TODO
-    return 0;
+    // It completely suffices to call sizeof, as there is no dynamic storage or
+    // similar used in this vMFM implementation. This obviously only serves as a
+    // lower bound, as there still may be platform-dependent dynamic allocations
+    // happening, but this generally applies to all memory approximations.
+
+    if (!this->use_ruppert)
+    {
+        return sizeof(this->vmm_native);
+    }
+
+    return sizeof(this->vmm_ruppert);
 }
 
 MTS_NAMESPACE_END
