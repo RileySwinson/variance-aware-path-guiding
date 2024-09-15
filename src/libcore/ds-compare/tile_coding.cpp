@@ -228,8 +228,18 @@ Float TileCoding::pdf(Point2& pos)
 
 int TileCoding::memory()
 {
-    auto tilings_size = sizeof(this->tilings) + sizeof(Tiling) * this->tilings.capacity();
-    auto map_size = sizeof(this->guiding_map) + sizeof(Float) * this->guiding_map.capacity();
+    // Calc size of tilings
+    int tilings_size = 0;
+    for (const auto& tiling : this->tilings)
+    {
+        // tile bytes * number of Tiles + vector bytes
+        const int tiling_size = (sizeof(Tile) * tiling.capacity()) + sizeof(Tiling);
+        tilings_size += tiling_size;
+    }
+    tilings_size += sizeof(this->tilings);
+
+    // Calc size of map
+    int map_size = sizeof(float) * this->guiding_map.capacity() + sizeof(this->guiding_map);
 
     return tilings_size + map_size;
 }
