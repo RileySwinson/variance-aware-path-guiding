@@ -23,6 +23,7 @@
 #include <ctime>
 #include <ratio>
 #include <chrono>
+#include <bit>
 
 #if !defined(DS_COMPARE)
     #define DS_COMPARE MTS_IMPORT

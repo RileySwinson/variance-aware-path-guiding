@@ -53,7 +53,7 @@ data_structures = [
         'd_tree.cpp',
         'spherical_harmonics.cpp',
         'tile_coding.cpp',
-        'tile_coding_dyn.cpp',
+        'binary_tile_coding.cpp',
         'unidir.cpp',
         'vmfm.cpp'
 ]

@@ -8,7 +8,7 @@
 #include <ds-compare/structures/spherical_harmonics.h>
 #include <ds-compare/structures/d_tree.h>
 #include <ds-compare/structures/tile_coding.h>
-#include <ds-compare/structures/tile_coding_dyn.h>
+#include <ds-compare/structures/binary_tile_coding.h>
 #include <ds-compare/structures/vmfm.h>
 
 /* ==================== */
