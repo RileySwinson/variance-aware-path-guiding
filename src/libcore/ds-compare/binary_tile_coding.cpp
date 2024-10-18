@@ -1,4 +1,5 @@
 #include <ds-compare/structures/binary_tile_coding.h>
+#include <iomanip>
 
 MTS_NAMESPACE_BEGIN
 
@@ -11,12 +12,18 @@ bool BinaryTile::is_leaf() const
     return (this->idx_first == -1) && (this->idx_second == -1);
 }
 
+/// Checks if the current tile fulfills all criteria for splitting.
+/// Make sure that this tile isn't a leaf by checking against !is_leaf() before!
 bool BinaryTile::is_splittable() const
 {
-    bool above_thresholds = (this->meta_data.sample_count > BinaryTileCoding::MIN_SAMPLES) 
-        && (this->cov.x > BinaryTileCoding::SUBDIV_THRESHOLD || this->cov.y > BinaryTileCoding::SUBDIV_THRESHOLD);
-    
-    return is_leaf() && above_thresholds;
+    // Are there enough samples in this cell?
+    if (this->meta_data.sample_count < BinaryTileCoding::MIN_SAMPLES)
+    {
+        return false;
+    }
+
+    return (std::abs(covar(HORIZONTAL)) > BinaryTileCoding::SUBDIV_THRESHOLD 
+        || std::abs(covar(VERTICAL)) > BinaryTileCoding::SUBDIV_THRESHOLD);
 }
 
 SplitDirection BinaryTile::split_direction() const
@@ -26,14 +33,36 @@ SplitDirection BinaryTile::split_direction() const
 
 void BinaryTile::update_covariance(Sample& sample)
 {
-    // TODO
-    return;
+    auto samples = this->meta_data.sample_count;
+    float value_mean = (samples > 0)
+        ? (this->value / samples)
+        : 0;
+
+    auto n = samples + 1;
+
+    float dx = sample.value - value_mean;
+    auto dy_x = [&sample, this]() { return sample.phi - this->sample_mean.x; };
+    auto dy_y = [&sample, this]() { return sample.theta - this->sample_mean.y; };
+
+    // Update x covariance
+    this->sample_mean.x += dy_x() / n;
+    this->cov.x += dx * dy_x();
+
+    // Update y covariance
+    this->sample_mean.y += dy_y() / n;
+    this->cov.y += dx * dy_y();
 }
 
 void BinaryTile::update_value(Sample& sample)
 {
     this->value += sample.value;
     this->meta_data.sample_count++;
+}
+
+float BinaryTile::covar(SplitDirection dir) const
+{
+    float c = (dir == HORIZONTAL) ? this->cov.x : this->cov.y;
+    return c / (this->meta_data.sample_count - 1);
 }
 
 /* ============ */
@@ -80,10 +109,15 @@ void BinaryTiling::insert(Sample& sample, Point2i& tile_dims)
             curr_tile = this->tiles.at(curr_tile.idx_second);
         }
     }
-    
+
+    Sample updater;
+    updater.value = sample.value;
+    updater.phi = x_pos;
+    updater.theta = y_pos;
+
     // Store value & update covariance
-    curr_tile.update_value(sample);
-    curr_tile.update_covariance(sample);
+    curr_tile.update_covariance(updater);
+    curr_tile.update_value(updater);
     
     // Split if necessary
     if (!curr_tile.is_splittable()) return;
@@ -91,10 +125,10 @@ void BinaryTiling::insert(Sample& sample, Point2i& tile_dims)
     this->tiles.push_back(BinaryTile());
     this->tiles.push_back(BinaryTile());
 
-    curr_tile.idx_first = this->tiles.size() - 1;
+    curr_tile.idx_first = this->tiles.size();
     curr_tile.idx_second = curr_tile.idx_first + 1;
     
-    curr_tile.meta_data.split = (curr_tile.cov.x > BinaryTileCoding::SUBDIV_THRESHOLD) 
+    curr_tile.meta_data.split = (std::abs(curr_tile.covar(VERTICAL)) > BinaryTileCoding::SUBDIV_THRESHOLD) 
         ? VERTICAL 
         : HORIZONTAL;
 }
@@ -134,8 +168,8 @@ void BinaryTileCoding::preprocess()
     {
         BinaryTiling& tiling = this->tilings.at(i);
 
-        Point2 x_range(0 - (i * offset.x), 1 + ((this->m_tiling_count - 1 - i) * offset.x));
-        Point2 y_range(0 - ((this->m_tiling_count - 1 - i) * offset.y), 1 + (i * offset.y));
+        Point2 x_range(0 - (i * offset.x), 1 + ((num_tilings - 1 - i) * offset.x));
+        Point2 y_range(0 - ((num_tilings - 1 - i) * offset.y), 1 + (i * offset.y));
 
         Float x_factor = 1.0 / (x_range.y - x_range.x);
         Float y_factor = 1.0 / (y_range.y - y_range.x);

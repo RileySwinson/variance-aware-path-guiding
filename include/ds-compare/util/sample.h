@@ -55,6 +55,13 @@ struct DS_COMPARE Sample {
 		
 		this->value = boost::algorithm::clamp(this->value * noise_factor, 0, this->value);
 	}
+
+	std::string to_string()
+	{
+		return "value » " + std::to_string(this->value) + "\n"
+			+ "pdf » " + std::to_string(this->pdf) + "\n"
+			+ "φ » " + std::to_string(this->phi) + " | θ » " + std::to_string(this->theta);
+	}
 };
 
 MTS_NAMESPACE_END

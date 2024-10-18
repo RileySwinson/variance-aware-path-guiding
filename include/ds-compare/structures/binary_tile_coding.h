@@ -14,10 +14,11 @@ enum SplitDirection {
 struct Bitfield32 {
     unsigned int split : 1; // how a tile is split -- 0 = horizontal, 1 = vertical
     unsigned int sample_count : 31; // number of samples in a tile
-}
+};
 
 struct BinaryTile {
     Point2f cov;
+    Point2f sample_mean;
     float value;
 
     uint32_t idx_first = -1;
@@ -30,7 +31,8 @@ struct BinaryTile {
     SplitDirection split_direction() const;
     void update_covariance(Sample& sample);
     void update_value(Sample& sample);
-}
+    float covar(SplitDirection dir) const;
+};
 
 struct BinaryTiling {
     std::vector<BinaryTile> tiles;
@@ -39,12 +41,12 @@ struct BinaryTiling {
     Point2f factors;
 
     void insert(Sample& sample, Point2i& tile_dims);
-}
+};
 
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
-    static const float SUBDIV_THRESHOLD = 0.15f;
-    static const int MIN_SAMPLES = 30;
-    
+    static constexpr float SUBDIV_THRESHOLD = 0.15f;
+    static constexpr int MIN_SAMPLES = 30;
+
     ~BinaryTileCoding() { }
 
     void construct(DSArguments& init_data) override;
@@ -65,7 +67,7 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
 private:
     std::vector<BinaryTiling> tilings;
     Point2i tile_dims;
-}
+};
 
 MTS_NAMESPACE_END 
 
