@@ -19,7 +19,7 @@ struct Bitfield32 {
 struct BinaryTile {
     Point2f cov;
     Point2f sample_mean;
-    float value;
+    float value = 0;
 
     uint32_t idx_first = -1;
     uint32_t idx_second = -1;
@@ -27,7 +27,7 @@ struct BinaryTile {
     Bitfield32 meta_data;
 
     bool is_leaf() const;
-    bool is_splittable() const;
+    bool should_split() const;
     SplitDirection split_direction() const;
     void update_covariance(Sample& sample);
     void update_value(Sample& sample);
@@ -40,12 +40,14 @@ struct BinaryTiling {
     Point2f start_vals;
     Point2f factors;
 
+    BinaryTile* find_tile(Point2& uv, Point2i& tile_dims, int& depth);
     void insert(Sample& sample, Point2i& tile_dims);
 };
 
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
-    static constexpr float SUBDIV_THRESHOLD = 0.15f;
-    static constexpr int MIN_SAMPLES = 30;
+    static constexpr float SUBDIV_THRESHOLD = 0.10f;
+    static constexpr int MIN_SAMPLES = 100;
+    static constexpr int MAX_DEPTH = 10;
 
     ~BinaryTileCoding() { }
 
