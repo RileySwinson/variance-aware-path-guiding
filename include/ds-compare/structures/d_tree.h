@@ -19,21 +19,6 @@ struct MTS_EXPORT_CORE DTreeRecord {
     bool isDelta;
 };
 
-struct RandomGen {
-    Float next1D() {
-        return m_random->nextFloat();
-    }
-
-    Point2 next2D() {
-        Float v1 = m_random->nextFloat();
-        Float v2 = m_random->nextFloat();
-        return Point2(v1, v2);
-    }
-
-private:
-    ref<Random> m_random = new Random();
-};
-
 class MTS_EXPORT_CORE BlobWriter {
 public:
     BlobWriter(const std::string& filename);
