@@ -64,11 +64,22 @@ void VMFM::postprocess()
 
 Sample VMFM::sample(Point2& pos)
 {
+    VMM4& vmm = this->use_ruppert
+        ? this->vmm_ruppert.distribution
+        : this->vmm_native;
+
+    Vector3 dir = vmm.sample(pos);
+    float pdf = vmm.pdf(dir);
+
+    Float theta = std::acos(dir.z);
+    Float phi = std::atan2(dir.y, dir.x);
+    if (phi < 0) phi += 2 * M_PI;
+
     Sample sample;
     sample.value = 0.0f;
-    sample.pdf = 0.0f;
-    sample.phi = 0.0f;
-    sample.theta = 0.0f;
+    sample.pdf = pdf;
+    sample.phi = phi;
+    sample.theta = theta;
 
     return sample;
 }
@@ -82,7 +93,7 @@ Float VMFM::eval(Point2& pos)
         std::cos(spherical.y)
     );
     
-    VMM4& vmm = (this->use_ruppert) 
+    VMM4& vmm = this->use_ruppert
         ? this->vmm_ruppert.distribution
         : this->vmm_native;
 
