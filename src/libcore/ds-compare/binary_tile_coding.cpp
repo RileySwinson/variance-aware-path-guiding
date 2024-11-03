@@ -372,7 +372,17 @@ std::string BinaryTileCoding::name()
 
 int BinaryTileCoding::memory()
 {
-    return 0;
+    size_t size_self = sizeof(this) + sizeof(BinaryTileCoding); // base layer size
+    size_t size_tilings = this->tilings.capacity() * sizeof(BinaryTiling); // #tilings * base tiling size
+    
+    size_t size_tiles = 0;
+    for (const auto& tiling : this->tilings)
+    {
+        // #tiles * constant tile size
+        size_tiles += tiling.tiles.capacity() * sizeof(BinaryTile);
+    }
+
+    return size_self + size_tilings + size_tiles;
 }
 
 MTS_NAMESPACE_END

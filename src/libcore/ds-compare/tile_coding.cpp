@@ -241,7 +241,7 @@ int TileCoding::memory()
     // Calc size of map
     int map_size = sizeof(float) * this->guiding_map.capacity() + sizeof(this->guiding_map);
 
-    return tilings_size + map_size;
+    return sizeof(this) + tilings_size + map_size;
 }
 
 MTS_NAMESPACE_END
