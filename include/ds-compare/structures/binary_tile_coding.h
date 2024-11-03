@@ -19,19 +19,25 @@ struct Bitfield32 {
 struct BinaryTile {
     Point2f cov;
     Point2f sample_mean;
-    float value = 0;
+    float m2 = 0;
+    float diff_sum = 0;
+    float sum = 0;
 
     uint32_t idx_first = -1;
     uint32_t idx_second = -1;
-
-    Bitfield32 meta_data;
+    Bitfield32 data;
 
     bool is_leaf() const;
-    bool should_split() const;
+    bool should_split(int depth) const;
     SplitDirection split_direction() const;
-    void update_covariance(Sample& sample);
-    void update_value(Sample& sample);
+    void update_statistics(Sample& sample);
+    void update_sum(Sample& sample);
+
     float covar(SplitDirection dir) const;
+    float meandev(int depth) const;
+    float var(int depth) const;
+    float adjusted_covar(SplitDirection dir) const;
+    float mean() const;
 };
 
 struct BinaryTiling {
@@ -45,7 +51,7 @@ struct BinaryTiling {
 };
 
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
-    static constexpr float SUBDIV_THRESHOLD = 0.10f;
+    static constexpr float SUBDIV_THRESHOLD = 0.05f;
     static constexpr int MIN_SAMPLES = 100;
     static constexpr int MAX_DEPTH = 10;
 
@@ -69,6 +75,8 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
 private:
     std::vector<BinaryTiling> tilings;
     Point2i tile_dims;
+
+    static RandomGen random;
 };
 
 MTS_NAMESPACE_END 

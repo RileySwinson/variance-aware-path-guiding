@@ -1,7 +1,5 @@
 #include <ds-compare/structures/binary_tile_coding.h>
 
-// TODO: Figure out something to avoid passing in tile dims each time we wanna fetch a tile by uv
-
 MTS_NAMESPACE_BEGIN
 
 /* ========== */
@@ -15,29 +13,32 @@ bool BinaryTile::is_leaf() const
 
 /// Checks if the current tile fulfills all criteria for splitting.
 /// Make sure that this tile is a leaf by checking against is_leaf() before!
-bool BinaryTile::should_split() const
+bool BinaryTile::should_split(int depth) const
 {
-    // Are there enough samples in this cell?
-    if (this->meta_data.sample_count < BinaryTileCoding::MIN_SAMPLES)
+    if (this->data.sample_count < 2)
     {
         return false;
     }
+    
+    float diff = meandev(depth) - BinaryTileCoding::SUBDIV_THRESHOLD;
+    float stderr = var(depth) / std::sqrt(this->data.sample_count);
+    
+    float t_own = diff / stderr;
+    float t_obt = TTable95::fetch(this->data.sample_count - 1);
 
-    // Does the covariance exceed the threshold for splitting in any direction?
-    return (std::sqrt(std::abs(covar(HORIZONTAL))) > BinaryTileCoding::SUBDIV_THRESHOLD 
-        || std::sqrt(std::abs(covar(VERTICAL))) > BinaryTileCoding::SUBDIV_THRESHOLD);
+    return (t_own > t_obt);
 }
 
 SplitDirection BinaryTile::split_direction() const
 {
-    return static_cast<SplitDirection>(this->meta_data.split);
+    return static_cast<SplitDirection>(this->data.split);
 }
 
-void BinaryTile::update_covariance(Sample& sample)
+void BinaryTile::update_statistics(Sample& sample)
 {
-    auto samples = this->meta_data.sample_count;
+    auto samples = this->data.sample_count;
     float value_mean = (samples > 0)
-        ? (this->value / samples)
+        ? (this->sum / samples)
         : 0;
 
     auto n = samples + 1;
@@ -53,20 +54,57 @@ void BinaryTile::update_covariance(Sample& sample)
     // Update y covariance
     this->sample_mean.y += dy_y() / n;
     this->cov.y += dx * dy_y();
+
+    // Update mean deviation
+    value_mean += dx / n;
+    float dx2 = sample.value - value_mean;
+    this->m2 += dx * dx2;
+    this->diff_sum += std::abs(dx);
 }
 
-void BinaryTile::update_value(Sample& sample)
+void BinaryTile::update_sum(Sample& sample)
 {
-    this->value += sample.value;
-    this->meta_data.sample_count++;
+    this->sum += sample.value;
+    this->data.sample_count++;
 }
 
 float BinaryTile::covar(SplitDirection dir) const
 {
-    if (this->meta_data.sample_count < 2) return 0.0f;
+    if (this->data.sample_count < 2) return 0.0f;
 
     float c = (dir == HORIZONTAL) ? this->cov.x : this->cov.y;
-    return c / (this->meta_data.sample_count - 1);
+    return c / (this->data.sample_count - 1);
+}
+
+float BinaryTile::adjusted_covar(SplitDirection dir) const
+{
+    return std::sqrt(std::abs(covar(dir)));
+}
+
+float BinaryTile::meandev(int depth) const
+{
+    if (this->data.sample_count == 0) return 0.0f;
+
+    float area = 1.0f / (1 << depth);
+    return area * this->diff_sum / this->data.sample_count;
+}
+
+float BinaryTile::var(int depth) const
+{
+    if (this->data.sample_count < 2) return 0.0f;
+
+    float area = 1.0f / (1 << depth);
+    return area * area * this->m2 / (this->data.sample_count - 1);
+}
+
+float BinaryTile::mean() const
+{
+    if (this->data.sample_count == 0)
+    {
+        return 1 / (4.0f * M_PI);
+    }
+
+    return this->sum / this->data.sample_count;
 }
 
 /* ============ */
@@ -132,11 +170,11 @@ void BinaryTiling::insert(Sample& sample, Point2i& tile_dims)
     updater.theta = warped_pos.y;
 
     // Store value & update covariance
-    tile->update_covariance(updater);
-    tile->update_value(updater);
+    tile->update_statistics(updater);
+    tile->update_sum(updater);
     
     // Split if necessary
-    if (!tile->should_split() || tile_depth >= BinaryTileCoding::MAX_DEPTH) return;
+    if (!tile->should_split(tile_depth) || tile_depth > BinaryTileCoding::MAX_DEPTH) return;
 
     tile->idx_first = this->tiles.size();
     tile->idx_second = tile->idx_first + 1;
@@ -144,7 +182,7 @@ void BinaryTiling::insert(Sample& sample, Point2i& tile_dims)
     this->tiles.push_back(BinaryTile());
     this->tiles.push_back(BinaryTile());
     
-    tile->meta_data.split = (std::sqrt(std::abs(tile->covar(HORIZONTAL))) > BinaryTileCoding::SUBDIV_THRESHOLD)
+    tile->data.split = (tile->adjusted_covar(HORIZONTAL) > tile->adjusted_covar(VERTICAL))
         ? HORIZONTAL
         : VERTICAL;
 }
@@ -204,20 +242,6 @@ void BinaryTileCoding::store(std::vector<Sample>& samples)
             tiling.insert(sample, this->tile_dims);
         }
     }
-
-    int id = 0;
-    for (auto& tile : this->tilings.at(0).tiles)
-    {
-        std::cout << "==== TILE " << id << " ====" << std::endl;
-        std::cout << "Covariance: " << std::sqrt(std::abs(tile.covar(HORIZONTAL))) << ", " << std::sqrt(std::abs(tile.covar(VERTICAL))) << std::endl;
-        std::cout << "Samples: " << tile.meta_data.sample_count << std::endl;
-        std::cout << "Value: " << tile.value << std::endl;
-        std::cout << "Child 1: " << tile.idx_first << " | Child 2: " << tile.idx_second << std::endl;
-        std::cout << "Leaf? -> " << (tile.is_leaf() ? "Yes" : "No") << std::endl;
-        id++;
-
-        if (id > 10) break;
-    }
 }
 
 void BinaryTileCoding::postprocess()
@@ -225,8 +249,79 @@ void BinaryTileCoding::postprocess()
     return;
 }
 
+RandomGen BinaryTileCoding::random = RandomGen();
+
 Sample BinaryTileCoding::sample(Point2& pos)
 {
+    // [1] Pick one of the tilings with equal weight
+    Float random = BinaryTileCoding::random.next1D();
+    int i = random * tilings.size();
+    BinaryTiling tiling = tilings.at(i);
+
+    // [2] Use the passed-in random 2D pos to fetch the right base tile (if there are any)
+    BinaryTile* curr_tile;
+    Point2 x_bounds = Point2(0.0, 1.0);
+    Point2 y_bounds = Point2(0.0, 1.0);
+
+    if (tile_dims.x * tile_dims.y == 1)
+    {
+        curr_tile = &tiling.tiles.at(0);
+    }
+    else
+    {
+        // Calculate CDFs
+        float total_mean = 0.0f;
+        std::vector<float> row_means(tile_dims.y);
+        for (int y = 0; y < tile_dims.y; ++y)
+        {
+            float row_mean = 0.0f;
+            for (int x = 0; x < tile_dims.x; ++x)
+            {
+                int tile_i = (y * tile_dims.x) + x;
+                row_mean += tiling.tiles.at(tile_i).mean();
+            }
+            total_mean += row_mean;
+            row_means.push_back(row_mean / tile_dims.x);
+        }
+        total_mean /= (tile_dims.x * tile_dims.y);
+
+        // y-dir sampling
+        float sum_y = 0.0f; int y = 0;
+        size_t y_len = row_means.size();
+        for (y = 0; y < y_len; ++y)
+        {
+            sum_y += row_means.at(y) / total_mean;
+            if (sum_y / y_len >= pos.y) break;
+        }
+        if (y == y_len) y -= 1;
+
+        // x-dir sampling
+        float sum_x = 0.0f; int x = 0;
+        size_t x_len = tile_dims.x;
+        for (x = 0; x < x_len; ++x)
+        {
+            int i = (y * x_len) + x;
+            sum_x += tiling.tiles.at(i).mean() / row_means.at(y);
+            if (sum_x / x_len >= pos.x) break;
+        }
+        if (x == x_len) x -= 1;
+
+        curr_tile = &tiling.tiles.at((y * x_len) + x);
+        x_bounds = Point2(x / (Float) x_len, (x + 1) / (Float) x_len);
+        y_bounds = Point2(y / (Float) y_len, (y + 1) / (Float) y_len);
+    }
+
+    // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
+    while (!curr_tile->is_leaf())
+    {
+        Float random = BinaryTileCoding::random.next1D();
+
+        SplitDirection split_dir = curr_tile->split_direction();
+        Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
+
+
+    }
+
     Sample sample;
     return sample;
 }
@@ -243,7 +338,7 @@ Float BinaryTileCoding::eval(Point2& pos)
 
         int _;
         BinaryTile* tile = tiling.find_tile(warped_pos, this->tile_dims, _);
-        total_value += (tile->value / tile->meta_data.sample_count);
+        total_value += tile->mean();
     }
 
     return (total_value / this->tilings.size());
