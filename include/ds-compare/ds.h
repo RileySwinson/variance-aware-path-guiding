@@ -59,7 +59,7 @@ struct DS_COMPARE DSArguments {
 };
 
 /**
- * \brief Abstract base class for all data structures.
+ * @brief Abstract base class for all data structures.
  * 
  * As the approach of the comparison framework itself is based on a plug-and-play plugin system, each new
  * data structure must extend this class and implement the pure virtual methods to be usable within the comparison framework.
@@ -108,9 +108,9 @@ struct DS_COMPARE DataStructure {
 };
 
 /**
- * \brief Manager class for data structure storage and handling.
+ * @brief Manager class for data structure storage and handling.
  * 
- * A singleton responsible 
+ * A singleton responsible for performing operations on all data structures stored within it.
  */
 class DS_COMPARE DSCluster {
 public:
@@ -135,11 +135,11 @@ public:
     }
 
     /**
-     * \brief Attaches a data structure instance to the cluster.
+     * @brief Attaches a data structure instance to the cluster.
      * 
      * Please note that this is an overload that should only be used if the user intends to overwrite
      * or manually specify the DSType with which the data structure is stored and can be referenced with.
-     * Otherwise, please refer to \ref attach(DataStructure*)
+     * Otherwise, please refer to attach(DataStructure*)
      */
     bool attach(const DSType type, DataStructure* ds)
     {

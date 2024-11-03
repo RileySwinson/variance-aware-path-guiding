@@ -11,22 +11,24 @@ bool BinaryTile::is_leaf() const
     return (this->idx_first == -1) && (this->idx_second == -1);
 }
 
-/// Checks if the current tile fulfills all criteria for splitting.
-/// Make sure that this tile is a leaf by checking against is_leaf() before!
-bool BinaryTile::should_split(int depth) const
+bool BinaryTile::should_split(const int depth) const
 {
-    if (this->data.sample_count < 2)
+    if (this->data.sample_count < BinaryTileCoding::MIN_SAMPLES)
     {
         return false;
     }
     
     float diff = meandev(depth) - BinaryTileCoding::SUBDIV_THRESHOLD;
-    float stderr = var(depth) / std::sqrt(this->data.sample_count);
+    float stderr = std::sqrt(var(depth) / this->data.sample_count);
     
     float t_own = diff / stderr;
-    float t_obt = TTable95::fetch(this->data.sample_count - 1);
+    float t_req = TTable95::fetch(this->data.sample_count - 1);
 
-    return (t_own > t_obt);
+    //std::cout << "meandev - 0.05 = diff | " << meandev(depth) << " - 0.05 = " << diff << std::endl;
+    //std::cout << "stddev / sqrt(n) = stderr | " << std::sqrt(var(depth)) << " / " << std::sqrt(this->data.sample_count) << " = " << stderr << std::endl;
+    //std::cout << "t_own: " << t_own << " | t_req: " << t_req << std::endl;
+
+    return (t_own > t_req);
 }
 
 SplitDirection BinaryTile::split_direction() const
@@ -34,7 +36,7 @@ SplitDirection BinaryTile::split_direction() const
     return static_cast<SplitDirection>(this->data.split);
 }
 
-void BinaryTile::update_statistics(Sample& sample)
+void BinaryTile::update_statistics(const Sample& sample)
 {
     auto samples = this->data.sample_count;
     float value_mean = (samples > 0)
@@ -62,13 +64,13 @@ void BinaryTile::update_statistics(Sample& sample)
     this->diff_sum += std::abs(dx);
 }
 
-void BinaryTile::update_sum(Sample& sample)
+void BinaryTile::update_sum(const Sample& sample)
 {
     this->sum += sample.value;
     this->data.sample_count++;
 }
 
-float BinaryTile::covar(SplitDirection dir) const
+float BinaryTile::covar(const SplitDirection dir) const
 {
     if (this->data.sample_count < 2) return 0.0f;
 
@@ -81,7 +83,7 @@ float BinaryTile::adjusted_covar(SplitDirection dir) const
     return std::sqrt(std::abs(covar(dir)));
 }
 
-float BinaryTile::meandev(int depth) const
+float BinaryTile::meandev(const int depth) const
 {
     if (this->data.sample_count == 0) return 0.0f;
 
@@ -89,7 +91,7 @@ float BinaryTile::meandev(int depth) const
     return area * this->diff_sum / this->data.sample_count;
 }
 
-float BinaryTile::var(int depth) const
+float BinaryTile::var(const int depth) const
 {
     if (this->data.sample_count < 2) return 0.0f;
 
@@ -111,7 +113,13 @@ float BinaryTile::mean() const
 /* BinaryTiling */
 /* ============ */
 
-BinaryTile* BinaryTiling::find_tile(Point2& uv, Point2i& tile_dims, int& depth)
+BinaryTile* BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims)
+{
+    int unused = 0;
+    return find_tile(uv, tile_dims, unused);
+}
+
+BinaryTile* BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, int& depth)
 {
     Point2i index(
         uv.x * tile_dims.x,
@@ -151,7 +159,7 @@ BinaryTile* BinaryTiling::find_tile(Point2& uv, Point2i& tile_dims, int& depth)
     return curr_tile;
 }
 
-void BinaryTiling::insert(Sample& sample, Point2i& tile_dims)
+void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
 {
     // Find initial tile
     Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
@@ -336,8 +344,7 @@ Float BinaryTileCoding::eval(Point2& pos)
             tiling.factors.y * (pos.y - tiling.start_vals.y)
         );
 
-        int _;
-        BinaryTile* tile = tiling.find_tile(warped_pos, this->tile_dims, _);
+        BinaryTile* tile = tiling.find_tile(warped_pos, this->tile_dims);
         total_value += tile->mean();
     }
 

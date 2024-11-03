@@ -6,52 +6,114 @@
 
 MTS_NAMESPACE_BEGIN
 
+/**
+ * @brief Used to specify the split direction of a tile.
+ * 
+ * HORIZONTAL = horizontal split, split from top to bottom.
+ * VERTICAL = vertical split, split from left to right.
+ */
 enum SplitDirection {
     HORIZONTAL,
     VERTICAL
 };
 
+/**
+ * @brief Memory efficient storage (4 byte) of the split decision (1 bit), combined with the sample
+ * count (31 bit) in a tile.
+ */
 struct Bitfield32 {
-    unsigned int split : 1; // how a tile is split -- 0 = horizontal, 1 = vertical
+    unsigned int split : 1;         // how a tile is split -- 0 = horizontal, 1 = vertical
     unsigned int sample_count : 31; // number of samples in a tile
 };
 
+/**
+ * @brief Tile in a tiling.
+ * 
+ * The most low-level entity in the 'Binary Tile Coding' data structure, storing luminance information
+ * in a specific area of the sample space (and beyond). Can be both leaf and non-leaf based on the two
+ * sub-leaf indices it may hold. To access a child, use the tiles vector in combination with the child
+ * vertices.
+ */
 struct BinaryTile {
+    /* ==== Statistics (28 bytes) ==== */
+
     Point2f cov;
     Point2f sample_mean;
     float m2 = 0;
     float diff_sum = 0;
     float sum = 0;
 
+    /* ==== Data (12 bytes) ==== */
+
     uint32_t idx_first = -1;
     uint32_t idx_second = -1;
     Bitfield32 data;
 
+    /// Checks if the current tile is a leaf by comparing if the two member indices are assigned.
     bool is_leaf() const;
-    bool should_split(int depth) const;
-    SplitDirection split_direction() const;
-    void update_statistics(Sample& sample);
-    void update_sum(Sample& sample);
 
-    float covar(SplitDirection dir) const;
-    float meandev(int depth) const;
-    float var(int depth) const;
-    float adjusted_covar(SplitDirection dir) const;
+    /// Determines if the leaf should be split by performing a One-Sample T-Test against the subdivision threshold.
+    /// Important: is_leaf() should be called before to ensure this operation is only performed in a leaf!
+    bool should_split(const int depth) const;
+    
+    /// Returns the split direction of this tile in a usable format.
+    SplitDirection split_direction() const;
+
+    /// Correctly updates the covariance, variance and mean deviation statistics.
+    void update_statistics(const Sample& sample);
+
+    /// Correctly updates sum and sample count. Must be called after update_statistics()!
+    void update_sum(const Sample& sample);
+
+    /// Utility function to generate a new binary tile with copied variance & covariance values.
+    //BinaryTile gen_from(BinaryTile& other);
+    
+    /// TODO: Base on area???
+    float covar(const SplitDirection dir) const;
+
+    /// Returns the area-adjusted mean deviation of the current tile.
+    float meandev(const int depth) const;
+
+    /// Returns the area-adjusted variance of the current tile.
+    float var(const int depth) const;
+
+    /// Returns the absolute squared covariance used for determining the split direction.
+    float adjusted_covar(const SplitDirection dir) const;
+
+    /// Returns the mean of the luminance stored in this tile.
     float mean() const;
 };
 
+/**
+ * @brief Tiling containing tiles.
+ * 
+ * Each 'Binary Tiling' can be understood as a collection of tiles that act as binary trees.
+ * The number of binary trees depends on the initialization, and is guaranteed to be x * y, where x is
+ * the number of tiles in x-direction and y the #tiles in y-direction. If only one tile is stored during
+ * the entire construction process, the tiling will only contain a single tree. If, e.g., a tiling is
+ * however initialized with x = y = 4, it will contain 16 b-trees, as each base tile acts as its own tree.
+ */
 struct BinaryTiling {
     std::vector<BinaryTile> tiles;
 
     Point2f start_vals;
     Point2f factors;
 
-    BinaryTile* find_tile(Point2& uv, Point2i& tile_dims, int& depth);
-    void insert(Sample& sample, Point2i& tile_dims);
+    /// Finds a tile based on the position stored in the uv parameter.
+    BinaryTile* find_tile(const Point2& uv, const Point2i& tile_dims);
+
+    /// Finds a tile based on the position stored in the uv parameter, but with the option to pass a int to obtain the depth at which the tile is located.
+    BinaryTile* find_tile(const Point2& uv, const Point2i& tile_dims, int& depth);
+
+    /// Stores a sample in a binary tiling.
+    void insert(const Sample& sample, const Point2i& tile_dims);
 };
 
+/**
+ * @brief Uppermost layer of the Binary Tile Coding (BTC).
+ */
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
-    static constexpr float SUBDIV_THRESHOLD = 0.05f;
+    static constexpr float SUBDIV_THRESHOLD = 0.001f;
     static constexpr int MIN_SAMPLES = 100;
     static constexpr int MAX_DEPTH = 10;
 
@@ -73,10 +135,10 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     int memory() override;
 
 private:
+    static RandomGen random;
+
     std::vector<BinaryTiling> tilings;
     Point2i tile_dims;
-
-    static RandomGen random;
 };
 
 MTS_NAMESPACE_END 
