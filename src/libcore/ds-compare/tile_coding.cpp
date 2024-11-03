@@ -9,19 +9,15 @@ void TileCoding::construct(DSArguments& init_data)
     this->m_tiling_count = init_data.tilings;
     this->m_tiling_dims = Point2i(init_data.tiles_x, init_data.tiles_y);
     this->m_mode = init_data.mode;
+}
 
-    // Allocate space for tile coding. We only have to do this once as .clear()
-    // in the postprocess step leaves the capacity of the underlying vector intact.
+void TileCoding::preprocess()
+{
     tilings.resize(this->m_tiling_count);
     for (auto& tiling : this->tilings)
     {
         tiling.resize(this->m_tiling_dims.x * this->m_tiling_dims.y);
     }
-}
-
-void TileCoding::preprocess()
-{
-    return;
 }
 
 void TileCoding::store(std::vector<Sample>& samples)
@@ -146,6 +142,9 @@ void TileCoding::postprocess()
     }
 
     this->m_integral = result / map_size;
+
+    /* Clear tilings -- we only need the map */
+    this->tilings.clear();
 }
 
 Sample TileCoding::sample(Point2& sample)
@@ -193,11 +192,6 @@ Float TileCoding::eval(Point2& pos)
 
 void TileCoding::wipe()
 {
-    // Clear tilings by filling each tile with an empty tile
-    Tile t = { .value = 0, .entries = 0 };
-    for (auto& tiling : this->tilings)
-        std::fill(tiling.begin(), tiling.end(), t);
-
     // Reset guiding map (keep space so no new allocation is needed!)
     std::fill(this->guiding_map.begin(), this->guiding_map.end(), 0);
 }
