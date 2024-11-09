@@ -8,33 +8,38 @@ MTS_NAMESPACE_BEGIN
 
 bool BinaryTile::is_leaf() const
 {
-    return (this->idx_first == -1) && (this->idx_second == -1);
+    return (this->idx_first == UINT32_MAX) && (this->idx_second == UINT32_MAX);
 }
 
 bool BinaryTile::should_split(const int depth) const
 {
-    if (this->data.sample_count < BinaryTileCoding::MIN_SAMPLES)
+    if (this->sample_count < BinaryTileCoding::MIN_SAMPLES)
     {
         return false;
     }
     
     float diff = meandev(depth) - BinaryTileCoding::SUBDIV_THRESHOLD;
-    float stderr = std::sqrt(var(depth) / this->data.sample_count);
+    float stderr = std::sqrt(var(depth) / this->sample_count);
     
     float t_own = diff / stderr;
-    float t_req = TTable95::fetch(this->data.sample_count - 1);
+    float t_req = TTable95::fetch(this->sample_count - 1);
 
     return (t_own > t_req);
 }
 
 SplitDirection BinaryTile::split_direction() const
 {
-    return static_cast<SplitDirection>(this->data.split);
+    if (this->adjusted_covar(HORIZONTAL) > this->adjusted_covar(VERTICAL))
+    {
+        return HORIZONTAL;
+    }
+
+    return VERTICAL;
 }
 
 void BinaryTile::update_statistics(const Sample& sample)
 {
-    auto samples = this->data.sample_count;
+    auto samples = this->sample_count;
     float value_mean = (samples > 0)
         ? (this->sum / samples)
         : 0;
@@ -63,15 +68,15 @@ void BinaryTile::update_statistics(const Sample& sample)
 void BinaryTile::update_sum(const Sample& sample)
 {
     this->sum += sample.value;
-    this->data.sample_count++;
+    this->sample_count++;
 }
 
 float BinaryTile::covar(const SplitDirection dir) const
 {
-    if (this->data.sample_count < 2) return 0.0f;
+    if (this->sample_count < 2) return 0.0f;
 
     float c = (dir == HORIZONTAL) ? 0.5f * this->cov.x : this->cov.y;
-    return c / (this->data.sample_count - 1);
+    return c / (this->sample_count - 1);
 }
 
 float BinaryTile::adjusted_covar(const SplitDirection dir) const
@@ -81,28 +86,28 @@ float BinaryTile::adjusted_covar(const SplitDirection dir) const
 
 float BinaryTile::meandev(const int depth) const
 {
-    if (this->data.sample_count == 0) return 0.0f;
+    if (this->sample_count == 0) return 0.0f;
 
     float area = 1.0f / (1 << depth);
-    return area * this->diff_sum / this->data.sample_count;
+    return area * this->diff_sum / this->sample_count;
 }
 
 float BinaryTile::var(const int depth) const
 {
-    if (this->data.sample_count < 2) return 0.0f;
+    if (this->sample_count < 2) return 0.0f;
 
     float area = 1.0f / (1 << depth);
-    return area * area * this->m2 / (this->data.sample_count - 1);
+    return area * area * this->m2 / (this->sample_count - 1);
 }
 
 float BinaryTile::mean() const
 {
-    if (this->data.sample_count == 0)
+    if (this->sample_count == 0)
     {
         return 1 / (4.0f * M_PI);
     }
 
-    return this->sum / this->data.sample_count;
+    return this->sum / this->sample_count;
 }
 
 /* ============ */
@@ -183,12 +188,39 @@ void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
     tile.idx_first = this->tiles.size();
     tile.idx_second = tile.idx_first + 1;
 
-    tile.data.split = (tile.adjusted_covar(HORIZONTAL) > tile.adjusted_covar(VERTICAL))
-        ? HORIZONTAL
-        : VERTICAL;
+    this->tiles.push_back(BinaryTile());
+    this->tiles.push_back(BinaryTile());
+}
 
-    this->tiles.push_back(BinaryTile());
-    this->tiles.push_back(BinaryTile());
+float BinaryTiling::calc_leaf_sum()
+{
+    typedef std::pair<BinaryTile*, int> d_tile;
+    auto create_tile = [this](int idx, int depth) { return d_tile(&this->tiles.at(idx), depth); };
+
+    std::stack<d_tile> tile_storage;
+    tile_storage.push(create_tile(0, 0));
+
+    float leaf_sum = 0.0f;
+    while (!tile_storage.empty())
+    {
+        d_tile& dt = tile_storage.top();
+        tile_storage.pop();
+
+        BinaryTile* curr_tile = dt.first;
+        int depth = dt.second;
+
+        if (curr_tile->is_leaf())
+        {
+            float area = 1.0f / (1 << depth);
+            leaf_sum += curr_tile->mean() * area;
+            continue;
+        }
+
+        tile_storage.push(create_tile(curr_tile->idx_first, depth++));
+        tile_storage.push(create_tile(curr_tile->idx_second, depth++));
+    }
+
+    return leaf_sum;
 }
 
 /* ================ */
@@ -197,7 +229,7 @@ void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
 
 RandomGen BinaryTileCoding::random = RandomGen();
 float BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
-int BinaryTileCoding::MIN_SAMPLES = 100;
+int BinaryTileCoding::MIN_SAMPLES = 1000;
 int BinaryTileCoding::MAX_DEPTH = 10;
 
 void BinaryTileCoding::construct(DSArguments& init_data)
@@ -258,7 +290,10 @@ void BinaryTileCoding::store(std::vector<Sample>& samples)
 
 void BinaryTileCoding::postprocess()
 {
-    return;
+    for (BinaryTiling& tiling : this->tilings)
+    {
+        tiling.area_leaf_sum = tiling.calc_leaf_sum();
+    }
 }
 
 Sample BinaryTileCoding::sample(Point2& pos)
@@ -322,17 +357,39 @@ Sample BinaryTileCoding::sample(Point2& pos)
     }
 
     // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
+    int depth = 0;
     while (!curr_tile->is_leaf())
     {
         Float random = BinaryTileCoding::random.next1D();
 
         SplitDirection split_dir = curr_tile->split_direction();
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
+        Float split = (bounds.x + bounds.y) * 0.5;
 
-
+        if (random < split)
+        {
+            bounds.y = split;
+            curr_tile = &tiling.tiles.at(curr_tile->idx_first);
+        }
+        else
+        {
+            bounds.x = split;
+            curr_tile = &tiling.tiles.at(curr_tile->idx_second);
+        }
+        
+        depth++;
     }
 
-    Sample sample;
+    // Note: Not sure if mult. by area is needed here...
+    float area = 1.0f / (1 << depth);
+    float prob = area * (curr_tile->mean() / tiling.area_leaf_sum);
+
+    Sample sample = {
+        .value = 0,
+        .pdf = prob,
+        .theta = 0, // todo
+        .phi = 0 // todo
+    };
     return sample;
 }
 

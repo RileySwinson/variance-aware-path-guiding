@@ -22,8 +22,8 @@ enum SplitDirection {
  * count (31 bit) in a tile.
  */
 struct Bitfield32 {
-    unsigned int split : 1;         // how a tile is split -- 0 = horizontal, 1 = vertical
-    unsigned int sample_count : 31; // number of samples in a tile
+    uint32_t split : 1;         // how a tile is split -- 0 = horizontal, 1 = vertical
+    uint32_t sample_count : 31; // number of samples in a tile
 };
 
 /**
@@ -45,9 +45,10 @@ struct BinaryTile {
 
     /* ==== Data (12 bytes) ==== */
 
-    uint32_t idx_first = -1;
-    uint32_t idx_second = -1;
-    Bitfield32 data;
+    uint32_t idx_first = UINT32_MAX;
+    uint32_t idx_second = UINT32_MAX;
+    uint32_t sample_count;
+    //Bitfield32 data;
 
     /// Checks if the current tile is a leaf by comparing if the two member indices are assigned.
     bool is_leaf() const;
@@ -98,6 +99,7 @@ struct BinaryTiling {
 
     Point2 start_vals;
     Point2 factors;
+    float area_leaf_sum;
 
     /// Finds a tile based on the position stored in the uv parameter.
     BinaryTile& find_tile(const Point2& uv, const Point2i& tile_dims);
@@ -107,6 +109,9 @@ struct BinaryTiling {
 
     /// Stores a sample in a binary tiling.
     void insert(const Sample& sample, const Point2i& tile_dims);
+
+    /// Calculate the area-adjusted sum of all means in leaf-nodes.
+    float calc_leaf_sum();
 };
 
 /**
