@@ -24,10 +24,6 @@ bool BinaryTile::should_split(const int depth) const
     float t_own = diff / stderr;
     float t_req = TTable95::fetch(this->data.sample_count - 1);
 
-    //std::cout << "meandev - 0.05 = diff | " << meandev(depth) << " - 0.05 = " << diff << std::endl;
-    //std::cout << "stddev / sqrt(n) = stderr | " << std::sqrt(var(depth)) << " / " << std::sqrt(this->data.sample_count) << " = " << stderr << std::endl;
-    //std::cout << "t_own: " << t_own << " | t_req: " << t_req << std::endl;
-
     return (t_own > t_req);
 }
 
@@ -74,11 +70,11 @@ float BinaryTile::covar(const SplitDirection dir) const
 {
     if (this->data.sample_count < 2) return 0.0f;
 
-    float c = (dir == HORIZONTAL) ? this->cov.x : this->cov.y;
+    float c = (dir == HORIZONTAL) ? 0.5f * this->cov.x : this->cov.y;
     return c / (this->data.sample_count - 1);
 }
 
-float BinaryTile::adjusted_covar(SplitDirection dir) const
+float BinaryTile::adjusted_covar(const SplitDirection dir) const
 {
     return std::sqrt(std::abs(covar(dir)));
 }
@@ -113,13 +109,13 @@ float BinaryTile::mean() const
 /* BinaryTiling */
 /* ============ */
 
-BinaryTile* BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims)
+BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims)
 {
     int unused = 0;
     return find_tile(uv, tile_dims, unused);
 }
 
-BinaryTile* BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, int& depth)
+BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, int& depth)
 {
     Point2i index(
         uv.x * tile_dims.x,
@@ -156,7 +152,7 @@ BinaryTile* BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, 
         depth++;
     }
 
-    return curr_tile;
+    return *curr_tile;
 }
 
 void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
@@ -170,7 +166,7 @@ void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
     );
 
     int tile_depth = 0;
-    BinaryTile* tile = find_tile(warped_pos, tile_dims, tile_depth);
+    BinaryTile& tile = find_tile(warped_pos, tile_dims, tile_depth);
 
     Sample updater;
     updater.value = sample.value;
@@ -178,30 +174,38 @@ void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
     updater.theta = warped_pos.y;
 
     // Store value & update covariance
-    tile->update_statistics(updater);
-    tile->update_sum(updater);
+    tile.update_statistics(updater);
+    tile.update_sum(updater);
     
     // Split if necessary
-    if (!tile->should_split(tile_depth) || tile_depth > BinaryTileCoding::MAX_DEPTH) return;
+    if (!tile.should_split(tile_depth) || tile_depth > BinaryTileCoding::MAX_DEPTH) return;
 
-    tile->idx_first = this->tiles.size();
-    tile->idx_second = tile->idx_first + 1;
+    tile.idx_first = this->tiles.size();
+    tile.idx_second = tile.idx_first + 1;
 
-    this->tiles.push_back(BinaryTile());
-    this->tiles.push_back(BinaryTile());
-    
-    tile->data.split = (tile->adjusted_covar(HORIZONTAL) > tile->adjusted_covar(VERTICAL))
+    tile.data.split = (tile.adjusted_covar(HORIZONTAL) > tile.adjusted_covar(VERTICAL))
         ? HORIZONTAL
         : VERTICAL;
+
+    this->tiles.push_back(BinaryTile());
+    this->tiles.push_back(BinaryTile());
 }
 
 /* ================ */
 /* BinaryTileCoding */
 /* ================ */
 
+RandomGen BinaryTileCoding::random = RandomGen();
+float BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
+int BinaryTileCoding::MIN_SAMPLES = 100;
+int BinaryTileCoding::MAX_DEPTH = 10;
+
 void BinaryTileCoding::construct(DSArguments& init_data)
 {
     this->tile_dims = Point2i(init_data.tiles_x, init_data.tiles_y);
+    BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
+    BinaryTileCoding::MIN_SAMPLES = 100;
+    BinaryTileCoding::MAX_DEPTH = 13;
 
     this->tilings.resize(init_data.tilings);
     for (auto& tiling : this->tilings)
@@ -256,8 +260,6 @@ void BinaryTileCoding::postprocess()
 {
     return;
 }
-
-RandomGen BinaryTileCoding::random = RandomGen();
 
 Sample BinaryTileCoding::sample(Point2& pos)
 {
@@ -344,8 +346,8 @@ Float BinaryTileCoding::eval(Point2& pos)
             tiling.factors.y * (pos.y - tiling.start_vals.y)
         );
 
-        BinaryTile* tile = tiling.find_tile(warped_pos, this->tile_dims);
-        total_value += tile->mean();
+        BinaryTile& tile = tiling.find_tile(warped_pos, this->tile_dims);
+        total_value += tile.mean();
     }
 
     return (total_value / this->tilings.size());

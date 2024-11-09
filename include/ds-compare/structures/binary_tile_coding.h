@@ -96,14 +96,14 @@ struct BinaryTile {
 struct BinaryTiling {
     std::vector<BinaryTile> tiles;
 
-    Point2f start_vals;
-    Point2f factors;
+    Point2 start_vals;
+    Point2 factors;
 
     /// Finds a tile based on the position stored in the uv parameter.
-    BinaryTile* find_tile(const Point2& uv, const Point2i& tile_dims);
+    BinaryTile& find_tile(const Point2& uv, const Point2i& tile_dims);
 
     /// Finds a tile based on the position stored in the uv parameter, but with the option to pass a int to obtain the depth at which the tile is located.
-    BinaryTile* find_tile(const Point2& uv, const Point2i& tile_dims, int& depth);
+    BinaryTile& find_tile(const Point2& uv, const Point2i& tile_dims, int& depth);
 
     /// Stores a sample in a binary tiling.
     void insert(const Sample& sample, const Point2i& tile_dims);
@@ -113,9 +113,9 @@ struct BinaryTiling {
  * @brief Uppermost layer of the Binary Tile Coding (BTC).
  */
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
-    static constexpr float SUBDIV_THRESHOLD = 0.001f;
-    static constexpr int MIN_SAMPLES = 100;
-    static constexpr int MAX_DEPTH = 10;
+    static float SUBDIV_THRESHOLD;
+    static int MIN_SAMPLES;
+    static int MAX_DEPTH;
 
     ~BinaryTileCoding() { }
 
