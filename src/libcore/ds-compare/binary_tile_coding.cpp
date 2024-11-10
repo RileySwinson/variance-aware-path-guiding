@@ -234,12 +234,16 @@ int BinaryTileCoding::MAX_DEPTH = 10;
 
 void BinaryTileCoding::construct(DSArguments& init_data)
 {
-    this->tile_dims = Point2i(init_data.tiles_x, init_data.tiles_y);
-    BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
-    BinaryTileCoding::MIN_SAMPLES = 100;
-    BinaryTileCoding::MAX_DEPTH = 13;
+    SAssert(init_data.btc.tilings > 0);
+    SAssert(init_data.btc.tiles_x > 0 && init_data.btc.tiles_y > 0);
+    SAssert(init_data.btc.max_depth > 0);
 
-    this->tilings.resize(init_data.tilings);
+    this->tile_dims = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
+    BinaryTileCoding::SUBDIV_THRESHOLD = init_data.btc.subdiv_threshold;
+    BinaryTileCoding::MIN_SAMPLES = init_data.btc.min_tile_samples;
+    BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
+
+    this->tilings.resize(init_data.btc.tilings);
     for (auto& tiling : this->tilings)
     {
         tiling.tiles.resize(this->tile_dims.x * this->tile_dims.y);

@@ -18,15 +18,6 @@ enum SplitDirection {
 };
 
 /**
- * @brief Memory efficient storage (4 byte) of the split decision (1 bit), combined with the sample
- * count (31 bit) in a tile.
- */
-struct Bitfield32 {
-    uint32_t split : 1;         // how a tile is split -- 0 = horizontal, 1 = vertical
-    uint32_t sample_count : 31; // number of samples in a tile
-};
-
-/**
  * @brief Tile in a tiling.
  * 
  * The most low-level entity in the 'Binary Tile Coding' data structure, storing luminance information
@@ -35,20 +26,19 @@ struct Bitfield32 {
  * vertices.
  */
 struct BinaryTile {
-    /* ==== Statistics (28 bytes) ==== */
+    /* ==== Statistics (24 bytes) ==== */
 
     Point2f cov;
     Point2f sample_mean;
     float m2 = 0;
     float diff_sum = 0;
-    float sum = 0;
 
-    /* ==== Data (12 bytes) ==== */
+    /* ==== Data (16 bytes) ==== */
 
     uint32_t idx_first = UINT32_MAX;
     uint32_t idx_second = UINT32_MAX;
     uint32_t sample_count;
-    //Bitfield32 data;
+    float sum = 0;
 
     /// Checks if the current tile is a leaf by comparing if the two member indices are assigned.
     bool is_leaf() const;
@@ -125,16 +115,13 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     ~BinaryTileCoding() { }
 
     void construct(DSArguments& init_data) override;
-
     void preprocess() override;
     void store(std::vector<Sample>& samples) override;
     void postprocess() override;
 
     Sample sample(Point2& pos) override;
     Float eval(Point2& pos) override;
-
     void wipe() override;
-
     DSType type() override;
     std::string name() override;
     int memory() override;

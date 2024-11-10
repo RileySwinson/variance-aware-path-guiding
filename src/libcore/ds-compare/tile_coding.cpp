@@ -4,11 +4,11 @@ MTS_NAMESPACE_BEGIN
 
 void TileCoding::construct(DSArguments& init_data)
 {
-    SAssert(init_data.tilings > 0 && init_data.tiles_x > 0 && init_data.tiles_y > 0);
+    SAssert(init_data.tc.tilings > 0 && init_data.tc.tiles_x > 0 && init_data.tc.tiles_y > 0);
 
-    this->m_tiling_count = init_data.tilings;
-    this->m_tiling_dims = Point2i(init_data.tiles_x, init_data.tiles_y);
-    this->m_mode = init_data.mode;
+    this->m_tiling_count = init_data.tc.tilings;
+    this->m_tiling_dims = Point2i(init_data.tc.tiles_x, init_data.tc.tiles_y);
+    this->m_mode = init_data.comparer.mode;
 }
 
 void TileCoding::preprocess()

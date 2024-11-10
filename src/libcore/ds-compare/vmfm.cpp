@@ -4,12 +4,12 @@ MTS_NAMESPACE_BEGIN
 
 void VMFM::construct(DSArguments& init_data)
 {
-    this->use_ruppert = init_data.use_ruppert;
+    this->use_ruppert = init_data.vmf.use_ruppert;
 
     if (this->use_ruppert)
     {
         Properties props;
-        props.setSize("vmmFactory.numInitialComponents", init_data.vmf_components);
+        props.setSize("vmmFactory.numInitialComponents", init_data.vmf.components);
         props.setFloat("vmmFactory.maxKappa", 32768.0f);
         props.setFloat("vmmFactory.rPriorWeight", 0.2f);
         props.setBoolean("parallaxCompensation", false);
@@ -20,14 +20,14 @@ void VMFM::construct(DSArguments& init_data)
     else
     {
         VMMFactoryProperties vmm_native_props;
-        vmm_native_props.numInitialComponents = init_data.vmf_components;
+        vmm_native_props.numInitialComponents = init_data.vmf.components;
         vmm_native_props.maxKappa = 32768.0f;
         vmm_native_props.rPriorWeight = 0.2f;
 
         this->factory_native = VMMNativeFactory(vmm_native_props);
     }
     
-    samples.reserve(init_data.samples_learning);
+    samples.reserve(init_data.comparer.samples_learning);
 }
 
 void VMFM::preprocess()

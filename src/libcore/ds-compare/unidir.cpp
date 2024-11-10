@@ -4,7 +4,7 @@ MTS_NAMESPACE_BEGIN
 
 void Unidirectional::construct(DSArguments& init_data)
 {
-    this->sample_mode = init_data.mode;
+    this->sample_mode = init_data.comparer.mode;
 }
 
 void Unidirectional::preprocess()

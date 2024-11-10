@@ -29,33 +29,62 @@ enum DS_COMPARE DSType : int {
  * If a value is missing, the missing value may be added by the user.
  */
 struct DS_COMPARE DSArguments {
-	std::string path = "./data/tests/envmaps/";
-    std::string result_path = "./data/results";
-    Sample::Mode mode = Sample::Mode::Cosine;
-	uint32_t samples_learning = 16384;
-    uint32_t samples_guiding = 65536;
-    std::vector<int> blacklist;
-    bool normalize = true;
+    struct Comparer {
+        std::string path = "./data/tests/envmaps/";
+        std::string result_path = "./data/results";
+        Sample::Mode mode = Sample::Mode::Cosine;
+        uint32_t samples_learning = 16384;
+        uint32_t samples_guiding = 65536;
+        std::vector<int> blacklist;
+        bool normalize = true;
+    };
 
-    bool envmap_noise = false;
-    bool samples_noise = false;
+    struct Noise {
+        bool envmap = false;
+        bool samples = false;
+    };
 
-    int sh_bands = 7;
-    int sh_depth = 12;
-    bool sh_use_offset = true;
+    struct SH {
+        int bands = 7;
+        int depth = 12;
+        bool use_offset = true;
+    };
+    
+    struct DTree {
+        DTreeParams::EBsdfSamplingFractionLoss frac_loss = DTreeParams::EBsdfSamplingFractionLoss::ENone;
+        DTreeParams::EDirectionalFilter dir_filter = DTreeParams::EDirectionalFilter::ENearest;
+        Float threshold = 0.01;
+        int iterations = -1;
+        int max_depth = 20;
+    };
 
-    DTreeParams::EBsdfSamplingFractionLoss dt_frac_loss = DTreeParams::EBsdfSamplingFractionLoss::ENone;
-    DTreeParams::EDirectionalFilter dt_dir_filter = DTreeParams::EDirectionalFilter::ENearest;
-    Float dt_threshold = 0.01;
-    int dt_iterations = -1;
-    int dt_max_depth = 20;
+    struct TC {
+        int tilings = 4;
+        int tiles_x = 16;
+        int tiles_y = 16;
+    };
 
-    int tilings = 4;
-    int tiles_x = 16;
-    int tiles_y = 16;
+    struct BTC {
+        int tilings = 4;
+        int tiles_x = 1;
+        int tiles_y = 1;
+        int max_depth = 10;
+        int min_tile_samples = 100;
+        Float subdiv_threshold = 0.001;
+    };
 
-    uint32_t vmf_components = 16;
-    bool use_ruppert = false;
+    struct VMF {
+        uint32_t components = 16;
+        bool use_ruppert = true;
+    };
+
+    Comparer comparer;
+    Noise noise;
+    SH sh;
+    DTree dt;
+    TC tc;
+    BTC btc;
+    VMF vmf;
 };
 
 /**

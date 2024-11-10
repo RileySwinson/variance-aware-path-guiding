@@ -38,15 +38,15 @@ SphericalHarmonics::SphericalHarmonics(Stream* stream) {
 
 void SphericalHarmonics::construct(DSArguments& init_data)
 { 
-    SAssert(init_data.sh_bands > 0);
-    SAssert(init_data.sh_depth > 0);
+    SAssert(init_data.sh.bands > 0);
+    SAssert(init_data.sh.depth > 0);
 
-    *this = SphericalHarmonics(init_data.sh_bands);
+    *this = SphericalHarmonics(init_data.sh.bands);
 
-    this->sampler = new SphericalHarmonicsSampler(init_data.sh_bands, init_data.sh_depth);
-    this->m_num_samples = init_data.samples_learning;
-    this->m_sample_mode = init_data.mode;
-    this->m_use_offset = init_data.sh_use_offset;
+    this->sampler = new SphericalHarmonicsSampler(init_data.sh.bands, init_data.sh.depth);
+    this->m_num_samples = init_data.comparer.samples_learning;
+    this->m_sample_mode = init_data.comparer.mode;
+    this->m_use_offset = init_data.sh.use_offset;
 
     staticInitialization();
 }

@@ -567,13 +567,13 @@ void DirectionalTree::dump(BlobWriter& blob, const Point& p, const Vector& size)
 
 void DirectionalTree::construct(DSArguments& init_data)
 {
-    SAssert(init_data.dt_iterations >= -1);
+    SAssert(init_data.dt.iterations >= -1);
 
-    this->param_sampling_frac_loss = init_data.dt_frac_loss;
-    this->param_dir_filter = init_data.dt_dir_filter;
-    this->param_d_tree_thresh = init_data.dt_threshold;
-    this->param_max_iter = init_data.dt_iterations;
-    this->param_max_depth = init_data.dt_max_depth;
+    this->param_sampling_frac_loss = init_data.dt.frac_loss;
+    this->param_dir_filter = init_data.dt.dir_filter;
+    this->param_d_tree_thresh = init_data.dt.threshold;
+    this->param_max_iter = init_data.dt.iterations;
+    this->param_max_depth = init_data.dt.max_depth;
 }
 
 void DirectionalTree::preprocess()

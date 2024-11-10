@@ -44,7 +44,7 @@ public:
 		tracker.reserve(cluster.largest() + 1);
 
 		/* Iterate over all environment maps */
-		for (const auto& entry : boost::filesystem::recursive_directory_iterator(this->args.path))
+		for (const auto& entry : boost::filesystem::recursive_directory_iterator(this->args.comparer.path))
 		{
 			if (boost::filesystem::is_directory(entry)) continue;
 
@@ -53,25 +53,25 @@ public:
 			if (!fetched_envmap) continue;
 			
 			EnvironmentMap envmap = fetched_envmap.get();
-			if (this->args.envmap_noise) envmap.noisify();
+			if (this->args.noise.envmap) envmap.noisify();
 			envmap.precompute();
 
 			/* Generate random samples and store them so they can be reused per data structure */
 			std::vector<Sample> samples;
-			uint32_t samples_learning = this->args.samples_learning;
+			uint32_t samples_learning = this->args.comparer.samples_learning;
 			samples.reserve(samples_learning);
 
 			for (uint32_t s_i = 0; s_i < samples_learning; ++s_i)
 			{
 				Point2 coords(random->nextFloat(), random->nextFloat());
-				Sample sample = envmap.sample(this->args.mode, coords);
-				if (this->args.samples_noise) sample.noisify();
+				Sample sample = envmap.sample(this->args.comparer.mode, coords);
+				if (this->args.noise.samples) sample.noisify();
 
 				samples.push_back(sample);
 			}
 
 			/* Create folder for final output */
-			const std::string base_name = this->args.result_path;
+			const std::string base_name = this->args.comparer.result_path;
 			const std::string folder_name = envmap.path.at(0);
 			const std::string envmap_file_name = envmap.path.at(1);
 			
@@ -88,7 +88,7 @@ public:
 					if (lum > max) max = lum;
 				});
 
-			if (this->args.normalize)
+			if (this->args.comparer.normalize)
 			{
 				gt.normalize(max);
 			}
@@ -99,8 +99,9 @@ public:
 
 			/* Iterate over data structures... */
 			uint8_t curr_i = 1;
+			auto& blacklist = this->args.comparer.blacklist;
 			cluster.for_each([&](DataStructure* ds) {
-				if (ds->is_in(this->args.blacklist.begin(), this->args.blacklist.end())) return;
+				if (ds->is_in(blacklist.begin(), blacklist.end())) return;
 
 				Log(EInfo, "[%s] | Active structure: '%s' (%i)",
 					(std::to_string(curr_i) + "/" + std::to_string(cluster.size())).c_str(),
@@ -132,7 +133,7 @@ public:
 						if (density > max) max = density;
 					});
 
-				if (this->args.normalize)
+				if (this->args.comparer.normalize)
 				{
 					em.normalize(max);
 				}
@@ -184,33 +185,40 @@ private:
 				// Utility
 				("help,h", "Display help text.")
 				// General
-				("path,p", p_opt::value<std::string>(&this->args.path), "Path to envmap folder.")
-				("result-path,rp", p_opt::value<std::string>(&this->args.result_path), "Path to output folder.")
-				("samples-learning,sl", p_opt::value<uint32_t>(&this->args.samples_learning), "Envmap sample count.")
-				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.samples_guiding), "Reconstruction sample count.")
-				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.mode), "Envmap sampling mode.")
-				("blacklist,b", p_opt::value<std::vector<int>>(&this->args.blacklist)->multitoken(), "List of data structure indices that won't be run.")
-				("normalize,n", p_opt::value<bool>(&this->args.normalize), "Normalize?")
+				("path,p", p_opt::value<std::string>(&this->args.comparer.path), "Path to envmap folder.")
+				("result-path,rp", p_opt::value<std::string>(&this->args.comparer.result_path), "Path to output folder.")
+				("samples-learning,sl", p_opt::value<uint32_t>(&this->args.comparer.samples_learning), "Envmap sample count.")
+				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.comparer.samples_guiding), "Reconstruction sample count.")
+				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.comparer.mode), "Envmap sampling mode.")
+				("blacklist,b", p_opt::value<std::vector<int>>(&this->args.comparer.blacklist)->multitoken(), "List of data structure indices that won't be run.")
+				("normalize,n", p_opt::value<bool>(&this->args.comparer.normalize), "Normalize?")
 				// Noise
-				("noisy-envmap,ne", p_opt::value<bool>(&this->args.envmap_noise), "Noisify input envmap?")
-				("noisy-samples,ns", p_opt::value<bool>(&this->args.samples_noise), "Noisify learning samples?")
+				("noisy-envmap,ne", p_opt::value<bool>(&this->args.noise.envmap), "Noisify input envmap?")
+				("noisy-samples,ns", p_opt::value<bool>(&this->args.noise.samples), "Noisify learning samples?")
 				// Spherical Harmonics
-				("sh-bands,shb", p_opt::value<int>(&this->args.sh_bands), "Number of Spherical Harmonic bands.")
-				("sh-depth,shd", p_opt::value<int>(&this->args.sh_depth), "Depth of Spherical Harmonics.")
-				("sh-use-offset,sho", p_opt::value<bool>(&this->args.sh_use_offset), "Apply offset to SHs?")
+				("sh-bands,shb", p_opt::value<int>(&this->args.sh.bands), "Number of Spherical Harmonic bands.")
+				("sh-depth,shd", p_opt::value<int>(&this->args.sh.depth), "Depth of Spherical Harmonics.")
+				("sh-use-offset,sho", p_opt::value<bool>(&this->args.sh.use_offset), "Apply offset to SHs?")
 				// DTree
-				("dt-fracloss,dtl", p_opt::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt_frac_loss), "Loss function during gradient descent.")
-				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt_dir_filter), "Directional filter for splatting radiance samples.")
-				("dt-threshold,dtt", p_opt::value<Float>(&this->args.dt_threshold), "Threshold for subdividing leaf nodes (percentage).")
-				("dt-iter,dti", p_opt::value<int>(&this->args.dt_iterations), "Stop after nth iteration, starting at 0 (-1 to disable).")
-				("dt-max-depth,dtd", p_opt::value<int>(&this->args.dt_max_depth), "Maximum depth.")
+				("dt-fracloss,dtl", p_opt::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt.frac_loss), "Loss function during gradient descent.")
+				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt.dir_filter), "Directional filter for splatting radiance samples.")
+				("dt-threshold,dtt", p_opt::value<Float>(&this->args.dt.threshold), "Threshold for subdividing leaf nodes (percentage).")
+				("dt-iter,dti", p_opt::value<int>(&this->args.dt.iterations), "Stop after nth iteration, starting at 0 (-1 to disable).")
+				("dt-max-depth,dtd", p_opt::value<int>(&this->args.dt.max_depth), "Maximum tree depth.")
 				// TileCoding
-				("tilings,t", p_opt::value<int>(&this->args.tilings), "Number of tilings.")
-				("tiles-x,tx", p_opt::value<int>(&this->args.tiles_x), "Number of tiles in x direction.")
-				("tiles-y,ty", p_opt::value<int>(&this->args.tiles_y), "Number of tiles in y direction.")
+				("tilings,t", p_opt::value<int>(&this->args.tc.tilings), "Number of tilings.")
+				("tiles-x,tx", p_opt::value<int>(&this->args.tc.tiles_x), "Number of tiles in x direction.")
+				("tiles-y,ty", p_opt::value<int>(&this->args.tc.tiles_y), "Number of tiles in y direction.")
+				// Binary Tile Coding
+				("btc-tilings,bt", p_opt::value<int>(&this->args.btc.tilings), "Number of tilings.")
+				("btc-tiles-x,btx", p_opt::value<int>(&this->args.btc.tiles_x), "Number of base tiles in x direction.")
+				("btc-tiles-y,bty", p_opt::value<int>(&this->args.btc.tiles_y), "Number of base tiles in y direction.")
+				("btc-max-depth,btd", p_opt::value<int>(&this->args.btc.max_depth), "Maximum tree depth.")
+				("btc-min-samples,btm", p_opt::value<int>(&this->args.btc.min_tile_samples), "Min. #samples per tile before subdivision check.")
+				("btc-threshold,btt", p_opt::value<Float>(&this->args.btc.subdiv_threshold), "Assumed population mean for T-Test.")
 				// VMM
-				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf_components), "Number of initial VMM components.")
-				("vmm-mode,vr", p_opt::value<bool>(&this->args.use_ruppert), "Use ruppert implementation?");
+				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf.components), "Number of initial VMM components.")
+				("vmm-mode,vr", p_opt::value<bool>(&this->args.vmf.use_ruppert), "Use ruppert implementation?");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);
