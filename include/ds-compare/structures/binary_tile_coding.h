@@ -18,6 +18,17 @@ enum SplitDirection {
 };
 
 /**
+ * @brief Helper struct to track the depth of a tile.
+ */
+struct DepthCounter {
+    int horizontal = 0;
+    int vertical = 0;
+
+    inline int depth() const { return this->horizontal + this->vertical; }
+    inline void increment(const SplitDirection split) { if (split == HORIZONTAL) this->horizontal++; else this->vertical++; }
+};
+
+/**
  * @brief Tile in a tiling.
  * 
  * The most low-level entity in the 'Binary Tile Coding' data structure, storing luminance information
@@ -48,7 +59,7 @@ struct BinaryTile {
     bool should_split(const int depth) const;
     
     /// Returns the split direction of this tile in a usable format.
-    SplitDirection split_direction() const;
+    SplitDirection split_direction(const DepthCounter& depth_counter) const;
 
     /// Correctly updates the covariance, variance and mean deviation statistics.
     void update_statistics(const Sample& sample);
@@ -56,11 +67,8 @@ struct BinaryTile {
     /// Correctly updates sum and sample count. Must be called after update_statistics()!
     void update_sum(const Sample& sample);
 
-    /// Utility function to generate a new binary tile with copied variance & covariance values.
-    //BinaryTile gen_from(BinaryTile& other);
-    
-    /// TODO: Base on area???
-    float covar(const SplitDirection dir) const;
+    /// Utility function to generate a new binary tile with copied statistics.
+    //BinaryTile stat_copy_of(const BinaryTile& other);
 
     /// Returns the area-adjusted mean deviation of the current tile.
     float meandev(const int depth) const;
@@ -68,8 +76,11 @@ struct BinaryTile {
     /// Returns the area-adjusted variance of the current tile.
     float var(const int depth) const;
 
+    /// Returns the covariance of the current tile given the splitting direction.
+    float covar(const SplitDirection dir, const DepthCounter& depth_counter) const;
+
     /// Returns the absolute squared covariance used for determining the split direction.
-    float adjusted_covar(const SplitDirection dir) const;
+    float adjusted_covar(const SplitDirection dir, const DepthCounter& depth_counter) const;
 
     /// Returns the mean of the luminance stored in this tile.
     float mean() const;
@@ -94,8 +105,8 @@ struct BinaryTiling {
     /// Finds a tile based on the position stored in the uv parameter.
     BinaryTile& find_tile(const Point2& uv, const Point2i& tile_dims);
 
-    /// Finds a tile based on the position stored in the uv parameter, but with the option to pass a int to obtain the depth at which the tile is located.
-    BinaryTile& find_tile(const Point2& uv, const Point2i& tile_dims, int& depth);
+    /// Finds a tile based on the position stored in the uv parameter, but with the option to pass a DepthCounter to obtain the depth at which the tile is located.
+    BinaryTile& find_tile(const Point2& uv, const Point2i& tile_dims, DepthCounter& counter);
 
     /// Stores a sample in a binary tiling.
     void insert(const Sample& sample, const Point2i& tile_dims);

@@ -27,9 +27,9 @@ bool BinaryTile::should_split(const int depth) const
     return (t_own > t_req);
 }
 
-SplitDirection BinaryTile::split_direction() const
+SplitDirection BinaryTile::split_direction(const DepthCounter& depth) const
 {
-    if (this->adjusted_covar(HORIZONTAL) > this->adjusted_covar(VERTICAL))
+    if (this->adjusted_covar(HORIZONTAL, depth) > this->adjusted_covar(VERTICAL, depth))
     {
         return HORIZONTAL;
     }
@@ -71,17 +71,29 @@ void BinaryTile::update_sum(const Sample& sample)
     this->sample_count++;
 }
 
-float BinaryTile::covar(const SplitDirection dir) const
+/*BinaryTile BinaryTile::stat_copy_of(const BinaryTile& other)
+{
+    BinaryTile tile;
+    tile.cov = other.cov;
+    tile.sample_mean = other.sample_mean;
+    tile.m2 = other.m2;
+    return tile;
+}*/
+
+float BinaryTile::covar(const SplitDirection dir, const DepthCounter& counter) const
 {
     if (this->sample_count < 2) return 0.0f;
+    
+    float c = (dir == HORIZONTAL) 
+        ? ((0.5f * this->cov.x) / (1 << counter.horizontal))
+        : (this->cov.y / (1 << counter.vertical));
 
-    float c = (dir == HORIZONTAL) ? 0.5f * this->cov.x : this->cov.y;
     return c / (this->sample_count - 1);
 }
 
-float BinaryTile::adjusted_covar(const SplitDirection dir) const
+float BinaryTile::adjusted_covar(const SplitDirection dir, const DepthCounter& counter) const
 {
-    return std::sqrt(std::abs(covar(dir)));
+    return std::sqrt(std::abs(covar(dir, counter)));
 }
 
 float BinaryTile::meandev(const int depth) const
@@ -89,7 +101,7 @@ float BinaryTile::meandev(const int depth) const
     if (this->sample_count == 0) return 0.0f;
 
     float area = 1.0f / (1 << depth);
-    return area * this->diff_sum / this->sample_count;
+    return area * (this->diff_sum / this->sample_count);
 }
 
 float BinaryTile::var(const int depth) const
@@ -97,14 +109,14 @@ float BinaryTile::var(const int depth) const
     if (this->sample_count < 2) return 0.0f;
 
     float area = 1.0f / (1 << depth);
-    return area * area * this->m2 / (this->sample_count - 1);
+    return area * area * (this->m2 / (this->sample_count - 1));
 }
 
 float BinaryTile::mean() const
 {
     if (this->sample_count == 0)
     {
-        return 1 / (4.0f * M_PI);
+        return Epsilon;
     }
 
     return this->sum / this->sample_count;
@@ -116,11 +128,11 @@ float BinaryTile::mean() const
 
 BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims)
 {
-    int unused = 0;
+    DepthCounter unused;
     return find_tile(uv, tile_dims, unused);
 }
 
-BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, int& depth)
+BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, DepthCounter& counter)
 {
     Point2i index(
         uv.x * tile_dims.x,
@@ -137,7 +149,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, 
     // Iterate through tree if necessary
     while (!curr_tile->is_leaf())
     {
-        SplitDirection split_dir = curr_tile->split_direction();
+        SplitDirection split_dir = curr_tile->split_direction(counter);
 
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
         Float pos = (split_dir == HORIZONTAL) ? uv.x : uv.y;
@@ -154,7 +166,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, 
             curr_tile = &this->tiles.at(curr_tile->idx_second);
         }
 
-        depth++;
+        counter.increment(split_dir);
     }
 
     return *curr_tile;
@@ -170,8 +182,8 @@ void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
         this->factors.y * (uv.y - this->start_vals.y)
     );
 
-    int tile_depth = 0;
-    BinaryTile& tile = find_tile(warped_pos, tile_dims, tile_depth);
+    DepthCounter counter;
+    BinaryTile& tile = find_tile(warped_pos, tile_dims, counter);
 
     Sample updater;
     updater.value = sample.value;
@@ -183,7 +195,7 @@ void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
     tile.update_sum(updater);
     
     // Split if necessary
-    if (!tile.should_split(tile_depth) || tile_depth > BinaryTileCoding::MAX_DEPTH) return;
+    if (counter.depth() > BinaryTileCoding::MAX_DEPTH || !tile.should_split(counter.depth())) return;
 
     tile.idx_first = this->tiles.size();
     tile.idx_second = tile.idx_first + 1;
@@ -361,12 +373,12 @@ Sample BinaryTileCoding::sample(Point2& pos)
     }
 
     // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
-    int depth = 0;
+    DepthCounter counter;
     while (!curr_tile->is_leaf())
     {
         Float random = BinaryTileCoding::random.next1D();
 
-        SplitDirection split_dir = curr_tile->split_direction();
+        SplitDirection split_dir = curr_tile->split_direction(counter);
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
         Float split = (bounds.x + bounds.y) * 0.5;
 
@@ -381,11 +393,11 @@ Sample BinaryTileCoding::sample(Point2& pos)
             curr_tile = &tiling.tiles.at(curr_tile->idx_second);
         }
         
-        depth++;
+        counter.increment(split_dir);
     }
 
     // Note: Not sure if mult. by area is needed here...
-    float area = 1.0f / (1 << depth);
+    float area = 1.0f / (1 << counter.depth());
     float prob = area * (curr_tile->mean() / tiling.area_leaf_sum);
 
     Sample sample = {
