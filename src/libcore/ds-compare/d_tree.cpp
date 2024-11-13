@@ -629,22 +629,14 @@ Sample DirectionalTree::sample(Point2& pos)
 {
     // We ignore the sample we pass in and instead use the internal sample() function.
     Point2 coords = sampling.sample();
-    
-    Float theta = std::acos(2 * coords.x - 1);
-    Float phi = 2 * M_PI * coords.y;
-
-    Float pdf = sampling.pdf(
-        Point2(
-            0.5 * (std::cos(theta) + 1),
-            INV_TWOPI * phi
-        )
-    );
+    Point2 spherical = Converter::uv_to_spherical(coords);
+    Float pdf = sampling.pdf(coords);
 
     Sample sample = {
         .value = 0,
         .pdf = pdf,
-        .theta = theta,
-        .phi = phi
+        .theta = spherical.y,
+        .phi = spherical.x
     };
     return sample;
 }
