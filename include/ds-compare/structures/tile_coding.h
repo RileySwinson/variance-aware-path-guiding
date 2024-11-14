@@ -47,6 +47,8 @@ private:
     Float m_integral = 0;
     std::vector<Float> m_row_avgs;
 
+    static RandomGen random;
+
     Float pdf(Point2& pos);
 };
 

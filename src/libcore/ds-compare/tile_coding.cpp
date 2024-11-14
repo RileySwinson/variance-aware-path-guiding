@@ -2,6 +2,8 @@
 
 MTS_NAMESPACE_BEGIN
 
+RandomGen TileCoding::random = RandomGen();
+
 void TileCoding::construct(DSArguments& init_data)
 {
     SAssert(init_data.tc.tilings > 0 && init_data.tc.tiles_x > 0 && init_data.tc.tiles_y > 0);
@@ -124,24 +126,19 @@ void TileCoding::postprocess()
     /* Normalize & Precompute averages */
     this->m_row_avgs.reserve(inner_y);
 
-    Float result = 0;
-    Float result_row = 0;
-    for (int i = 0; i < this->guiding_map.size(); ++i)
+    float total_avg = 0.0f;
+    for (int y = 0; y < inner_y; ++y)
     {
-        Float value = this->guiding_map.at(i);
-        value /= biggest; // Normalize first
-
-        result_row += value;
-        if (i != 0 && (i % inner_y == 0))
+        float row_avg = 0.0f;
+        for (int x = 0; x < inner_x; ++x)
         {
-            this->m_row_avgs.push_back(result_row);
-
-            result += result_row / inner_x;
-            result_row = 0;
+            int tile_i = (y * inner_x) + x;
+            row_avg += this->guiding_map.at(tile_i);
         }
+        total_avg += row_avg;
+        this->m_row_avgs.push_back(row_avg / inner_x);
     }
-
-    this->m_integral = result / map_size;
+    this->m_integral = total_avg / map_size;
 
     /* Clear tilings -- we only need the map */
     this->tilings.clear();
@@ -167,12 +164,21 @@ Sample TileCoding::sample(Point2& sample)
     for (x = 0; x < x_len; ++x)
     {
         int i = (y * x_len) + x;
-        sum_x = this->guiding_map.at(i) / this->m_row_avgs.at(y);
+        sum_x += this->guiding_map.at(i) / this->m_row_avgs.at(y);
         if (sum_x / x_len >= sample.x) break;
     }
     if (x == x_len) x -= 1;
 
-    Point2 uv((Float) x / x_len, (Float) y / y_len);
+    Point2 tile_start(x / (Float) x_len, y / (Float) y_len);
+
+    std::cout << y << " " << x << std::endl;
+
+    Point2 rng = random.next2D();
+    Point2 uv(
+        tile_start.x + rng.x * (1.0 / x_len),
+        tile_start.y + rng.y * (1.0 / y_len)
+    );
+
     Point2 spherical = Converter::uv_to_spherical(uv);
 
     Sample sample_data = {
@@ -187,7 +193,16 @@ Sample TileCoding::sample(Point2& sample)
 
 Float TileCoding::eval(Point2& pos)
 {
-    return pdf(pos);
+    int x = this->m_tiling_dims.x * this->m_tiling_count;
+    int y = this->m_tiling_dims.y * this->m_tiling_count;
+    int total_overhead = this->m_tiling_count - 1;
+
+    Point2i index(
+        pos.x * (x - total_overhead),
+        pos.y * (y - total_overhead)
+    );
+
+    return this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
 }
 
 void TileCoding::wipe()
@@ -208,16 +223,8 @@ std::string TileCoding::name()
 
 Float TileCoding::pdf(Point2& pos)
 {
-    int x = this->m_tiling_dims.x * this->m_tiling_count;
-    int y = this->m_tiling_dims.y * this->m_tiling_count;
-    int total_overhead = this->m_tiling_count - 1;
-
-    Point2i index(
-        pos.x * (x - total_overhead),
-        pos.y * (y - total_overhead)
-    );
-
-    return this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
+    auto lum = eval(pos);
+    return lum / (this->m_integral * this->guiding_map.size());
 }
 
 int TileCoding::memory()
