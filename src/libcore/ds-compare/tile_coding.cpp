@@ -171,8 +171,6 @@ Sample TileCoding::sample(Point2& sample)
 
     Point2 tile_start(x / (Float) x_len, y / (Float) y_len);
 
-    std::cout << y << " " << x << std::endl;
-
     Point2 rng = random.next2D();
     Point2 uv(
         tile_start.x + rng.x * (1.0 / x_len),
@@ -209,6 +207,9 @@ void TileCoding::wipe()
 {
     // Reset guiding map (keep space so no new allocation is needed!)
     std::fill(this->guiding_map.begin(), this->guiding_map.end(), 0);
+
+    this->m_row_avgs.clear();
+    this->m_integral = 0;
 }
 
 DSType TileCoding::type()
