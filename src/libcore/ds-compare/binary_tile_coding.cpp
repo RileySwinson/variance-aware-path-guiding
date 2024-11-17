@@ -126,14 +126,16 @@ float BinaryTile::mean() const
 /* BinaryTiling */
 /* ============ */
 
-BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims)
+BinaryTile& BinaryTiling::find_tile(const Point2& uv)
 {
     DepthCounter unused;
-    return find_tile(uv, tile_dims, unused);
+    return find_tile(uv, unused);
 }
 
-BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, DepthCounter& counter)
+BinaryTile& BinaryTiling::find_tile(const Point2& uv, DepthCounter& counter)
 {
+    const Point2i tile_dims = BinaryTileCoding::tile_dims;
+
     Point2i index(
         uv.x * tile_dims.x,
         uv.y * tile_dims.y
@@ -172,18 +174,14 @@ BinaryTile& BinaryTiling::find_tile(const Point2& uv, const Point2i& tile_dims, 
     return *curr_tile;
 }
 
-void BinaryTiling::insert(const Sample& sample, const Point2i& tile_dims)
+void BinaryTiling::insert(const Sample& sample)
 {
     // Find initial tile
     Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
-
-    Point2 warped_pos(
-        this->factors.x * (uv.x - this->start_vals.x),
-        this->factors.y * (uv.y - this->start_vals.y)
-    );
+    Point2 warped_pos = warp_to_range(uv);
 
     DepthCounter counter;
-    BinaryTile& tile = find_tile(warped_pos, tile_dims, counter);
+    BinaryTile& tile = find_tile(warped_pos, counter);
 
     Sample updater;
     updater.value = sample.value;
@@ -235,11 +233,20 @@ float BinaryTiling::calc_leaf_sum()
     return leaf_sum;
 }
 
+Point2 BinaryTiling::warp_to_range(const Point2& uv) const
+{
+    return Point2(
+        (uv.x - this->x_bounds.x) / (this->x_bounds.y - this->x_bounds.x),
+        (uv.y - this->y_bounds.x) / (this->y_bounds.y - this->y_bounds.x)
+    );
+}
+
 /* ================ */
 /* BinaryTileCoding */
 /* ================ */
 
 RandomGen BinaryTileCoding::random = RandomGen();
+Point2i BinaryTileCoding::tile_dims = Point2i(1, 1);
 float BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
 int BinaryTileCoding::MIN_SAMPLES = 1000;
 int BinaryTileCoding::MAX_DEPTH = 10;
@@ -250,23 +257,23 @@ void BinaryTileCoding::construct(DSArguments& init_data)
     SAssert(init_data.btc.tiles_x > 0 && init_data.btc.tiles_y > 0);
     SAssert(init_data.btc.max_depth > 0);
 
-    this->tile_dims = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
+    BinaryTileCoding::tile_dims = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
     BinaryTileCoding::SUBDIV_THRESHOLD = init_data.btc.subdiv_threshold;
     BinaryTileCoding::MIN_SAMPLES = init_data.btc.min_tile_samples;
     BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
 
-    this->tilings.resize(init_data.btc.tilings);
+    this->tilings = std::vector<BinaryTiling>(init_data.btc.tilings);
     for (auto& tiling : this->tilings)
     {
-        tiling.tiles.resize(this->tile_dims.x * this->tile_dims.y);
+        tiling.tiles = std::vector<BinaryTile>(init_data.btc.tiles_x * init_data.btc.tiles_y);
     }
 }
 
 void BinaryTileCoding::preprocess()
 {
     // Calculate tiling offset
-    Float tile_width = 1.0 / this->tile_dims.x;
-    Float tile_height = 1.0 / this->tile_dims.y;
+    Float tile_width = 1.0 / tile_dims.x;
+    Float tile_height = 1.0 / tile_dims.y;
     auto num_tilings = this->tilings.size();
 
     Float overhead = 0.0;
@@ -277,7 +284,7 @@ void BinaryTileCoding::preprocess()
 
     Point2 offset(tile_width * overhead, tile_height * overhead);
 
-    // Store start values and mapping factors in each tiling
+    // Store start and end thresholds in each tiling
     for (int i = 0; i < num_tilings; ++i)
     {
         BinaryTiling& tiling = this->tilings.at(i);
@@ -285,11 +292,8 @@ void BinaryTileCoding::preprocess()
         Point2 x_range(0 - (i * offset.x), 1 + ((num_tilings - 1 - i) * offset.x));
         Point2 y_range(0 - ((num_tilings - 1 - i) * offset.y), 1 + (i * offset.y));
 
-        Float x_factor = 1.0 / (x_range.y - x_range.x);
-        Float y_factor = 1.0 / (y_range.y - y_range.x);
-
-        tiling.start_vals = Point2(x_range.x, y_range.x);
-        tiling.factors = Point2(x_factor, y_factor);
+        tiling.x_bounds = x_range;
+        tiling.y_bounds = y_range;
     }
 }
 
@@ -299,7 +303,7 @@ void BinaryTileCoding::store(std::vector<Sample>& samples)
     {
         for (auto& tiling : this->tilings)
         {
-            tiling.insert(sample, this->tile_dims);
+            tiling.insert(sample);
         }
     }
 }
@@ -317,13 +321,13 @@ Sample BinaryTileCoding::sample(Point2& pos)
     // [1] Pick one of the tilings with equal weight
     Float random = BinaryTileCoding::random.next1D();
     int i = random * tilings.size();
-    BinaryTiling tiling = tilings.at(i);
+    BinaryTiling& tiling = tilings.at(i);
 
     // [2] Use the passed-in random 2D pos to fetch the right base tile (if there are any)
     BinaryTile* curr_tile;
-    Point2 x_bounds = Point2(0.0, 1.0);
-    Point2 y_bounds = Point2(0.0, 1.0);
-
+    Point2 x_bounds = tiling.x_bounds;
+    Point2 y_bounds = tiling.y_bounds;
+    
     if (tile_dims.x * tile_dims.y == 1)
     {
         curr_tile = &tiling.tiles.at(0);
@@ -380,31 +384,53 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
         SplitDirection split_dir = curr_tile->split_direction(counter);
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
-        Float split = (bounds.x + bounds.y) * 0.5;
+
+        BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
+        BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
+
+        Float split = first->mean() / (first->mean() + second->mean());
+        Float halved = (bounds.x + bounds.y) * 0.5;
 
         if (random < split)
         {
-            bounds.y = split;
-            curr_tile = &tiling.tiles.at(curr_tile->idx_first);
+            bounds.y = halved;
+            curr_tile = first;
         }
         else
         {
-            bounds.x = split;
-            curr_tile = &tiling.tiles.at(curr_tile->idx_second);
+            bounds.x = halved;
+            curr_tile = second;
         }
         
         counter.increment(split_dir);
     }
 
-    // Note: Not sure if mult. by area is needed here...
+    Point2 rng = BinaryTileCoding::random.next2D();
+    Point2 coords(
+        x_bounds.x + rng.x * (x_bounds.y - x_bounds.x),
+        y_bounds.x + rng.y * (y_bounds.y - y_bounds.x)
+    );
+
+    if (x_bounds.x < 0)
+        coords.x = ((coords.x - x_bounds.x) * x_bounds.y) / (x_bounds.y - x_bounds.x);
+
+    if (y_bounds.x < 0)
+        coords.y = ((coords.y - y_bounds.x) * y_bounds.y) / (y_bounds.y - y_bounds.x);
+
+    if (x_bounds.y > 1)
+        coords.x = x_bounds.x + ((coords.x - x_bounds.x) * (1.0 - x_bounds.x)) / (x_bounds.y - x_bounds.x);
+
+    if (y_bounds.y > 1)
+        coords.y = y_bounds.x + ((coords.y - y_bounds.x) * (1.0 - y_bounds.x)) / (y_bounds.y - y_bounds.x);
+
     float area = 1.0f / (1 << counter.depth());
     float prob = area * (curr_tile->mean() / tiling.area_leaf_sum);
 
     Sample sample = {
         .value = 0,
         .pdf = prob,
-        .theta = 0, // todo
-        .phi = 0 // todo
+        .theta = (coords.y * M_PI),
+        .phi = (coords.x * 2 * M_PI)
     };
     return sample;
 }
@@ -414,12 +440,8 @@ Float BinaryTileCoding::eval(Point2& pos)
     float total_value = 0.0f;
     for (auto& tiling : this->tilings)
     {
-        Point2 warped_pos(
-            tiling.factors.x * (pos.x - tiling.start_vals.x),
-            tiling.factors.y * (pos.y - tiling.start_vals.y)
-        );
-
-        BinaryTile& tile = tiling.find_tile(warped_pos, this->tile_dims);
+        Point2 warped_pos = tiling.warp_to_range(pos);
+        BinaryTile& tile = tiling.find_tile(warped_pos);
         total_value += tile.mean();
     }
 
@@ -431,7 +453,7 @@ void BinaryTileCoding::wipe()
     for (auto& tiling : this->tilings)
     {
         tiling = BinaryTiling();
-        tiling.tiles.resize(this->tile_dims.x * this->tile_dims.y);
+        tiling.tiles = std::vector<BinaryTile>(tile_dims.x * tile_dims.y);
     }
 }
 

@@ -39,8 +39,8 @@ struct DepthCounter {
 struct BinaryTile {
     /* ==== Statistics (24 bytes) ==== */
 
-    Point2f cov;
-    Point2f sample_mean;
+    Point2f cov = Point2f(0.0f);
+    Point2f sample_mean = Point2f(0.0f);
     float m2 = 0;
     float diff_sum = 0;
 
@@ -48,7 +48,7 @@ struct BinaryTile {
 
     uint32_t idx_first = UINT32_MAX;
     uint32_t idx_second = UINT32_MAX;
-    uint32_t sample_count;
+    uint32_t sample_count = 0;
     float sum = 0;
 
     /// Checks if the current tile is a leaf by comparing if the two member indices are assigned.
@@ -98,21 +98,24 @@ struct BinaryTile {
 struct BinaryTiling {
     std::vector<BinaryTile> tiles;
 
-    Point2 start_vals;
-    Point2 factors;
+    Point2 x_bounds;
+    Point2 y_bounds;
     float area_leaf_sum;
 
     /// Finds a tile based on the position stored in the uv parameter.
-    BinaryTile& find_tile(const Point2& uv, const Point2i& tile_dims);
+    BinaryTile& find_tile(const Point2& uv);
 
     /// Finds a tile based on the position stored in the uv parameter, but with the option to pass a DepthCounter to obtain the depth at which the tile is located.
-    BinaryTile& find_tile(const Point2& uv, const Point2i& tile_dims, DepthCounter& counter);
+    BinaryTile& find_tile(const Point2& uv, DepthCounter& counter);
 
     /// Stores a sample in a binary tiling.
-    void insert(const Sample& sample, const Point2i& tile_dims);
+    void insert(const Sample& sample);
 
     /// Calculate the area-adjusted sum of all means in leaf-nodes.
     float calc_leaf_sum();
+
+    /// Warps a 2D coordinate in [0, 1]^2 to the range of the current tiling.
+    Point2 warp_to_range(const Point2& uv) const;
 };
 
 /**
@@ -122,6 +125,8 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     static float SUBDIV_THRESHOLD;
     static int MIN_SAMPLES;
     static int MAX_DEPTH;
+
+    static Point2i tile_dims;
 
     ~BinaryTileCoding() { }
 
@@ -139,9 +144,7 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
 
 private:
     static RandomGen random;
-
     std::vector<BinaryTiling> tilings;
-    Point2i tile_dims;
 };
 
 MTS_NAMESPACE_END 
