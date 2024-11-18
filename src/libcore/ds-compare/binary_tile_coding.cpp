@@ -71,15 +71,6 @@ void BinaryTile::update_sum(const Sample& sample)
     this->sample_count++;
 }
 
-/*BinaryTile BinaryTile::stat_copy_of(const BinaryTile& other)
-{
-    BinaryTile tile;
-    tile.cov = other.cov;
-    tile.sample_mean = other.sample_mean;
-    tile.m2 = other.m2;
-    return tile;
-}*/
-
 float BinaryTile::covar(const SplitDirection dir, const DepthCounter& counter) const
 {
     if (this->sample_count < 2) return 0.0f;
@@ -384,12 +375,49 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
         SplitDirection split_dir = curr_tile->split_direction(counter);
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
+        Float halved = (bounds.x + bounds.y) * 0.5;
+
+        Float first_area_mult = 1.0;
+        if (halved <= 0) first_area_mult = 0.0;
+        else if (x_bounds.x < 0 || x_bounds.y > 1 || y_bounds.x < 0 || y_bounds.y > 1)
+        {
+            Float x_half = (split_dir == HORIZONTAL) ? (x_bounds.x + x_bounds.y) * 0.5 : x_bounds.y;
+            Float y_half = (split_dir == VERTICAL) ? (y_bounds.x + y_bounds.y) * 0.5 : y_bounds.y;
+
+            Point2 p1_inner(std::max((Float) 0.0, x_bounds.x), std::max((Float) 0.0, y_bounds.x));
+            Point2 p2_inner(std::min((Float) 1.0, x_half), std::min((Float) 1.0, y_half));
+            Point2 p1_outer(x_bounds.x, y_bounds.x);
+            Point2 p2_outer(x_half, y_half);
+
+            Float area_inner = std::abs(p2_inner.x - p1_inner.x) * std::abs(p2_inner.y - p1_inner.y);
+            Float area_outer = std::abs(p2_outer.x - p1_outer.x) * std::abs(p2_outer.y - p1_outer.y);
+            first_area_mult = (area_outer == 0) ? 0 : area_inner / area_outer;
+        }
+
+        Float second_area_mult = 1.0;
+        if (halved > 1) second_area_mult = 0.0;
+        else if (x_bounds.x < 0 || x_bounds.y > 1 || y_bounds.x < 0 || y_bounds.y > 1)
+        {
+            Float x_half = (split_dir == HORIZONTAL) ? (x_bounds.x + x_bounds.y) * 0.5 : x_bounds.x;
+            Float y_half = (split_dir == VERTICAL) ? (y_bounds.x + y_bounds.y) * 0.5 : y_bounds.x;
+
+            Point2 p1_inner(std::max((Float) 0.0, x_half), std::max((Float) 0.0, y_half));
+            Point2 p2_inner(std::min((Float) 1.0, x_bounds.y), std::min((Float) 1.0, y_bounds.y));
+            Point2 p1_outer(x_half, y_half);
+            Point2 p2_outer(x_bounds.y, y_bounds.y);
+
+            Float area_inner = std::abs(p2_inner.x - p1_inner.x) * std::abs(p2_inner.y - p1_inner.y);
+            Float area_outer = std::abs(p2_outer.x - p1_outer.x) * std::abs(p2_outer.y - p1_outer.y);
+            second_area_mult = (area_outer == 0) ? 0 : area_inner / area_outer;
+        }
 
         BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
         BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
 
-        Float split = first->mean() / (first->mean() + second->mean());
-        Float halved = (bounds.x + bounds.y) * 0.5;
+        Float first_mean = first_area_mult * first->mean();
+        Float second_mean = second_area_mult * second->mean();
+
+        Float split = first_mean / (first_mean + second_mean);
 
         if (random < split)
         {

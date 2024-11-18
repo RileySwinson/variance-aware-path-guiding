@@ -67,9 +67,6 @@ struct BinaryTile {
     /// Correctly updates sum and sample count. Must be called after update_statistics()!
     void update_sum(const Sample& sample);
 
-    /// Utility function to generate a new binary tile with copied statistics.
-    //BinaryTile stat_copy_of(const BinaryTile& other);
-
     /// Returns the area-adjusted mean deviation of the current tile.
     float meandev(const int depth) const;
 
