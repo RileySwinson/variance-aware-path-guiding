@@ -369,6 +369,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
     // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
     DepthCounter counter;
+    Float area_mult = 1.0;
     while (!curr_tile->is_leaf())
     {
         Float random = BinaryTileCoding::random.next1D();
@@ -423,11 +424,13 @@ Sample BinaryTileCoding::sample(Point2& pos)
         {
             bounds.y = halved;
             curr_tile = first;
+            area_mult = first_area_mult;
         }
         else
         {
             bounds.x = halved;
             curr_tile = second;
+            area_mult = second_area_mult;
         }
         
         counter.increment(split_dir);
@@ -452,7 +455,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
         coords.y = y_bounds.x + ((coords.y - y_bounds.x) * (1.0 - y_bounds.x)) / (y_bounds.y - y_bounds.x);
 
     float area = 1.0f / (1 << counter.depth());
-    float prob = area * (curr_tile->mean() / tiling.area_leaf_sum);
+    float prob = area_mult * area * (curr_tile->mean() / tiling.area_leaf_sum);
 
     Sample sample = {
         .value = 0,
