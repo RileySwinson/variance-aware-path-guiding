@@ -81,6 +81,9 @@ struct BinaryTile {
 
     /// Returns the mean of the luminance stored in this tile.
     float mean() const;
+
+    /// Returns the ratio of the area of a tile (specified by the bounds) lying within the visible (i.e, sample-able) region.
+    static float calc_visible_area_ratio(bool is_first, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds);
 };
 
 /**

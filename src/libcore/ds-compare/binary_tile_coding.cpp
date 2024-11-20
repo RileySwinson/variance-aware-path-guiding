@@ -113,6 +113,60 @@ float BinaryTile::mean() const
     return this->sum / this->sample_count;
 }
 
+// Small disclaimer: I really hate that this function exists in this form and I am very sure it will be refactored in the future.
+float BinaryTile::calc_visible_area_ratio(bool is_first, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds)
+{
+    // Return 1.0 if tile is fully within sample area
+    if (!(x_bounds.x < 0 || x_bounds.y > 1 || y_bounds.x < 0 || y_bounds.y > 1))
+    {
+        return 1.0f;
+    }
+
+    // Return 0.0 if (sub)tile is fully outside sample area
+    Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
+    Float halved = (bounds.x + bounds.y) * 0.5;
+    if ((is_first && halved <= 0) || (!is_first && halved >= 1))
+    {
+        return 0.0f;
+    }
+
+    // Otherwise, calc area ratio...
+    if (!is_first)
+    {
+        auto bound_swap = [](Point2& bounds) {
+            Float temp = std::move(bounds.x);
+            bounds.x = std::move(bounds.y);
+            bounds.y = std::move(temp);
+        };
+
+        bound_swap(x_bounds);
+        bound_swap(y_bounds);
+    }
+
+    Float x_half = (split_dir == HORIZONTAL) ? (x_bounds.x + x_bounds.y) * 0.5 : x_bounds.y;
+    Float y_half = (split_dir == VERTICAL)   ? (y_bounds.x + y_bounds.y) * 0.5 : y_bounds.y;
+
+    Point2 p1_outer(x_bounds.x, y_bounds.x);
+    Point2 p2_outer(x_half, y_half);
+
+    Point2 p1_inner = is_first
+        ? Point2(std::max((Float) 0.0, x_bounds.x), std::max((Float) 0.0, y_bounds.x))
+        : Point2(std::max((Float) 0.0, x_half), std::max((Float) 0.0, y_half));
+    Point2 p2_inner = is_first
+        ? Point2(std::min((Float) 1.0, x_half), std::min((Float) 1.0, y_half))
+        : Point2(std::min((Float) 1.0, x_bounds.x), std::min((Float) 1.0, y_bounds.x));
+
+    Float area_outer = std::abs(p2_outer.x - p1_outer.x) * std::abs(p2_outer.y - p1_outer.y);
+    Float area_inner = std::abs(p2_inner.x - p1_inner.x) * std::abs(p2_inner.y - p1_inner.y);
+
+    if (area_outer == 0) // This should never happen, but just in case...
+    {
+        return 0.0f;
+    }
+
+    return (area_inner / area_outer);
+}
+
 /* ============ */
 /* BinaryTiling */
 /* ============ */
@@ -378,43 +432,11 @@ Sample BinaryTileCoding::sample(Point2& pos)
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
         Float halved = (bounds.x + bounds.y) * 0.5;
 
-        Float first_area_mult = 1.0;
-        if (halved <= 0) first_area_mult = 0.0;
-        else if (x_bounds.x < 0 || x_bounds.y > 1 || y_bounds.x < 0 || y_bounds.y > 1)
-        {
-            Float x_half = (split_dir == HORIZONTAL) ? (x_bounds.x + x_bounds.y) * 0.5 : x_bounds.y;
-            Float y_half = (split_dir == VERTICAL) ? (y_bounds.x + y_bounds.y) * 0.5 : y_bounds.y;
-
-            Point2 p1_inner(std::max((Float) 0.0, x_bounds.x), std::max((Float) 0.0, y_bounds.x));
-            Point2 p2_inner(std::min((Float) 1.0, x_half), std::min((Float) 1.0, y_half));
-            Point2 p1_outer(x_bounds.x, y_bounds.x);
-            Point2 p2_outer(x_half, y_half);
-
-            Float area_inner = std::abs(p2_inner.x - p1_inner.x) * std::abs(p2_inner.y - p1_inner.y);
-            Float area_outer = std::abs(p2_outer.x - p1_outer.x) * std::abs(p2_outer.y - p1_outer.y);
-            first_area_mult = (area_outer == 0) ? 0 : area_inner / area_outer;
-        }
-
-        Float second_area_mult = 1.0;
-        if (halved > 1) second_area_mult = 0.0;
-        else if (x_bounds.x < 0 || x_bounds.y > 1 || y_bounds.x < 0 || y_bounds.y > 1)
-        {
-            Float x_half = (split_dir == HORIZONTAL) ? (x_bounds.x + x_bounds.y) * 0.5 : x_bounds.x;
-            Float y_half = (split_dir == VERTICAL) ? (y_bounds.x + y_bounds.y) * 0.5 : y_bounds.x;
-
-            Point2 p1_inner(std::max((Float) 0.0, x_half), std::max((Float) 0.0, y_half));
-            Point2 p2_inner(std::min((Float) 1.0, x_bounds.y), std::min((Float) 1.0, y_bounds.y));
-            Point2 p1_outer(x_half, y_half);
-            Point2 p2_outer(x_bounds.y, y_bounds.y);
-
-            Float area_inner = std::abs(p2_inner.x - p1_inner.x) * std::abs(p2_inner.y - p1_inner.y);
-            Float area_outer = std::abs(p2_outer.x - p1_outer.x) * std::abs(p2_outer.y - p1_outer.y);
-            second_area_mult = (area_outer == 0) ? 0 : area_inner / area_outer;
-        }
-
         BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
         BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
 
+        Float first_area_mult = BinaryTile::calc_visible_area_ratio(true, split_dir, x_bounds, y_bounds);
+        Float second_area_mult = BinaryTile::calc_visible_area_ratio(false, split_dir, x_bounds, y_bounds);
         Float first_mean = first_area_mult * first->mean();
         Float second_mean = second_area_mult * second->mean();
 
