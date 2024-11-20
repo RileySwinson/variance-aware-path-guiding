@@ -120,8 +120,7 @@ public:
 
 				tracker.timer_end("store()");
 
-				EnvironmentMap test = envmap.deep_copy(true);
-
+				EnvironmentMap s_map = envmap.deep_copy(true);
 				for (int i = 0; i < this->args.comparer.samples_guiding; ++i)
 				{
 					Point2 rnd(random->nextFloat(), random->nextFloat());
@@ -129,12 +128,11 @@ public:
 
 					Point2 spherical(s.phi, s.theta);
 					Point2 uv = Converter::spherical_to_uv(spherical);
-					Point2i converted_pos(uv.x * test.bitmap->getWidth(), uv.y * test.bitmap->getHeight());
-					Point3 col(1.0 - s.pdf, 0, s.pdf);
-					test.set_pixel_rgb(converted_pos, col);
+					Point2i converted_pos(uv.x * s_map.bitmap->getWidth(), uv.y * s_map.bitmap->getHeight());
+					Point3 col(std::max((Float) 0.0, 1 - 500 * s.pdf), 0, std::min((Float) 1.0, 500 * s.pdf));
+					s_map.set_pixel_rgb(converted_pos, col);
 				}
-
-				test.write(folder_path + "/" + std::to_string(ds->type()) + "test.exr");
+				s_map.write(folder_path + "/" + std::to_string(ds->type()) + "test.exr");
 
 				/* Evaluate function approximation per pixel and store the results in a new envmap */
 				Float max = 0;

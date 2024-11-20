@@ -391,7 +391,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
                 row_mean += tiling.tiles.at(tile_i).mean();
             }
             total_mean += row_mean;
-            row_means.push_back(row_mean / tile_dims.x);
+            row_means.at(y) = (row_mean / tile_dims.x);
         }
         total_mean /= (tile_dims.x * tile_dims.y);
 
@@ -417,8 +417,10 @@ Sample BinaryTileCoding::sample(Point2& pos)
         if (x == x_len) x -= 1;
 
         curr_tile = &tiling.tiles.at((y * x_len) + x);
-        x_bounds = Point2(x / (Float) x_len, (x + 1) / (Float) x_len);
-        y_bounds = Point2(y / (Float) y_len, (y + 1) / (Float) y_len);
+        Float dx = tiling.x_bounds.y - tiling.x_bounds.x;
+        Float dy = tiling.y_bounds.y - tiling.y_bounds.x;
+        x_bounds = Point2(tiling.x_bounds.x + (x / (Float) x_len) * dx, tiling.x_bounds.x + ((x + 1) / (Float) x_len) * dx);
+        y_bounds = Point2(tiling.y_bounds.x + (y / (Float) y_len) * dy, tiling.y_bounds.x + ((y + 1) / (Float) y_len) * dy);
     }
 
     // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
