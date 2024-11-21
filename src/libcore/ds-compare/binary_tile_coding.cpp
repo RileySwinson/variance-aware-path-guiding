@@ -74,10 +74,12 @@ void BinaryTile::update_sum(const Sample& sample)
 float BinaryTile::covar(const SplitDirection dir, const DepthCounter& counter) const
 {
     if (this->sample_count < 2) return 0.0f;
+
+    const Point2i td = BinaryTileCoding::tile_dims;
     
     float c = (dir == HORIZONTAL) 
-        ? ((0.5f * this->cov.x) / (1 << counter.horizontal))
-        : (this->cov.y / (1 << counter.vertical));
+        ? ((0.5f * this->cov.x) / (1 << counter.horizontal) / td.x)
+        : (this->cov.y / (1 << counter.vertical) / td.y);
 
     return c / (this->sample_count - 1);
 }
@@ -91,16 +93,15 @@ float BinaryTile::meandev(const int depth) const
 {
     if (this->sample_count == 0) return 0.0f;
 
-    float area = 1.0f / (1 << depth);
-    return area * (this->diff_sum / this->sample_count);
+    return area(depth) * (this->diff_sum / this->sample_count);
 }
 
 float BinaryTile::var(const int depth) const
 {
     if (this->sample_count < 2) return 0.0f;
 
-    float area = 1.0f / (1 << depth);
-    return area * area * (this->m2 / (this->sample_count - 1));
+    float a = area(depth);
+    return a * a * (this->m2 / (this->sample_count - 1));
 }
 
 float BinaryTile::mean() const
@@ -111,6 +112,12 @@ float BinaryTile::mean() const
     }
 
     return this->sum / this->sample_count;
+}
+
+float BinaryTile::area(const int depth) const
+{
+    const Point2i td = BinaryTileCoding::tile_dims;
+    return 1.0f / ((1 << depth) * (td.x * td.y));
 }
 
 // Small disclaimer: I really hate that this function exists in this form and I am very sure it will be refactored in the future.
@@ -252,8 +259,12 @@ float BinaryTiling::calc_leaf_sum()
     typedef std::pair<BinaryTile*, int> d_tile;
     auto create_tile = [this](int idx, int depth) { return d_tile(&this->tiles.at(idx), depth); };
 
+    const Point2i td = BinaryTileCoding::tile_dims;
     std::stack<d_tile> tile_storage;
-    tile_storage.push(create_tile(0, 0));
+    for (int i = 0; i < td.x * td.y; ++i)
+    {
+        tile_storage.push(create_tile(i, 0));
+    }
 
     float leaf_sum = 0.0f;
     while (!tile_storage.empty())
@@ -266,8 +277,7 @@ float BinaryTiling::calc_leaf_sum()
 
         if (curr_tile->is_leaf())
         {
-            float area = 1.0f / (1 << depth);
-            leaf_sum += curr_tile->mean() * area;
+            leaf_sum += curr_tile->area(depth) * curr_tile->mean();
             continue;
         }
 
@@ -478,7 +488,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
     if (y_bounds.y > 1)
         coords.y = y_bounds.x + ((coords.y - y_bounds.x) * (1.0 - y_bounds.x)) / (y_bounds.y - y_bounds.x);
 
-    float area = 1.0f / (1 << counter.depth());
+    float area = curr_tile->area(counter.depth());
     float prob = area_mult * area * (curr_tile->mean() / tiling.area_leaf_sum);
 
     Sample sample = {
