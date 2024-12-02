@@ -13,7 +13,7 @@ bool BinaryTile::is_leaf() const
 
 bool BinaryTile::should_split(const int depth) const
 {
-    if (this->sample_count < BinaryTileCoding::MIN_SAMPLES)
+    if (this->sample_count < 2)
     {
         return false;
     }
@@ -303,7 +303,6 @@ Point2 BinaryTiling::warp_to_range(const Point2& uv) const
 RandomGen BinaryTileCoding::random = RandomGen();
 Point2i BinaryTileCoding::tile_dims = Point2i(1, 1);
 float BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
-int BinaryTileCoding::MIN_SAMPLES = 1000;
 int BinaryTileCoding::MAX_DEPTH = 10;
 
 void BinaryTileCoding::construct(DSArguments& init_data)
@@ -314,7 +313,6 @@ void BinaryTileCoding::construct(DSArguments& init_data)
 
     BinaryTileCoding::tile_dims = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
     BinaryTileCoding::SUBDIV_THRESHOLD = init_data.btc.subdiv_threshold;
-    BinaryTileCoding::MIN_SAMPLES = init_data.btc.min_tile_samples;
     BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
 
     this->tilings = std::vector<BinaryTiling>(init_data.btc.tilings);
@@ -375,7 +373,21 @@ Sample BinaryTileCoding::sample(Point2& pos)
 {
     // [1] Pick one of the tilings with equal weight
     Float random = BinaryTileCoding::random.next1D();
-    int i = random * tilings.size();
+    
+    // int i = random * this->tilings.size();
+    Float total_leaf_sum = 0;
+    for (const auto& tiling : this->tilings)
+    {
+        total_leaf_sum += tiling.area_leaf_sum;
+    }
+
+    Float sum_leafs = 0; int i = 0;
+    for (i = 0; i < this->tilings.size(); ++i)
+    {
+        sum_leafs += this->tilings.at(i).area_leaf_sum / total_leaf_sum;
+        if (sum_leafs >= random) break;
+    }
+
     BinaryTiling& tiling = tilings.at(i);
 
     // [2] Use the passed-in random 2D pos to fetch the right base tile (if there are any)

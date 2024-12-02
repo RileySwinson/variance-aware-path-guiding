@@ -126,9 +126,7 @@ struct BinaryTiling {
  */
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     static float SUBDIV_THRESHOLD;
-    static int MIN_SAMPLES;
     static int MAX_DEPTH;
-
     static Point2i tile_dims;
 
     ~BinaryTileCoding() { }

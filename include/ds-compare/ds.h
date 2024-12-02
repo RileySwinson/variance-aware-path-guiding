@@ -69,7 +69,6 @@ struct DS_COMPARE DSArguments {
         int tiles_x = 1;
         int tiles_y = 1;
         int max_depth = 10;
-        int min_tile_samples = 100;
         Float subdiv_threshold = 0.0001;
     };
 
