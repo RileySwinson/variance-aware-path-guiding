@@ -103,7 +103,7 @@ struct BinaryTiling {
 
     Point2 x_bounds;
     Point2 y_bounds;
-    float area_leaf_sum;
+    float leaf_sum;
 
     /// Finds a tile based on the position stored in the uv parameter.
     BinaryTile& find_tile(const Point2& uv);
@@ -114,8 +114,8 @@ struct BinaryTiling {
     /// Stores a sample in a binary tiling.
     void insert(const Sample& sample);
 
-    /// Calculate the area-adjusted sum of all means in leaf-nodes.
-    float calc_leaf_sum();
+    /// Utility function to recursively add the sum and sample count statistics from child tiles to parent tiles.
+    std::pair<uint32_t, float> recurse_statistics(float& leaf_sum, BinaryTile& curr_tile, int depth);
 
     /// Warps a 2D coordinate in [0, 1]^2 to the range of the current tiling.
     Point2 warp_to_range(const Point2& uv) const;

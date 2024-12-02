@@ -254,38 +254,28 @@ void BinaryTiling::insert(const Sample& sample)
     this->tiles.push_back(BinaryTile());
 }
 
-float BinaryTiling::calc_leaf_sum()
+std::pair<uint32_t, float> BinaryTiling::recurse_statistics(float& leaf_sum, BinaryTile& curr_tile, int depth)
 {
-    typedef std::pair<BinaryTile*, int> d_tile;
-    auto create_tile = [this](int idx, int depth) { return d_tile(&this->tiles.at(idx), depth); };
-
-    const Point2i td = BinaryTileCoding::tile_dims;
-    std::stack<d_tile> tile_storage;
-    for (int i = 0; i < td.x * td.y; ++i)
+    if (curr_tile.is_leaf())
     {
-        tile_storage.push(create_tile(i, 0));
+        leaf_sum += curr_tile.area(depth) * curr_tile.mean();
+        return { curr_tile.sample_count, curr_tile.sum };
     }
 
-    float leaf_sum = 0.0f;
-    while (!tile_storage.empty())
+    std::array<BinaryTile*, 2> children = {
+        &this->tiles.at(curr_tile.idx_first),
+        &this->tiles.at(curr_tile.idx_second)
+    };
+
+    for (auto child : children)
     {
-        d_tile& dt = tile_storage.top();
-        tile_storage.pop();
+        auto stats = recurse_statistics(leaf_sum, *child, depth++);
 
-        BinaryTile* curr_tile = dt.first;
-        int depth = dt.second;
-
-        if (curr_tile->is_leaf())
-        {
-            leaf_sum += curr_tile->area(depth) * curr_tile->mean();
-            continue;
-        }
-
-        tile_storage.push(create_tile(curr_tile->idx_first, depth++));
-        tile_storage.push(create_tile(curr_tile->idx_second, depth++));
+        curr_tile.sample_count += stats.first;
+        curr_tile.sum += stats.second;
     }
 
-    return leaf_sum;
+    return { curr_tile.sample_count, curr_tile.sum };
 }
 
 Point2 BinaryTiling::warp_to_range(const Point2& uv) const
@@ -365,7 +355,16 @@ void BinaryTileCoding::postprocess()
 {
     for (BinaryTiling& tiling : this->tilings)
     {
-        tiling.area_leaf_sum = tiling.calc_leaf_sum();
+        float leaf_sum = 0.0f;
+
+        const Point2i td = BinaryTileCoding::tile_dims;
+        for (int i = 0; i < td.x * td.y; ++i)
+        {
+            BinaryTile& tile = tiling.tiles.at(i);
+            tiling.recurse_statistics(leaf_sum, tile, 0);
+        }
+
+        tiling.leaf_sum = leaf_sum;
     }
 }
 
@@ -374,20 +373,19 @@ Sample BinaryTileCoding::sample(Point2& pos)
     // [1] Pick one of the tilings with equal weight
     Float random = BinaryTileCoding::random.next1D();
     
-    // int i = random * this->tilings.size();
-    Float total_leaf_sum = 0;
+    int i = random * this->tilings.size();
+    /*Float total_leaf_sum = 0;
     for (const auto& tiling : this->tilings)
     {
-        total_leaf_sum += tiling.area_leaf_sum;
+        total_leaf_sum += tiling.leaf_sum;
     }
 
     Float sum_leafs = 0; int i = 0;
     for (i = 0; i < this->tilings.size(); ++i)
     {
-        sum_leafs += this->tilings.at(i).area_leaf_sum / total_leaf_sum;
+        sum_leafs += this->tilings.at(i).leaf_sum / total_leaf_sum;
         if (sum_leafs >= random) break;
-    }
-
+    }*/
     BinaryTiling& tiling = tilings.at(i);
 
     // [2] Use the passed-in random 2D pos to fetch the right base tile (if there are any)
@@ -501,7 +499,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
         coords.y = y_bounds.x + ((coords.y - y_bounds.x) * (1.0 - y_bounds.x)) / (y_bounds.y - y_bounds.x);
 
     float area = curr_tile->area(counter.depth());
-    float prob = area_mult * area * (curr_tile->mean() / tiling.area_leaf_sum);
+    float prob = area_mult * area * (curr_tile->mean() / tiling.leaf_sum);
 
     Sample sample = {
         .value = 0,
