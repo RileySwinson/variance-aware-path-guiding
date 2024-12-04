@@ -59,6 +59,7 @@ public:
 			/* Generate random samples and store them so they can be reused per data structure */
 			std::vector<Sample> samples;
 			uint32_t samples_learning = this->args.comparer.samples_learning;
+			uint32_t samples_guiding = this->args.comparer.samples_guiding;
 			samples.reserve(samples_learning);
 
 			for (uint32_t s_i = 0; s_i < samples_learning; ++s_i)
@@ -120,32 +121,43 @@ public:
 
 				tracker.timer_end("store()");
 
+				/* Sample from the data structure and store the acquired samples in a new envmap + vectors for MD calculation */
+				std::vector<Float> reference;
+				reference.reserve(samples_guiding);
+				std::vector<Float> observed;
+				observed.reserve(samples_guiding);
+
 				EnvironmentMap s_map = envmap.deep_copy(true);
-				for (int i = 0; i < this->args.comparer.samples_guiding; ++i)
+				for (int i = 0; i < samples_guiding; ++i)
 				{
 					Point2 rnd(random->nextFloat(), random->nextFloat());
-					Sample s = ds->sample(rnd);
+					Sample sample = ds->sample(rnd);
 
-					Point2 spherical(s.phi, s.theta);
-					Point2 uv = Converter::spherical_to_uv(spherical);
-					Point2i converted_pos(uv.x * s_map.bitmap->getWidth(), uv.y * s_map.bitmap->getHeight());
-					Point3 col(std::max((Float) 0.0, 1 - 500 * s.pdf), 0, std::min((Float) 1.0, 500 * s.pdf));
-					s_map.set_pixel_rgb(converted_pos, col);
+					Point2 spherical(sample.phi, sample.theta);
+					auto uv_coords = Converter::spherical_to_uv(spherical);
+					auto im_coords = Converter::uv_to_image(uv_coords, envmap.bitmap->getSize());
+
+					reference.push_back(envmap.get_pixel_luminance(im_coords));
+					observed.push_back(ds->eval(uv_coords));
+
+					Point3 col(std::max((Float) 0.0, 1 - 500 * sample.pdf), 0, std::min((Float) 1.0, 500 * sample.pdf));
+					s_map.set_pixel_rgb(im_coords, col);
 				}
-				s_map.write(folder_path + "/" + std::to_string(ds->type()) + "test.exr");
+				s_map.write(folder_path + "/" + std::to_string(ds->type()) + "_samples.exr");
 
 				/* Evaluate function approximation per pixel and store the results in a new envmap */
-				Float max = 0;
-				Vector2i dims = envmap.bitmap->getSize();
-
+				Float max = 0; Float d_sum = 0;
 				EnvironmentMap em = envmap
 					.deep_copy(true)
 					.map([&](Point2i coords, Point3& px) {
-						Point2 norm((Float) coords.x / dims.x, (Float) coords.y / dims.y);
-						Float density = ds->eval(norm);
+						Point2 uv = Converter::image_to_uv(coords, envmap.bitmap->getSize());
+						Float density = ds->eval(uv);
+						d_sum += density;
 						for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = density;
 						if (density > max) max = density;
 					});
+
+				std::cout << "PDF: " << (d_sum / em.bitmap->getPixelCount()) * (4 * M_PI) << "\n";
 
 				if (this->args.comparer.normalize)
 				{
@@ -157,6 +169,7 @@ public:
 				em.write(envmap_path);
 
 				/* Compute metrics and store them */
+				tracker.store(MD, ErrorMetrics::MD(reference, observed));
 				tracker.store(RMSE, ErrorMetrics::RMSE(gt, em));
 				tracker.store(PSNR, ErrorMetrics::PSNR(gt, em));
 				tracker.store(MSE, ErrorMetrics::MSE(gt, em));

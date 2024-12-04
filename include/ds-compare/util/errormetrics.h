@@ -201,6 +201,22 @@ struct DS_COMPARE ErrorMetrics {
 
 		return err / (float) bm1.getPixelCount();
 	}*/
+
+	template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+	static float MD(const std::vector<T>& reference, const std::vector<T>& observed)
+	{
+		SAssert(reference.size() == observed.size());
+
+		float mean_deviation = 0.0f;
+
+		int samples = reference.size();
+		for (int i = 0; i < samples; ++i)
+		{
+			mean_deviation += std::abs(reference.at(i) - observed.at(i));
+		}
+
+		return (mean_deviation / samples);
+	}
 };
 
 MTS_NAMESPACE_END

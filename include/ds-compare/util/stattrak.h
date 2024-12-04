@@ -10,6 +10,7 @@ MTS_NAMESPACE_BEGIN
 enum DS_COMPARE DSType : int;
 
 enum DS_COMPARE MeasureMetric : int {
+    MD,
     RMSE,
     PSNR,
     MSE,
@@ -164,7 +165,7 @@ struct DS_COMPARE StatTrak {
         output.open(path, std::ios::out);
 
         /* Initialize header with errors + time measurements */
-        std::string header = ",RMSE,PSNR,MSE,MAE,Memory,";
+        std::string header = ",MD,RMSE,PSNR,MSE,MAE,Memory,";
         const auto& f_times = this->m_data.begin()->second.m_times;
         std::vector<std::string> time_headers;
         for (const auto& value : f_times)
@@ -187,14 +188,17 @@ struct DS_COMPARE StatTrak {
             const auto& errors = entry.second.m_errors;
             const auto& times = entry.second.m_times;
 
+            auto add_measure = [&](MeasureMetric m) { res += (errors.find(m) != errors.end()) ? std::to_string(get_error(type, m)) + "," : ","; };
+
             // Errors
-            res += (errors.find(RMSE) != errors.end()) ? std::to_string(get_error(type, RMSE)) + "," : ",";
-            res += (errors.find(PSNR) != errors.end()) ? std::to_string(get_error(type, PSNR)) + "," : ",";
-            res += (errors.find(MSE) != errors.end())  ? std::to_string(get_error(type, MSE)) + ","  : ",";
-            res += (errors.find(MAE) != errors.end())  ? std::to_string(get_error(type, MAE)) + ","  : ",";
+            add_measure(MD);
+            add_measure(RMSE);
+            add_measure(PSNR);
+            add_measure(MSE);
+            add_measure(MAE);
 
             // Memory
-            res += (errors.find(Memory) != errors.end()) ? std::to_string(get_error(type, Memory)) + "," : ",";
+            add_measure(Memory);
 
             // Time
             for (const auto& header : time_headers)

@@ -117,7 +117,7 @@ struct BinaryTiling {
     /// Utility function to recursively add the sum and sample count statistics from child tiles to parent tiles.
     std::pair<uint32_t, float> recurse_statistics(float& leaf_sum, BinaryTile& curr_tile, int depth);
 
-    /// Warps a 2D coordinate in [0, 1]^2 to the range of the current tiling.
+    /// Utility function to warp a 2D coordinate in [0, 1]^2 to the range of the current tiling.
     Point2 warp_to_range(const Point2& uv) const;
 };
 
