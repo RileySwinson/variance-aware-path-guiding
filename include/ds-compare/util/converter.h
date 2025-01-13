@@ -9,10 +9,10 @@ MTS_NAMESPACE_BEGIN
 
 struct DS_COMPARE Converter {
 	/// Converts spherical coordinates [phi, theta] in the domain [0, 2pi) x [0, pi] to uv coordinates in the domain [0, 1)^2
-	static Point2 spherical_to_uv(const Point2& sphere)
+	static Point2 spherical_to_uv(const Point2& spherical)
 	{
-		Float u = sphere.x * INV_TWOPI;
-		Float v = sphere.y * INV_PI;
+		Float u = spherical.x * INV_TWOPI;
+		Float v = spherical.y * INV_PI;
 
 		return Point2(
 			boost::algorithm::clamp(u, 0, 1 - Epsilon),

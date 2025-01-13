@@ -88,9 +88,8 @@ void TileCoding::postprocess()
 
     this->guiding_map.resize(map_size);
 
-    // Track the biggest value for normalization
-    Float biggest = 0;
-
+    // Track the total sum for normalization
+    Float total_sum = 0;
     for (int i = 0; i < map_size; ++i)
     {
         const int pos_x = i % inner_x;
@@ -117,9 +116,12 @@ void TileCoding::postprocess()
         }
 
         Float result = sum / this->m_tiling_count;
-        if (result == 0 && this->m_mode != Sample::Mode::Cosine) result = Epsilon; // We want to make sure no value is actually 0
-        if (result > biggest) biggest = result;
+        if (result == 0 && this->m_mode != Sample::Mode::Cosine)
+        {
+            result = Epsilon; // We want to make sure no value is actually 0
+        }
 
+        total_sum += result;
         this->guiding_map.at(i) = result;
     }
 
@@ -133,6 +135,13 @@ void TileCoding::postprocess()
         for (int x = 0; x < inner_x; ++x)
         {
             int tile_i = (y * inner_x) + x;
+
+            Float theta_step = M_PI / inner_y;
+            Float d_theta = std::abs(std::cos(y * theta_step) - std::cos((y + 1) * theta_step));
+            Float d_phi = (2 * M_PI) / inner_x;
+            Float tile_area = d_phi * d_theta;
+
+            this->guiding_map.at(tile_i) /= total_sum * tile_area;
             row_avg += this->guiding_map.at(tile_i);
         }
         total_avg += row_avg;
@@ -191,16 +200,7 @@ Sample TileCoding::sample(Point2& sample)
 
 Float TileCoding::eval(Point2& pos)
 {
-    int x = this->m_tiling_dims.x * this->m_tiling_count;
-    int y = this->m_tiling_dims.y * this->m_tiling_count;
-    int total_overhead = this->m_tiling_count - 1;
-
-    Point2i index(
-        pos.x * (x - total_overhead),
-        pos.y * (y - total_overhead)
-    );
-
-    return this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
+    return pdf(pos);
 }
 
 void TileCoding::wipe()
@@ -224,8 +224,20 @@ std::string TileCoding::name()
 
 Float TileCoding::pdf(Point2& pos)
 {
-    auto lum = eval(pos);
-    return lum / (this->m_integral * this->guiding_map.size());
+    int x = this->m_tiling_dims.x * this->m_tiling_count;
+    int y = this->m_tiling_dims.y * this->m_tiling_count;
+    int total_overhead = this->m_tiling_count - 1;
+
+    Point2i index(
+        pos.x * (x - total_overhead),
+        pos.y * (y - total_overhead)
+    );
+
+    float value = this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
+    return value;
+
+    //auto lum = eval(pos);
+    //return lum / (this->m_integral * this->guiding_map.size());
 }
 
 int TileCoding::memory()

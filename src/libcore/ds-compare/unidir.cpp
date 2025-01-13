@@ -68,14 +68,10 @@ std::string Unidirectional::name()
 
 Float Unidirectional::pdf(Point2& coords)
 {
-    // Returning Epsilon is arguably hacky, but we need to ensure that the pdf != 0 at any position, which unfortunately
-    // isn't the case for infinitesimal cases like when coords.y is 0, as the envmap is converging towards a single point there.
-    if (coords.y == 0) return Epsilon;
-
     if (this->sample_mode == Sample::Mode::Cosine)
-        return std::max((Float) 0, INV_PI * std::cos(coords.y) * std::sin(coords.y));
+        return std::max((Float) 0, INV_PI * std::cos(coords.y));
 
-    return INV_FOURPI * std::sin(coords.y);
+    return INV_FOURPI;
 }
 
 int Unidirectional::memory()

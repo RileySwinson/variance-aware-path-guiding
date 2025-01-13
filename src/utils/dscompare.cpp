@@ -81,20 +81,24 @@ public:
 
 			/* Generate bitmap for ground truth PDF & write to file */
 			Float max = 0;
-			EnvironmentMap gt = envmap
+			EnvironmentMap base_map = envmap
 				.deep_copy(true)
 				.map([&](Point2i coords, Point3& px) {
 					Float lum = envmap.get_pixel_luminance(coords);
-					for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = lum;
+					for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c)
+					{
+						px[c] = lum;
+					}
+
 					if (lum > max) max = lum;
 				});
 
 			if (this->args.comparer.normalize)
 			{
-				gt.normalize(max);
+				base_map.normalize(max);
 			}
 
-			gt.write(folder_path + "/base.exr");
+			base_map.write(folder_path + "/base.exr");
 
 			Log(EInfo, "Comparing data structures for envmap '%s'...", (folder_name + "/" + envmap_file_name).c_str());
 
@@ -127,7 +131,7 @@ public:
 				std::vector<Float> observed;
 				observed.reserve(samples_guiding);
 
-				EnvironmentMap s_map = envmap.deep_copy(true);
+				EnvironmentMap sample_map = envmap.deep_copy(true);
 				for (int i = 0; i < samples_guiding; ++i)
 				{
 					Point2 rnd(random->nextFloat(), random->nextFloat());
@@ -141,39 +145,41 @@ public:
 					observed.push_back(ds->eval(uv_coords));
 
 					Point3 col(std::max((Float) 0.0, 1 - 500 * sample.pdf), 0, std::min((Float) 1.0, 500 * sample.pdf));
-					s_map.set_pixel_rgb(im_coords, col);
+					sample_map.set_pixel_rgb(im_coords, col);
 				}
-				s_map.write(folder_path + "/" + std::to_string(ds->type()) + "_samples.exr");
+				sample_map.write(folder_path + "/" + std::to_string(ds->type()) + "_samples.exr");
 
 				/* Evaluate function approximation per pixel and store the results in a new envmap */
-				Float max = 0; Float d_sum = 0;
-				EnvironmentMap em = envmap
+				Float d_sum = 0;
+				EnvironmentMap eval_map = envmap
 					.deep_copy(true)
 					.map([&](Point2i coords, Point3& px) {
 						Point2 uv = Converter::image_to_uv(coords, envmap.bitmap->getSize());
-						Float density = ds->eval(uv);
+						Float density = ds->eval(uv) * std::sin(Converter::uv_to_spherical(uv).y);
+						for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c)
+						{
+							px[c] = density;
+						}
+
 						d_sum += density;
-						for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c) px[c] = density;
-						if (density > max) max = density;
 					});
 
-				std::cout << "PDF: " << (d_sum / em.bitmap->getPixelCount()) * (4 * M_PI) << "\n";
-
-				if (this->args.comparer.normalize)
+				d_sum = (d_sum / eval_map.bitmap->getPixelCount()) * (2 * M_PI * M_PI);
+				if (d_sum < 0.99 || d_sum > 1.01)
 				{
-					em.normalize(max);
+					Log(EWarn, "PDF does not properly integrate even within tolerable error margin... %f ∉ [0.99, 1.01]", d_sum);
 				}
 
 				/* Write envmap to .exr file */
 				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
-				em.write(envmap_path);
+				eval_map.write(envmap_path);
 
 				/* Compute metrics and store them */
 				tracker.store(MD, ErrorMetrics::MD(reference, observed));
-				tracker.store(RMSE, ErrorMetrics::RMSE(gt, em));
-				tracker.store(PSNR, ErrorMetrics::PSNR(gt, em));
-				tracker.store(MSE, ErrorMetrics::MSE(gt, em));
-				tracker.store(MAE, ErrorMetrics::MAE(gt, em));
+				tracker.store(RMSE, ErrorMetrics::RMSE(base_map, eval_map));
+				tracker.store(PSNR, ErrorMetrics::PSNR(base_map, eval_map));
+				tracker.store(MSE, ErrorMetrics::MSE(base_map, eval_map));
+				tracker.store(MAE, ErrorMetrics::MAE(base_map, eval_map));
 
 				tracker.store(Memory, ds->memory());
 

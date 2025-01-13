@@ -374,6 +374,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
     Float random = BinaryTileCoding::random.next1D();
     
     int i = random * this->tilings.size();
+    // Uncomment for rng weighted by tiling leaf sum (comment line above)
     /*Float total_leaf_sum = 0;
     for (const auto& tiling : this->tilings)
     {
@@ -515,8 +516,9 @@ Float BinaryTileCoding::eval(Point2& pos)
     float total_value = 0.0f;
     for (auto& tiling : this->tilings)
     {
+        DepthCounter counter;
         Point2 warped_pos = tiling.warp_to_range(pos);
-        BinaryTile& tile = tiling.find_tile(warped_pos);
+        BinaryTile& tile = tiling.find_tile(warped_pos, counter);
         total_value += tile.mean();
     }
 
