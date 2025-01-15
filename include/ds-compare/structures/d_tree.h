@@ -90,7 +90,6 @@ public:
 
     void setChild(int index, uint16_t val);
     uint16_t child(int index) const;
-
     void copyFrom(const QuadTreeNode& arg);
     int childIndex(Point2& p) const;
     
@@ -98,7 +97,6 @@ public:
     // To obtain radiance, the sum density (result of this function) must be divided
     // by the total statistical weight of the estimates that were summed up.
     Float eval(Point2& p, const std::vector<QuadTreeNode>& nodes) const;
-    
     Float pdf(Point2& p, const std::vector<QuadTreeNode>& nodes) const;
     int depthAt(Point2& p, const std::vector<QuadTreeNode>& nodes) const;
     Point2 sample(const std::vector<QuadTreeNode>& nodes) const;
@@ -249,9 +247,10 @@ private:
     // Internal storage
     InternalDTree building;
     InternalDTree sampling;
-    std::vector<Sample> l_sample_storage;
 
     AdamOptimizer bsdfSamplingFractionOptimizer{0.01f};
+
+    Float calc_pdf(const Point2& uv);
 
     class SpinLock {
     public:

@@ -583,36 +583,42 @@ void DirectionalTree::preprocess()
 
 void DirectionalTree::store(std::vector<Sample>& samples)
 {
-    // As Müller et al.'s D-Trees require multiple iterations, we first store our sample contingent
-    // into a vector, then use these samples in the postprocessing step to build the actual tree.
-
-    this->l_sample_storage = samples;
-}
-
-void DirectionalTree::postprocess()
-{
     // Müller et al. states that the geometric series uses twice as many samples as in the previous
     // iteration. We therefore iterate over all stored samples, building and resetting when we hit a threshold.
     // We start with 4 samples and go from there.
 
     size_t t = 4;
     int i = 0;
-    auto total_samples = this->l_sample_storage.size();
+    auto total_samples = samples.size();
 
     for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
-        Sample& sample = this->l_sample_storage.at(s_i);
-        Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
+        Sample& sample = samples.at(s_i);
 
-        building.recordIrradiance(uv, sample.value, 1, this->param_dir_filter);
+        Vector directional(
+            std::sin(sample.theta) * std::cos(sample.phi),
+            std::sin(sample.theta) * std::sin(sample.phi),
+            std::cos(sample.theta)
+        );
+
+        DTreeRecord rec;
+        rec.isDelta = false;
+        rec.d = directional;
+        rec.radiance = sample.value;
+        rec.product = 0; // Unsure what this parameter does. It is set to 0 for now to prevent unwanted optimizations in this simulated setting.
+        rec.woPdf = 1;
+        rec.statisticalWeight = 1;
+
+        record(rec, this->param_dir_filter, this->param_sampling_frac_loss);
 
         // Important: Müller et al. don't state what to do if there's less than half the samples left in total than
         // in the previous learning iteration for learning with a fixed sample contingent. In this specific case we
         // decide that these samples should belong to the same, final learning iteration.
+        // Edit: Turns out Müller et al. does the exact same thing. :>
         if ((s_i == t - 1) && (total_samples - t >= t))
         {
             build();
-            
+
             t += 2 * t;
             if (i == this->param_max_iter) break;
 
@@ -625,12 +631,20 @@ void DirectionalTree::postprocess()
     build();
 }
 
+void DirectionalTree::postprocess()
+{
+    return;
+}
+
 Sample DirectionalTree::sample(Point2& pos)
 {
     // We ignore the sample we pass in and instead use the internal sample() function.
     Point2 coords = sampling.sample();
+    std::swap(coords.x, coords.y);
+    coords.y = (Float) 1.0 - coords.y;
+    
     Point2 spherical = Converter::uv_to_spherical(coords);
-    Float pdf = sampling.pdf(coords);
+    Float pdf = calc_pdf(coords);
 
     Sample sample = {
         .value = 0,
@@ -643,13 +657,25 @@ Sample DirectionalTree::sample(Point2& pos)
 
 Float DirectionalTree::eval(Point2& pos)
 {
-    return sampling.pdf(pos);
+    return calc_pdf(pos);
+}
+
+Float DirectionalTree::calc_pdf(const Point2& uv)
+{
+    Point2 spherical = Converter::uv_to_spherical(uv);
+
+    Vector directional(
+        std::sin(spherical.y) * std::cos(spherical.x),
+        std::sin(spherical.y) * std::sin(spherical.x),
+        std::cos(spherical.y)
+    );
+
+    return pdf(directional);
 }
 
 void DirectionalTree::wipe()
 {
     building = InternalDTree();
-    this->l_sample_storage.clear();
 }
 
 DSType DirectionalTree::type()
