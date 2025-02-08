@@ -105,11 +105,11 @@ struct BinaryTiling {
     Point2 y_bounds;
     float leaf_sum;
 
-    /// Finds a tile based on the position stored in the uv parameter.
-    BinaryTile& find_tile(const Point2& uv);
+    /// Finds a tile at a given position within the bounds of this tiling.
+    BinaryTile& find_tile(const Point2& pos);
 
-    /// Finds a tile based on the position stored in the uv parameter, but with the option to pass a DepthCounter to obtain the depth at which the tile is located.
-    BinaryTile& find_tile(const Point2& uv, DepthCounter& counter);
+    /// Finds a tile at a given position within the bounds of this tiling, but with the option to pass a DepthCounter to obtain the depth at which the tile is located.
+    BinaryTile& find_tile(const Point2& pos, DepthCounter& counter);
 
     /// Stores a sample in a binary tiling.
     void insert(const Sample& sample);
@@ -119,6 +119,12 @@ struct BinaryTiling {
 
     /// Utility function to warp a 2D coordinate in [0, 1]^2 to the range of the current tiling.
     Point2 warp_to_range(const Point2& uv) const;
+
+    /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
+    Point2i base_tile_pos_from_cdf(const Point2& pos) const;
+
+    /// Obtain the value of the underlying PDF at a given position.
+    float pdf(const Point2& pos) const;
 };
 
 /**

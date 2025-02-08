@@ -120,7 +120,6 @@ float BinaryTile::area(const int depth) const
     return 1.0f / ((1 << depth) * (td.x * td.y));
 }
 
-// Small disclaimer: I really hate that this function exists in this form and I am very sure it will be refactored in the future.
 float BinaryTile::calc_visible_area_ratio(bool is_first, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds)
 {
     // Return 1.0 if tile is fully within sample area
@@ -258,6 +257,7 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(float& leaf_sum, Bin
 {
     if (curr_tile.is_leaf())
     {
+        // Do I need to consider the visible area here too?
         leaf_sum += curr_tile.area(depth) * curr_tile.mean();
         return { curr_tile.sample_count, curr_tile.sum };
     }
@@ -284,6 +284,55 @@ Point2 BinaryTiling::warp_to_range(const Point2& uv) const
         (uv.x - this->x_bounds.x) / (this->x_bounds.y - this->x_bounds.x),
         (uv.y - this->y_bounds.x) / (this->y_bounds.y - this->y_bounds.x)
     );
+}
+
+Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
+{
+    Point2i td = BinaryTileCoding::tile_dims;
+
+    // Calculate CDFs
+    float total_mean = 0.0f;
+    std::vector<float> row_means(td.y);
+    for (int y = 0; y < td.y; ++y)
+    {
+        float row_mean = 0.0f;
+        for (int x = 0; x < td.x; ++x)
+        {
+            int tile_i = (y * td.x) + x;
+            row_mean += this->tiles.at(tile_i).mean();
+        }
+        total_mean += row_mean;
+        row_means.at(y) = (row_mean / td.x);
+    }
+    total_mean /= (td.x * td.y);
+
+    // y-dir sampling
+    float sum_y = 0.0f; int y = 0;
+    size_t y_len = row_means.size();
+    for (y; y < y_len; ++y)
+    {
+        sum_y += row_means.at(y) / total_mean;
+        if (sum_y / y_len >= pos.y) break;
+    }
+    if (y == y_len) y -= 1;
+
+    // x-dir sampling
+    float sum_x = 0.0f; int x = 0;
+    size_t x_len = td.x;
+    for (x; x < x_len; ++x)
+    {
+        int i = (y * x_len) + x;
+        sum_x += this->tiles.at(i).mean() / row_means.at(y);
+        if (sum_x / x_len >= pos.x) break;
+    }
+    if (x == x_len) x -= 1;
+
+    return Point2i(x, y);
+}
+
+float BinaryTiling::pdf(const Point2& pos) const
+{
+    
 }
 
 /* ================ */
@@ -372,81 +421,35 @@ Sample BinaryTileCoding::sample(Point2& pos)
 {
     // [1] Pick one of the tilings with equal weight
     Float random = BinaryTileCoding::random.next1D();
-    
     int i = random * this->tilings.size();
-    // Uncomment for rng weighted by tiling leaf sum (comment line above)
-    /*Float total_leaf_sum = 0;
-    for (const auto& tiling : this->tilings)
-    {
-        total_leaf_sum += tiling.leaf_sum;
-    }
+    BinaryTiling& tiling = this->tilings.at(i);
 
-    Float sum_leafs = 0; int i = 0;
-    for (i = 0; i < this->tilings.size(); ++i)
-    {
-        sum_leafs += this->tilings.at(i).leaf_sum / total_leaf_sum;
-        if (sum_leafs >= random) break;
-    }*/
-    BinaryTiling& tiling = tilings.at(i);
-
-    // [2] Use the passed-in random 2D pos to fetch the right base tile (if there are any)
-    BinaryTile* curr_tile;
+    // [2] If there is more than one base tile, use the passed-in (ideally random) 2D position to fetch the right one
+    BinaryTile* curr_tile = &tiling.tiles.at(0);
     Point2 x_bounds = tiling.x_bounds;
     Point2 y_bounds = tiling.y_bounds;
     
-    if (tile_dims.x * tile_dims.y == 1)
+    if (tile_dims.x * tile_dims.y > 1)
     {
-        curr_tile = &tiling.tiles.at(0);
-    }
-    else
-    {
-        // Calculate CDFs
-        float total_mean = 0.0f;
-        std::vector<float> row_means(tile_dims.y);
-        for (int y = 0; y < tile_dims.y; ++y)
-        {
-            float row_mean = 0.0f;
-            for (int x = 0; x < tile_dims.x; ++x)
-            {
-                int tile_i = (y * tile_dims.x) + x;
-                row_mean += tiling.tiles.at(tile_i).mean();
-            }
-            total_mean += row_mean;
-            row_means.at(y) = (row_mean / tile_dims.x);
-        }
-        total_mean /= (tile_dims.x * tile_dims.y);
+        auto bt_pos = tiling.base_tile_pos_from_cdf(pos);
+        curr_tile = &tiling.tiles.at((bt_pos.y * tile_dims.x) + bt_pos.x);
 
-        // y-dir sampling
-        float sum_y = 0.0f; int y = 0;
-        size_t y_len = row_means.size();
-        for (y = 0; y < y_len; ++y)
-        {
-            sum_y += row_means.at(y) / total_mean;
-            if (sum_y / y_len >= pos.y) break;
-        }
-        if (y == y_len) y -= 1;
-
-        // x-dir sampling
-        float sum_x = 0.0f; int x = 0;
-        size_t x_len = tile_dims.x;
-        for (x = 0; x < x_len; ++x)
-        {
-            int i = (y * x_len) + x;
-            sum_x += tiling.tiles.at(i).mean() / row_means.at(y);
-            if (sum_x / x_len >= pos.x) break;
-        }
-        if (x == x_len) x -= 1;
-
-        curr_tile = &tiling.tiles.at((y * x_len) + x);
         Float dx = tiling.x_bounds.y - tiling.x_bounds.x;
         Float dy = tiling.y_bounds.y - tiling.y_bounds.x;
-        x_bounds = Point2(tiling.x_bounds.x + (x / (Float) x_len) * dx, tiling.x_bounds.x + ((x + 1) / (Float) x_len) * dx);
-        y_bounds = Point2(tiling.y_bounds.x + (y / (Float) y_len) * dy, tiling.y_bounds.x + ((y + 1) / (Float) y_len) * dy);
+
+        x_bounds = Point2(
+            tiling.x_bounds.x + (bt_pos.x / (Float) tile_dims.x) * dx,
+            tiling.x_bounds.x + ((bt_pos.x + 1) / (Float) tile_dims.x) * dx
+        );
+        y_bounds = Point2(
+            tiling.y_bounds.x + (bt_pos.y / (Float) tile_dims.y) * dy,
+            tiling.y_bounds.x + ((bt_pos.y + 1) / (Float) tile_dims.y) * dy
+        );
     }
 
     // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
     DepthCounter counter;
-    Float area_mult = 1.0;
+    Float visible_area = 1.0;
     while (!curr_tile->is_leaf())
     {
         Float random = BinaryTileCoding::random.next1D();
@@ -458,10 +461,10 @@ Sample BinaryTileCoding::sample(Point2& pos)
         BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
         BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
 
-        Float first_area_mult = BinaryTile::calc_visible_area_ratio(true, split_dir, x_bounds, y_bounds);
-        Float second_area_mult = BinaryTile::calc_visible_area_ratio(false, split_dir, x_bounds, y_bounds);
-        Float first_mean = first_area_mult * first->mean();
-        Float second_mean = second_area_mult * second->mean();
+        Float area_first = BinaryTile::calc_visible_area_ratio(true, split_dir, x_bounds, y_bounds);
+        Float area_second = BinaryTile::calc_visible_area_ratio(false, split_dir, x_bounds, y_bounds);
+        Float first_mean = area_first * first->mean();
+        Float second_mean = area_second * second->mean();
 
         Float split = first_mean / (first_mean + second_mean);
 
@@ -469,18 +472,19 @@ Sample BinaryTileCoding::sample(Point2& pos)
         {
             bounds.y = halved;
             curr_tile = first;
-            area_mult = first_area_mult;
+            visible_area = area_first;
         }
         else
         {
             bounds.x = halved;
             curr_tile = second;
-            area_mult = second_area_mult;
+            visible_area = area_second;
         }
-        
+
         counter.increment(split_dir);
     }
 
+    // [4] Generate random sample once in a leaf tile
     Point2 rng = BinaryTileCoding::random.next2D();
     Point2 coords(
         x_bounds.x + rng.x * (x_bounds.y - x_bounds.x),
@@ -499,8 +503,8 @@ Sample BinaryTileCoding::sample(Point2& pos)
     if (y_bounds.y > 1)
         coords.y = y_bounds.x + ((coords.y - y_bounds.x) * (1.0 - y_bounds.x)) / (y_bounds.y - y_bounds.x);
 
-    float area = curr_tile->area(counter.depth());
-    float prob = area_mult * area * (curr_tile->mean() / tiling.leaf_sum);
+    float area = visible_area * curr_tile->area(counter.depth());
+    float prob = (area * (curr_tile->mean() / tiling.leaf_sum));
 
     Sample sample = {
         .value = 0,

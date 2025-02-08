@@ -24,6 +24,7 @@
 #include <ratio>
 #include <chrono>
 #include <bit>
+#include <numeric>
 
 #if !defined(DS_COMPARE)
     #define DS_COMPARE MTS_IMPORT
