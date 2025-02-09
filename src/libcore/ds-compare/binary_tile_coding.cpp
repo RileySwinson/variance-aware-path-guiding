@@ -177,27 +177,38 @@ float BinaryTile::calc_visible_area_ratio(bool is_first, SplitDirection split_di
 /* BinaryTiling */
 /* ============ */
 
-BinaryTile& BinaryTiling::find_tile(const Point2& uv)
+BinaryTile& BinaryTiling::find_tile(const Point2& pos)
 {
     DepthCounter unused;
-    return find_tile(uv, unused);
+    return find_tile(pos, unused);
 }
 
-BinaryTile& BinaryTiling::find_tile(const Point2& uv, DepthCounter& counter)
+BinaryTile& BinaryTiling::find_tile(const Point2& pos, DepthCounter& counter)
 {
     const Point2i tile_dims = BinaryTileCoding::tile_dims;
 
-    Point2i index(
-        uv.x * tile_dims.x,
-        uv.y * tile_dims.y
+    // Find right base tile by mapping the pos within the range of the tiling to the range [0, 1]
+    auto warped_pos = warp_to_range(pos);
+    Point2i bt_pos(
+        warped_pos.x * tile_dims.x,
+        warped_pos.y * tile_dims.y
     );
 
-    int i = (index.y * tile_dims.x) + index.x;
+    int i = (bt_pos.y * tile_dims.x) + bt_pos.x;
     BinaryTile* curr_tile = &this->tiles.at(i);
 
     // Calculate boundary of current tile
-    Point2 x_bounds(index.x / (Float) tile_dims.x, (index.x + 1) / (Float) tile_dims.x);
-    Point2 y_bounds(index.y / (Float) tile_dims.y, (index.y + 1) / (Float) tile_dims.y);
+    float x_step = (this->x_bounds.y - this->x_bounds.x) / tile_dims.x;
+    float y_step = (this->y_bounds.y - this->y_bounds.x) / tile_dims.y;
+
+    Point2 x_bounds(
+        this->x_bounds.x + (bt_pos.x * x_step),
+        this->x_bounds.x + ((bt_pos.x + 1) * x_step)
+    );
+    Point2 y_bounds(
+        this->y_bounds.x + (bt_pos.y * y_step),
+        this->y_bounds.x + (bt_pos.y + 1) * y_step
+    );
 
     // Iterate through tree if necessary
     while (!curr_tile->is_leaf())
@@ -205,10 +216,10 @@ BinaryTile& BinaryTiling::find_tile(const Point2& uv, DepthCounter& counter)
         SplitDirection split_dir = curr_tile->split_direction(counter);
 
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
-        Float pos = (split_dir == HORIZONTAL) ? uv.x : uv.y;
+        Float local = (split_dir == HORIZONTAL) ? pos.x : pos.y;
         Float split = (bounds.x + bounds.y) * 0.5;
 
-        if (pos < split) // we're in the left or upper subtree
+        if (local < split) // we're in the left or upper subtree
         {
             bounds.y = split;
             curr_tile = &this->tiles.at(curr_tile->idx_first);
@@ -229,15 +240,15 @@ void BinaryTiling::insert(const Sample& sample)
 {
     // Find initial tile
     Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
-    Point2 warped_pos = warp_to_range(uv);
+    //Point2 warped_pos = warp_to_range(uv);
 
     DepthCounter counter;
-    BinaryTile& tile = find_tile(warped_pos, counter);
+    BinaryTile& tile = find_tile(uv, counter);
 
     Sample updater;
     updater.value = sample.value;
-    updater.phi = warped_pos.x;
-    updater.theta = warped_pos.y;
+    updater.phi = uv.x;
+    updater.theta = uv.y;
 
     // Store value & update covariance
     tile.update_statistics(updater);
@@ -332,7 +343,8 @@ Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
 
 float BinaryTiling::pdf(const Point2& pos) const
 {
-    
+    // TODO
+    return 1.0f;
 }
 
 /* ================ */
@@ -421,7 +433,8 @@ Sample BinaryTileCoding::sample(Point2& pos)
 {
     // [1] Pick one of the tilings with equal weight
     Float random = BinaryTileCoding::random.next1D();
-    int i = random * this->tilings.size();
+    int tiling_count = this->tilings.size();
+    int i = random * tiling_count;
     BinaryTiling& tiling = this->tilings.at(i);
 
     // [2] If there is more than one base tile, use the passed-in (ideally random) 2D position to fetch the right one
@@ -434,16 +447,16 @@ Sample BinaryTileCoding::sample(Point2& pos)
         auto bt_pos = tiling.base_tile_pos_from_cdf(pos);
         curr_tile = &tiling.tiles.at((bt_pos.y * tile_dims.x) + bt_pos.x);
 
-        Float dx = tiling.x_bounds.y - tiling.x_bounds.x;
-        Float dy = tiling.y_bounds.y - tiling.y_bounds.x;
+        Float x_step = (tiling.x_bounds.y - tiling.x_bounds.x) / tile_dims.x;
+        Float y_step = (tiling.y_bounds.y - tiling.y_bounds.x) / tile_dims.y;
 
         x_bounds = Point2(
-            tiling.x_bounds.x + (bt_pos.x / (Float) tile_dims.x) * dx,
-            tiling.x_bounds.x + ((bt_pos.x + 1) / (Float) tile_dims.x) * dx
+            tiling.x_bounds.x + (bt_pos.x * x_step),
+            tiling.x_bounds.x + ((bt_pos.x + 1) * x_step)
         );
         y_bounds = Point2(
-            tiling.y_bounds.x + (bt_pos.y / (Float) tile_dims.y) * dy,
-            tiling.y_bounds.x + ((bt_pos.y + 1) / (Float) tile_dims.y) * dy
+            tiling.y_bounds.x + (bt_pos.y * y_step),
+            tiling.y_bounds.x + ((bt_pos.y + 1) * y_step)
         );
     }
 
@@ -506,6 +519,15 @@ Sample BinaryTileCoding::sample(Point2& pos)
     float area = visible_area * curr_tile->area(counter.depth());
     float prob = (area * (curr_tile->mean() / tiling.leaf_sum));
 
+    // [5] Sample the PDF of all other tiles at that position and take the average
+    for (int ti = 0; ti < tiling_count; ++ti)
+    {
+        if (ti == i) continue;
+        prob += this->tilings.at(ti).pdf(coords);
+    }
+
+    prob /= tiling_count;
+
     Sample sample = {
         .value = 0,
         .pdf = prob,
@@ -520,9 +542,8 @@ Float BinaryTileCoding::eval(Point2& pos)
     float total_value = 0.0f;
     for (auto& tiling : this->tilings)
     {
-        DepthCounter counter;
-        Point2 warped_pos = tiling.warp_to_range(pos);
-        BinaryTile& tile = tiling.find_tile(warped_pos, counter);
+        //DepthCounter counter;
+        BinaryTile& tile = tiling.find_tile(pos);
         total_value += tile.mean();
     }
 
