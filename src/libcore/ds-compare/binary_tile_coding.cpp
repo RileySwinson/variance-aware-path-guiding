@@ -27,9 +27,9 @@ bool BinaryTile::should_split(const int depth) const
     return (t_own > t_req);
 }
 
-SplitDirection BinaryTile::split_direction(const DepthCounter& depth) const
+SplitDirection BinaryTile::split_direction(const TileTracker& tracker) const
 {
-    if (this->adjusted_covar(HORIZONTAL, depth) > this->adjusted_covar(VERTICAL, depth))
+    if (this->adjusted_covar(HORIZONTAL, tracker) > this->adjusted_covar(VERTICAL, tracker))
     {
         return HORIZONTAL;
     }
@@ -71,22 +71,22 @@ void BinaryTile::update_sum(const Sample& sample)
     this->sample_count++;
 }
 
-float BinaryTile::covar(const SplitDirection dir, const DepthCounter& counter) const
+float BinaryTile::covar(const SplitDirection dir, const TileTracker& tracker) const
 {
     if (this->sample_count < 2) return 0.0f;
 
     const Point2i td = BinaryTileCoding::tile_dims;
     
     float c = (dir == HORIZONTAL) 
-        ? ((0.5f * this->cov.x) / (1 << counter.horizontal) / td.x)
-        : (this->cov.y / (1 << counter.vertical) / td.y);
+        ? ((0.5f * this->cov.x) / (1 << tracker.splits.x) / td.x)
+        : (this->cov.y / (1 << tracker.splits.y) / td.y);
 
     return c / (this->sample_count - 1);
 }
 
-float BinaryTile::adjusted_covar(const SplitDirection dir, const DepthCounter& counter) const
+float BinaryTile::adjusted_covar(const SplitDirection dir, const TileTracker& tracker) const
 {
-    return std::sqrt(std::abs(covar(dir, counter)));
+    return std::sqrt(std::abs(covar(dir, tracker)));
 }
 
 float BinaryTile::meandev(const int depth) const
@@ -120,7 +120,7 @@ float BinaryTile::area(const int depth) const
     return 1.0f / ((1 << depth) * (td.x * td.y));
 }
 
-float BinaryTile::calc_visible_area_ratio(bool is_first, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds)
+float BinaryTile::visible_area_perc(bool before_split, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds)
 {
     // Return 1.0 if tile is fully within sample area
     if (!(x_bounds.x < 0 || x_bounds.y > 1 || y_bounds.x < 0 || y_bounds.y > 1))
@@ -128,16 +128,16 @@ float BinaryTile::calc_visible_area_ratio(bool is_first, SplitDirection split_di
         return 1.0f;
     }
 
-    // Return 0.0 if (sub)tile is fully outside sample area
+    // Return 0.0 if tile is fully outside sample area
     Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
     Float halved = (bounds.x + bounds.y) * 0.5;
-    if ((is_first && halved <= 0) || (!is_first && halved >= 1))
+    if ((before_split && halved <= 0) || (!before_split && halved >= 1))
     {
         return 0.0f;
     }
 
     // Otherwise, calc area ratio...
-    if (!is_first)
+    if (!before_split)
     {
         auto bound_swap = [](Point2& bounds) {
             Float temp = std::move(bounds.x);
@@ -155,10 +155,10 @@ float BinaryTile::calc_visible_area_ratio(bool is_first, SplitDirection split_di
     Point2 p1_outer(x_bounds.x, y_bounds.x);
     Point2 p2_outer(x_half, y_half);
 
-    Point2 p1_inner = is_first
+    Point2 p1_inner = before_split
         ? Point2(std::max((Float) 0.0, x_bounds.x), std::max((Float) 0.0, y_bounds.x))
         : Point2(std::max((Float) 0.0, x_half), std::max((Float) 0.0, y_half));
-    Point2 p2_inner = is_first
+    Point2 p2_inner = before_split
         ? Point2(std::min((Float) 1.0, x_half), std::min((Float) 1.0, y_half))
         : Point2(std::min((Float) 1.0, x_bounds.x), std::min((Float) 1.0, y_bounds.x));
 
@@ -179,27 +179,27 @@ float BinaryTile::calc_visible_area_ratio(bool is_first, SplitDirection split_di
 
 BinaryTile& BinaryTiling::find_tile(const Point2& pos)
 {
-    DepthCounter unused;
+    TileTracker unused;
     return find_tile(pos, unused);
 }
 
-BinaryTile& BinaryTiling::find_tile(const Point2& pos, DepthCounter& counter)
+BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker)
 {
-    const Point2i tile_dims = BinaryTileCoding::tile_dims;
+    const Point2i td = BinaryTileCoding::tile_dims;
 
     // Find right base tile by mapping the pos within the range of the tiling to the range [0, 1]
     auto warped_pos = warp_to_range(pos);
     Point2i bt_pos(
-        warped_pos.x * tile_dims.x,
-        warped_pos.y * tile_dims.y
+        warped_pos.x * td.x,
+        warped_pos.y * td.y
     );
 
-    int i = (bt_pos.y * tile_dims.x) + bt_pos.x;
+    int i = (bt_pos.y * td.x) + bt_pos.x;
     BinaryTile* curr_tile = &this->tiles.at(i);
 
     // Calculate boundary of current tile
-    float x_step = (this->x_bounds.y - this->x_bounds.x) / tile_dims.x;
-    float y_step = (this->y_bounds.y - this->y_bounds.x) / tile_dims.y;
+    float x_step = (this->x_bounds.y - this->x_bounds.x) / td.x;
+    float y_step = (this->y_bounds.y - this->y_bounds.x) / td.y;
 
     Point2 x_bounds(
         this->x_bounds.x + (bt_pos.x * x_step),
@@ -213,7 +213,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, DepthCounter& counter)
     // Iterate through tree if necessary
     while (!curr_tile->is_leaf())
     {
-        SplitDirection split_dir = curr_tile->split_direction(counter);
+        SplitDirection split_dir = curr_tile->split_direction(tracker);
 
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
         Float local = (split_dir == HORIZONTAL) ? pos.x : pos.y;
@@ -230,9 +230,11 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, DepthCounter& counter)
             curr_tile = &this->tiles.at(curr_tile->idx_second);
         }
 
-        counter.increment(split_dir);
+        tracker.increment(split_dir);
+        tracker.split(local < split);
     }
 
+    tracker.boundaries(x_bounds, y_bounds);
     return *curr_tile;
 }
 
@@ -240,10 +242,9 @@ void BinaryTiling::insert(const Sample& sample)
 {
     // Find initial tile
     Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
-    //Point2 warped_pos = warp_to_range(uv);
 
-    DepthCounter counter;
-    BinaryTile& tile = find_tile(uv, counter);
+    TileTracker tracker;
+    BinaryTile& tile = find_tile(uv, tracker);
 
     Sample updater;
     updater.value = sample.value;
@@ -255,7 +256,7 @@ void BinaryTiling::insert(const Sample& sample)
     tile.update_sum(updater);
     
     // Split if necessary
-    if (counter.depth() > BinaryTileCoding::MAX_DEPTH || !tile.should_split(counter.depth())) return;
+    if (tracker.depth() > BinaryTileCoding::MAX_DEPTH || !tile.should_split(tracker.depth())) return;
 
     tile.idx_first = this->tiles.size();
     tile.idx_second = tile.idx_first + 1;
@@ -264,7 +265,7 @@ void BinaryTiling::insert(const Sample& sample)
     this->tiles.push_back(BinaryTile());
 }
 
-std::pair<uint32_t, float> BinaryTiling::recurse_statistics(float& leaf_sum, BinaryTile& curr_tile, int depth)
+std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_tile, int depth, float& leaf_sum)
 {
     if (curr_tile.is_leaf())
     {
@@ -280,7 +281,7 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(float& leaf_sum, Bin
 
     for (auto child : children)
     {
-        auto stats = recurse_statistics(leaf_sum, *child, depth++);
+        auto stats = recurse_statistics(*child, depth++, leaf_sum);
 
         curr_tile.sample_count += stats.first;
         curr_tile.sum += stats.second;
@@ -341,10 +342,17 @@ Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
     return Point2i(x, y);
 }
 
-float BinaryTiling::pdf(const Point2& pos) const
+float BinaryTiling::pdf(const Point2& pos)
 {
-    // TODO
-    return 1.0f;
+    TileTracker tracker;
+    BinaryTile& tile = find_tile(pos, tracker);
+
+    // TODO: Account for spherical attenuation!
+    float visible_perc = BinaryTile::visible_area_perc(tracker.before_split, tracker.last, tracker.x_bounds, tracker.y_bounds);
+    float area = tile.area(tracker.depth());
+    float mu = tile.mean();
+
+    return visible_perc * area * mu;
 }
 
 /* ================ */
@@ -353,6 +361,7 @@ float BinaryTiling::pdf(const Point2& pos) const
 
 RandomGen BinaryTileCoding::random = RandomGen();
 Point2i BinaryTileCoding::tile_dims = Point2i(1, 1);
+
 float BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
 int BinaryTileCoding::MAX_DEPTH = 10;
 
@@ -416,24 +425,21 @@ void BinaryTileCoding::postprocess()
 {
     for (BinaryTiling& tiling : this->tilings)
     {
-        float leaf_sum = 0.0f;
-
         const Point2i td = BinaryTileCoding::tile_dims;
         for (int i = 0; i < td.x * td.y; ++i)
         {
             BinaryTile& tile = tiling.tiles.at(i);
-            tiling.recurse_statistics(leaf_sum, tile, 0);
+            tiling.recurse_statistics(tile, 0, this->leaf_sum);
         }
-
-        tiling.leaf_sum = leaf_sum;
     }
 }
 
 Sample BinaryTileCoding::sample(Point2& pos)
 {
+    int tiling_count = this->tilings.size();
+
     // [1] Pick one of the tilings with equal weight
     Float random = BinaryTileCoding::random.next1D();
-    int tiling_count = this->tilings.size();
     int i = random * tiling_count;
     BinaryTiling& tiling = this->tilings.at(i);
 
@@ -461,21 +467,21 @@ Sample BinaryTileCoding::sample(Point2& pos)
     }
 
     // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
-    DepthCounter counter;
-    Float visible_area = 1.0;
+    TileTracker tracker;
+    Float visible_perc = 1.0;
     while (!curr_tile->is_leaf())
     {
         Float random = BinaryTileCoding::random.next1D();
 
-        SplitDirection split_dir = curr_tile->split_direction(counter);
+        SplitDirection split_dir = curr_tile->split_direction(tracker);
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
         Float halved = (bounds.x + bounds.y) * 0.5;
 
         BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
         BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
 
-        Float area_first = BinaryTile::calc_visible_area_ratio(true, split_dir, x_bounds, y_bounds);
-        Float area_second = BinaryTile::calc_visible_area_ratio(false, split_dir, x_bounds, y_bounds);
+        Float area_first = BinaryTile::visible_area_perc(true, split_dir, x_bounds, y_bounds);
+        Float area_second = BinaryTile::visible_area_perc(false, split_dir, x_bounds, y_bounds);
         Float first_mean = area_first * first->mean();
         Float second_mean = area_second * second->mean();
 
@@ -485,16 +491,16 @@ Sample BinaryTileCoding::sample(Point2& pos)
         {
             bounds.y = halved;
             curr_tile = first;
-            visible_area = area_first;
+            visible_perc = area_first;
         }
         else
         {
             bounds.x = halved;
             curr_tile = second;
-            visible_area = area_second;
+            visible_perc = area_second;
         }
 
-        counter.increment(split_dir);
+        tracker.increment(split_dir);
     }
 
     // [4] Generate random sample once in a leaf tile
@@ -516,17 +522,18 @@ Sample BinaryTileCoding::sample(Point2& pos)
     if (y_bounds.y > 1)
         coords.y = y_bounds.x + ((coords.y - y_bounds.x) * (1.0 - y_bounds.x)) / (y_bounds.y - y_bounds.x);
 
-    float area = visible_area * curr_tile->area(counter.depth());
-    float prob = (area * (curr_tile->mean() / tiling.leaf_sum));
+    // [5] Calculate PDF value based on position
+    float area = curr_tile->area(tracker.depth());
+    float mu = curr_tile->mean();
+    float prob = visible_perc * area * mu;
 
-    // [5] Sample the PDF of all other tiles at that position and take the average
     for (int ti = 0; ti < tiling_count; ++ti)
     {
         if (ti == i) continue;
         prob += this->tilings.at(ti).pdf(coords);
     }
 
-    prob /= tiling_count;
+    prob /= this->leaf_sum;
 
     Sample sample = {
         .value = 0,
@@ -539,19 +546,18 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
 Float BinaryTileCoding::eval(Point2& pos)
 {
-    float total_value = 0.0f;
+    float prob = 0.0f;
     for (auto& tiling : this->tilings)
     {
-        //DepthCounter counter;
-        BinaryTile& tile = tiling.find_tile(pos);
-        total_value += tile.mean();
+        prob += tiling.pdf(pos);
     }
-
-    return (total_value / this->tilings.size());
+    
+    return prob;
 }
 
 void BinaryTileCoding::wipe()
 {
+    this->leaf_sum = 0.0f;
     for (auto& tiling : this->tilings)
     {
         tiling = BinaryTiling();

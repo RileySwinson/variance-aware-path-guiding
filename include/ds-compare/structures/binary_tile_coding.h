@@ -18,14 +18,19 @@ enum SplitDirection {
 };
 
 /**
- * @brief Helper struct to track the depth of a tile.
+ * @brief Helper struct to track tile data.
  */
-struct DepthCounter {
-    int horizontal = 0;
-    int vertical = 0;
+struct TileTracker {
+    Point2i splits;
+    SplitDirection last;
+    Point2 x_bounds;
+    Point2 y_bounds;
+    bool before_split;
 
-    inline int depth() const { return this->horizontal + this->vertical; }
-    inline void increment(const SplitDirection split) { if (split == HORIZONTAL) this->horizontal++; else this->vertical++; }
+    inline int depth() const { return this->splits.x + this->splits.y; }
+    inline void split(const bool decision) { this->before_split = decision; }
+    inline void boundaries(const Point2 x, const Point2 y) { this->x_bounds = x; this->y_bounds = y; }
+    inline void increment(const SplitDirection split) { ((split == HORIZONTAL) ? this->splits.x : this->splits.y)++; this->last = split; }
 };
 
 /**
@@ -59,7 +64,7 @@ struct BinaryTile {
     bool should_split(const int depth) const;
     
     /// Returns the split direction of this tile in a usable format.
-    SplitDirection split_direction(const DepthCounter& depth_counter) const;
+    SplitDirection split_direction(const TileTracker& depth_counter) const;
 
     /// Correctly updates the covariance, variance and mean deviation statistics.
     void update_statistics(const Sample& sample);
@@ -74,10 +79,10 @@ struct BinaryTile {
     float var(const int depth) const;
 
     /// Returns the covariance of the current tile given the splitting direction.
-    float covar(const SplitDirection dir, const DepthCounter& depth_counter) const;
+    float covar(const SplitDirection dir, const TileTracker& depth_counter) const;
 
     /// Returns the absolute squared covariance used for determining the split direction.
-    float adjusted_covar(const SplitDirection dir, const DepthCounter& depth_counter) const;
+    float adjusted_covar(const SplitDirection dir, const TileTracker& depth_counter) const;
 
     /// Returns the mean of the luminance stored in this tile.
     float mean() const;
@@ -86,7 +91,7 @@ struct BinaryTile {
     float area(const int depth) const;
 
     /// Returns the ratio of the area of a tile (specified by the bounds) lying within the visible (i.e, sample-able) region.
-    static float calc_visible_area_ratio(bool is_first, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds);
+    static float visible_area_perc(bool before_split, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds);
 };
 
 /**
@@ -100,22 +105,20 @@ struct BinaryTile {
  */
 struct BinaryTiling {
     std::vector<BinaryTile> tiles;
-
     Point2 x_bounds;
     Point2 y_bounds;
-    float leaf_sum;
 
     /// Finds a tile at a given position within the bounds of this tiling.
     BinaryTile& find_tile(const Point2& pos);
 
-    /// Finds a tile at a given position within the bounds of this tiling, but with the option to pass a DepthCounter to obtain the depth at which the tile is located.
-    BinaryTile& find_tile(const Point2& pos, DepthCounter& counter);
+    /// Finds a tile at a given position within the bounds of this tiling, but with the option to pass a TileTracker to obtain information about further data the tile.
+    BinaryTile& find_tile(const Point2& pos, TileTracker& counter);
 
     /// Stores a sample in a binary tiling.
     void insert(const Sample& sample);
 
     /// Utility function to recursively add the sum and sample count statistics from child tiles to parent tiles.
-    std::pair<uint32_t, float> recurse_statistics(float& leaf_sum, BinaryTile& curr_tile, int depth);
+    std::pair<uint32_t, float> recurse_statistics(BinaryTile& curr_tile, int depth, float& leaf_sum);
 
     /// Utility function to warp a 2D coordinate in [0, 1]^2 to the range of the current tiling.
     Point2 warp_to_range(const Point2& uv) const;
@@ -123,8 +126,8 @@ struct BinaryTiling {
     /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
     Point2i base_tile_pos_from_cdf(const Point2& pos) const;
 
-    /// Obtain the value of the underlying PDF at a given position.
-    float pdf(const Point2& pos) const;
+    /// Obtain the *unnormalized* value of the underlying PDF at a given position.
+    float pdf(const Point2& pos);
 };
 
 /**
@@ -134,6 +137,7 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     static float SUBDIV_THRESHOLD;
     static int MAX_DEPTH;
     static Point2i tile_dims;
+    float leaf_sum = 0.0f;
 
     ~BinaryTileCoding() { }
 
