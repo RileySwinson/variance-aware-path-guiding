@@ -1,8 +1,26 @@
 import subprocess
 import os
-import time
+# import time
 import math
 from concurrent.futures import ProcessPoolExecutor
+
+class RangeEntry:
+    def __init__(self, start, end, func = None):
+        self.bounds = (start, end)
+        self.curr = start
+        self.func = func
+
+    def increase(self):
+        f = self.func
+        if f == None:
+            f = lambda x: x + 1
+
+        value = f(self.curr)
+        if (value > self.bounds[-1]):
+            return
+        
+        self.curr = value
+
 
 settings = {
     "testing": {
@@ -14,12 +32,12 @@ settings = {
     "general": {
         # Path to folder containing the envmaps. Set to 'None' to use the default folder. If multithreading is enabled, this setting is ignored.
         "envmap_path": None,
-        #
+        # Path to folder containing the results. Set to 'None' to use the default folder. If multithreading is enabled, this setting is ignored.
         "result_path": None,
         #
-        "samples_learning": [64, 65536],
+        "samples_learning": RangeEntry(start=64, end=65536, func=lambda x: x * 2),
         #
-        "samples_guiding": [64, 65536],
+        "samples_guiding": RangeEntry(start=64, end=65536, func=lambda x: x * 2),
         #
         "blacklist": [],
         #
@@ -33,31 +51,31 @@ settings = {
     },
     "structures": {
         "sh": {
-            "bands": [1, 10, 1],
-            "depth": [1, 20, 1],
+            "bands": RangeEntry(start=1, end=10),
+            "depth": RangeEntry(start=1, end=20),
             "use_offset": True
         },
         "dt": {
             "frac_loss": "none",
             "dir_filter": "nearest",
-            "threshold": [0.01, 0.5, 0.01],
+            "threshold": RangeEntry(start=0.01, end=0.5, func=lambda x: x + 0.01),
             "iterations": -1,
-            "max_depth": [2, 20, 1]
+            "max_depth": RangeEntry(start=2, end=20)
         },
         "tc": {
-            "tilings": [1, 8, 1],
-            "tiles_x": [2, 32, 1],
-            "tiles_y": [2, 32, 1]
+            "tilings": RangeEntry(start=1, end=8),
+            "tiles_x": RangeEntry(start=2, end=32),
+            "tiles_y": RangeEntry(start=2, end=32)
         },
         "btc": {
-            "tilings": [1, 8, 1],
-            "tiles_x": [1, 8, 1],
-            "tiles_y": [1, 8, 1],
-            "max_depth": [2, 20, 1],
-            "subdiv_thresh": [0.0001, 0.01, 0.0001]
+            "tilings": RangeEntry(start=1, end=8),
+            "tiles_x": RangeEntry(start=1, end=8),
+            "tiles_y": RangeEntry(start=1, end=8),
+            "max_depth": RangeEntry(start=2, end=20),
+            "subdiv_thresh": [0.0001, 0.01, func=lambda x: x * 2]
         },
         "vmf": {
-            "components": [1, 32, 1],
+            "components": RangeEntry(start=1, end=32),
             "use_ruppert": True
         }
     }
