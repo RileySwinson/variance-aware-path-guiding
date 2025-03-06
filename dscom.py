@@ -15,18 +15,21 @@ class FluidSetting:
 class Range(FluidSetting):
     def __init__(self, start, end, func = None):
         self.bounds = (start, end)
-        self.curr = start
+        self.value = start
         
         if not func:
             func = lambda x: x + 1
         self.func = func
 
     def next(self):
-        self.curr = self.func(self.curr)
+        self.value = self.func(self.value)
 
     def finished(self):
-        value = self.func(self.curr)
-        return (value > self.bounds[-1])
+        next_value = self.func(self.value)
+        return (next_value > self.bounds[-1])
+
+    def get(self):
+        return self.value
     
 class Toggleable(FluidSetting):
     def __init__(self, state):
@@ -38,6 +41,11 @@ class Toggleable(FluidSetting):
 
     def finished(self):
         return (self.state != self.initial)
+
+    def get(self):
+        return self.state
+
+###################################################
 
 settings = {
     "testing": {
@@ -101,10 +109,37 @@ settings = {
 base_name = "./data/tests/envmaps/"
 res_name = "./data/results/"
 
+###################################################
+################# END CONFIG ######################
+###################################################
+
 commands = []
 progress = {}
 futures = None
 i = 0
+
+def build_argvals(s, a = []):
+    """
+    Builds a list of setting values required for cl call
+
+    Parameters
+    ----------
+    a : list
+      List for accumulating all relevant values
+    s : obj
+      The settings object
+    """
+
+    for k, v in s.items():
+        if isinstance(v, dict):
+            build_argvals(v, a)
+        elif k.lower() in ["multithreading", "time_limit", "envmap_path", "result_path"]:
+            continue
+        else:
+            a.append(v.get() if isinstance(v, FluidSetting) else v)
+
+    return a
+
 
 def print_status():
     """
@@ -155,24 +190,45 @@ def collect_args():
     Accumulates a list of args for every sub-folder / worker based on the global settings
     """
 
+    # dont forget to add sm at end!
+    commands = ["--sl", "--sg", "-b", "-n", "--ne", "--ns", "--shb", "--shd", "--sho", "--dtl", "--dtf", "--dtt", "--dti", "--dtd", "-t", "--tx", "--ty", "--bt", "--btx", "--bty", "--btd", "--btt", "--vc", "--vr"]
+    commands = zip(commands, build_argvals(settings))
+    
     for path in os.listdir(os.fsencode(base_name)):
         folder_name = os.fsdecode(path)
         full_path = base_name + folder_name
         _, _, files = next(os.walk(full_path))
         progress[folder_name] = [0, len(files)]
         
-        args = ["mtsutil", "dscompare", "-p", full_path, "--sl", "65536", "--sm", "sphere"]
+        args = ["mtsutil", "dscompare", "-p", full_path, "--sm", "sphere"]
+        for prefix, value in commands:
+            args.append(prefix)
+            args.append(value)
+        
         commands.append(args)
     
 def start_comparer(command):
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
+def all_finished(s, c = True):
+    for _, v in s.items():
+        if isinstance(v, dict):
+            c = all_finished(v, c)
+        elif isinstance(v, FluidSetting) and not v.finished():
+            return False
+
+    return c
+
 if __name__ == '__main__':
-    #while not all_settings_finished():
+    sl = settings["general"]["samples_learning"]
+    sg = settings["general"]["samples_guiding"]
+
+    print(all_finished(settings))
+
+    while not all_finished(settings):
         collect_args()
 
         with ProcessPoolExecutor(max_workers=7) as executor:
             executor.submit(watch_folder)
             futures = executor.map(start_comparer, commands)
 
-        
