@@ -48,6 +48,12 @@ class FluidSetting:
     def reset(self):
         self.value = self.default
 
+    def next(self):
+        raise NotImplementedError
+
+    def finished(self):
+        raise NotImplementedError
+
 class Range(FluidSetting):
     def __init__(self, start, end, func = None):
         super().__init__(start)
@@ -151,7 +157,6 @@ batch_paths = []
 commands = []
 progress = {}
 futures = None
-i = 0
 
 def build_argvals(s, a = []):
     """
@@ -228,13 +233,9 @@ def collect_args():
     commands = ["--sl", "--sg", "-b", "-n", "--ne", "--ns", "--shb", "--shd", "--sho", "--dtl", "--dtf", "--dtt", "--dti", "--dtd", "-t", "--tx", "--ty", "--bt", "--btx", "--bty", "--btd", "--btt", "--vc", "--vr"]
     commands = zip(commands, build_argvals(settings))
     
-    for path in os.listdir(os.fsencode(base_name)):
-        folder_name = os.fsdecode(path)
-        full_path = base_name + folder_name
-        _, _, files = next(os.walk(full_path))
-        progress[folder_name] = [0, len(files)]
-        
-        args = ["mtsutil", "dscompare", "-p", full_path, "--sm", "sphere"]
+    for path in batch_paths:
+        args = ["mtsutil", "dscompare", "-p", path, "--sm", "sphere"]
+
         for prefix, value in commands:
             args.append(prefix)
             args.append(value)
@@ -260,9 +261,9 @@ def create_batches():
             # generate file uid
             file_id = uuid.uuid4()
             _, file_ext = os.path.splitext(file)
+            new_name = str(file_id) + file_ext
 
             # store old folder path
-            new_name = str(file_id) + file_ext
             base_pairing[new_name] = full_path + "/" + file
 
             # create new folder
