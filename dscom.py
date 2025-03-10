@@ -21,29 +21,35 @@ class Range(FluidSetting):
             func = lambda x: x + 1
         self.func = func
 
+    def get(self):
+        return self.value
+    
     def next(self):
         self.value = self.func(self.value)
 
     def finished(self):
         next_value = self.func(self.value)
         return (next_value > self.bounds[-1])
-
-    def get(self):
-        return self.value
+    
+    def reset(self):
+        self.value = self.bounds[0]
     
 class Toggleable(FluidSetting):
     def __init__(self, state):
         self.state = state
         self.initial = state
 
+    def get(self):
+        return self.state
+    
     def next(self):
         self.state = not self.state
 
     def finished(self):
         return (self.state != self.initial)
-
-    def get(self):
-        return self.state
+    
+    def reset(self):
+        self.state = self.initial
 
 ###################################################
 
@@ -62,7 +68,7 @@ settings = {
         #
         "samples_learning": Range(start=64, end=65536, func=lambda x: x * 2),
         #
-        "samples_guiding": Range(start=64, end=65536, func=lambda x: x * 2),
+        "samples_guiding": 65536,
         #
         "blacklist": [],
         #
@@ -219,16 +225,17 @@ def all_finished(s, c = True):
 
     return c
 
-if __name__ == '__main__':
+def run():
     sl = settings["general"]["samples_learning"]
     sg = settings["general"]["samples_guiding"]
 
-    print(all_finished(settings))
-
     while not all_finished(settings):
+        
         collect_args()
 
-        with ProcessPoolExecutor(max_workers=7) as executor:
+        with ProcessPoolExecutor() as executor:
             executor.submit(watch_folder)
             futures = executor.map(start_comparer, commands)
 
+if __name__ == '__main__':
+    run()
