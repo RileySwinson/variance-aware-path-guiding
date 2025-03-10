@@ -14,7 +14,11 @@ import subprocess
 import os
 import time
 import math
+import signal
+import sys
+import uuid
 from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
 
 ##############################################
 # A bunch of classes handling fluid setting parameters.
@@ -142,7 +146,8 @@ res_name = "./data/results/"
 # Start of code.
 ##############################################
 
-batches = []
+base_pairing = {}
+batch_paths = []
 commands = []
 progress = {}
 futures = None
@@ -163,7 +168,7 @@ def build_argvals(s, a = []):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ["multithreading", "time_limit", "envmap_path", "result_path"]:
+        elif k.lower() in ["multithreading", "time_limit", "batch_size", "envmap_path", "result_path"]:
             continue
         else:
             a.append(v.get() if isinstance(v, FluidSetting) else v)
@@ -236,8 +241,65 @@ def collect_args():
         
         commands.append(args)
 
-def split_folders():
-    pass
+def create_batches():
+    batch_size = settings["testing"]["batch_size"]
+    batch_id = 0
+    file_count = 0
+
+    for i, path in enumerate(os.listdir(os.fsencode(base_name))):
+        folder_name = os.fsdecode(path)
+        full_path = base_name + folder_name
+        _, _, files = next(os.walk(full_path))
+        
+        if batch_size < 0:
+            progress[folder_name] = [0, len(files)]
+            batch_paths.append(full_path)
+            continue
+        
+        for file in files:
+            # generate file uid
+            file_id = uuid.uuid4()
+            _, file_ext = os.path.splitext(file)
+
+            # store old folder path
+            new_name = str(file_id) + file_ext
+            base_pairing[new_name] = full_path + "/" + file
+
+            # create new folder
+            new_path = base_name + "testing/batch_" + str(batch_id) + "/"
+            if not os.path.exists(new_path):
+                os.makedirs(new_path)
+            
+            # move to new folder
+            Path(full_path + "/" + file).rename(new_path + new_name)
+            file_count += 1
+
+            if file_count % batch_size == 0 and file_count != 0:
+                progress["Batch " + str(batch_id)] = [0, batch_size]
+                batch_paths.append(new_path)
+                batch_id += 1
+        
+        # Unless there was exactly a multiple of 'batch_size' files, the last batch hasn't been tracked yet
+        if i == (len(os.listdir(os.fsencode(base_name))) - 1) and ("Batch " + str(batch_id)) not in progress.keys():
+            progress["Batch " + str(batch_id)] = [0, file_count % batch_size]
+            batch_paths.append(base_name + "testing/batch_" + str(batch_id) + "/")
+
+def restore_old_folders():
+    if settings["testing"]["batch_size"] < 0:
+        return
+
+    test_path = base_name + "testing/"
+    for path in os.listdir(os.fsencode(test_path)):
+        folder_name = os.fsdecode(path)
+        full_path = test_path + folder_name
+        _, _, files = next(os.walk(full_path))
+
+        for file in files:
+            old_path = base_pairing.pop(file)
+            Path(full_path + "/" + file).rename(old_path)
+
+        if os.path.isfile(full_path):
+            os.remove(full_path)
     
 def start_comparer(command):
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -251,7 +313,7 @@ def all_finished(s, c = True):
 
     return c
 
-def run():
+def run_test():
     sl = settings["general"]["samples_learning"]
     sg = settings["general"]["samples_guiding"]
 
@@ -263,10 +325,22 @@ def run():
             executor.submit(watch_folder)
             futures = executor.map(start_comparer, commands)
 
+def sighandler(signum, frame):
+    signal.signal(signum, signal.SIG_IGN)
+    restore_old_folders()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, sighandler)
+
 if __name__ == '__main__':
-    run()
+    create_batches()
+    while True:
+        pass
+    
+    exit(0)
+    run_test()
 
 # TODO:
-# - Split up folders so they're 100 images at most for faster processing
+# - Change file number approach to size approach for even distribution
 # - Iterate over settings and increase each time
 # - Store results in CSV; one folder per ds, one csv for every permutation
