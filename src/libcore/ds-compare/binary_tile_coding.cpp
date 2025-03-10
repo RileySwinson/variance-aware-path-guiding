@@ -1,593 +1,241 @@
-#include <ds-compare/structures/binary_tile_coding.h>
+import subprocess
+import os
+import time
+import math
+from concurrent.futures import ProcessPoolExecutor
 
-MTS_NAMESPACE_BEGIN
+# TODO:
+# - Split up folders so they're 100 images at most for faster processing
+# - Iterate over settings and increase each time
+# - Store results in CSV; one folder per ds, one csv for every permutation
 
-/* ========== */
-/* BinaryTile */
-/* ========== */
+class FluidSetting:
+    pass
 
-bool BinaryTile::is_leaf() const
-{
-    return (this->idx_first == UINT32_MAX) && (this->idx_second == UINT32_MAX);
-}
+class Range(FluidSetting):
+    def __init__(self, start, end, func = None):
+        self.bounds = (start, end)
+        self.value = start
+        
+        if not func:
+            func = lambda x: x + 1
+        self.func = func
 
-bool BinaryTile::should_split(const int depth) const
-{
-    if (this->sample_count < 2)
-    {
-        return false;
-    }
+    def get(self):
+        return self.value
     
-    float diff = meandev(depth) - BinaryTileCoding::SUBDIV_THRESHOLD;
-    float stderr = std::sqrt(var(depth) / this->sample_count);
+    def next(self):
+        self.value = self.func(self.value)
+
+    def finished(self):
+        next_value = self.func(self.value)
+        return (next_value > self.bounds[-1])
     
-    float t_own = diff / stderr;
-    float t_req = TTable95::fetch(this->sample_count - 1);
-
-    return (t_own > t_req);
-}
-
-SplitDirection BinaryTile::split_direction(const TileTracker& tracker) const
-{
-    if (this->adjusted_covar(HORIZONTAL, tracker) > this->adjusted_covar(VERTICAL, tracker))
-    {
-        return HORIZONTAL;
-    }
-
-    return VERTICAL;
-}
-
-void BinaryTile::update_statistics(const Sample& sample)
-{
-    auto samples = this->sample_count;
-    float value_mean = (samples > 0)
-        ? (this->sum / samples)
-        : 0;
-
-    auto n = samples + 1;
-
-    float dx = sample.value - value_mean;
-    auto dy_x = [&sample, this]() { return sample.phi - this->sample_mean.x; };
-    auto dy_y = [&sample, this]() { return sample.theta - this->sample_mean.y; };
-
-    // Update x covariance
-    this->sample_mean.x += dy_x() / n;
-    this->cov.x += dx * dy_x();
-
-    // Update y covariance
-    this->sample_mean.y += dy_y() / n;
-    this->cov.y += dx * dy_y();
-
-    // Update mean deviation
-    value_mean += dx / n;
-    float dx2 = sample.value - value_mean;
-    this->m2 += dx * dx2;
-    this->diff_sum += std::abs(dx);
-}
-
-void BinaryTile::update_sum(const Sample& sample)
-{
-    this->sum += sample.value;
-    this->sample_count++;
-}
-
-float BinaryTile::covar(const SplitDirection dir, const TileTracker& tracker) const
-{
-    if (this->sample_count < 2) return 0.0f;
-
-    const Point2i td = BinaryTileCoding::tile_dims;
+    def reset(self):
+        self.value = self.bounds[0]
     
-    float c = (dir == HORIZONTAL) 
-        ? ((0.5f * this->cov.x) / (1 << tracker.splits.x) / td.x)
-        : (this->cov.y / (1 << tracker.splits.y) / td.y);
+class Toggleable(FluidSetting):
+    def __init__(self, state):
+        self.state = state
+        self.initial = state
 
-    return c / (this->sample_count - 1);
-}
-
-float BinaryTile::adjusted_covar(const SplitDirection dir, const TileTracker& tracker) const
-{
-    return std::sqrt(std::abs(covar(dir, tracker)));
-}
-
-float BinaryTile::meandev(const int depth) const
-{
-    if (this->sample_count == 0) return 0.0f;
-
-    return area(depth) * (this->diff_sum / this->sample_count);
-}
-
-float BinaryTile::var(const int depth) const
-{
-    if (this->sample_count < 2) return 0.0f;
-
-    float a = area(depth);
-    return a * a * (this->m2 / (this->sample_count - 1));
-}
-
-float BinaryTile::mean() const
-{
-    if (this->sample_count == 0)
-    {
-        return Epsilon;
-    }
-
-    return this->sum / this->sample_count;
-}
-
-float BinaryTile::area(const int depth) const
-{
-    const Point2i td = BinaryTileCoding::tile_dims;
-    return 1.0f / ((1 << depth) * (td.x * td.y));
-}
-
-float BinaryTile::visible_area_perc(bool before_split, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds)
-{
-    // Return 1.0 if tile is fully within sample area
-    if (!(x_bounds.x < 0 || x_bounds.y > 1 || y_bounds.x < 0 || y_bounds.y > 1))
-    {
-        return 1.0f;
-    }
-
-    // Return 0.0 if tile is fully outside sample area
-    Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
-    Float halved = (bounds.x + bounds.y) * 0.5;
-    if ((before_split && halved <= 0) || (!before_split && halved >= 1))
-    {
-        return 0.0f;
-    }
-
-    // Otherwise, calc area ratio...
-    if (!before_split)
-    {
-        auto bound_swap = [](Point2& bounds) {
-            Float temp = std::move(bounds.x);
-            bounds.x = std::move(bounds.y);
-            bounds.y = std::move(temp);
-        };
-
-        bound_swap(x_bounds);
-        bound_swap(y_bounds);
-    }
-
-    Float x_half = (split_dir == HORIZONTAL) ? (x_bounds.x + x_bounds.y) * 0.5 : x_bounds.y;
-    Float y_half = (split_dir == VERTICAL)   ? (y_bounds.x + y_bounds.y) * 0.5 : y_bounds.y;
-
-    Point2 p1_outer(x_bounds.x, y_bounds.x);
-    Point2 p2_outer(x_half, y_half);
-
-    Point2 p1_inner = before_split
-        ? Point2(std::max((Float) 0.0, x_bounds.x), std::max((Float) 0.0, y_bounds.x))
-        : Point2(std::max((Float) 0.0, x_half), std::max((Float) 0.0, y_half));
-    Point2 p2_inner = before_split
-        ? Point2(std::min((Float) 1.0, x_half), std::min((Float) 1.0, y_half))
-        : Point2(std::min((Float) 1.0, x_bounds.x), std::min((Float) 1.0, y_bounds.x));
-
-    Float area_outer = std::abs(p2_outer.x - p1_outer.x) * std::abs(p2_outer.y - p1_outer.y);
-    Float area_inner = std::abs(p2_inner.x - p1_inner.x) * std::abs(p2_inner.y - p1_inner.y);
-
-    if (area_outer == 0) // This should never happen, but just in case...
-    {
-        return 0.0f;
-    }
-
-    return (area_inner / area_outer);
-}
-
-/* ============ */
-/* BinaryTiling */
-/* ============ */
-
-BinaryTile& BinaryTiling::find_tile(const Point2& pos)
-{
-    TileTracker unused;
-    return find_tile(pos, unused);
-}
-
-BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker)
-{
-    const Point2i td = BinaryTileCoding::tile_dims;
-
-    // Find right base tile by mapping the pos within the range of the tiling to the range [0, 1]
-    auto warped_pos = warp_to_range(pos);
-    Point2i bt_pos(
-        warped_pos.x * td.x,
-        warped_pos.y * td.y
-    );
-
-    int i = (bt_pos.y * td.x) + bt_pos.x;
-    BinaryTile* curr_tile = &this->tiles.at(i);
-
-    // Calculate boundary of current tile
-    float x_step = (this->x_bounds.y - this->x_bounds.x) / td.x;
-    float y_step = (this->y_bounds.y - this->y_bounds.x) / td.y;
-
-    Point2 x_bounds(
-        this->x_bounds.x + (bt_pos.x * x_step),
-        this->x_bounds.x + ((bt_pos.x + 1) * x_step)
-    );
-    Point2 y_bounds(
-        this->y_bounds.x + (bt_pos.y * y_step),
-        this->y_bounds.x + (bt_pos.y + 1) * y_step
-    );
-
-    // Iterate through tree if necessary
-    while (!curr_tile->is_leaf())
-    {
-        SplitDirection split_dir = curr_tile->split_direction(tracker);
-
-        Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
-        Float local = (split_dir == HORIZONTAL) ? pos.x : pos.y;
-        Float split = (bounds.x + bounds.y) * 0.5;
-
-        if (local < split) // we're in the left or upper subtree
-        {
-            bounds.y = split;
-            curr_tile = &this->tiles.at(curr_tile->idx_first);
-        }
-        else // we're in the right or lower subtree
-        {
-            bounds.x = split;
-            curr_tile = &this->tiles.at(curr_tile->idx_second);
-        }
-
-        tracker.increment(split_dir);
-        tracker.split(local < split);
-    }
-
-    tracker.boundaries(x_bounds, y_bounds);
-    return *curr_tile;
-}
-
-void BinaryTiling::insert(const Sample& sample)
-{
-    // Find initial tile
-    Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
-
-    TileTracker tracker;
-    BinaryTile& tile = find_tile(uv, tracker);
-
-    Sample updater;
-    updater.value = sample.value;
-    updater.phi = uv.x;
-    updater.theta = uv.y;
-
-    // Store value & update covariance
-    tile.update_statistics(updater);
-    tile.update_sum(updater);
+    def get(self):
+        return self.state
     
-    // Split if necessary
-    if (tracker.depth() > BinaryTileCoding::MAX_DEPTH || !tile.should_split(tracker.depth())) return;
+    def next(self):
+        self.state = not self.state
 
-    tile.idx_first = this->tiles.size();
-    tile.idx_second = tile.idx_first + 1;
+    def finished(self):
+        return (self.state != self.initial)
+    
+    def reset(self):
+        self.state = self.initial
 
-    this->tiles.push_back(BinaryTile());
-    this->tiles.push_back(BinaryTile());
-}
+###################################################
 
-std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_tile, int depth, float& leaf_sum)
-{
-    if (curr_tile.is_leaf())
-    {
-        // Do I need to consider the visible area here too?
-        leaf_sum += curr_tile.area(depth) * curr_tile.mean();
-        return { curr_tile.sample_count, curr_tile.sum };
-    }
-
-    std::array<BinaryTile*, 2> children = {
-        &this->tiles.at(curr_tile.idx_first),
-        &this->tiles.at(curr_tile.idx_second)
-    };
-
-    for (auto child : children)
-    {
-        auto stats = recurse_statistics(*child, depth++, leaf_sum);
-
-        curr_tile.sample_count += stats.first;
-        curr_tile.sum += stats.second;
-    }
-
-    return { curr_tile.sample_count, curr_tile.sum };
-}
-
-Point2 BinaryTiling::warp_to_range(const Point2& uv) const
-{
-    return Point2(
-        (uv.x - this->x_bounds.x) / (this->x_bounds.y - this->x_bounds.x),
-        (uv.y - this->y_bounds.x) / (this->y_bounds.y - this->y_bounds.x)
-    );
-}
-
-Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
-{
-    Point2i td = BinaryTileCoding::tile_dims;
-
-    // Calculate CDFs
-    float total_mean = 0.0f;
-    std::vector<float> row_means(td.y);
-    for (int y = 0; y < td.y; ++y)
-    {
-        float row_mean = 0.0f;
-        for (int x = 0; x < td.x; ++x)
-        {
-            int tile_i = (y * td.x) + x;
-            row_mean += this->tiles.at(tile_i).mean();
-        }
-        total_mean += row_mean;
-        row_means.at(y) = (row_mean / td.x);
-    }
-    total_mean /= (td.x * td.y);
-
-    // y-dir sampling
-    float sum_y = 0.0f; int y = 0;
-    size_t y_len = row_means.size();
-    for (y; y < y_len; ++y)
-    {
-        sum_y += row_means.at(y) / total_mean;
-        if (sum_y / y_len >= pos.y) break;
-    }
-    if (y == y_len) y -= 1;
-
-    // x-dir sampling
-    float sum_x = 0.0f; int x = 0;
-    size_t x_len = td.x;
-    for (x; x < x_len; ++x)
-    {
-        int i = (y * x_len) + x;
-        sum_x += this->tiles.at(i).mean() / row_means.at(y);
-        if (sum_x / x_len >= pos.x) break;
-    }
-    if (x == x_len) x -= 1;
-
-    return Point2i(x, y);
-}
-
-float BinaryTiling::pdf(const Point2& pos)
-{
-    TileTracker tracker;
-    BinaryTile& tile = find_tile(pos, tracker);
-
-    // TODO: Account for spherical attenuation!
-    float visible_perc = BinaryTile::visible_area_perc(tracker.before_split, tracker.last, tracker.x_bounds, tracker.y_bounds);
-    float area = tile.area(tracker.depth());
-    float mu = tile.mean();
-
-    return visible_perc * area * mu;
-}
-
-/* ================ */
-/* BinaryTileCoding */
-/* ================ */
-
-RandomGen BinaryTileCoding::random = RandomGen();
-Point2i BinaryTileCoding::tile_dims = Point2i(1, 1);
-
-float BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
-int BinaryTileCoding::MAX_DEPTH = 10;
-
-void BinaryTileCoding::construct(DSArguments& init_data)
-{
-    SAssert(init_data.btc.tilings > 0);
-    SAssert(init_data.btc.tiles_x > 0 && init_data.btc.tiles_y > 0);
-    SAssert(init_data.btc.max_depth > 0);
-
-    BinaryTileCoding::tile_dims = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
-    BinaryTileCoding::SUBDIV_THRESHOLD = init_data.btc.subdiv_threshold;
-    BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
-
-    this->tilings = std::vector<BinaryTiling>(init_data.btc.tilings);
-    for (auto& tiling : this->tilings)
-    {
-        tiling.tiles = std::vector<BinaryTile>(init_data.btc.tiles_x * init_data.btc.tiles_y);
-    }
-}
-
-void BinaryTileCoding::preprocess()
-{
-    // Calculate tiling offset
-    Float tile_width = 1.0 / tile_dims.x;
-    Float tile_height = 1.0 / tile_dims.y;
-    auto num_tilings = this->tilings.size();
-
-    Float overhead = 0.0;
-    if (num_tilings > 1)
-    {
-        overhead = 1.0 / num_tilings;
-    }
-
-    Point2 offset(tile_width * overhead, tile_height * overhead);
-
-    // Store start and end thresholds in each tiling
-    for (int i = 0; i < num_tilings; ++i)
-    {
-        BinaryTiling& tiling = this->tilings.at(i);
-
-        Point2 x_range(0 - (i * offset.x), 1 + ((num_tilings - 1 - i) * offset.x));
-        Point2 y_range(0 - ((num_tilings - 1 - i) * offset.y), 1 + (i * offset.y));
-
-        tiling.x_bounds = x_range;
-        tiling.y_bounds = y_range;
-    }
-}
-
-void BinaryTileCoding::store(std::vector<Sample>& samples)
-{
-    for (auto& sample : samples)
-    {
-        for (auto& tiling : this->tilings)
-        {
-            tiling.insert(sample);
+settings = {
+    "testing": {
+        # Enables multithreading for concurrent evaluation of environment maps.
+        "multithreading": True,
+        # Set a time limit in seconds after which the application will stop running. If set to '-1', the time limit will be ignored.
+        "time_limit": -1
+    },
+    "general": {
+        # Path to folder containing the envmaps. Set to 'None' to use the default folder. If multithreading is enabled, this setting is ignored.
+        "envmap_path": None,
+        # Path to folder containing the results. Set to 'None' to use the default folder. If multithreading is enabled, this setting is ignored.
+        "result_path": None,
+        #
+        "samples_learning": Range(start=64, end=65536, func=lambda x: x * 2),
+        #
+        "samples_guiding": 65536,
+        #
+        "blacklist": [],
+        #
+        "normalize": True
+    },
+    "noise": {
+        #
+        "envmap": False,
+        #
+        "samples": False
+    },
+    "structures": {
+        "sh": {
+            "bands": Range(start=1, end=10),
+            "depth": Range(start=1, end=20),
+            "use_offset": Toggleable(True)
+        },
+        "dt": {
+            "frac_loss": "none",
+            "dir_filter": "nearest",
+            "threshold": Range(start=0.01, end=0.5, func=lambda x: x + 0.01),
+            "iterations": -1,
+            "max_depth": Range(start=2, end=20)
+        },
+        "tc": {
+            "tilings": Range(start=1, end=8),
+            "tiles_x": Range(start=2, end=32),
+            "tiles_y": Range(start=2, end=32)
+        },
+        "btc": {
+            "tilings": Range(start=1, end=8),
+            "tiles_x": Range(start=1, end=8),
+            "tiles_y": Range(start=1, end=8),
+            "max_depth": Range(start=2, end=20),
+            "subdiv_thresh": Range(start=0.0001, end=0.01, func=lambda x: x * 2)
+        },
+        "vmf": {
+            "components": Range(start=1, end=32),
+            "use_ruppert": Toggleable(True)
         }
     }
 }
 
-void BinaryTileCoding::postprocess()
-{
-    for (BinaryTiling& tiling : this->tilings)
-    {
-        const Point2i td = BinaryTileCoding::tile_dims;
-        for (int i = 0; i < td.x * td.y; ++i)
-        {
-            BinaryTile& tile = tiling.tiles.at(i);
-            tiling.recurse_statistics(tile, 0, this->leaf_sum);
-        }
-    }
-}
+base_name = "./data/tests/envmaps/"
+res_name = "./data/results/"
 
-Sample BinaryTileCoding::sample(Point2& pos)
-{
-    int tiling_count = this->tilings.size();
+###################################################
+################# END CONFIG ######################
+###################################################
 
-    // [1] Pick one of the tilings with equal weight
-    Float random = BinaryTileCoding::random.next1D();
-    int i = random * tiling_count;
-    BinaryTiling& tiling = this->tilings.at(i);
+commands = []
+progress = {}
+futures = None
+i = 0
 
-    // [2] If there is more than one base tile, use the passed-in (ideally random) 2D position to fetch the right one
-    BinaryTile* curr_tile = &tiling.tiles.at(0);
-    Point2 x_bounds = tiling.x_bounds;
-    Point2 y_bounds = tiling.y_bounds;
+def build_argvals(s, a = []):
+    """
+    Builds a list of setting values required for cl call
+
+    Parameters
+    ----------
+    a : list
+      List for accumulating all relevant values
+    s : obj
+      The settings object
+    """
+
+    for k, v in s.items():
+        if isinstance(v, dict):
+            build_argvals(v, a)
+        elif k.lower() in ["multithreading", "time_limit", "envmap_path", "result_path"]:
+            continue
+        else:
+            a.append(v.get() if isinstance(v, FluidSetting) else v)
+
+    return a
+
+
+def print_status():
+    """
+    Prints the current progress of the benchmark
+    """
+
+    if os.name == 'nt':
+        _ = os.system('cls')
+    else:
+        _ = os.system('clear')
+        
+    for k, v in progress.items():
+        completion_rate = v[0] / v[1]
+        full_bars = math.floor(completion_rate * 20)
+        empty_bars = 20 - full_bars
+        
+        percentage = math.floor(completion_rate * 100)
+        percentage = ' ' * (3 - len(str(percentage))) + str(percentage)
+        progress_bar = '|' + '█' * full_bars + ' ' * empty_bars + '|'
+        
+        print(f'{percentage}%{progress_bar} {v[0]}/{v[1]} ({k})')
+   
+def watch_folder():
+    """
+    Tracks the current progress of the benchmark in a given folder
+    """
     
-    if (tile_dims.x * tile_dims.y > 1)
-    {
-        auto bt_pos = tiling.base_tile_pos_from_cdf(pos);
-        curr_tile = &tiling.tiles.at((bt_pos.y * tile_dims.x) + bt_pos.x);
+    while True:
+        if futures != None:
+            tasks_finished = True
+            for future in futures:
+                if not future.done():
+                    tasks_finished = False
+                    break
+                    
+            if tasks_finished:
+                break
+        
+        for k, v in progress.items():
+            _, f_count, _ = next(os.walk(res_name + k))
+            f_count = len(f_count)
+            if (f_count != v[0]):
+                progress[k] = [f_count, v[1]]
+                print_status()
 
-        Float x_step = (tiling.x_bounds.y - tiling.x_bounds.x) / tile_dims.x;
-        Float y_step = (tiling.y_bounds.y - tiling.y_bounds.x) / tile_dims.y;
+def collect_args():
+    """
+    Accumulates a list of args for every sub-folder / worker based on the global settings
+    """
 
-        x_bounds = Point2(
-            tiling.x_bounds.x + (bt_pos.x * x_step),
-            tiling.x_bounds.x + ((bt_pos.x + 1) * x_step)
-        );
-        y_bounds = Point2(
-            tiling.y_bounds.x + (bt_pos.y * y_step),
-            tiling.y_bounds.x + ((bt_pos.y + 1) * y_step)
-        );
-    }
-
-    // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
-    TileTracker tracker;
-    Float visible_perc = 1.0;
-    while (!curr_tile->is_leaf())
-    {
-        Float random = BinaryTileCoding::random.next1D();
-
-        SplitDirection split_dir = curr_tile->split_direction(tracker);
-        Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
-        Float halved = (bounds.x + bounds.y) * 0.5;
-
-        BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
-        BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
-
-        Float area_first = BinaryTile::visible_area_perc(true, split_dir, x_bounds, y_bounds);
-        Float area_second = BinaryTile::visible_area_perc(false, split_dir, x_bounds, y_bounds);
-        Float first_mean = area_first * first->mean();
-        Float second_mean = area_second * second->mean();
-
-        Float split = first_mean / (first_mean + second_mean);
-
-        if (random < split)
-        {
-            bounds.y = halved;
-            curr_tile = first;
-            visible_perc = area_first;
-        }
-        else
-        {
-            bounds.x = halved;
-            curr_tile = second;
-            visible_perc = area_second;
-        }
-
-        tracker.increment(split_dir);
-    }
-
-    // [4] Generate random sample once in a leaf tile
-    Point2 rng = BinaryTileCoding::random.next2D();
-    Point2 coords(
-        x_bounds.x + rng.x * (x_bounds.y - x_bounds.x),
-        y_bounds.x + rng.y * (y_bounds.y - y_bounds.x)
-    );
-
-    if (x_bounds.x < 0)
-        coords.x = ((coords.x - x_bounds.x) * x_bounds.y) / (x_bounds.y - x_bounds.x);
-
-    if (y_bounds.x < 0)
-        coords.y = ((coords.y - y_bounds.x) * y_bounds.y) / (y_bounds.y - y_bounds.x);
-
-    if (x_bounds.y > 1)
-        coords.x = x_bounds.x + ((coords.x - x_bounds.x) * (1.0 - x_bounds.x)) / (x_bounds.y - x_bounds.x);
-
-    if (y_bounds.y > 1)
-        coords.y = y_bounds.x + ((coords.y - y_bounds.x) * (1.0 - y_bounds.x)) / (y_bounds.y - y_bounds.x);
-
-    // [5] Calculate PDF value based on position
-    float area = curr_tile->area(tracker.depth());
-    float mu = curr_tile->mean();
-    float prob = visible_perc * area * mu;
-
-    for (int ti = 0; ti < tiling_count; ++ti)
-    {
-        if (ti == i) continue;
-        prob += this->tilings.at(ti).pdf(coords);
-    }
-
-    prob /= this->leaf_sum;
-
-    Sample sample = {
-        .value = 0,
-        .pdf = prob,
-        .theta = (coords.y * M_PI),
-        .phi = (coords.x * 2 * M_PI)
-    };
-    return sample;
-}
-
-Float BinaryTileCoding::eval(Point2& pos)
-{
-    float prob = 0.0f;
-    for (auto& tiling : this->tilings)
-    {
-        prob += tiling.pdf(pos);
-    }
+    # dont forget to add sm at end!
+    commands = ["--sl", "--sg", "-b", "-n", "--ne", "--ns", "--shb", "--shd", "--sho", "--dtl", "--dtf", "--dtt", "--dti", "--dtd", "-t", "--tx", "--ty", "--bt", "--btx", "--bty", "--btd", "--btt", "--vc", "--vr"]
+    commands = zip(commands, build_argvals(settings))
     
-    return prob;
-}
-
-void BinaryTileCoding::wipe()
-{
-    this->leaf_sum = 0.0f;
-    for (auto& tiling : this->tilings)
-    {
-        tiling = BinaryTiling();
-        tiling.tiles = std::vector<BinaryTile>(tile_dims.x * tile_dims.y);
-    }
-}
-
-DSType BinaryTileCoding::type()
-{
-    return DSType::DS_BinaryTileCoding;
-}
-
-std::string BinaryTileCoding::name()
-{
-    return "Binary Tile Coding";
-}
-
-int BinaryTileCoding::memory()
-{
-    size_t size_self = sizeof(this) + sizeof(BinaryTileCoding); // base layer size
-    size_t size_tilings = this->tilings.capacity() * sizeof(BinaryTiling); // #tilings * base tiling size
+    for path in os.listdir(os.fsencode(base_name)):
+        folder_name = os.fsdecode(path)
+        full_path = base_name + folder_name
+        _, _, files = next(os.walk(full_path))
+        progress[folder_name] = [0, len(files)]
+        
+        args = ["mtsutil", "dscompare", "-p", full_path, "--sm", "sphere"]
+        for prefix, value in commands:
+            args.append(prefix)
+            args.append(value)
+        
+        commands.append(args)
     
-    size_t size_tiles = 0;
-    for (const auto& tiling : this->tilings)
-    {
-        // #tiles * constant tile size
-        size_tiles += tiling.tiles.capacity() * sizeof(BinaryTile);
-    }
+def start_comparer(command):
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
-    return size_self + size_tilings + size_tiles;
-}
+def all_finished(s, c = True):
+    for _, v in s.items():
+        if isinstance(v, dict):
+            c = all_finished(v, c)
+        elif isinstance(v, FluidSetting) and not v.finished():
+            return False
 
-MTS_NAMESPACE_END
+    return c
+
+def run():
+    sl = settings["general"]["samples_learning"]
+    sg = settings["general"]["samples_guiding"]
+
+    while not all_finished(settings):
+        
+        collect_args()
+
+        with ProcessPoolExecutor() as executor:
+            executor.submit(watch_folder)
+            futures = executor.map(start_comparer, commands)
+
+if __name__ == '__main__':
+    run()
