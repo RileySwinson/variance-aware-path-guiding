@@ -265,12 +265,20 @@ void BinaryTiling::insert(const Sample& sample)
     this->tiles.push_back(BinaryTile());
 }
 
-std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_tile, int depth, float& leaf_sum)
+std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum)
 {
     if (curr_tile.is_leaf())
     {
-        // Do I need to consider the visible area here too?
-        leaf_sum += curr_tile.area(depth) * curr_tile.mean();
+        // visible perc is fucked
+        float visible_perc = BinaryTile::visible_area_perc(tracker.before_split, tracker.last, tracker.x_bounds, tracker.y_bounds);
+        float area = curr_tile.area(tracker.depth());
+        float mu = curr_tile.mean();
+        leaf_sum += visible_perc * area * mu;
+
+        std::cout << tracker.before_split << " " << tracker.last << " " << tracker.x_bounds.toString() << " " << tracker.y_bounds.toString() << "\n";
+        std::cout << visible_perc << "\n";
+        std::cout << "====================" << "\n";
+
         return { curr_tile.sample_count, curr_tile.sum };
     }
 
@@ -279,9 +287,21 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
         &this->tiles.at(curr_tile.idx_second)
     };
 
-    for (auto child : children)
+    SplitDirection split_dir = curr_tile.split_direction(tracker);
+    tracker.increment(split_dir);
+
+    for (int i = 0; i < 2; ++i)
     {
-        auto stats = recurse_statistics(*child, depth++, leaf_sum);
+        tracker.split(i == 0);
+
+        Point2& bounds = (tracker.last == HORIZONTAL) ? tracker.x_bounds : tracker.y_bounds;
+        Float halved = (bounds.x + bounds.y) * 0.5;
+
+        if (i == 0) bounds.y = halved;
+        else        bounds.x = halved;
+
+        BinaryTile* child = children.at(i);
+        auto stats = recurse_statistics(*child, tracker, leaf_sum);
 
         curr_tile.sample_count += stats.first;
         curr_tile.sum += stats.second;
@@ -428,8 +448,11 @@ void BinaryTileCoding::postprocess()
         const Point2i td = BinaryTileCoding::tile_dims;
         for (int i = 0; i < td.x * td.y; ++i)
         {
+            TileTracker tracker;
+            tracker.boundaries(tiling.x_bounds, tiling.y_bounds); // need to consider base tiles!
+            
             BinaryTile& tile = tiling.tiles.at(i);
-            tiling.recurse_statistics(tile, 0, this->leaf_sum);
+            tiling.recurse_statistics(tile, tracker, this->leaf_sum);
         }
     }
 }
@@ -552,7 +575,7 @@ Float BinaryTileCoding::eval(Point2& pos)
         prob += tiling.pdf(pos);
     }
     
-    return prob;
+    return (prob / this->leaf_sum);
 }
 
 void BinaryTileCoding::wipe()
