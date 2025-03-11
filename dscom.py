@@ -35,7 +35,7 @@ import warnings
 # • get() -> obtain the current value
 # • reset() -> set the value back to its initial state
 # • next() -> increase the value to its next state
-# • finished() -> check whether the value has reached its final state (upper bound, !current, etc.) 
+# • final() -> check whether the value has reached its final state (upper bound, !current, etc.) 
 ##############################################
 
 class FluidSetting:
@@ -52,7 +52,7 @@ class FluidSetting:
     def next(self):
         raise NotImplementedError
 
-    def finished(self):
+    def final(self):
         raise NotImplementedError
 
 class Range(FluidSetting):
@@ -67,7 +67,7 @@ class Range(FluidSetting):
     def next(self):
         self.value = self.func(self.value)
 
-    def finished(self):
+    def final(self):
         next_value = self.func(self.value)
         return (next_value > self.end)
     
@@ -78,7 +78,7 @@ class Toggle(FluidSetting):
     def next(self):
         self.value = not self.value
 
-    def finished(self):
+    def final(self):
         return (self.value != self.default)
 
 ##############################################
@@ -115,6 +115,7 @@ settings = {
         "samples": False
     },
     "structures": {
+        "unidir": { },
         "sh": {
             "bands": Range(start=1, end=10),
             "depth": Range(start=1, end=20),
@@ -207,7 +208,7 @@ def watch_folder():
     """
     Tracks the current progress of the benchmark in a given folder
     """
-    
+
     while True:
         if futures != None:
             tasks_finished = True
@@ -297,25 +298,30 @@ def create_batches():
         if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
             progress[batch_key()] = [0, curr_files]
             batch_paths.append(base_name + "testing/batch_" + str(b_id) + "/")
-    
-"""
-def all_finished(s, c = True):
-    for _, v in s.items():
-        if isinstance(v, dict):
-            c = all_finished(v, c)
-            if not c:
-                break
-        elif isinstance(v, FluidSetting) and not v.finished():
-            return False
-
-    return c
-"""
-
-def rcall(data):
-    pass
-
+            
 def start_comparer(command):
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+def rcall(data, pos=0):
+    if pos == len(data):
+        #for d in data:
+        #    print(d.get(), end=' ')
+        #print('\n')
+
+        commands.clear()
+        collect_args()
+        with ProcessPoolExecutor() as executor:
+            executor.submit(watch_folder)
+            futures = executor.map(start_comparer, commands)
+
+        return
+
+    while not data[pos].final():
+        rcall(data, pos + 1)
+        data[pos].next()
+
+    rcall(data, pos + 1)
+    data[pos].reset()
 
 def run_test():
     blacklist = settings["general"]["blacklist"]
@@ -324,26 +330,22 @@ def run_test():
         blacklist = []
 
     sl = settings["general"]["samples_learning"]
-    sg = settings["general"]["samples_guiding"]
-    ds_keys = settings["structures"].keys()
+    ds_keys = list(settings["structures"].keys())
 
     for ds_i in range(len(ds_keys)):
         if ds_i in blacklist:
             continue
 
-        settings["general"]["blacklist"] = range(len(ds_keys))
+        settings["general"]["blacklist"] = list(range(len(ds_keys)))
         settings["general"]["blacklist"].remove(ds_i)
 
-        while not sl.finished():
-            rcall(settings["structures"][ds_keys[ds_i]])
-
+        fluid_settings = [v for v in settings["structures"][ds_keys[ds_i]].values() if isinstance(v, FluidSetting)]
+        while not sl.final():
+            rcall(fluid_settings)
             sl.next()
-        sl.reset()
 
-    collect_args()
-    with ProcessPoolExecutor() as executor:
-        executor.submit(watch_folder)
-        futures = executor.map(start_comparer, commands)
+        rcall(fluid_settings)
+        sl.reset()
 
 def restore_old_folders():
     if settings["testing"]["batches"] < 0:
@@ -375,5 +377,5 @@ if __name__ == '__main__':
     restore_old_folders()
 
 # TODO:
-# - Iterate over settings and increase each time
 # - Store results in CSV; one folder per ds, one csv for every permutation
+# - Add time limit
