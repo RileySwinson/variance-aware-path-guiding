@@ -19,6 +19,7 @@ import sys
 import uuid
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
+import warnings
 
 ##############################################
 # A bunch of classes handling fluid setting parameters.
@@ -90,7 +91,7 @@ settings = {
         "multithreading": True,
         # Set a time limit in seconds after which the application will stop running. If set to '-1', the time limit will be ignored.
         "time_limit": -1,
-        # Number of batches the envmaps get divided into. Set to -1 to disable.
+        # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
         "batches": 12
     },
     "general": {
@@ -230,13 +231,13 @@ def collect_args():
     Accumulates a list of args for every sub-folder / worker based on the global settings
     """
 
-    commands = ["--sl", "--sg", "-b", "-n", "--ne", "--ns", "--shb", "--shd", "--sho", "--dtl", "--dtf", "--dtt", "--dti", "--dtd", "-t", "--tx", "--ty", "--bt", "--btx", "--bty", "--btd", "--btt", "--vc", "--vr"]
-    commands = zip(commands, build_argvals(settings))
+    prefixes = ["--sl", "--sg", "-b", "-n", "--ne", "--ns", "--shb", "--shd", "--sho", "--dtl", "--dtf", "--dtt", "--dti", "--dtd", "-t", "--tx", "--ty", "--bt", "--btx", "--bty", "--btd", "--btt", "--vc", "--vr"]
+    combined = zip(prefixes, build_argvals(settings))
     
     for path in batch_paths:
         args = ["mtsutil", "dscompare", "-p", path, "--sm", "sphere"]
 
-        for prefix, value in commands:
+        for prefix, value in combined:
             args.append(prefix)
             args.append(value)
         
@@ -296,6 +297,53 @@ def create_batches():
         if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
             progress[batch_key()] = [0, curr_files]
             batch_paths.append(base_name + "testing/batch_" + str(b_id) + "/")
+    
+"""
+def all_finished(s, c = True):
+    for _, v in s.items():
+        if isinstance(v, dict):
+            c = all_finished(v, c)
+            if not c:
+                break
+        elif isinstance(v, FluidSetting) and not v.finished():
+            return False
+
+    return c
+"""
+
+def rcall(data):
+    pass
+
+def start_comparer(command):
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+def run_test():
+    blacklist = settings["general"]["blacklist"]
+    if not all(isinstance(v, int) for v in blacklist):
+        warnings.warn('Invalid blacklist content. Falling back to using all data structures.')
+        blacklist = []
+
+    sl = settings["general"]["samples_learning"]
+    sg = settings["general"]["samples_guiding"]
+    ds_keys = settings["structures"].keys()
+
+    for ds_i in range(len(ds_keys)):
+        if ds_i in blacklist:
+            continue
+
+        settings["general"]["blacklist"] = range(len(ds_keys))
+        settings["general"]["blacklist"].remove(ds_i)
+
+        while not sl.finished():
+            rcall(settings["structures"][ds_keys[ds_i]])
+
+            sl.next()
+        sl.reset()
+
+    collect_args()
+    with ProcessPoolExecutor() as executor:
+        executor.submit(watch_folder)
+        futures = executor.map(start_comparer, commands)
 
 def restore_old_folders():
     if settings["testing"]["batches"] < 0:
@@ -313,30 +361,6 @@ def restore_old_folders():
 
         if os.path.isfile(full_path):
             os.remove(full_path)
-    
-def start_comparer(command):
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-
-def all_finished(s, c = True):
-    for _, v in s.items():
-        if isinstance(v, dict):
-            c = all_finished(v, c)
-        elif isinstance(v, FluidSetting) and not v.finished():
-            return False
-
-    return c
-
-def run_test():
-    sl = settings["general"]["samples_learning"]
-    sg = settings["general"]["samples_guiding"]
-
-    while not all_finished(settings):
-        
-        collect_args()
-
-        with ProcessPoolExecutor() as executor:
-            executor.submit(watch_folder)
-            futures = executor.map(start_comparer, commands)
 
 def sighandler(signum, frame):
     signal.signal(signum, signal.SIG_IGN)
@@ -347,11 +371,8 @@ signal.signal(signal.SIGINT, sighandler)
 
 if __name__ == '__main__':
     create_batches()
-    while True:
-        pass
-    
-    exit(0)
     run_test()
+    restore_old_folders()
 
 # TODO:
 # - Iterate over settings and increase each time
