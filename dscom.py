@@ -90,8 +90,8 @@ settings = {
         "multithreading": True,
         # Set a time limit in seconds after which the application will stop running. If set to '-1', the time limit will be ignored.
         "time_limit": -1,
-        # Max. number of envmaps per folder. Set to -1 to disable.
-        "batch_size": 100
+        # Number of batches the envmaps get divided into. Set to -1 to disable.
+        "batches": 12
     },
     "general": {
         # Path to folder containing the envmaps. Set to 'None' to use the default folder. If multithreading is enabled, this setting is ignored.
@@ -173,7 +173,7 @@ def build_argvals(s, a = []):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ["multithreading", "time_limit", "batch_size", "envmap_path", "result_path"]:
+        elif k.lower() in ["multithreading", "time_limit", "batches", "envmap_path", "result_path"]:
             continue
         else:
             a.append(v.get() if isinstance(v, FluidSetting) else v)
@@ -242,17 +242,27 @@ def collect_args():
         
         commands.append(args)
 
-def create_batches():
-    batch_size = settings["testing"]["batch_size"]
-    batch_id = 0
-    file_count = 0
+def get_size(path: str) -> int:
+    return sum(p.stat().st_size for p in Path(path).rglob('*'))
 
-    for i, path in enumerate(os.listdir(os.fsencode(base_name))):
+def create_batches():
+    b_id = 0
+    curr_bytes = 0
+    curr_files = 0
+
+    batch_count = settings["testing"]["batches"]
+    folders = os.listdir(os.fsencode(base_name))
+    total_bytes = sum(get_size(base_name + os.fsdecode(f)) for f in folders)
+
+    def batch_key() -> str:
+        return f"Batch {str(b_id)}"
+
+    for i, path in enumerate(folders):
         folder_name = os.fsdecode(path)
-        full_path = base_name + folder_name
+        full_path = os.path.join(base_name, folder_name)
         _, _, files = next(os.walk(full_path))
         
-        if batch_size < 0:
+        if batch_count < 0:
             progress[folder_name] = [0, len(files)]
             batch_paths.append(full_path)
             continue
@@ -264,40 +274,42 @@ def create_batches():
             new_name = str(file_id) + file_ext
 
             # store old folder path
-            base_pairing[new_name] = full_path + "/" + file
+            base_pairing[new_name] = os.path.join(full_path, file)
 
             # create new folder
-            new_path = base_name + "testing/batch_" + str(batch_id) + "/"
+            new_path = os.path.join(base_name, "testing", f"batch_{str(b_id)}")
             if not os.path.exists(new_path):
                 os.makedirs(new_path)
-            
-            # move to new folder
-            Path(full_path + "/" + file).rename(new_path + new_name)
-            file_count += 1
 
-            if file_count % batch_size == 0 and file_count != 0:
-                progress["Batch " + str(batch_id)] = [0, batch_size]
+            # move to new folder
+            Path(os.path.join(full_path, file)).rename(os.path.join(new_path, new_name))
+
+            curr_bytes += get_size(new_path + new_name)
+            curr_files += 1
+
+            if curr_bytes >= (total_bytes / batch_count):
+                progress[batch_key()] = [0, curr_files]
                 batch_paths.append(new_path)
-                batch_id += 1
+                b_id += 1
+                curr_files = 0
         
-        # Unless there was exactly a multiple of 'batch_size' files, the last batch hasn't been tracked yet
-        if i == (len(os.listdir(os.fsencode(base_name))) - 1) and ("Batch " + str(batch_id)) not in progress.keys():
-            progress["Batch " + str(batch_id)] = [0, file_count % batch_size]
-            batch_paths.append(base_name + "testing/batch_" + str(batch_id) + "/")
+        if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
+            progress[batch_key()] = [0, curr_files]
+            batch_paths.append(base_name + "testing/batch_" + str(b_id) + "/")
 
 def restore_old_folders():
-    if settings["testing"]["batch_size"] < 0:
+    if settings["testing"]["batches"] < 0:
         return
 
-    test_path = base_name + "testing/"
+    test_path = os.path.join(base_name, "testing")
     for path in os.listdir(os.fsencode(test_path)):
         folder_name = os.fsdecode(path)
-        full_path = test_path + folder_name
+        full_path = os.path.join(test_path, folder_name)
         _, _, files = next(os.walk(full_path))
 
         for file in files:
             old_path = base_pairing.pop(file)
-            Path(full_path + "/" + file).rename(old_path)
+            Path(os.path.join(full_path, file)).rename(old_path)
 
         if os.path.isfile(full_path):
             os.remove(full_path)
@@ -342,6 +354,5 @@ if __name__ == '__main__':
     run_test()
 
 # TODO:
-# - Change file number approach to size approach for even distribution
 # - Iterate over settings and increase each time
 # - Store results in CSV; one folder per ds, one csv for every permutation
