@@ -39,23 +39,32 @@ from pathlib import Path
 ##############################################
 
 class Value:
-    def __init__(self, arg, value):
-        self.arg = f'-{arg}' if len(arg) == 1 else f'--{arg}'
-        self.value = value
+    def __init__(self, flag, value):
+        self._flag = f'-{flag}' if len(flag) == 1 else f'--{flag}'
+        self._value = value
 
-    def get(self):
-        return self.value
+    def get(self, as_str=False):
+        if not as_str:
+            return self._value
+
+        val_type = type(self._value)
+        if (val_type is bool):
+            return str(int(self._value))
+        if (val_type is list):
+            return ' '.join([str(v) for v in self._value])
+
+        return str(self._value)
     
     def flag(self):
-        return self.arg
+        return self._flag
 
 class FluidSetting(Value):
-    def __init__(self, arg, value):
-        super().__init__(arg, value)
-        self.default = value
+    def __init__(self, flag, value):
+        super().__init__(flag, value)
+        self._default = value
 
     def reset(self):
-        self.value = self.default
+        self._value = self._default
 
     def next(self):
         raise NotImplementedError
@@ -64,30 +73,30 @@ class FluidSetting(Value):
         raise NotImplementedError
 
 class Range(FluidSetting):
-    def __init__(self, arg, start, end, func = None):
-        super().__init__(arg, start)
-        self.end = end
+    def __init__(self, flag, start, end, func = None):
+        super().__init__(flag, start)
+        self._end = end
         
         if not func:
-            func = lambda x: x + 1
-        self.func = func
+            func = lambda x: x + start
+        self._func = func
     
     def next(self):
-        self.value = self.func(self.value)
+        self._value = self._func(self._value)
 
     def final(self):
-        next_value = self.func(self.value)
-        return (next_value > self.end)
+        next_value = self._func(self._value)
+        return (next_value > self._end)
     
 class Toggle(FluidSetting):
-    def __init__(self, arg, state):
-        super().__init__(arg, state)
+    def __init__(self, flag, state):
+        super().__init__(flag, state)
     
     def next(self):
-        self.value = not self.value
+        self._value = not self._value
 
     def final(self):
-        return (self.value != self.default)
+        return (self._value != self._default)
 
 ##############################################
 # Base config.
@@ -112,7 +121,7 @@ settings = {
         # Number of guiding samples per data structure. These samples are used to recreate the sampled distribution from the guiding distribution.
         "samples_guiding": Value('sg', 65536),
         # A blacklist specifying which data structures should be skipped in the overall test.
-        "blacklist": Value('b', []),
+        "blacklist": Value('b', [0]),
         # Whether to normalize the envmap each data structure is 'learning' with. (Keep this true unless you know what you're doing.)
         "normalize": Value('n', True)
     },
@@ -163,7 +172,10 @@ base_pairing = {}
 batch_paths = []
 commands = []
 progress = {}
-futures = None
+
+class FHolder:
+    futures = None
+fholder = FHolder()
 
 def build_argvals(s, a = []):
     """
@@ -172,7 +184,7 @@ def build_argvals(s, a = []):
     Parameters
     ----------
     a : list
-      List for accumulating all relevant values
+      List for accumulating all relevant (flag, value) pairs
     s : obj
       The settings object
     """
@@ -180,10 +192,10 @@ def build_argvals(s, a = []):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ["multithreading", "time_limit", "batches"]:
+        elif k.lower() in ["multithreading", "time_limit", "batches", "envmap_path", "result_path"]:
             continue
         else:
-            a.append(v.get() if isinstance(v, FluidSetting) else v)
+            a.append((v.flag(), v.get(as_str=True)))
 
     return a
 
@@ -214,12 +226,12 @@ def watch_folder():
     Tracks the current progress of the benchmark in a given folder
     """
 
-    res_name = settings['general']['result_path']
-
+    res_name = settings['general']['result_path'].get()
+    
     while True:
-        if futures != None:
+        if fholder.futures != None:
             tasks_finished = True
-            for future in futures:
+            for future in fholder.futures:
                 if not future.done():
                     tasks_finished = False
                     break
@@ -227,6 +239,9 @@ def watch_folder():
             if tasks_finished:
                 break
         
+        # TODO: Fix
+        # TODO: Make sure old res folders are used, even if batched up!
+        # TODO: Fix description of f-settings
         for k, v in progress.items():
             _, f_count, _ = next(os.walk(res_name + k))
             f_count = len(f_count)
@@ -239,30 +254,25 @@ def collect_args():
     Accumulates a list of args for every sub-folder / worker based on the global settings
     """
 
-    prefixes = ["--sl", "--sg", "-b", "-n", "--ne", "--ns", "--shb", "--shd", "--sho", "--dtl", "--dtf", "--dtt", "--dti", "--dtd", "-t", "--tx", "--ty", "--bt", "--btx", "--bty", "--btd", "--btt", "--vc", "--vr"]
-    combined = zip(prefixes, build_argvals(settings))
-    
+    combined = build_argvals(settings)
     for path in batch_paths:
         args = ["mtsutil", "dscompare", "-p", path, "--sm", "sphere"]
-
-        for prefix, value in combined:
-            args.append(prefix)
+        
+        for flag, value in combined:
+            args.append(flag)
             args.append(value)
         
         commands.append(args)
-
-def get_size(path: str) -> int:
-    return sum(p.stat().st_size for p in Path(path).rglob('*'))
 
 def create_batches():
     b_id = 0
     curr_bytes = 0
     curr_files = 0
 
-    base_name = settings['general']['envmap_path']
+    base_name = settings['general']['envmap_path'].get()
     batch_count = settings['testing']['batches']
     folders = os.listdir(os.fsencode(base_name))
-    total_bytes = sum(get_size(base_name + os.fsdecode(f)) for f in folders)
+    total_bytes = sum(os.path.getsize(base_name + os.fsdecode(f)) for f in folders)
 
     def batch_key() -> str:
         return f'Batch {str(b_id)}'
@@ -287,17 +297,18 @@ def create_batches():
             base_pairing[new_name] = os.path.join(full_path, file)
 
             # create new folder
-            new_path = os.path.join(base_name, "testing", f"batch_{str(b_id)}")
+            new_path = os.path.join(base_name, "testing", batch_key())
             if not os.path.exists(new_path):
                 os.makedirs(new_path)
 
             # move to new folder
             Path(os.path.join(full_path, file)).rename(os.path.join(new_path, new_name))
 
-            curr_bytes += get_size(new_path + new_name)
+            curr_bytes += os.path.getsize(os.path.join(new_path, new_name))
+            print(curr_bytes)
             curr_files += 1
 
-            if curr_bytes >= (total_bytes / batch_count):
+            if (curr_bytes >= (total_bytes / batch_count)) and (b_id < batch_count):
                 progress[batch_key()] = [0, curr_files]
                 batch_paths.append(new_path)
                 b_id += 1
@@ -305,7 +316,7 @@ def create_batches():
         
         if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
             progress[batch_key()] = [0, curr_files]
-            batch_paths.append(base_name + "testing/batch_" + str(b_id) + "/")
+            batch_paths.append(base_name + "testing/" + batch_key() + "/")
             
 def start_comparer(command):
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -314,9 +325,10 @@ def rcall(data, pos=0):
     if pos == len(data):
         commands.clear()
         collect_args()
+
         with ProcessPoolExecutor() as executor:
             executor.submit(watch_folder)
-            futures = executor.map(start_comparer, commands)
+            fholder.futures = executor.map(start_comparer, commands)
 
         return
 
@@ -328,20 +340,20 @@ def rcall(data, pos=0):
     data[pos].reset()
 
 def run_test():
-    blacklist = settings["general"]["blacklist"]
+    blacklist = settings['general']['blacklist'].get()
     if not all(isinstance(v, int) for v in blacklist):
         warnings.warn('Invalid blacklist content. Falling back to using all data structures.')
         blacklist = []
 
-    sl = settings["general"]["samples_learning"]
+    sl = settings['general']['samples_learning']
     ds_keys = list(settings["structures"].keys())
 
     for ds_i in range(len(ds_keys)):
         if ds_i in blacklist:
             continue
 
-        settings["general"]["blacklist"] = list(range(len(ds_keys)))
-        settings["general"]["blacklist"].remove(ds_i)
+        settings['general']['blacklist'].value = list(range(len(ds_keys)))
+        settings['general']['blacklist'].value.remove(ds_i)
 
         fluid_settings = [v for v in settings["structures"][ds_keys[ds_i]].values() if isinstance(v, FluidSetting)]
         while not sl.final():
@@ -356,7 +368,7 @@ def restore_old_folders():
         return
 
     base_name = settings['general']['envmap_path']
-    test_path = os.path.join(base_name, 'testing')
+    test_path = os.path.join(base_name.get(), 'testing')
     for path in os.listdir(os.fsencode(test_path)):
         folder_name = os.fsdecode(path)
         full_path = os.path.join(test_path, folder_name)
