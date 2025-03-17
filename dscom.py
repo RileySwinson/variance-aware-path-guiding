@@ -17,9 +17,9 @@ import math
 import signal
 import sys
 import uuid
+import warnings
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-import warnings
 
 ##############################################
 # A bunch of classes handling fluid setting parameters.
@@ -38,13 +38,21 @@ import warnings
 # • final() -> check whether the value has reached its final state (upper bound, !current, etc.) 
 ##############################################
 
-class FluidSetting:
-    def __init__(self, value):
+class Value:
+    def __init__(self, arg, value):
+        self.arg = f'-{arg}' if len(arg) == 1 else f'--{arg}'
         self.value = value
-        self.default = value
 
     def get(self):
         return self.value
+    
+    def flag(self):
+        return self.arg
+
+class FluidSetting(Value):
+    def __init__(self, arg, value):
+        super().__init__(arg, value)
+        self.default = value
 
     def reset(self):
         self.value = self.default
@@ -56,8 +64,8 @@ class FluidSetting:
         raise NotImplementedError
 
 class Range(FluidSetting):
-    def __init__(self, start, end, func = None):
-        super().__init__(start)
+    def __init__(self, arg, start, end, func = None):
+        super().__init__(arg, start)
         self.end = end
         
         if not func:
@@ -72,8 +80,8 @@ class Range(FluidSetting):
         return (next_value > self.end)
     
 class Toggle(FluidSetting):
-    def __init__(self, state):
-        super().__init__(state)
+    def __init__(self, arg, state):
+        super().__init__(arg, state)
     
     def next(self):
         self.value = not self.value
@@ -95,60 +103,57 @@ settings = {
         "batches": 12
     },
     "general": {
-        # Path to folder containing the envmaps. Set to 'None' to use the default folder. If multithreading is enabled, this setting is ignored.
-        "envmap_path": None,
-        # Path to folder containing the results. Set to 'None' to use the default folder. If multithreading is enabled, this setting is ignored.
-        "result_path": None,
+        # Path to folder containing the envmaps.
+        "envmap_path": Value('p', './data/tests/envmaps/'),
+        # Path to folder containing the results.
+        "result_path": Value('rp', './data/results/'),
         # Number of learning samples per data structure. These samples are used to create a guiding distribution.
-        "samples_learning": Range(start=64, end=65536, func=lambda x: x * 2),
+        "samples_learning": Range('sl', start=64, end=65536, func=lambda x: x * 2),
         # Number of guiding samples per data structure. These samples are used to recreate the sampled distribution from the guiding distribution.
-        "samples_guiding": 65536,
+        "samples_guiding": Value('sg', 65536),
         # A blacklist specifying which data structures should be skipped in the overall test.
-        "blacklist": [],
+        "blacklist": Value('b', []),
         # Whether to normalize the envmap each data structure is 'learning' with. (Keep this true unless you know what you're doing.)
-        "normalize": True
+        "normalize": Value('n', True)
     },
     "noise": {
         # Whether the initial envmap should be noisified.
-        "envmap": False,
+        "envmap": Value('ne', False),
         # Whether a variable amount of noise should be introduced to each learning sample.
-        "samples": False
+        "samples": Value('ns', False)
     },
     "structures": {
         "unidir": { },
         "sh": {
-            "bands": Range(start=1, end=10),
-            "depth": Range(start=1, end=20),
-            "use_offset": Toggle(True)
+            "bands": Range('shb', start=1, end=10),
+            "depth": Range('shd', start=1, end=20),
+            "use_offset": Toggle('sho', True)
         },
         "dt": {
-            "frac_loss": "none",
-            "dir_filter": "nearest",
-            "threshold": Range(start=0.01, end=0.5, func=lambda x: x + 0.01),
-            "iterations": -1,
-            "max_depth": Range(start=2, end=20)
+            "frac_loss": Value('dtl', 'none'),
+            "dir_filter": Value('dtf', 'nearest'),
+            "threshold": Range('dtt', start=0.01, end=0.5, func=lambda x: x + 0.01),
+            "iterations": Value('dti', -1),
+            "max_depth": Range('dtd', start=2, end=20)
         },
         "tc": {
-            "tilings": Range(start=1, end=8),
-            "tiles_x": Range(start=2, end=32),
-            "tiles_y": Range(start=2, end=32)
+            "tilings": Range('t', start=1, end=8),
+            "tiles_x": Range('tx', start=2, end=32),
+            "tiles_y": Range('ty', start=2, end=32)
         },
         "btc": {
-            "tilings": Range(start=1, end=8),
-            "tiles_x": Range(start=1, end=8),
-            "tiles_y": Range(start=1, end=8),
-            "max_depth": Range(start=2, end=20),
-            "subdiv_thresh": Range(start=0.0001, end=0.01, func=lambda x: x * 2)
+            "tilings": Range('bt', start=1, end=8),
+            "tiles_x": Range('btx', start=1, end=8),
+            "tiles_y": Range('bty', start=1, end=8),
+            "max_depth": Range('btd', start=2, end=20),
+            "subdiv_thresh": Range('btt', start=0.0001, end=0.01, func=lambda x: x * 2)
         },
         "vmf": {
-            "components": Range(start=1, end=32),
-            "use_ruppert": Toggle(True)
+            "components": Range('vc', start=1, end=32),
+            "use_ruppert": Toggle('vr', True)
         }
     }
 }
-
-base_name = "./data/tests/envmaps/"
-res_name = "./data/results/"
 
 ##############################################
 # Start of code.
@@ -175,7 +180,7 @@ def build_argvals(s, a = []):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ["multithreading", "time_limit", "batches", "envmap_path", "result_path"]:
+        elif k.lower() in ["multithreading", "time_limit", "batches"]:
             continue
         else:
             a.append(v.get() if isinstance(v, FluidSetting) else v)
@@ -208,6 +213,8 @@ def watch_folder():
     """
     Tracks the current progress of the benchmark in a given folder
     """
+
+    res_name = settings['general']['result_path']
 
     while True:
         if futures != None:
@@ -252,12 +259,13 @@ def create_batches():
     curr_bytes = 0
     curr_files = 0
 
-    batch_count = settings["testing"]["batches"]
+    base_name = settings['general']['envmap_path']
+    batch_count = settings['testing']['batches']
     folders = os.listdir(os.fsencode(base_name))
     total_bytes = sum(get_size(base_name + os.fsdecode(f)) for f in folders)
 
     def batch_key() -> str:
-        return f"Batch {str(b_id)}"
+        return f'Batch {str(b_id)}'
 
     for i, path in enumerate(folders):
         folder_name = os.fsdecode(path)
@@ -304,10 +312,6 @@ def start_comparer(command):
 
 def rcall(data, pos=0):
     if pos == len(data):
-        #for d in data:
-        #    print(d.get(), end=' ')
-        #print('\n')
-
         commands.clear()
         collect_args()
         with ProcessPoolExecutor() as executor:
@@ -348,10 +352,11 @@ def run_test():
         sl.reset()
 
 def restore_old_folders():
-    if settings["testing"]["batches"] < 0:
+    if settings['testing']['batches'] < 0:
         return
 
-    test_path = os.path.join(base_name, "testing")
+    base_name = settings['general']['envmap_path']
+    test_path = os.path.join(base_name, 'testing')
     for path in os.listdir(os.fsencode(test_path)):
         folder_name = os.fsdecode(path)
         full_path = os.path.join(test_path, folder_name)
