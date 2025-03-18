@@ -251,11 +251,9 @@ def watch_folder():
             if tasks_finished:
                 break
         
-        # TODO: Fix
-        # TODO: Make sure old res folders are used, even if batched up!
         for k, v in progress.items():
-            _, f_count, _ = next(os.walk(res_name + k))
-            f_count = len(f_count)
+            _, f_names, _ = next(os.walk(res_name + k))
+            f_count = len(f_names)
             if (f_count != v[0]):
                 progress[k] = [f_count, v[1]]
                 print_status()
@@ -285,12 +283,18 @@ def create_batches():
     curr_files = 0
 
     base_name = settings['general']['envmap_path'].get()
+    res_name = settings['general']['result_path'].get()
     batch_count = settings['testing']['batches']
     folders = os.listdir(os.fsencode(base_name))
-    total_bytes = sum(os.path.getsize(base_name + os.fsdecode(f)) for f in folders)
+    total_bytes = sum(f.stat().st_size for f in Path(base_name).rglob('*') if f.is_file())
 
     def batch_key() -> str:
         return f'Batch {str(b_id)}'
+
+    def create_folder(p) -> str:
+        if not os.path.exists(p):
+            os.makedirs(p)
+        return p
 
     for i, path in enumerate(folders):
         folder_name = os.fsdecode(path)
@@ -311,22 +315,22 @@ def create_batches():
             # store old folder path
             base_pairing[new_name] = os.path.join(full_path, file)
 
-            # create new folder
-            new_path = os.path.join(base_name, 'testing', batch_key())
-            if not os.path.exists(new_path):
-                os.makedirs(new_path)
+            # create new results and testing folders
+            create_folder(os.path.join(res_name, batch_key()))
+            new_path = create_folder(os.path.join(base_name, 'testing', batch_key()))
 
-            # move to new folder
+            # move to new testing folder
             Path(os.path.join(full_path, file)).rename(os.path.join(new_path, new_name))
 
             curr_bytes += os.path.getsize(os.path.join(new_path, new_name))
-            print(curr_bytes)
             curr_files += 1
 
             if (curr_bytes >= (total_bytes / batch_count)) and (b_id < batch_count):
                 progress[batch_key()] = [0, curr_files]
                 batch_paths.append(new_path)
+                
                 b_id += 1
+                curr_bytes = 0
                 curr_files = 0
         
         if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
@@ -353,6 +357,8 @@ def rcall(data, pos=0):
         with ProcessPoolExecutor() as executor:
             executor.submit(watch_folder)
             fholder.futures = executor.map(start_comparer, commands)
+
+        # TODO: Collect data and wipe folders
 
         return
 
