@@ -1,40 +1,52 @@
 ##############################################
-# Automated DS::compare testing script for all implemented data structures.
-# Stores the results as CSV file per data structure, per configuration, in a folder.
+# Automated ds::compare testing script for all implemented data structures.
+# Stores the results as CSV file per data structure in a folder.
 # Lots of folders, in fact.
 #
 # How to add your own structure to this script:
-# TBA!
+# 1. Make sure your data structure works as intended within the ds::compare framework.
+#    Info: See the README for further details, but the tl;dr: It should be registered
+#          in the cluster, the include.h file and the SCons file to compile correctly.
+#          It should have its own DSType (see ds.h). All its exposed parameters should
+#          be in both the DSArguments struct (see ds.h) and the clargs handler function
+#          (see dscompare.cpp).
+#
+# 2. Add the exposed parameters of your data structure to the settings dict below.
+#    Info: Verify the settings flags match the ones you specified in the clargs handler
+#          function. If you used aliases, pick only one. The order of the data structures
+#          (however not the settings) matters -- please make sure you place it in the
+#          same order as in the ds.h DSType enum. If you don't have any exposed parameters,
+#          please create an empty dict nevertheless. ("your_ds" = { })
+#
+# 3. Your data structure should now be registered.
 #
 # Feel free to do whatever you want to this script.
 # Michael Eickmeyer, 2025 @ TU Wien.
 ##############################################
 
-import subprocess
-import os
-import time
-import math
-import signal
-import sys
-import uuid
-import warnings
-from concurrent.futures import ProcessPoolExecutor
+import subprocess, os, time, math, signal, sys, uuid, warnings
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor
 
 ##############################################
-# A bunch of classes handling fluid setting parameters.
+# A bunch of classes handling settings storage.
+# Settings may either be fixed or fluid.
 #
-# Fluid settings allow for a parameter to increase, decrease or toggle
-# within this test script. For instance, the Range class takes an optional
-# 'func' parameter which allows the user to specify how exactly the value
-# should increase within the range.
+# Fixed settings (Value) consist of a single value, as well as its command line flag.
 #
-# The Toggle class allows the user to easily toggle between two truthy/falsy values.
+# Fluid settings (Range, Toggle) on the other hand allow for a parameter to increase,
+# decrease or toggle within this test script. For instance, the Range class takes an
+# optional 'func' parameter which allows the user to specify how exactly the value
+# should increase within the range. The Toggle class allows the user to easily toggle
+# between a truthy/falsy value.
+#
+# Feel free to extend the FluidSetting class for custom behavior if needed.
 #
 # All fluid settings consist of the functions...
-# • get() -> obtain the current value
+# • get()   -> obtain the current value
+# • flag()  -> obtain the command flag
 # • reset() -> set the value back to its initial state
-# • next() -> increase the value to its next state
+# • next()  -> change the value to its next state
 # • final() -> check whether the value has reached its final state (upper bound, !current, etc.) 
 ##############################################
 
@@ -169,9 +181,9 @@ settings = {
 ##############################################
 
 base_pairing = {}
+progress = {}
 batch_paths = []
 commands = []
-progress = {}
 
 class FHolder:
     futures = None
@@ -241,7 +253,6 @@ def watch_folder():
         
         # TODO: Fix
         # TODO: Make sure old res folders are used, even if batched up!
-        # TODO: Fix description of f-settings
         for k, v in progress.items():
             _, f_count, _ = next(os.walk(res_name + k))
             f_count = len(f_count)
