@@ -16,7 +16,7 @@
 #          function. If you used aliases, pick only one. The order of the data structures
 #          (however not the settings) matters -- please make sure you place it in the
 #          same order as in the ds.h DSType enum. If you don't have any exposed parameters,
-#          please create an empty dict nevertheless. ("your_ds" = { })
+#          please create an empty dict nevertheless. ('your_ds' = { })
 #
 # 3. Your data structure should now be registered.
 #
@@ -115,63 +115,63 @@ class Toggle(FluidSetting):
 ##############################################
 
 settings = {
-    "testing": {
+    'testing': {
         # Enables multithreading for concurrent evaluation of environment maps.
-        "multithreading": True,
+        'multithreading': True,
         # Set a time limit in seconds after which the application will stop running. If set to '-1', the time limit will be ignored.
-        "time_limit": -1,
+        'time_limit': -1,
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
-        "batches": 12
+        'batches': 12
     },
-    "general": {
+    'general': {
         # Path to folder containing the envmaps.
-        "envmap_path": Value('p', './data/tests/envmaps/'),
+        'envmap_path': Value('p', './data/tests/envmaps/'),
         # Path to folder containing the results.
-        "result_path": Value('rp', './data/results/'),
+        'result_path': Value('rp', './data/results/'),
         # Number of learning samples per data structure. These samples are used to create a guiding distribution.
-        "samples_learning": Range('sl', start=64, end=65536, func=lambda x: x * 2),
+        'samples_learning': Range('sl', start=64, end=65536, func=lambda x: x * 2),
         # Number of guiding samples per data structure. These samples are used to recreate the sampled distribution from the guiding distribution.
-        "samples_guiding": Value('sg', 65536),
+        'samples_guiding': Value('sg', 65536),
         # A blacklist specifying which data structures should be skipped in the overall test.
-        "blacklist": Value('b', [0]),
+        'blacklist': Value('b', [0]),
         # Whether to normalize the envmap each data structure is 'learning' with. (Keep this true unless you know what you're doing.)
-        "normalize": Value('n', True)
+        'normalize': Value('n', True)
     },
-    "noise": {
+    'noise': {
         # Whether the initial envmap should be noisified.
-        "envmap": Value('ne', False),
+        'envmap': Value('ne', False),
         # Whether a variable amount of noise should be introduced to each learning sample.
-        "samples": Value('ns', False)
+        'samples': Value('ns', False)
     },
-    "structures": {
-        "unidir": { },
-        "sh": {
-            "bands": Range('shb', start=1, end=10),
-            "depth": Range('shd', start=1, end=20),
-            "use_offset": Toggle('sho', True)
+    'structures': {
+        'unidir': { },
+        'sh': {
+            'bands': Range('shb', start=1, end=10),
+            'depth': Range('shd', start=1, end=20),
+            'use_offset': Toggle('sho', True)
         },
-        "dt": {
-            "frac_loss": Value('dtl', 'none'),
-            "dir_filter": Value('dtf', 'nearest'),
-            "threshold": Range('dtt', start=0.01, end=0.5, func=lambda x: x + 0.01),
-            "iterations": Value('dti', -1),
-            "max_depth": Range('dtd', start=2, end=20)
+        'dt': {
+            'frac_loss': Value('dtl', 'none'),
+            'dir_filter': Value('dtf', 'nearest'),
+            'threshold': Range('dtt', start=0.01, end=0.5, func=lambda x: x + 0.01),
+            'iterations': Value('dti', -1),
+            'max_depth': Range('dtd', start=2, end=20)
         },
-        "tc": {
-            "tilings": Range('t', start=1, end=8),
-            "tiles_x": Range('tx', start=2, end=32),
-            "tiles_y": Range('ty', start=2, end=32)
+        'tc': {
+            'tilings': Range('t', start=1, end=8),
+            'tiles_x': Range('tx', start=2, end=32),
+            'tiles_y': Range('ty', start=2, end=32)
         },
-        "btc": {
-            "tilings": Range('bt', start=1, end=8),
-            "tiles_x": Range('btx', start=1, end=8),
-            "tiles_y": Range('bty', start=1, end=8),
-            "max_depth": Range('btd', start=2, end=20),
-            "subdiv_thresh": Range('btt', start=0.0001, end=0.01, func=lambda x: x * 2)
+        'btc': {
+            'tilings': Range('bt', start=1, end=8),
+            'tiles_x': Range('btx', start=1, end=8),
+            'tiles_y': Range('bty', start=1, end=8),
+            'max_depth': Range('btd', start=2, end=20),
+            'subdiv_thresh': Range('btt', start=0.0001, end=0.01, func=lambda x: x * 2)
         },
-        "vmf": {
-            "components": Range('vc', start=1, end=32),
-            "use_ruppert": Toggle('vr', True)
+        'vmf': {
+            'components': Range('vc', start=1, end=32),
+            'use_ruppert': Toggle('vr', True)
         }
     }
 }
@@ -191,7 +191,7 @@ fholder = FHolder()
 
 def build_argvals(s, a = []):
     """
-    Builds a list of setting values required for cl call
+    Builds a list of setting values required for cl call.
 
     Parameters
     ----------
@@ -204,7 +204,7 @@ def build_argvals(s, a = []):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ["multithreading", "time_limit", "batches", "envmap_path", "result_path"]:
+        elif k.lower() in ['multithreading', 'time_limit', 'batches', 'envmap_path', 'result_path']:
             continue
         else:
             a.append((v.flag(), v.get(as_str=True)))
@@ -214,7 +214,7 @@ def build_argvals(s, a = []):
 
 def print_status():
     """
-    Prints the current progress of the benchmark
+    Prints the current progress of the benchmark.
     """
 
     if os.name == 'nt':
@@ -235,7 +235,7 @@ def print_status():
    
 def watch_folder():
     """
-    Tracks the current progress of the benchmark in a given folder
+    Tracks the current progress of the benchmark in a given folder.
     """
 
     res_name = settings['general']['result_path'].get()
@@ -262,12 +262,12 @@ def watch_folder():
 
 def collect_args():
     """
-    Accumulates a list of args for every sub-folder / worker based on the global settings
+    Accumulates a list of args for every sub-folder / worker based on the global settings.
     """
 
     combined = build_argvals(settings)
     for path in batch_paths:
-        args = ["mtsutil", "dscompare", "-p", path, "--sm", "sphere"]
+        args = ['mtsutil', 'dscompare', '-p', path, '--sm', 'sphere']
         
         for flag, value in combined:
             args.append(flag)
@@ -276,6 +276,10 @@ def collect_args():
         commands.append(args)
 
 def create_batches():
+    """
+    Splits all test envmaps into batches of roughly even size (based on the file size) for more efficient computation.
+    """
+    
     b_id = 0
     curr_bytes = 0
     curr_files = 0
@@ -308,7 +312,7 @@ def create_batches():
             base_pairing[new_name] = os.path.join(full_path, file)
 
             # create new folder
-            new_path = os.path.join(base_name, "testing", batch_key())
+            new_path = os.path.join(base_name, 'testing', batch_key())
             if not os.path.exists(new_path):
                 os.makedirs(new_path)
 
@@ -327,12 +331,21 @@ def create_batches():
         
         if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
             progress[batch_key()] = [0, curr_files]
-            batch_paths.append(base_name + "testing/" + batch_key() + "/")
+            batch_paths.append(f'{base_name}testing/{batch_key()}/')
             
 def start_comparer(command):
+    """
+    Calls the command to start Mitsuba.
+    """
+    
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
 def rcall(data, pos=0):
+    """
+    Recursively goes through all possible setting permutations and creates multiple workers that each start
+    Mitsuba with their respective envmap batch for the current settings state.
+    """
+    
     if pos == len(data):
         commands.clear()
         collect_args()
@@ -351,13 +364,17 @@ def rcall(data, pos=0):
     data[pos].reset()
 
 def run_test():
+    """
+    Performs a full benchmark run.
+    """
+    
     blacklist = settings['general']['blacklist'].get()
     if not all(isinstance(v, int) for v in blacklist):
         warnings.warn('Invalid blacklist content. Falling back to using all data structures.')
         blacklist = []
 
     sl = settings['general']['samples_learning']
-    ds_keys = list(settings["structures"].keys())
+    ds_keys = list(settings['structures'].keys())
 
     for ds_i in range(len(ds_keys)):
         if ds_i in blacklist:
@@ -366,7 +383,7 @@ def run_test():
         settings['general']['blacklist'].value = list(range(len(ds_keys)))
         settings['general']['blacklist'].value.remove(ds_i)
 
-        fluid_settings = [v for v in settings["structures"][ds_keys[ds_i]].values() if isinstance(v, FluidSetting)]
+        fluid_settings = [v for v in settings['structures'][ds_keys[ds_i]].values() if isinstance(v, FluidSetting)]
         while not sl.final():
             rcall(fluid_settings)
             sl.next()
@@ -375,6 +392,10 @@ def run_test():
         sl.reset()
 
 def restore_old_folders():
+    """
+    Restores the batchified folder structure back to its initial state.
+    """
+    
     if settings['testing']['batches'] < 0:
         return
 
@@ -393,6 +414,10 @@ def restore_old_folders():
             os.remove(full_path)
 
 def sighandler(signum, frame):
+    """
+    Gracefully stops script interruptions and restores the initial folder structure.
+    """
+    
     signal.signal(signum, signal.SIG_IGN)
     restore_old_folders()
     sys.exit(0)
