@@ -26,7 +26,9 @@
 
 import subprocess, os, time, math, signal, sys, uuid, warnings
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
+from threading import Event, Thread
+from collections.abc import Iterable
 
 ##############################################
 # A bunch of classes handling settings storage.
@@ -63,7 +65,7 @@ class Value:
         if (val_type is bool):
             return str(int(self._value))
         if (val_type is list):
-            return ' '.join([str(v) for v in self._value])
+            return [str(v) for v in self._value]
 
         return str(self._value)
     
@@ -121,7 +123,7 @@ settings = {
         # Set a time limit in seconds after which the application will stop running. If set to '-1', the time limit will be ignored.
         'time_limit': -1,
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
-        'batches': 12
+        'batches': 4
     },
     'general': {
         # Path to folder containing the envmaps.
@@ -184,10 +186,7 @@ base_pairing = {}
 progress = {}
 batch_paths = []
 commands = []
-
-class FHolder:
-    futures = None
-fholder = FHolder()
+stop_event = Event()
 
 def build_argvals(s, a = []):
     """
@@ -211,7 +210,6 @@ def build_argvals(s, a = []):
 
     return a
 
-
 def print_status():
     """
     Prints the current progress of the benchmark.
@@ -221,7 +219,7 @@ def print_status():
         _ = os.system('cls')
     else:
         _ = os.system('clear')
-        
+    
     for k, v in progress.items():
         completion_rate = v[0] / v[1]
         full_bars = math.floor(completion_rate * 20)
@@ -240,23 +238,15 @@ def watch_folder():
 
     res_name = settings['general']['result_path'].get()
     
-    while True:
-        if fholder.futures != None:
-            tasks_finished = True
-            for future in fholder.futures:
-                if not future.done():
-                    tasks_finished = False
-                    break
-                    
-            if tasks_finished:
-                break
-        
+    while not stop_event.is_set():
         for k, v in progress.items():
             _, f_names, _ = next(os.walk(res_name + k))
             f_count = len(f_names)
             if (f_count != v[0]):
                 progress[k] = [f_count, v[1]]
                 print_status()
+
+        time.sleep(0.5)
 
 def collect_args():
     """
@@ -269,7 +259,12 @@ def collect_args():
         
         for flag, value in combined:
             args.append(flag)
-            args.append(value)
+
+            if isinstance(value, Iterable) and not isinstance(value, str):
+                for v in value:
+                    args.append(v)
+            else:
+                args.append(value)
         
         commands.append(args)
 
@@ -336,12 +331,23 @@ def create_batches():
         if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
             progress[batch_key()] = [0, curr_files]
             batch_paths.append(f'{base_name}testing/{batch_key()}/')
-            
+
+def collect_data(wipe=False):
+    """
+    Collects the data from each csv and stores it into the respective data structure csv.
+    If wipe is enabled, the folder is wiped after storing for the next iteration.
+    """
+
+    res_path = settings['general']['result_path'].get()
+    for folder_name in progress.keys():
+        path = os.path.join(res_path, folder_name, '')
+
+
 def start_comparer(command):
     """
     Calls the command to start Mitsuba.
     """
-    
+
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
 def rcall(data, pos=0):
@@ -351,15 +357,14 @@ def rcall(data, pos=0):
     """
     
     if pos == len(data):
-        commands.clear()
         collect_args()
 
-        with ProcessPoolExecutor() as executor:
-            executor.submit(watch_folder)
-            fholder.futures = executor.map(start_comparer, commands)
-
-        # TODO: Collect data and wipe folders
-
+        with ThreadPoolExecutor(max_workers=len(commands)) as executor:
+            futures = [executor.submit(start_comparer, c) for c in commands]
+            wait(futures)
+        
+        commands.clear()
+        #collect_data(wipe=True)
         return
 
     while not data[pos].final():
@@ -382,12 +387,17 @@ def run_test():
     sl = settings['general']['samples_learning']
     ds_keys = list(settings['structures'].keys())
 
+    # Start watch thread
+    watcher = Thread(target=watch_folder)
+    watcher.start()
+
+    # Run benchmark per data structure
     for ds_i in range(len(ds_keys)):
         if ds_i in blacklist:
             continue
 
-        settings['general']['blacklist'].value = list(range(len(ds_keys)))
-        settings['general']['blacklist'].value.remove(ds_i)
+        settings['general']['blacklist']._value = list(range(len(ds_keys)))
+        settings['general']['blacklist']._value.remove(ds_i)
 
         fluid_settings = [v for v in settings['structures'][ds_keys[ds_i]].values() if isinstance(v, FluidSetting)]
         while not sl.final():
@@ -405,8 +415,8 @@ def restore_old_folders():
     if settings['testing']['batches'] < 0:
         return
 
-    base_name = settings['general']['envmap_path']
-    test_path = os.path.join(base_name.get(), 'testing')
+    base_name = settings['general']['envmap_path'].get()
+    test_path = os.path.join(base_name, 'testing')
     for path in os.listdir(os.fsencode(test_path)):
         folder_name = os.fsdecode(path)
         full_path = os.path.join(test_path, folder_name)
@@ -419,21 +429,22 @@ def restore_old_folders():
         if os.path.isfile(full_path):
             os.remove(full_path)
 
-def sighandler(signum, frame):
+def shutdown(signum, frame):
     """
     Gracefully stops script interruptions and restores the initial folder structure.
     """
     
     signal.signal(signum, signal.SIG_IGN)
     restore_old_folders()
+    stop_event.set()
     sys.exit(0)
 
-signal.signal(signal.SIGINT, sighandler)
+signal.signal(signal.SIGINT, shutdown)
 
 if __name__ == '__main__':
     create_batches()
     run_test()
-    restore_old_folders()
+    shutdown()
 
 # TODO:
 # - Store results in CSV; one folder per ds, one csv for every permutation
