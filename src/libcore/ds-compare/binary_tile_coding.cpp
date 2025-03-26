@@ -241,9 +241,8 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker)
 void BinaryTiling::insert(const Sample& sample)
 {
     // Find initial tile
-    Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
-
     TileTracker tracker;
+    Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
     BinaryTile& tile = find_tile(uv, tracker);
 
     Sample updater;

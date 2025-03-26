@@ -21,11 +21,11 @@ enum SplitDirection {
  * @brief Helper struct to track tile data.
  */
 struct TileTracker {
-    Point2i splits;
-    SplitDirection last;
+    Point2i splits = Point2i(0);
+    SplitDirection last = HORIZONTAL;
     Point2 x_bounds;
     Point2 y_bounds;
-    bool before_split;
+    bool before_split = true;
 
     inline int depth() const { return this->splits.x + this->splits.y; }
     inline void split(const bool decision) { this->before_split = decision; }
@@ -118,7 +118,7 @@ struct BinaryTiling {
     void insert(const Sample& sample);
 
     /// Utility function to recursively add the sum and sample count statistics from child tiles to parent tiles.
-    std::pair<uint32_t, float> recurse_statistics(BinaryTile& curr_tile, int depth, float& leaf_sum);
+    std::pair<uint32_t, float> recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum);
 
     /// Utility function to warp a 2D coordinate in [0, 1]^2 to the range of the current tiling.
     Point2 warp_to_range(const Point2& uv) const;
