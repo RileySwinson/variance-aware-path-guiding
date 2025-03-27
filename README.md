@@ -27,7 +27,7 @@ docker build -t <your-image-name> .
 
 **Step 2:** Clone this project:
 ```
-git clone https://github.com/GitThirteen/mitsuba-comparer.git
+git clone --recurse-submodules https://github.com/GitThirteen/mitsuba-comparer.git
 ```
 
 **Step 3:** Attach the project on your local device to a fresh docker container via a [*bind mount*](https://docs.docker.com/storage/bind-mounts/):
@@ -54,8 +54,8 @@ Compiling Mitsuba manually is possible, however quite cumbersome due to outdated
 ### Overview
 The plugin system is structured as follows:<br>
 `src/utils/dscompare.cpp` - Main plugin file<br>
-`include/mitsuba/ds/*` - Plugin headers (Utility, data structures, etc.)<br>
-`src/libcore/ds/*` - Data structure impl.<br>
+`include/ds-compare/*` - Plugin headers (utility, data structures, etc.)<br>
+`src/libcore/ds-compare/*` - Data structure impl.<br>
 
 <a name="how-to-use"></a>
 ## How to Use
@@ -66,46 +66,54 @@ To compile Mitsuba code, simply use
 ```
 scons
 ```
-in the command line.<br>
+in the command line. It is strongly advised to run this command with something like `-j 4` or `-j 8` to expedite the compilation step.<br>
 
 To run the ds::compare plugin, use
 ```
 mtsutil dscompare
 ```
 
-Changing parameters via CL arguments is currently unsupported (but planned). Please alter the arguments directly in `dscompare.cpp` in the meantime.
+The plugin supports several CL arguments that both affect data structure values and the underlying testing environment. As there are far too many to list them here, please use the internal `-h` or `--help` command, or check the clargs handler function in the main file of the plugin (`dscompare.cpp`). For a more high-level interaction with the plugin, please refer to the `dscom.py` benchmarking script written in Python 3. (Python 3.9 or later highly suggested!)
 
 ### Adding Environment Maps
 
-As environment maps can be quite huge in terms of file size, they have been excluded from this repository. To test the plugin on your own environment maps, please add them to `data/tests/envmaps`. If the folder does not exist, you are free to create one yourself. If you want to use a custom folder, please make sure to change the path variable in `dscompare.cpp` accordingly.
+As environment maps can be quite huge in terms of file size, they have been excluded from this repository. To test the plugin on your own environment maps, please add them to `data/tests/envmaps`. If the folder does not exist, you are free to create one yourself. If you want to use a custom folder, please make sure to change the path variable via the `-p` or `--path` flag in the command line.
 <br>
 <br>
 Some of the environment maps used for testing this plugin can also be found here:
-- http://benedikt-bitterli.me/
-- https://hdri-haven.com/
-- https://hdrmaps.com/
+- http://benedikt-bitterli.me
+- https://hdri-haven.com
+- https://hdrmaps.com
 - https://www.textures.com/library
-- http://dativ.at/
+- https://dativ.at/lightprobes
 - https://pbrt.org/resources
 
 The environment maps must either be `.hdr` or `.exr` files. Other file formats are not supported.
 
 ### Adding a Data Structure
 #### Implementation
-As the plugin itself uses a plugin-esque system for data structures, adding a custom data structure to the already existing ones is fairly easy. Data structures in ds::compare are divided into a `.cpp` and `.h` file, located in `src/libcore/ds` and `include/mitsuba/ds/structures` respectively. Each data structure must extend the `DataStructure` base class and mark itself as visible to the compiler via `MTS_EXPORT_CORE` like this:
+As the plugin itself uses a plugin-esque system for data structures, adding a custom data structure to the already existing ones is fairly easy. Data structures in ds::compare are divided into a `.cpp` and `.h` file, located in `src/libcore/ds-compare` and `include/ds-compare/structures` respectively. Each data structure must extend the `DataStructure` base class and mark itself as visible to the compiler via `MTS_EXPORT_CORE` like this:
 ```cpp
 struct MTS_EXPORT_CORE MyDataStructure : public DataStructure { ...
 ```
-Furthermore, the class must implement all functions marked as pure virtual in the base class. The plugin will be interacting with the data structure solely through these functions. For more information about each virtual function, take a look at the `ds.h` file located in `include/mitsuba/ds`.
+Furthermore, the class must implement all functions marked as pure virtual in the base class. The plugin will be interacting with the data structure solely through these functions. For more information about each virtual function, take a look at the `ds.h` file located in `include/ds-compare`.
 
 #### Registration
 Both implementation (`.cpp`) and header file (`.h`) must be registered in Mitsuba and the ds::compare system for it to be visible.
 <br>
-- To register the header file, please include the header in `include/mitsuba/ds/include.h`.
+- To register the header file, please (a) include the header in `include/ds-compare/include.h` and (b) create a DSType in `ds.h` which should then be returned by the `type()` function of the data structure.
 - To register the implementation file, please (a) add the file name to the SConscript file located in `src/libcore` and (b) instantiate and attach an instance to the internal cluster in `src/utils/dscompare.cpp` via
 ```cpp
 cluster.attach(new <Class>());
 ```
+
+To add command line arguments for your structure, please add the relevant parameters to the `DSArguments` struct located in `ds.h`. An instance of this struct gets passed to each constructor where the value can subsequently be read. Finally, add them to the clargs handler function in `dscompare.cpp` like this:
+```cpp
+desc.add_options()
+  // a bunch of already registered clargs
+  ("yourflag", p_opt::value<yourtype>(&this->args.yourarg), "yourdescription")
+```
+For more information, refer to the *Boost.Program_options* [documentation](https://www.boost.org/doc/libs/1_87_0/doc/html/program_options.html).
 
 ## License
 DS::compare is available under the [GNU GLPv3 license](https://www.gnu.org/licenses/gpl-3.0.html). See [LICENSE](https://github.com/GitThirteen/mitsuba-comparer/blob/main/LICENSE) for the full license text.
