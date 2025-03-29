@@ -342,7 +342,6 @@ def collect_data(wipe=False):
     for folder_name in progress.keys():
         path = os.path.join(res_path, folder_name, '')
 
-
 def start_comparer(command):
     """
     Calls the command to start Mitsuba.
@@ -386,6 +385,18 @@ def run_test():
 
     sl = settings['general']['samples_learning']
     ds_keys = list(settings['structures'].keys())
+
+    # Create directories for benchmark results
+    res_path = settings['general']['result_path'].get()
+    benchmark_path = os.path.join(res_path, 'benchmark')
+    if not os.path.exists(benchmark_path):
+        os.makedirs(benchmark_path)
+
+    for ds_name in ds_keys:
+        ds_path = os.path.join(benchmark_path, f'{ds_name}.csv')
+        if not os.path.exists(ds_path):
+            with open(ds_path, 'w') as _:
+                pass
 
     # Start watch thread
     watcher = Thread(target=watch_folder)
