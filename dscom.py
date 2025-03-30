@@ -243,9 +243,21 @@ def watch_folder():
     """
 
     res_name = settings['general']['result_path'].get()
-    
+    max_time = settings['testing']['time_limit']
+
+    total_time = 0
+    last_time = time.perf_counter()
+
     while not stop_event.is_set():
         time.sleep(0.25)
+
+        if max_time != -1:
+            curr_time = time.perf_counter()
+            total_time += curr_time - last_time
+            last_time = curr_time
+
+            if total_time > max_time:
+                shutdown(signal.SIGINT, None)
 
         if pause_watcher.is_set():
             continue
@@ -519,16 +531,20 @@ def restore_old_folders():
         if os.path.isfile(full_path):
             os.remove(full_path)
 
-    # TODO: Delete batch folders in output folder
+    res_path = settings['general']['result_path'].get()
+    for folder_name in progress.keys():
+        path = os.path.join(res_path, folder_name)
+        shutil.rmtree(path)
 
 def shutdown(signum, frame):
     """
     Gracefully stops script interruptions and restores the initial folder structure.
     """
     
+    stop_event.set()
+    print("Shutting down...")
     signal.signal(signum, signal.SIG_IGN)
     restore_old_folders()
-    stop_event.set()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, shutdown)
@@ -536,8 +552,4 @@ signal.signal(signal.SIGINT, shutdown)
 if __name__ == '__main__':
     create_batches()
     run_test()
-    shutdown()
-
-# TODO:
-# - Store results in CSV; one folder per ds, one csv for every permutation
-# - Add time limit
+    shutdown(signal.SIGINT, None)
