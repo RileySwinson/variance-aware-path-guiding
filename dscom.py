@@ -24,7 +24,7 @@
 # Michael Eickmeyer, 2025 @ TU Wien.
 ##############################################
 
-import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil 
+import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil, pprint
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, wait
 from threading import Event, Thread
@@ -346,7 +346,7 @@ def collect_data(curr_settings, wipe=False):
 
     res_path = settings['general']['result_path'].get()
     metrics = settings['testing']['metrics']
-    collector = dict(zip(metrics, [{}] * len(metrics)))
+    collector = { m: [] for m in metrics }
     ds_index = -1
 
     # Iterate over all output batches
@@ -368,8 +368,8 @@ def collect_data(curr_settings, wipe=False):
                     for metric, index in zip(metrics, indices):
                         base_path = base_pairing.get(f'{out_folder}.exr', base_pairing.get(f'{out_folder}.hdr'))
                         name = Path(base_path).stem
-                        collector[metric][name] = data[index]
-
+                        collector[metric].append((name, data[index]))
+    
     # Wipe folders if requested
     if wipe:
         pause_event.set()
@@ -406,7 +406,7 @@ def collect_data(curr_settings, wipe=False):
         else:
             payload[None].append('+'.join(str(s.get()) for s in curr_settings))
         
-        for envmap, value in data.items():
+        for envmap, value in data:
             if envmap not in payload:
                 payload[envmap] = [value]
             else:
