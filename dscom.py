@@ -120,8 +120,6 @@ settings = {
     'testing': {
         # Enables multithreading for concurrent evaluation of environment maps.
         'multithreading': True,
-        # Set a time limit in seconds after which the application will stop running. If set to '-1', the time limit will be ignored.
-        'time_limit': -1,
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
         'batches': 8,
         # Metrics to store in the benchmark.csv files. Names must match the metrics specified in ds::compare.
@@ -189,7 +187,7 @@ progress = {}
 batch_paths = []
 commands = []
 stop_event = Event()
-pause_watcher = Event()
+pause_event = Event()
 
 def build_argvals(s, a):
     """
@@ -206,7 +204,7 @@ def build_argvals(s, a):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ['multithreading', 'time_limit', 'batches', 'metrics', 'envmap_path', 'result_path']:
+        elif k.lower() in ['multithreading', 'batches', 'metrics', 'envmap_path', 'result_path']:
             continue
         else:
             a.append((v.flag(), v.get(as_str=True)))
@@ -240,23 +238,11 @@ def watch_folder():
     """
 
     res_name = settings['general']['result_path'].get()
-    max_time = settings['testing']['time_limit']
-
-    total_time = 0
-    last_time = time.perf_counter()
 
     while not stop_event.is_set():
-        time.sleep(0.5)
+        time.sleep(1)
 
-        if max_time != -1:
-            curr_time = time.perf_counter()
-            total_time += curr_time - last_time
-            last_time = curr_time
-
-            if total_time > max_time:
-                shutdown(signal.SIGINT, None)
-
-        if pause_watcher.is_set():
+        if pause_event.is_set():
             continue
 
         for k, v in progress.items():
@@ -290,7 +276,9 @@ def create_batches():
     """
     Splits all test envmaps into batches of roughly even size (based on the file size) for more efficient computation.
     """
-    
+
+    print('Creating batches...')
+
     b_id = 0
     curr_bytes = 0
     curr_files = 0
@@ -313,12 +301,12 @@ def create_batches():
         folder_name = os.fsdecode(path)
         full_path = os.path.join(base_name, folder_name)
         _, _, files = next(os.walk(full_path))
-        
+
         if batch_count < 0:
             progress[folder_name] = [0, len(files)]
             batch_paths.append(full_path)
             continue
-        
+
         for file in files:
             # generate file uid
             file_id = uuid.uuid4()
@@ -345,7 +333,7 @@ def create_batches():
                 b_id += 1
                 curr_bytes = 0
                 curr_files = 0
-        
+
         if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
             progress[batch_key()] = [0, curr_files]
             batch_paths.append(f'{base_name}testing/{batch_key()}/')
@@ -384,18 +372,19 @@ def collect_data(curr_settings, wipe=False):
 
     # Wipe folders if requested
     if wipe:
-        pause_watcher.set()
+        pause_event.set()
 
         for folder_name in progress.keys():
             path = os.path.join(res_path, folder_name)
             shutil.rmtree(path)
             os.makedirs(path)
 
-        pause_watcher.clear()
+        pause_event.clear()
 
+    # Write to benchmark csv
     ds_name = list(settings['structures'].keys())[ds_index]
     benchmark_path = os.path.join(res_path, 'benchmark')
-
+    
     for metric in metrics:
         data = collector[metric]
 
@@ -445,9 +434,13 @@ def rcall(data, pos=0):
     if pos == len(data):
         collect_args()
 
-        with ThreadPoolExecutor(max_workers=len(commands)) as executor:
-            futures = [executor.submit(start_comparer, c) for c in commands]
-            wait(futures)
+        if settings['testing']['multithreading']:
+            with ThreadPoolExecutor(max_workers=len(commands)) as executor:
+                futures = [executor.submit(start_comparer, c) for c in commands]
+                wait(futures)
+        else:
+            for command in commands:
+                start_comparer(command)
         
         commands.clear()
         collect_data(data, wipe=True)
@@ -464,6 +457,8 @@ def run_test():
     """
     Performs a full benchmark run.
     """
+
+    print('Running test...')
     
     blacklist = settings['general']['blacklist'].get()
     if not all(isinstance(v, int) for v in blacklist):
@@ -539,7 +534,7 @@ def shutdown(signum, frame):
     """
     
     stop_event.set()
-    print("Shutting down...")
+    print('Shutting down...')
     signal.signal(signum, signal.SIG_IGN)
     restore_old_folders()
     sys.exit(0)
