@@ -191,7 +191,7 @@ commands = []
 stop_event = Event()
 pause_watcher = Event()
 
-def build_argvals(s, a=None):
+def build_argvals(s, a):
     """
     Builds a list of setting values required for cl call.
 
@@ -202,9 +202,6 @@ def build_argvals(s, a=None):
     s : obj
       The settings object
     """
-
-    if not a:
-        a = []
 
     for k, v in s.items():
         if isinstance(v, dict):
@@ -249,7 +246,7 @@ def watch_folder():
     last_time = time.perf_counter()
 
     while not stop_event.is_set():
-        time.sleep(0.25)
+        time.sleep(0.5)
 
         if max_time != -1:
             curr_time = time.perf_counter()
@@ -274,7 +271,7 @@ def collect_args():
     Accumulates a list of args for every sub-folder / worker based on the global settings.
     """
 
-    combined = build_argvals(settings)
+    combined = build_argvals(settings, [])
     for path in batch_paths:
         args = ['mtsutil', 'dscompare', '-p', path, '--sm', 'sphere']
         
