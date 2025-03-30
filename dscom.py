@@ -24,7 +24,7 @@
 # Michael Eickmeyer, 2025 @ TU Wien.
 ##############################################
 
-import subprocess, os, time, math, signal, sys, uuid, warnings
+import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil 
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, wait
 from threading import Event, Thread
@@ -123,7 +123,9 @@ settings = {
         # Set a time limit in seconds after which the application will stop running. If set to '-1', the time limit will be ignored.
         'time_limit': -1,
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
-        'batches': 4
+        'batches': 8,
+        # Metrics to store in the benchmark.csv files. Names must match the metrics specified in ds::compare.
+        'metrics': ['MD', 'Memory', 'store() (s)']
     },
     'general': {
         # Path to folder containing the envmaps.
@@ -188,7 +190,7 @@ batch_paths = []
 commands = []
 stop_event = Event()
 
-def build_argvals(s, a = []):
+def build_argvals(s, a=None):
     """
     Builds a list of setting values required for cl call.
 
@@ -200,10 +202,13 @@ def build_argvals(s, a = []):
       The settings object
     """
 
+    if not a:
+        a = []
+
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ['multithreading', 'time_limit', 'batches', 'envmap_path', 'result_path']:
+        elif k.lower() in ['multithreading', 'time_limit', 'batches', 'metrics', 'envmap_path', 'result_path']:
             continue
         else:
             a.append((v.flag(), v.get(as_str=True)))
@@ -332,15 +337,80 @@ def create_batches():
             progress[batch_key()] = [0, curr_files]
             batch_paths.append(f'{base_name}testing/{batch_key()}/')
 
-def collect_data(wipe=False):
+def collect_data(curr_settings, wipe=False):
     """
     Collects the data from each csv and stores it into the respective data structure csv.
     If wipe is enabled, the folder is wiped after storing for the next iteration.
     """
 
     res_path = settings['general']['result_path'].get()
+    metrics = settings['testing']['metrics']
+    collector = dict(zip(metrics, [{}] * len(metrics)))
+    ds_index = -1
+
+    # Iterate over all output batches
     for folder_name in progress.keys():
-        path = os.path.join(res_path, folder_name, '')
+        path = os.path.join(res_path, folder_name)
+        for _, dirs, _ in os.walk(path):
+            # Iterate over all envmap folders inside a batch
+            for out_folder in dirs:
+                # Store results from metrics.csv into the collector
+                csv_path = os.path.join(path, out_folder, 'metrics.csv')
+                with open(csv_path) as file:
+                    reader = csv.reader(file, delimiter=',', quotechar='"')
+
+                    data = [row for row in reader if row[1]]
+                    indices = [data[0].index(metric) for metric in metrics if metric in data[0]]
+                    data = data[-1]
+                    ds_index = int(data[0])
+
+                    for metric, index in zip(metrics, indices):
+                        base_path = base_pairing.get(f'{out_folder}.exr', base_pairing.get(f'{out_folder}.hdr'))
+                        name = Path(base_path).stem
+                        collector[metric][name] = data[index]
+
+    # Wipe folders if requested
+    if wipe:
+        for folder_name in progress.keys():
+            path = os.path.join(res_path, folder_name)
+            shutil.rmtree(path)
+            os.makedirs(path)
+
+    ds_name = list(settings['structures'].keys())[ds_index]
+    benchmark_path = os.path.join(res_path, 'benchmark')
+
+    for metric in metrics:
+        data = collector[metric]
+
+        ds_path = os.path.join(benchmark_path, f'{ds_name}_{metric}.csv')
+        payload = {}
+        with open(ds_path) as file:
+            reader = csv.reader(file, delimiter=',', quotechar='"')
+            
+            first_row = True
+            for row in reader:
+                if first_row:
+                    payload[None] = row[1:]
+                    first_row = False
+                else:
+                    payload[row[0]] = row[1:]
+
+        if None not in payload:
+            payload[None] = ['+'.join(str(s.get()) for s in curr_settings)]
+        else:
+            payload[None].append('+'.join(str(s.get()) for s in curr_settings))
+        
+        for envmap, value in data.items():
+            if envmap not in payload:
+                payload[envmap] = [value]
+            else:
+                payload[envmap].append(value)
+
+        with open(ds_path, 'w+') as file:
+            writer = csv.writer(file, delimiter=',', quotechar='"')
+
+            for envmap, values in payload.items():
+                writer.writerow([envmap, *values])
 
 def start_comparer(command):
     """
@@ -363,7 +433,7 @@ def rcall(data, pos=0):
             wait(futures)
         
         commands.clear()
-        #collect_data(wipe=True)
+        collect_data(data, wipe=True)
         return
 
     while not data[pos].final():
@@ -393,10 +463,11 @@ def run_test():
         os.makedirs(benchmark_path)
 
     for ds_name in ds_keys:
-        ds_path = os.path.join(benchmark_path, f'{ds_name}.csv')
-        if not os.path.exists(ds_path):
-            with open(ds_path, 'w') as _:
-                pass
+        for metric in settings['testing']['metrics']:
+            ds_path = os.path.join(benchmark_path, f'{ds_name}_{metric}.csv')
+            if not os.path.exists(ds_path):
+                with open(ds_path, 'w') as _:
+                    pass
 
     # Start watch thread
     watcher = Thread(target=watch_folder)
@@ -439,6 +510,8 @@ def restore_old_folders():
 
         if os.path.isfile(full_path):
             os.remove(full_path)
+
+    # TODO: Delete batch folders in output folder
 
 def shutdown(signum, frame):
     """
