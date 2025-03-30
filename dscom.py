@@ -189,6 +189,7 @@ progress = {}
 batch_paths = []
 commands = []
 stop_event = Event()
+pause_watcher = Event()
 
 def build_argvals(s, a=None):
     """
@@ -244,14 +245,17 @@ def watch_folder():
     res_name = settings['general']['result_path'].get()
     
     while not stop_event.is_set():
+        time.sleep(0.25)
+
+        if pause_watcher.is_set():
+            continue
+
         for k, v in progress.items():
             _, f_names, _ = next(os.walk(res_name + k))
             f_count = len(f_names)
             if (f_count != v[0]):
                 progress[k] = [f_count, v[1]]
                 print_status()
-
-        time.sleep(0.5)
 
 def collect_args():
     """
@@ -371,10 +375,14 @@ def collect_data(curr_settings, wipe=False):
 
     # Wipe folders if requested
     if wipe:
+        pause_watcher.set()
+
         for folder_name in progress.keys():
             path = os.path.join(res_path, folder_name)
             shutil.rmtree(path)
             os.makedirs(path)
+
+        pause_watcher.clear()
 
     ds_name = list(settings['structures'].keys())[ds_index]
     benchmark_path = os.path.join(res_path, 'benchmark')
