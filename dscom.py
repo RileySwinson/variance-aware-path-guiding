@@ -235,6 +235,7 @@ stats = StatTrak()
 stop_event = Event()
 pause_event = Event()
 
+timestamp = time.time()
 base_pairing = {}
 batch_paths = []
 commands = []
@@ -447,7 +448,7 @@ def collect_data(curr_settings, wipe=False):
 
     # Write to benchmark csv
     ds_name = list(settings['structures'].keys())[ds_index]
-    benchmark_path = os.path.join(res_path, 'benchmark')
+    benchmark_path = os.path.join(res_path, 'benchmark', str(int(timestamp)))
     
     for metric in metrics:
         data = collector[metric]
@@ -538,7 +539,7 @@ def run_test():
 
     # Create directories for benchmark results
     res_path = settings['general']['result_path'].get()
-    benchmark_path = os.path.join(res_path, 'benchmark')
+    benchmark_path = os.path.join(res_path, 'benchmark', str(int(timestamp)))
     if not os.path.exists(benchmark_path):
         os.makedirs(benchmark_path)
 
