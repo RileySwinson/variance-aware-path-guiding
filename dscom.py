@@ -48,6 +48,7 @@ from collections.abc import Iterable
 # • get()   -> obtain the current value
 # • flag()  -> obtain the command flag
 # • reset() -> set the value back to its initial state
+# • steps() -> obtain how many steps the setting needs from start to finish for completion
 # • next()  -> change the value to its next state
 # • final() -> check whether the value has reached its final state (upper bound, !current, etc.) 
 ##############################################
@@ -80,6 +81,9 @@ class FluidSetting(Value):
     def reset(self):
         self._value = self._default
 
+    def steps(self):
+        raise NotImplementedError
+
     def next(self):
         raise NotImplementedError
 
@@ -94,6 +98,17 @@ class Range(FluidSetting):
         if not func:
             func = lambda x: x + start
         self._func = func
+
+    def steps(self):
+        curr = self._default
+        end = self._end
+        fn = self._func
+
+        s = 1
+        while not fn(curr) > end:
+            curr = fn(curr)
+            s += 1
+        return s
     
     def next(self):
         self._value = self._func(self._value)
@@ -105,6 +120,9 @@ class Range(FluidSetting):
 class Toggle(FluidSetting):
     def __init__(self, flag, state):
         super().__init__(flag, state)
+
+    def steps(self):
+        return 2
     
     def next(self):
         self._value = not self._value
@@ -179,15 +197,48 @@ settings = {
 }
 
 ##############################################
+# Stat Tracker.
+##############################################
+
+class StatTrak:
+    run = {
+        'curr': 0,
+        'total': 0,
+        'ds': 0
+    }
+    time = {
+        'avg': 0,
+        'count': 0
+    }
+    progress = { }
+
+    def reset(self):
+        self.time['avg'] = 0
+        self.time['count'] = 0
+        self.run['curr'] = 0
+
+    def increment(self, what: str):
+        if what == 'run':
+            self.run['curr'] += 1
+        else:
+            self.time['count'] += 1
+
+    def store_time(self, elapsed):
+        avg_delta = elapsed - self.time['avg']
+        self.time['avg'] += avg_delta / self.time['count']
+
+##############################################
 # Start of code.
 ##############################################
 
-base_pairing = {}
-progress = {}
-batch_paths = []
-commands = []
+stats = StatTrak()
 stop_event = Event()
 pause_event = Event()
+
+base_pairing = {}
+batch_paths = []
+commands = []
+ds_keys = list(settings['structures'].keys())
 
 def build_argvals(s, a):
     """
@@ -221,7 +272,15 @@ def print_status():
     else:
         _ = os.system('clear')
     
-    for k, v in progress.items():
+    print(f"Run: {stats.run['curr'] + 1} / {stats.run['total']}")
+    
+    settings_kv = settings['structures'][ds_keys[stats.run['ds']]].items()
+    for i, kv in enumerate(settings_kv):
+        name, value = kv
+        print(f'{name} » {value.get(as_str=True)}', end='' if i + 1 == len(settings_kv) else ' | ')
+    print()
+
+    for k, v in stats.progress.items():
         completion_rate = v[0] / v[1]
         full_bars = math.floor(completion_rate * 20)
         empty_bars = 20 - full_bars
@@ -231,6 +290,11 @@ def print_status():
         progress_bar = '|' + '█' * full_bars + ' ' * empty_bars + '|'
         
         print(f'{percentage}%{progress_bar} {v[0]}/{v[1]} ({k})')
+
+    remaining = stats.time['avg'] * (stats.run['total'] - stats.run['curr'])
+    m, s = divmod(remaining, 60)
+    h, m = divmod(m, 60)
+    print('Est. Time Remaining: ' + (f'{int(h):d}:{int(m):02d}:{int(s):02d}' if remaining != 0 else 'Calculating...'))
    
 def watch_folder():
     """
@@ -245,11 +309,11 @@ def watch_folder():
         if pause_event.is_set():
             continue
 
-        for k, v in progress.items():
+        for k, v in stats.progress.items():
             _, f_names, _ = next(os.walk(res_name + k))
             f_count = len(f_names)
             if (f_count != v[0]):
-                progress[k] = [f_count, v[1]]
+                stats.progress[k] = [f_count, v[1]]
                 print_status()
 
 def collect_args():
@@ -303,7 +367,7 @@ def create_batches():
         _, _, files = next(os.walk(full_path))
 
         if batch_count < 0:
-            progress[folder_name] = [0, len(files)]
+            stats.progress[folder_name] = [0, len(files)]
             batch_paths.append(full_path)
             continue
 
@@ -327,15 +391,15 @@ def create_batches():
             curr_files += 1
 
             if (curr_bytes >= (total_bytes / batch_count)) and (b_id < batch_count):
-                progress[batch_key()] = [0, curr_files]
+                stats.progress[batch_key()] = [0, curr_files]
                 batch_paths.append(new_path)
                 
                 b_id += 1
                 curr_bytes = 0
                 curr_files = 0
 
-        if (i == len(folders) - 1) and (batch_key() not in progress.keys()):
-            progress[batch_key()] = [0, curr_files]
+        if (i == len(folders) - 1) and (batch_key() not in stats.progress.keys()):
+            stats.progress[batch_key()] = [0, curr_files]
             batch_paths.append(f'{base_name}testing/{batch_key()}/')
 
 def collect_data(curr_settings, wipe=False):
@@ -350,7 +414,7 @@ def collect_data(curr_settings, wipe=False):
     ds_index = -1
 
     # Iterate over all output batches
-    for folder_name in progress.keys():
+    for folder_name in stats.progress.keys():
         path = os.path.join(res_path, folder_name)
         for _, dirs, _ in os.walk(path):
             # Iterate over all envmap folders inside a batch
@@ -374,7 +438,7 @@ def collect_data(curr_settings, wipe=False):
     if wipe:
         pause_event.set()
 
-        for folder_name in progress.keys():
+        for folder_name in stats.progress.keys():
             path = os.path.join(res_path, folder_name)
             shutil.rmtree(path)
             os.makedirs(path)
@@ -432,6 +496,7 @@ def rcall(data, pos=0):
     """
     
     if pos == len(data):
+        now = time.perf_counter()
         collect_args()
 
         if settings['testing']['multithreading']:
@@ -444,6 +509,10 @@ def rcall(data, pos=0):
         
         commands.clear()
         collect_data(data, wipe=True)
+
+        stats.increment('run')
+        stats.increment('time')
+        stats.store_time(time.perf_counter() - now)
         return
 
     while not data[pos].final():
@@ -466,7 +535,6 @@ def run_test():
         blacklist = []
 
     sl = settings['general']['samples_learning']
-    ds_keys = list(settings['structures'].keys())
 
     # Create directories for benchmark results
     res_path = settings['general']['result_path'].get()
@@ -494,11 +562,16 @@ def run_test():
         settings['general']['blacklist']._value.remove(ds_i)
 
         fluid_settings = [v for v in settings['structures'][ds_keys[ds_i]].values() if isinstance(v, FluidSetting)]
+        stats.run['ds'] = ds_i
+        stats.run['total'] = math.prod(fs.steps() for fs in fluid_settings)
+
         while not sl.final():
             rcall(fluid_settings)
+            stats.reset()
             sl.next()
 
         rcall(fluid_settings)
+        stats.reset()
         sl.reset()
 
 def restore_old_folders():
@@ -524,7 +597,7 @@ def restore_old_folders():
             os.remove(full_path)
 
     res_path = settings['general']['result_path'].get()
-    for folder_name in progress.keys():
+    for folder_name in stats.progress.keys():
         path = os.path.join(res_path, folder_name)
         shutil.rmtree(path)
 
