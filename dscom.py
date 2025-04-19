@@ -24,7 +24,7 @@
 # Michael Eickmeyer, 2025 @ TU Wien.
 ##############################################
 
-import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil, pprint
+import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, wait
 from threading import Event, Thread
@@ -164,32 +164,32 @@ settings = {
         'samples': Value('ns', False)
     },
     'structures': {
-        'unidir': { },
-        'sh': {
+        'Unidirectional': { },
+        'Spherical Harmonics': {
             'bands': Range('shb', start=1, end=10),
             'depth': Range('shd', start=1, end=20),
             'use_offset': Toggle('sho', True)
         },
-        'dt': {
+        'D-Tree': {
             'frac_loss': Value('dtl', 'none'),
             'dir_filter': Value('dtf', 'nearest'),
             'threshold': Range('dtt', start=0.01, end=0.5, func=lambda x: x + 0.01),
             'iterations': Value('dti', -1),
             'max_depth': Range('dtd', start=2, end=20)
         },
-        'tc': {
+        'Tile Coding': {
             'tilings': Range('t', start=1, end=8),
             'tiles_x': Range('tx', start=2, end=32),
             'tiles_y': Range('ty', start=2, end=32)
         },
-        'btc': {
+        'Binary Tile Coding': {
             'tilings': Range('bt', start=1, end=8),
             'tiles_x': Range('btx', start=1, end=8),
             'tiles_y': Range('bty', start=1, end=8),
             'max_depth': Range('btd', start=2, end=20),
             'subdiv_thresh': Range('btt', start=0.0001, end=0.01, func=lambda x: x * 2)
         },
-        'vmf': {
+        'von Mises-Fisher Mixtures': {
             'components': Range('vc', start=1, end=32),
             'use_ruppert': Toggle('vr', True)
         }
@@ -273,13 +273,19 @@ def print_status():
     else:
         _ = os.system('clear')
     
-    print(f"Run: {stats.run['curr'] + 1} / {stats.run['total']}")
-    
-    settings_kv = settings['structures'][ds_keys[stats.run['ds']]].items()
+    curr_ds = ds_keys[stats.run['ds']]
+    settings_kv = settings['structures'][curr_ds].items()
+
+    print(f"DS: {curr_ds} | Run: {stats.run['curr'] + 1} / {stats.run['total']}")
+
+    output = ''
     for i, kv in enumerate(settings_kv):
         name, value = kv
-        print(f'{name} » {value.get(as_str=True)}', end='' if i + 1 == len(settings_kv) else ' | ')
-    print()
+        output += f'{name} » {value.get(as_str=True)}'
+        if not len(settings_kv) == i + 1:
+            output += ' | '
+    print(output)
+    print('=' * len(output))
 
     for k, v in stats.progress.items():
         completion_rate = v[0] / v[1]
