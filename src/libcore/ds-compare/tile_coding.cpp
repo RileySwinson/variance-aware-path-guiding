@@ -182,8 +182,8 @@ Sample TileCoding::sample(Point2& sample)
 
     Point2 rng = random.next2D();
     Point2 uv(
-        tile_start.x + rng.x * (1.0 / x_len),
-        tile_start.y + rng.y * (1.0 / y_len)
+        boost::algorithm::clamp(tile_start.x + rng.x * (1.0 / x_len), 0.0, 1.0 - Epsilon),
+        boost::algorithm::clamp(tile_start.y + rng.y * (1.0 / y_len), 0.0, 1.0 - Epsilon)
     );
 
     Point2 spherical = Converter::uv_to_spherical(uv);

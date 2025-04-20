@@ -231,7 +231,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker)
         }
 
         tracker.increment(split_dir);
-        tracker.split(local < split);
+        tracker.side(local < split);
     }
 
     tracker.boundaries(x_bounds, y_bounds);
@@ -268,15 +268,10 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
 {
     if (curr_tile.is_leaf())
     {
-        // visible perc is fucked
         float visible_perc = BinaryTile::visible_area_perc(tracker.before_split, tracker.last, tracker.x_bounds, tracker.y_bounds);
         float area = curr_tile.area(tracker.depth());
         float mu = curr_tile.mean();
         leaf_sum += visible_perc * area * mu;
-
-        std::cout << tracker.before_split << " " << tracker.last << " " << tracker.x_bounds.toString() << " " << tracker.y_bounds.toString() << "\n";
-        std::cout << visible_perc << "\n";
-        std::cout << "====================" << "\n";
 
         return { curr_tile.sample_count, curr_tile.sum };
     }
@@ -291,16 +286,15 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
 
     for (int i = 0; i < 2; ++i)
     {
-        tracker.split(i == 0);
+        TileTracker c_tracker = tracker;
+        c_tracker.side(i == 0);
 
-        Point2& bounds = (tracker.last == HORIZONTAL) ? tracker.x_bounds : tracker.y_bounds;
-        Float halved = (bounds.x + bounds.y) * 0.5;
-
-        if (i == 0) bounds.y = halved;
-        else        bounds.x = halved;
+        Point2& bounds = (c_tracker.last == HORIZONTAL) ? c_tracker.x_bounds : c_tracker.y_bounds;
+        Float& value = c_tracker.before_split ? bounds.y : bounds.x;
+        value = (bounds.x + bounds.y) * 0.5;
 
         BinaryTile* child = children.at(i);
-        auto stats = recurse_statistics(*child, tracker, leaf_sum);
+        auto stats = recurse_statistics(*child, c_tracker, leaf_sum);
 
         curr_tile.sample_count += stats.first;
         curr_tile.sum += stats.second;
@@ -404,8 +398,6 @@ void BinaryTileCoding::construct(DSArguments& init_data)
 void BinaryTileCoding::preprocess()
 {
     // Calculate tiling offset
-    Float tile_width = 1.0 / tile_dims.x;
-    Float tile_height = 1.0 / tile_dims.y;
     auto num_tilings = this->tilings.size();
 
     Float overhead = 0.0;
@@ -414,15 +406,13 @@ void BinaryTileCoding::preprocess()
         overhead = 1.0 / num_tilings;
     }
 
-    Point2 offset(tile_width * overhead, tile_height * overhead);
-
     // Store start and end thresholds in each tiling
     for (int i = 0; i < num_tilings; ++i)
     {
         BinaryTiling& tiling = this->tilings.at(i);
 
-        Point2 x_range(0 - (i * offset.x), 1 + ((num_tilings - 1 - i) * offset.x));
-        Point2 y_range(0 - ((num_tilings - 1 - i) * offset.y), 1 + (i * offset.y));
+        Point2 x_range(0 - (i * overhead), 1 + ((num_tilings - 1 - i) * overhead));
+        Point2 y_range(0 - ((num_tilings - 1 - i) * overhead), 1 + (i * overhead));
 
         tiling.x_bounds = x_range;
         tiling.y_bounds = y_range;
@@ -445,10 +435,19 @@ void BinaryTileCoding::postprocess()
     for (BinaryTiling& tiling : this->tilings)
     {
         const Point2i td = BinaryTileCoding::tile_dims;
+        Point2 step(
+            (tiling.x_bounds.y - tiling.x_bounds.x) / td.x,
+            (tiling.y_bounds.y - tiling.y_bounds.x) / td.y
+        );
+
         for (int i = 0; i < td.x * td.y; ++i)
         {
             TileTracker tracker;
-            tracker.boundaries(tiling.x_bounds, tiling.y_bounds); // need to consider base tiles!
+
+            Point2i pos(i % td.x, i / td.x);
+            Point2 local_x_bounds(tiling.x_bounds.x + step.x * pos.x, tiling.x_bounds.x + step.x * (pos.x + 1));
+            Point2 local_y_bounds(tiling.y_bounds.x + step.y * pos.y, tiling.y_bounds.x + step.y * (pos.y + 1));
+            tracker.boundaries(local_x_bounds, local_y_bounds);
             
             BinaryTile& tile = tiling.tiles.at(i);
             tiling.recurse_statistics(tile, tracker, this->leaf_sum);

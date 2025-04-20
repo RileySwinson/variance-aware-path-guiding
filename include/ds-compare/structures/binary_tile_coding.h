@@ -28,7 +28,7 @@ struct TileTracker {
     bool before_split = true;
 
     inline int depth() const { return this->splits.x + this->splits.y; }
-    inline void split(const bool decision) { this->before_split = decision; }
+    inline void side(const bool decision) { this->before_split = decision; }
     inline void boundaries(const Point2 x, const Point2 y) { this->x_bounds = x; this->y_bounds = y; }
     inline void increment(const SplitDirection split) { ((split == HORIZONTAL) ? this->splits.x : this->splits.y)++; this->last = split; }
 };
