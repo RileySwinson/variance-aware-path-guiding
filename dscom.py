@@ -6,10 +6,9 @@
 # How to add your own structure to this script:
 # 1. Make sure your data structure works as intended within the ds::compare framework.
 #    Info: See the README for further details, but the tl;dr: It should be registered
-#          in the cluster, the include.h file and the SCons file to compile correctly.
-#          It should have its own DSType (see ds.h). All its exposed parameters should
-#          be in both the DSArguments struct (see ds.h) and the clargs handler function
-#          (see dscompare.cpp).
+#          in the cluster and the include.h file to compile correctly. It should have
+#          its own DSType (see ds.h). All its exposed parameters should be in both the
+#          DSArguments struct (see ds.h) and the clargs handler function (see dscompare.cpp).
 #
 # 2. Add the exposed parameters of your data structure to the settings dict below.
 #    Info: Verify the settings flags match the ones you specified in the clargs handler

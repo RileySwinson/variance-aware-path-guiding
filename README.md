@@ -102,7 +102,7 @@ Furthermore, the class must implement all functions marked as pure virtual in th
 Both implementation (`.cpp`) and header file (`.h`) must be registered in Mitsuba and the ds::compare system for it to be visible.
 <br>
 - To register the header file, please (a) include the header in `include/ds-compare/include.h` and (b) create a DSType in `ds.h` which should then be returned by the `type()` function of the data structure.
-- To register the implementation file, please (a) add the file name to the SConscript file located in `src/libcore` and (b) instantiate and attach an instance to the internal cluster in `src/utils/dscompare.cpp` via
+- To register the implementation file, please instantiate and attach an instance to the internal cluster in `src/utils/dscompare.cpp` via
 ```cpp
 cluster.attach(new <Class>());
 ```
