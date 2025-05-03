@@ -233,11 +233,7 @@ Float TileCoding::pdf(Point2& pos)
         pos.y * (y - total_overhead)
     );
 
-    float value = this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
-    return value;
-
-    //auto lum = eval(pos);
-    //return lum / (this->m_integral * this->guiding_map.size());
+    return this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
 }
 
 int TileCoding::memory()

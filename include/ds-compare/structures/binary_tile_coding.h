@@ -7,12 +7,13 @@
 MTS_NAMESPACE_BEGIN
 
 /**
- * @brief Used to specify the split direction of a tile.
+ * @brief Used to specify the direction of an entity, e.g. a split, amongst other things.
  * 
- * HORIZONTAL = horizontal split, split from top to bottom.
- * VERTICAL = vertical split, split from left to right.
+ * In the case of a split:
+ * HORIZONTAL = divides horizontally, i.e. the split goes from top to bottom.
+ * VERTICAL = divides vertically, i.e. the split goes from left to right.
  */
-enum SplitDirection {
+enum Direction {
     HORIZONTAL,
     VERTICAL
 };
@@ -22,15 +23,41 @@ enum SplitDirection {
  */
 struct TileTracker {
     Point2i splits = Point2i(0);
-    SplitDirection last = HORIZONTAL;
+    Direction last = HORIZONTAL;
     Point2 x_bounds;
     Point2 y_bounds;
     bool before_split = true;
 
-    inline int depth() const { return this->splits.x + this->splits.y; }
-    inline void side(const bool decision) { this->before_split = decision; }
-    inline void boundaries(const Point2 x, const Point2 y) { this->x_bounds = x; this->y_bounds = y; }
-    inline void increment(const SplitDirection split) { ((split == HORIZONTAL) ? this->splits.x : this->splits.y)++; this->last = split; }
+    inline int depth() const
+    { 
+        return this->splits.x + this->splits.y;
+    }
+
+    inline void side(const bool decision)
+    {
+        this->before_split = decision;
+    }
+
+    inline void boundaries(const Point2 x, const Point2 y)
+    {
+        this->x_bounds = x;
+        this->y_bounds = y;
+    }
+
+    inline void increment(const Direction split)
+    {
+        ((split == HORIZONTAL) ? this->splits.x : this->splits.y)++;
+        this->last = split;
+    }
+
+    inline Point2 clamped(const Direction dir) const
+    {
+        Point2 bounds = (dir == HORIZONTAL) ? this->x_bounds : this->y_bounds;
+        return Point2(
+            boost::algorithm::clamp(bounds.x, 0.0, 1.0),
+            boost::algorithm::clamp(bounds.y, 0.0, 1.0)
+        );
+    }
 };
 
 /**
@@ -61,10 +88,10 @@ struct BinaryTile {
 
     /// Determines if the leaf should be split by performing a One-Sample T-Test against the subdivision threshold.
     /// Important: is_leaf() should be called before to ensure this operation is only performed in a leaf!
-    bool should_split(const int depth) const;
+    bool should_split(const TileTracker& tracker) const;
     
     /// Returns the split direction of this tile in a usable format.
-    SplitDirection split_direction(const TileTracker& depth_counter) const;
+    Direction split_direction(const TileTracker& tracker) const;
 
     /// Correctly updates the covariance, variance and mean deviation statistics.
     void update_statistics(const Sample& sample);
@@ -73,25 +100,25 @@ struct BinaryTile {
     void update_sum(const Sample& sample);
 
     /// Returns the area-adjusted mean deviation of the current tile.
-    float meandev(const int depth) const;
+    float meandev(const TileTracker& tracker) const;
 
     /// Returns the area-adjusted variance of the current tile.
-    float var(const int depth) const;
+    float var(const TileTracker& tracker) const;
 
     /// Returns the covariance of the current tile given the splitting direction.
-    float covar(const SplitDirection dir, const TileTracker& depth_counter) const;
+    float covar(const Direction dir, const TileTracker& tracker) const;
 
     /// Returns the absolute squared covariance used for determining the split direction.
-    float adjusted_covar(const SplitDirection dir, const TileTracker& depth_counter) const;
+    float adjusted_covar(const Direction dir, const TileTracker& tracker) const;
 
     /// Returns the mean of the luminance stored in this tile.
     float mean() const;
 
     /// Returns the normalized area of this tile.
-    float area(const int depth) const;
+    float area(const TileTracker& tracker) const;
 
     /// Returns the ratio of the area of a tile (specified by the bounds) lying within the visible (i.e, sample-able) region.
-    static float visible_area_perc(bool before_split, SplitDirection split_dir, Point2 x_bounds, Point2 y_bounds);
+    static float visible_area_perc(bool before_split, Direction split_dir, Point2 x_bounds, Point2 y_bounds);
 };
 
 /**
@@ -126,7 +153,7 @@ struct BinaryTiling {
     /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
     Point2i base_tile_pos_from_cdf(const Point2& pos) const;
 
-    /// Obtain the *unnormalized* value of the underlying PDF at a given position.
+    /// Obtain the density value of the underlying PDF at a given position.
     float pdf(const Point2& pos);
 };
 
