@@ -369,10 +369,10 @@ float BinaryTiling::pdf(const Point2& pos)
     TileTracker tracker;
     BinaryTile& tile = find_tile(pos, tracker);
 
-    float area = tile.area(tracker);
     float mu = tile.mean();
+    float area = tile.area(tracker);
 
-    return area * mu;
+    return mu;
 }
 
 /* ================ */
@@ -414,7 +414,7 @@ void BinaryTileCoding::preprocess()
     }
 
     // Store start and end thresholds in each tiling
-    for (int i = 0; i < num_tilings; ++i)
+    for (size_t i = 0; i < num_tilings; ++i)
     {
         BinaryTiling& tiling = this->tilings.at(i);
 
@@ -585,7 +585,8 @@ Float BinaryTileCoding::eval(Point2& pos)
     float prob = 0.0f;
     for (auto& tiling : this->tilings)
     {
-        prob += tiling.pdf(pos);
+        BinaryTile& tile = tiling.find_tile(pos);
+        prob += tile.mean();
     }
     
     return (prob / this->leaf_sum);
