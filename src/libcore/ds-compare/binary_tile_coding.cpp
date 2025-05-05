@@ -130,59 +130,6 @@ float BinaryTile::area(const TileTracker& tracker) const
     return d_theta * d_phi;
 }
 
-float BinaryTile::visible_area_perc(bool before_split, Direction split_dir, Point2 x_bounds, Point2 y_bounds)
-{
-    // Return 1.0 if tile is fully within sample area
-    if (!(x_bounds.x < 0 || x_bounds.y > 1 || y_bounds.x < 0 || y_bounds.y > 1))
-    {
-        return 1.0f;
-    }
-
-    // Return 0.0 if tile is fully outside sample area
-    Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
-    Float halved = (bounds.x + bounds.y) * 0.5;
-    if ((before_split && halved <= 0) || (!before_split && halved >= 1))
-    {
-        return 0.0f;
-    }
-
-    // Otherwise, calc area ratio...
-    if (!before_split)
-    {
-        auto bound_swap = [](Point2& bounds) {
-            Float temp = std::move(bounds.x);
-            bounds.x = std::move(bounds.y);
-            bounds.y = std::move(temp);
-        };
-
-        bound_swap(x_bounds);
-        bound_swap(y_bounds);
-    }
-
-    Float x_half = (split_dir == HORIZONTAL) ? (x_bounds.x + x_bounds.y) * 0.5 : x_bounds.y;
-    Float y_half = (split_dir == VERTICAL)   ? (y_bounds.x + y_bounds.y) * 0.5 : y_bounds.y;
-
-    Point2 p1_outer(x_bounds.x, y_bounds.x);
-    Point2 p2_outer(x_half, y_half);
-
-    Point2 p1_inner = before_split
-        ? Point2(std::max((Float) 0.0, x_bounds.x), std::max((Float) 0.0, y_bounds.x))
-        : Point2(std::max((Float) 0.0, x_half), std::max((Float) 0.0, y_half));
-    Point2 p2_inner = before_split
-        ? Point2(std::min((Float) 1.0, x_half), std::min((Float) 1.0, y_half))
-        : Point2(std::min((Float) 1.0, x_bounds.x), std::min((Float) 1.0, y_bounds.x));
-
-    Float area_outer = std::abs(p2_outer.x - p1_outer.x) * std::abs(p2_outer.y - p1_outer.y);
-    Float area_inner = std::abs(p2_inner.x - p1_inner.x) * std::abs(p2_inner.y - p1_inner.y);
-
-    if (area_outer == 0) // This should never happen, but just in case...
-    {
-        return 0.0f;
-    }
-
-    return (area_inner / area_outer);
-}
-
 /* ============ */
 /* BinaryTiling */
 /* ============ */
@@ -464,120 +411,122 @@ void BinaryTileCoding::postprocess()
 
 Sample BinaryTileCoding::sample(Point2& pos)
 {
+    int tiling_count = this->tilings.size();
+
+    // [1] Pick one of the tilings with equal weight
+    Float random = BinaryTileCoding::random.next1D();
+    int i = random * tiling_count;
+    BinaryTiling& tiling = this->tilings.at(i);
+
+    // [2] If there is more than one base tile, use the passed-in (ideally random) 2D position to fetch the right one
+    BinaryTile* curr_tile = &tiling.tiles.at(0);
+    Point2 x_bounds = tiling.x_bounds;
+    Point2 y_bounds = tiling.y_bounds;
+    
+    if (tile_dims.x * tile_dims.y > 1)
+    {
+        auto bt_pos = tiling.base_tile_pos_from_cdf(pos);
+        curr_tile = &tiling.tiles.at((bt_pos.y * tile_dims.x) + bt_pos.x);
+
+        Float x_step = (tiling.x_bounds.y - tiling.x_bounds.x) / tile_dims.x;
+        Float y_step = (tiling.y_bounds.y - tiling.y_bounds.x) / tile_dims.y;
+
+        x_bounds = Point2(
+            tiling.x_bounds.x + (bt_pos.x * x_step),
+            tiling.x_bounds.x + ((bt_pos.x + 1) * x_step)
+        );
+        y_bounds = Point2(
+            tiling.y_bounds.x + (bt_pos.y * y_step),
+            tiling.y_bounds.x + ((bt_pos.y + 1) * y_step)
+        );
+    }
+
+    // [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
+    TileTracker tracker;
+    tracker.boundaries(x_bounds, y_bounds);
+
+    while (!curr_tile->is_leaf())
+    {
+        Direction split_dir = curr_tile->split_direction(tracker);
+        bool h_split = (split_dir == HORIZONTAL);
+
+        BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
+        BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
+
+        Point2& bounds = h_split ? x_bounds : y_bounds;
+        Float halved = (bounds.x + bounds.y) * 0.5;
+        
+        Point2 first_bounds[2]; // boundaries of first tile (x, y)
+        Point2 second_bounds[2]; // boundaries of second tile (x, y)
+
+        if (h_split)
+        {
+            first_bounds[0] = Point2(x_bounds.x, halved);
+            second_bounds[0] = Point2(halved, x_bounds.y);
+
+            first_bounds[1] = second_bounds[1] = y_bounds;
+        }
+        else
+        {
+            first_bounds[0] = second_bounds[0] = x_bounds;
+
+            first_bounds[1] = Point2(y_bounds.x, halved);
+            second_bounds[1] = Point2(halved, y_bounds.y);
+        }
+
+        tracker.boundaries(first_bounds[0], first_bounds[1]);
+        float mu_first = first->mean() * first->area(tracker);
+        tracker.boundaries(second_bounds[0], second_bounds[1]);
+        float mu_second = second->mean() * second->area(tracker);
+
+        Float random = BinaryTileCoding::random.next1D();
+        float split = mu_first / (mu_first + mu_second);
+
+        if (random < split)
+        {
+            bounds.y = halved;
+            curr_tile = first;
+        }
+        else
+        {
+            bounds.x = halved;
+            curr_tile = second;
+        }
+
+        tracker.increment(split_dir);
+        tracker.boundaries(x_bounds, y_bounds);
+    }
+
+    // [4] Generate random sample once in a leaf tile
+    Point2 random2d = BinaryTileCoding::random.next2D();
+    
+    x_bounds = tracker.clamped(HORIZONTAL);
+    y_bounds = tracker.clamped(VERTICAL);
+
+    Point2 coords(
+        x_bounds.x + random2d.x * (x_bounds.y - x_bounds.x),
+        y_bounds.x + random2d.y * (y_bounds.y - y_bounds.x)
+    );
+
+    // [5] Calculate PDF value based on position
+    float prob = curr_tile->mean();
+
+    for (int ti = 0; ti < tiling_count; ++ti)
+    {
+        if (ti == i) continue;
+        BinaryTile& tile = this->tilings.at(ti).find_tile(coords);
+        prob += tile.mean();
+    }
+
+    prob /= this->leaf_sum;
+
     Sample sample = {
-           .value = 0,
-           .pdf = 0.01,
-           .theta = 0,
-           .phi = 0
+        .value = 0,
+        .pdf = prob,
+        .theta = (coords.y * M_PI),
+        .phi = (coords.x * 2 * M_PI)
     };
     return sample;
-
-    //int tiling_count = this->tilings.size();
-
-    //// [1] Pick one of the tilings with equal weight
-    //Float random = BinaryTileCoding::random.next1D();
-    //int i = random * tiling_count;
-    //BinaryTiling& tiling = this->tilings.at(i);
-
-    //// [2] If there is more than one base tile, use the passed-in (ideally random) 2D position to fetch the right one
-    //BinaryTile* curr_tile = &tiling.tiles.at(0);
-    //Point2 x_bounds = tiling.x_bounds;
-    //Point2 y_bounds = tiling.y_bounds;
-    //
-    //if (tile_dims.x * tile_dims.y > 1)
-    //{
-    //    auto bt_pos = tiling.base_tile_pos_from_cdf(pos);
-    //    curr_tile = &tiling.tiles.at((bt_pos.y * tile_dims.x) + bt_pos.x);
-
-    //    Float x_step = (tiling.x_bounds.y - tiling.x_bounds.x) / tile_dims.x;
-    //    Float y_step = (tiling.y_bounds.y - tiling.y_bounds.x) / tile_dims.y;
-
-    //    x_bounds = Point2(
-    //        tiling.x_bounds.x + (bt_pos.x * x_step),
-    //        tiling.x_bounds.x + ((bt_pos.x + 1) * x_step)
-    //    );
-    //    y_bounds = Point2(
-    //        tiling.y_bounds.x + (bt_pos.y * y_step),
-    //        tiling.y_bounds.x + ((bt_pos.y + 1) * y_step)
-    //    );
-    //}
-
-    //// [3] Generate random 1D sample and go deeper as long as the tile isn't a leaf
-    //TileTracker tracker;
-    //Float visible_perc = 1.0;
-    //while (!curr_tile->is_leaf())
-    //{
-    //    Float random = BinaryTileCoding::random.next1D();
-
-    //    Direction split_dir = curr_tile->split_direction(tracker);
-    //    Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
-    //    Float halved = (bounds.x + bounds.y) * 0.5;
-
-    //    BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
-    //    BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
-
-    //    Float area_first = BinaryTile::visible_area_perc(true, split_dir, x_bounds, y_bounds);
-    //    Float area_second = BinaryTile::visible_area_perc(false, split_dir, x_bounds, y_bounds);
-    //    Float first_mean = area_first * first->mean();
-    //    Float second_mean = area_second * second->mean();
-
-    //    Float split = first_mean / (first_mean + second_mean);
-
-    //    if (random < split)
-    //    {
-    //        bounds.y = halved;
-    //        curr_tile = first;
-    //        visible_perc = area_first;
-    //    }
-    //    else
-    //    {
-    //        bounds.x = halved;
-    //        curr_tile = second;
-    //        visible_perc = area_second;
-    //    }
-
-    //    tracker.increment(split_dir);
-    //}
-
-    //// [4] Generate random sample once in a leaf tile
-    //Point2 rng = BinaryTileCoding::random.next2D();
-    //Point2 coords(
-    //    x_bounds.x + rng.x * (x_bounds.y - x_bounds.x),
-    //    y_bounds.x + rng.y * (y_bounds.y - y_bounds.x)
-    //);
-
-    //if (x_bounds.x < 0)
-    //    coords.x = ((coords.x - x_bounds.x) * x_bounds.y) / (x_bounds.y - x_bounds.x);
-
-    //if (y_bounds.x < 0)
-    //    coords.y = ((coords.y - y_bounds.x) * y_bounds.y) / (y_bounds.y - y_bounds.x);
-
-    //if (x_bounds.y > 1)
-    //    coords.x = x_bounds.x + ((coords.x - x_bounds.x) * (1.0 - x_bounds.x)) / (x_bounds.y - x_bounds.x);
-
-    //if (y_bounds.y > 1)
-    //    coords.y = y_bounds.x + ((coords.y - y_bounds.x) * (1.0 - y_bounds.x)) / (y_bounds.y - y_bounds.x);
-
-    //// [5] Calculate PDF value based on position
-    //float area = curr_tile->area(tracker.depth());
-    //float mu = curr_tile->mean();
-    //float prob = visible_perc * area * mu;
-
-    //for (int ti = 0; ti < tiling_count; ++ti)
-    //{
-    //    if (ti == i) continue;
-    //    prob += this->tilings.at(ti).pdf(coords);
-    //}
-
-    //prob /= this->leaf_sum;
-
-    //Sample sample = {
-    //    .value = 0,
-    //    .pdf = prob,
-    //    .theta = (coords.y * M_PI),
-    //    .phi = (coords.x * 2 * M_PI)
-    //};
-    //return sample;
 }
 
 Float BinaryTileCoding::eval(Point2& pos)

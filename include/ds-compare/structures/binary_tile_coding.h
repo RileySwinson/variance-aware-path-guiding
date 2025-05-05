@@ -116,9 +116,6 @@ struct BinaryTile {
 
     /// Returns the normalized area of this tile.
     float area(const TileTracker& tracker) const;
-
-    /// Returns the ratio of the area of a tile (specified by the bounds) lying within the visible (i.e, sample-able) region.
-    static float visible_area_perc(bool before_split, Direction split_dir, Point2 x_bounds, Point2 y_bounds);
 };
 
 /**
