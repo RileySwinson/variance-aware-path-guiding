@@ -643,8 +643,13 @@ Sample DirectionalTree::sample(Point2& pos)
     std::swap(coords.x, coords.y);
     coords.y = (Float) 1.0 - coords.y;
     
-    Point2 spherical = Converter::uv_to_spherical(coords);
     Float pdf = calc_pdf(coords);
+    if (pdf <= 0) pdf = Epsilon;
+
+    Point2 spherical = Point2(
+        boost::algorithm::clamp(coords.x * (2 * M_PI), 0, 2 * M_PI - Epsilon),
+        boost::algorithm::clamp(std::acos(1 - 2 * coords.y), 0, M_PI - Epsilon)
+    );
 
     Sample sample = {
         .value = 0,
@@ -652,15 +657,19 @@ Sample DirectionalTree::sample(Point2& pos)
         .theta = spherical.y,
         .phi = spherical.x
     };
+
     return sample;
 }
 
 Float DirectionalTree::eval(Point2& pos)
 {
-    return calc_pdf(pos);
+    Float pdf = calc_pdf(pos);
+    if (pdf <= 0) pdf = Epsilon;
+
+    return pdf;
 }
 
-Float DirectionalTree::calc_pdf(const Point2& uv)
+Float DirectionalTree::calc_pdf(const Point2& uv) const
 {
     Point2 spherical = Converter::uv_to_spherical(uv);
 

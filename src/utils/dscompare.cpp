@@ -14,7 +14,7 @@ MTS_NAMESPACE_BEGIN
 typedef boost::program_options::options_description BoostOptions;
 typedef boost::program_options::variables_map BoostOptionsMap;
 
-class DSComparer : Utility {
+class DSComparer : public Utility {
 public:
 	int run(int argc, char** argv)
 	{
@@ -81,7 +81,7 @@ public:
 
 			/* Generate bitmap for ground truth PDF & write to file */
 			Float max = 0;
-			EnvironmentMap base_map = envmap
+			EnvironmentMap gt_map = envmap
 				.deep_copy(true)
 				.map([&](Point2i coords, Point3& px) {
 					Float lum = envmap.get_pixel_luminance(coords);
@@ -95,10 +95,11 @@ public:
 
 			if (this->args.comparer.normalize)
 			{
-				base_map.normalize(max);
+				gt_map.normalize(max);
 			}
 
-			base_map.write(folder_path + "/base.exr");
+			Float gt_mean = gt_map.mean();
+			gt_map.write(folder_path + "/gt.exr");
 
 			Log(EInfo, "Comparing data structures for envmap '%s'...", (folder_name + "/" + envmap_file_name).c_str());
 
@@ -114,7 +115,7 @@ public:
 				);
 
 				tracker.follow(ds->type());
-				tracker.timer_start("store()");
+				tracker.timer_start("store");
 
 				/* Optional: Preprocess whatever has to be preprocessed per data structure */
 				ds->preprocess();
@@ -123,13 +124,11 @@ public:
 				/* Optional: Postprocess whatever has to be postprocessed per data structure */
 				ds->postprocess();
 
-				tracker.timer_end("store()");
+				tracker.timer_end("store");
 
-				/* Sample from the data structure and store the acquired samples in a new envmap + vectors for MD calculation */
-				std::vector<Float> reference;
-				reference.reserve(samples_guiding);
-				std::vector<Float> observed;
-				observed.reserve(samples_guiding);
+				/* Sample the base map using the approximation stored within the data structure and store the values for further MD calculation */
+				std::vector<Float> observations;
+				observations.reserve(samples_guiding);
 
 				EnvironmentMap sample_map = envmap.deep_copy(true);
 				for (int i = 0; i < samples_guiding; ++i)
@@ -141,8 +140,9 @@ public:
 					auto uv_coords = Converter::spherical_to_uv(spherical);
 					auto im_coords = Converter::uv_to_image(uv_coords, envmap.bitmap->getSize());
 
-					reference.push_back(envmap.get_pixel_luminance(im_coords));
-					observed.push_back(ds->eval(uv_coords));
+					auto f_x = envmap.get_pixel_luminance(im_coords);
+					auto p_x = sample.pdf;
+					observations.push_back(f_x / p_x);
 
 					Point3 col(std::max((Float) 0.0, 1 - 500 * sample.pdf), 0, std::min((Float) 1.0, 500 * sample.pdf));
 					sample_map.set_pixel_rgb(im_coords, col);
@@ -175,11 +175,10 @@ public:
 				eval_map.write(envmap_path);
 
 				/* Compute metrics and store them */
-				tracker.store(MD, ErrorMetrics::MD(reference, observed));
-				tracker.store(RMSE, ErrorMetrics::RMSE(base_map, eval_map));
-				tracker.store(PSNR, ErrorMetrics::PSNR(base_map, eval_map));
-				tracker.store(MSE, ErrorMetrics::MSE(base_map, eval_map));
-				tracker.store(MAE, ErrorMetrics::MAE(base_map, eval_map));
+				tracker.store(MD, ErrorMetrics::MD(observations, gt_mean));
+				tracker.store(RMSE, ErrorMetrics::RMSE(gt_map, eval_map));
+				tracker.store(MSE, ErrorMetrics::MSE(gt_map, eval_map));
+				tracker.store(MAE, ErrorMetrics::MAE(gt_map, eval_map));
 
 				tracker.store(Memory, ds->memory());
 

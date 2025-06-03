@@ -12,7 +12,6 @@ enum DS_COMPARE DSType : int;
 enum DS_COMPARE MeasureMetric : int {
     MD,
     RMSE,
-    PSNR,
     MSE,
     MAE,
     Memory
@@ -165,8 +164,9 @@ struct DS_COMPARE StatTrak {
         output.open(path, std::ios::out);
 
         /* Initialize header with errors + time measurements */
-        std::string header = ",MD,RMSE,PSNR,MSE,MAE,Memory,";
+        std::string header = ",MD,RMSE,MSE,MAE,Memory,";
         const auto& f_times = this->m_data.begin()->second.m_times;
+
         std::vector<std::string> time_headers;
         for (const auto& value : f_times)
         {
@@ -193,7 +193,6 @@ struct DS_COMPARE StatTrak {
             // Errors
             add_measure(MD);
             add_measure(RMSE);
-            add_measure(PSNR);
             add_measure(MSE);
             add_measure(MAE);
 

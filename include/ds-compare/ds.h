@@ -36,7 +36,7 @@ struct DS_COMPARE DSArguments {
         uint32_t samples_learning = 16384;
         uint32_t samples_guiding = 65536;
         std::vector<int> blacklist;
-        bool normalize = true;
+        bool normalize = false;
     };
 
     struct Noise {

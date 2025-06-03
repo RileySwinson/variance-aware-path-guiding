@@ -174,23 +174,17 @@ struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
     ~DirectionalTree() { }
 
     void construct(DSArguments& init_data) override;
-
     void preprocess() override;
-
     void store(std::vector<Sample>& samples) override;
-
     void postprocess() override;
 
     Sample sample(Point2& pos) override;
-
     Float eval(Point2& pos) override;
-    
+
     void wipe() override;
 
     DSType type() override;
-
     std::string name() override;
-
     int memory() override;
 
     /* PPG funcs from here */
@@ -250,7 +244,7 @@ private:
 
     AdamOptimizer bsdfSamplingFractionOptimizer{0.01f};
 
-    Float calc_pdf(const Point2& uv);
+    Float calc_pdf(const Point2& uv) const;
 
     class SpinLock {
     public:

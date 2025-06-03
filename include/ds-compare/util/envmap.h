@@ -184,6 +184,64 @@ struct DS_COMPARE EnvironmentMap {
 		return *this;
 	}
 
+	/// Calculate the weighted mean (w.r.t. solid angle) of the entire envmap
+	Float mean()
+	{
+		Vector2i size = this->bitmap->getSize();
+
+		if (size.x == 0 || size.y == 0)
+		{
+			return ((Float) 0);
+		}
+
+		Float sum_luminance = 0;
+		Float sum_weights = 0;
+		for (int y = 0; y < size.y; ++y)
+		{
+			Point2i temp(0, y);
+			Point2 uv = Converter::image_to_uv(temp, size);
+			Float theta = Converter::uv_to_spherical(uv).y;
+
+			Float weight = std::max((Float) 0, std::sin(theta));
+
+			for (int x = 0; x < size.x; ++x)
+			{
+				Point2i px(x, y);
+				sum_luminance += get_pixel_luminance(px) * weight;
+				sum_weights += weight;
+			}
+		}
+
+		return (sum_luminance / sum_weights);
+	}
+
+	/// Calculate the weighted mean based on specific samples
+	Float mean(std::vector<Sample> samples)
+	{
+		Vector2i size = this->bitmap->getSize();
+
+		if (size.x == 0 || size.y == 0)
+		{
+			return ((Float) 0);
+		}
+
+		Float sum_luminance = 0;
+		Float sum_weights = 0;
+		for (const auto& sample : samples)
+		{
+			Float weight = std::max((Float) 0, std::sin(sample.theta));
+
+			Point2 spherical(sample.phi, sample.theta);
+			Point2 uv = Converter::spherical_to_uv(spherical);
+			Point2i px = Converter::uv_to_image(uv, size);
+
+			sum_luminance += get_pixel_luminance(px) * weight;
+			sum_weights += weight;
+		}
+
+		return (sum_luminance / sum_weights);
+	}
+
 	void write(std::string path)
 	{
 		this->bitmap->write(Bitmap::EFileFormat::EOpenEXR, path);
