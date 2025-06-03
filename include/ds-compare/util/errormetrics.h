@@ -86,9 +86,9 @@ struct DS_COMPARE ErrorMetrics {
 		SAssert(samples > 0);
 
 		float sum = 0.0f;
-		for (int i = 0; i < samples; ++i)
+		for (const auto& value : reference)
 		{
-			sum += std::abs(reference.at(i) - gt_mean);
+			sum += std::abs(value - gt_mean);
 		}
 
 		return (sum / samples);

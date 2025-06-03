@@ -642,18 +642,23 @@ Sample DirectionalTree::sample(Point2& pos)
     Point2 coords = sampling.sample();
     std::swap(coords.x, coords.y);
     coords.y = (Float) 1.0 - coords.y;
-    
-    Float pdf = calc_pdf(coords);
-    if (pdf <= 0) pdf = Epsilon;
 
     Point2 spherical = Point2(
         boost::algorithm::clamp(coords.x * (2 * M_PI), 0, 2 * M_PI - Epsilon),
         boost::algorithm::clamp(std::acos(1 - 2 * coords.y), 0, M_PI - Epsilon)
     );
 
+    Vector directional(
+        std::sin(spherical.y) * std::cos(spherical.x),
+        std::sin(spherical.y) * std::sin(spherical.x),
+        std::cos(spherical.y)
+    );
+
+    auto p_x = std::max((Float) Epsilon, pdf(directional));
+
     Sample sample = {
         .value = 0,
-        .pdf = pdf,
+        .pdf = p_x,
         .theta = spherical.y,
         .phi = spherical.x
     };
