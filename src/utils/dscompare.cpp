@@ -142,7 +142,7 @@ public:
 
 					auto f_x = envmap.get_pixel_luminance(im_coords);
 					auto p_x = sample.pdf;
-					observations.push_back(f_x / p_x);
+					observations.push_back((f_x / p_x) * INV_FOURPI);
 
 					Point3 col(std::max((Float) 0.0, 1 - 500 * sample.pdf), 0, std::min((Float) 1.0, 500 * sample.pdf));
 					sample_map.set_pixel_rgb(im_coords, col);
