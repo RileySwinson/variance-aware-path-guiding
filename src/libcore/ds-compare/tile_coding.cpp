@@ -88,14 +88,28 @@ void TileCoding::postprocess()
 
     this->guiding_map.resize(map_size);
 
+    auto calc_tile_area = [=](int y) {
+        Float theta_step = M_PI / inner_y;
+        Float d_phi = (2 * M_PI) / inner_x;
+        Float d_theta = std::abs(std::cos(y * theta_step) - std::cos((y + 1) * theta_step));
+        return (d_phi * d_theta);
+    };
+
     // Track the total sum for normalization
     Float total_sum = 0;
+    Float tile_area = 0;
     for (int i = 0; i < map_size; ++i)
     {
         const int pos_x = i % inner_x;
         const int pos_y = i / inner_x;
 
-        Float sum = 0;
+        // Calculate area to consider spherical trafo!
+        if (pos_x == 0)
+        {
+            tile_area = calc_tile_area(pos_y);
+        }
+
+        Float tile_sum = 0;
         const Point2i base(0, total_overhead);
         for (int t_i = 0; t_i < this->tilings.size(); ++t_i)
         {
@@ -112,42 +126,42 @@ void TileCoding::postprocess()
             Tile tile = tiling.at((t_y * this->m_tiling_dims.x) + t_x);
             if (tile.entries == 0) continue;
 
-            sum += tile.value / tile.entries;
+            tile_sum += tile.value / tile.entries;
         }
 
-        Float result = sum / this->m_tiling_count;
-        if (result == 0 && this->m_mode != Sample::Mode::Cosine)
-        {
-            result = Epsilon; // We want to make sure no value is actually 0
-        }
+        Float result = (tile_sum / this->m_tiling_count);
+        total_sum += result * tile_area;
 
-        total_sum += result;
         this->guiding_map.at(i) = result;
     }
 
-    /* Normalize & Precompute averages */
+    /* Normalize & Precompute means */
     this->m_row_avgs.reserve(inner_y);
 
-    float total_avg = 0.0f;
+    float total_pdf_sum = 0.0f;
     for (int y = 0; y < inner_y; ++y)
     {
-        float row_avg = 0.0f;
+        float row_pdf_sum = 0.0f;
         for (int x = 0; x < inner_x; ++x)
         {
             int tile_i = (y * inner_x) + x;
 
-            Float theta_step = M_PI / inner_y;
-            Float d_theta = std::abs(std::cos(y * theta_step) - std::cos((y + 1) * theta_step));
-            Float d_phi = (2 * M_PI) / inner_x;
-            Float tile_area = d_phi * d_theta;
+            auto& p_x = this->guiding_map.at(tile_i);
+            p_x /= total_sum;
 
-            this->guiding_map.at(tile_i) /= total_sum * tile_area;
-            row_avg += this->guiding_map.at(tile_i);
+            if (!(p_x > 0))
+            {
+                p_x = Epsilon;
+            }
+
+            row_pdf_sum += p_x;
         }
-        total_avg += row_avg;
-        this->m_row_avgs.push_back(row_avg / inner_x);
+
+        total_pdf_sum += row_pdf_sum;
+        this->m_row_avgs.push_back(row_pdf_sum / inner_x);
     }
-    this->m_integral = total_avg / map_size;
+
+    this->m_integral = total_pdf_sum / map_size;
 
     /* Clear tilings -- we only need the map */
     this->tilings.clear();

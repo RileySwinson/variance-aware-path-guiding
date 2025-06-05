@@ -99,7 +99,7 @@ struct DS_COMPARE ErrorMetrics {
 		}
 		mean /= reference.size();
 
-		std::cout << "[Estimator / GT]" << mean << " / " << gt_mean << std::endl;
+		std::cout << "[Estimator / GT]: " << mean << " / " << gt_mean << std::endl;
 		std::cout << "MD: " << (sum / sample_count) << std::endl;*/
 
 		return (sum / sample_count);
