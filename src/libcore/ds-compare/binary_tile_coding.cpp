@@ -110,7 +110,7 @@ float BinaryTile::mean() const
 {
     if (this->sample_count == 0)
     {
-        return Epsilon;
+        return 0;
     }
 
     return this->sum / this->sample_count;
@@ -311,17 +311,6 @@ Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
     return Point2i(x, y);
 }
 
-float BinaryTiling::pdf(const Point2& pos)
-{
-    TileTracker tracker;
-    BinaryTile& tile = find_tile(pos, tracker);
-
-    float mu = tile.mean();
-    float area = tile.area(tracker);
-
-    return mu;
-}
-
 /* ================ */
 /* BinaryTileCoding */
 /* ================ */
@@ -452,6 +441,11 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
         BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
         BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
+        
+        if (!first->mean() && !second->mean()) // We want to break in case both children are empty.
+        {
+            break;
+        }
 
         Point2& bounds = h_split ? x_bounds : y_bounds;
         Float halved = (bounds.x + bounds.y) * 0.5;
@@ -518,7 +512,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
         prob += tile.mean();
     }
 
-    prob /= this->leaf_sum;
+    prob = std::max(Epsilon, (prob / this->leaf_sum));
 
     Sample sample = {
         .value = 0,
@@ -538,7 +532,7 @@ Float BinaryTileCoding::eval(Point2& pos)
         prob += tile.mean();
     }
     
-    return (prob / this->leaf_sum);
+    return std::max(Epsilon, (prob / this->leaf_sum));
 }
 
 void BinaryTileCoding::wipe()

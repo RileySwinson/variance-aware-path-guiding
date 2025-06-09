@@ -149,9 +149,6 @@ struct BinaryTiling {
 
     /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
     Point2i base_tile_pos_from_cdf(const Point2& pos) const;
-
-    /// Obtain the density value of the underlying PDF at a given position.
-    float pdf(const Point2& pos);
 };
 
 /**
