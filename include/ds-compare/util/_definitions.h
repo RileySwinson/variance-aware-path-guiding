@@ -18,6 +18,7 @@
 
 #include <random>
 #include <array>
+#include <stack>
 #include <functional>
 #include <unordered_map>
 #include <ctime>
