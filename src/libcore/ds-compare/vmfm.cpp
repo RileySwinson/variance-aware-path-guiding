@@ -78,8 +78,8 @@ Sample VMFM::sample(Point2& pos)
     Sample sample;
     sample.value = 0.0f;
     sample.pdf = pdf;
-    sample.phi = phi;
-    sample.theta = theta;
+    sample.phi = boost::algorithm::clamp(phi, 0, 2 * M_PI - Epsilon);
+    sample.theta = boost::algorithm::clamp(theta, 0, M_PI - Epsilon);
 
     return sample;
 }
