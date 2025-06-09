@@ -32,9 +32,9 @@ struct DS_COMPARE DSArguments {
     struct Comparer {
         std::string path = "./data/tests/envmaps/";
         std::string result_path = "./data/results";
-        Sample::Mode mode = Sample::Mode::Cosine;
-        uint32_t samples_learning = 16384;
-        uint32_t samples_guiding = 65536;
+        Sample::Mode mode = Sample::Mode::Sphere;
+        uint32_t samples_learning = 16384; // 2^14
+        uint32_t samples_guiding = 65536; // 2^16
         std::vector<int> blacklist;
         bool normalize = false;
     };
