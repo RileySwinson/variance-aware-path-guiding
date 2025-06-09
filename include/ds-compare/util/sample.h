@@ -62,6 +62,16 @@ struct DS_COMPARE Sample {
 			+ "pdf » " + std::to_string(this->pdf) + "\n"
 			+ "φ » " + std::to_string(this->phi) + " | θ » " + std::to_string(this->theta);
 	}
+
+	bool is_valid()
+	{
+		if (!this->pdf || !std::isfinite(this->theta) || !std::isfinite(this->phi)) return false;
+
+		bool phi_valid = (0 <= this->phi) && (this->phi < 2 * M_PI);
+		bool theta_valid = (0 <= this->theta) && (this->theta < M_PI);
+
+		return phi_valid && theta_valid;
+	}
 };
 
 MTS_NAMESPACE_END

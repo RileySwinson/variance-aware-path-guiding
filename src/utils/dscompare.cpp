@@ -109,9 +109,9 @@ public:
 			cluster.for_each([&](DataStructure* ds) {
 				if (ds->is_in(blacklist.begin(), blacklist.end())) return;
 
+				std::string ds_counter = (std::to_string(curr_i) + "/" + std::to_string(cluster.size()));
 				Log(EInfo, "[%s] | Active structure: '%s' (%i)",
-					(std::to_string(curr_i) + "/" + std::to_string(cluster.size())).c_str(),
-					ds->name().c_str(), ds->type()
+					ds_counter.c_str(), ds->name().c_str(), ds->type()
 				);
 
 				tracker.follow(ds->type());
@@ -136,9 +136,11 @@ public:
 					Point2 rnd(random->nextFloat(), random->nextFloat());
 					Sample sample = ds->sample(rnd);
 
-					if (!std::isnormal(sample.phi) || !std::isnormal(sample.theta))
+					if (!sample.is_valid())
 					{
-						Log(EWarn, "Received an invalid sample -- skip!");
+						Log(EWarn, "%s Obtained invalid sample [φ: %f, θ: %f, p: %f] -- ignoring it!",
+							(std::string(ds_counter.length() + 2, ' ') + " └").c_str(), sample.phi, sample.theta, sample.pdf
+						);
 						continue;
 					}
 
@@ -173,7 +175,9 @@ public:
 				d_sum = (d_sum / eval_map.bitmap->getPixelCount()) * (2 * M_PI * M_PI);
 				if (d_sum < 0.99 || d_sum > 1.01)
 				{
-					Log(EWarn, "PDF does not properly integrate even within tolerable error margin... %f ∉ [0.99, 1.01]", d_sum);
+					Log(EWarn, "%s PDF does not properly integrate even within tolerable error margin... %f ∉ [0.99, 1.01]",
+						(std::string(ds_counter.length() + 2, ' ') + " └").c_str(), d_sum
+					);
 				}
 
 				/* Write envmap to .exr file */
