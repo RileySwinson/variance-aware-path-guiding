@@ -136,6 +136,12 @@ public:
 					Point2 rnd(random->nextFloat(), random->nextFloat());
 					Sample sample = ds->sample(rnd);
 
+					if (!std::isnormal(sample.phi) || !std::isnormal(sample.theta))
+					{
+						Log(EWarn, "Received an invalid sample -- skip!");
+						continue;
+					}
+
 					Point2 spherical(sample.phi, sample.theta);
 					auto uv_coords = Converter::spherical_to_uv(spherical);
 					auto im_coords = Converter::uv_to_image(uv_coords, envmap.bitmap->getSize());
