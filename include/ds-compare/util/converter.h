@@ -35,12 +35,21 @@ struct DS_COMPARE Converter {
 	/// Converts uv coordinates in the domain [0, 1)^2 to image coordinates (e.g., 1920x1080)
 	static Point2i uv_to_image(const Point2& uv, const Vector2i& dims)
 	{
-		return Point2i(uv.x * dims.x, uv.y * dims.y);
+		return Point2i(
+			boost::algorithm::clamp(uv.x * dims.x, 0, dims.x - 1),
+			boost::algorithm::clamp(uv.y * dims.y, 0, dims.y - 1)
+		);
 	}
 
 	static Point2 image_to_uv(const Point2i& coords, const Vector2i& dims)
 	{
-		return Point2(coords.x / (Float) dims.x, coords.y / (Float) dims.y);
+		Float u = coords.x / (Float) dims.x;
+		Float v = coords.y / (Float) dims.y;
+
+		return Point2(
+			boost::algorithm::clamp(u, 0, 1 - Epsilon),
+			boost::algorithm::clamp(v, 0, 1 - Epsilon)
+		);
 	}
 };
 
