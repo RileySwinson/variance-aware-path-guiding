@@ -29,7 +29,24 @@ bool BinaryTile::should_split(const TileTracker& tracker) const
 
 Direction BinaryTile::split_direction(const TileTracker& tracker) const
 {
-    if (this->adjusted_covar(HORIZONTAL, tracker) > this->adjusted_covar(VERTICAL, tracker))
+    SAssert(this->sample_count > 1);
+
+    auto x_norm = tracker.clamped(HORIZONTAL);
+    auto y_norm = tracker.clamped(VERTICAL);
+
+    float covar_x = 0.0f;
+    if (x_norm.x != x_norm.y)
+    {
+        covar_x = std::sqrt(std::abs(this->cov.x / (this->sample_count - 1)));
+    }
+
+    float covar_y = 0.0f;
+    if (y_norm.x != y_norm.y)
+    {
+        covar_y = std::sqrt(std::abs(this->cov.y / (this->sample_count - 1)));
+    }
+
+    if (covar_x > covar_y)
     {
         return HORIZONTAL;
     }
@@ -69,26 +86,6 @@ void BinaryTile::update_sum(const Sample& sample)
 {
     this->sum += sample.value;
     this->sample_count++;
-}
-
-float BinaryTile::covar(const Direction dir, const TileTracker& tracker) const
-{
-    if (this->sample_count < 2) return 0.0f;
-
-    auto x_norm = tracker.clamped(HORIZONTAL);
-    if (x_norm.x == x_norm.y) return 0.0f;
-
-    auto y_norm = tracker.clamped(VERTICAL);
-    if (y_norm.x == y_norm.y) return 0.0f;
-    
-    float c = (dir == HORIZONTAL) ? this->cov.x : this->cov.y;
-
-    return c / (this->sample_count - 1);
-}
-
-float BinaryTile::adjusted_covar(const Direction dir, const TileTracker& tracker) const
-{
-    return std::sqrt(std::abs(covar(dir, tracker)));
 }
 
 float BinaryTile::meandev(const TileTracker& tracker) const

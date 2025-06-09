@@ -90,7 +90,7 @@ struct BinaryTile {
     /// Important: is_leaf() should be called before to ensure this operation is only performed in a leaf!
     bool should_split(const TileTracker& tracker) const;
     
-    /// Returns the split direction of this tile in a usable format.
+    /// Returns the split direction of this tile by calculating the squared covariance in both x and y direction.
     Direction split_direction(const TileTracker& tracker) const;
 
     /// Correctly updates the covariance, variance and mean deviation statistics.
@@ -104,12 +104,6 @@ struct BinaryTile {
 
     /// Returns the area-adjusted variance of the current tile.
     float var(const TileTracker& tracker) const;
-
-    /// Returns the covariance of the current tile given the splitting direction.
-    float covar(const Direction dir, const TileTracker& tracker) const;
-
-    /// Returns the absolute squared covariance used for determining the split direction.
-    float adjusted_covar(const Direction dir, const TileTracker& tracker) const;
 
     /// Returns the mean of the luminance stored in this tile.
     float mean() const;
