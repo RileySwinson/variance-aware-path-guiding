@@ -158,12 +158,13 @@ public:
 				sample_map.write(folder_path + "/" + std::to_string(ds->type()) + "_samples.exr");
 
 				/* Evaluate function approximation per pixel and store the results in a new envmap */
-				Float d_sum = 0;
+				double d_sum = 0;
 				EnvironmentMap eval_map = envmap
 					.deep_copy(true)
 					.map([&](Point2i coords, Point3& px) {
 						Point2 uv = Converter::image_to_uv(coords, envmap.bitmap->getSize());
-						Float density = ds->eval(uv) * std::sin(Converter::uv_to_spherical(uv).y);
+						double density = ds->eval(uv) * std::sin(Converter::uv_to_spherical(uv).y);
+						
 						for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c)
 						{
 							px[c] = density;
