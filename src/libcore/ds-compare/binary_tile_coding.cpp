@@ -199,16 +199,11 @@ void BinaryTiling::insert(const Sample& sample)
     Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
     BinaryTile& tile = find_tile(uv, tracker);
 
-    Sample updater;
-    updater.value = sample.value;
-    updater.phi = uv.x;
-    updater.theta = uv.y;
-
     // Store value & update covariance
     tile.update_statistics(sample);
     tile.update_sum(sample);
     
-    // Split if necessary
+    // Only split if necessary
     if (tracker.depth() > BinaryTileCoding::MAX_DEPTH || !tile.should_split(tracker)) return;
 
     tile.idx_first = this->tiles.size();
@@ -247,6 +242,8 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
         value = (bounds.x + bounds.y) * 0.5;
 
         BinaryTile* child = children.at(i);
+        if (!child->mean()) continue;
+
         auto stats = recurse_statistics(*child, c_tracker, leaf_sum);
 
         curr_tile.sample_count += stats.first;
@@ -329,14 +326,20 @@ void BinaryTileCoding::construct(DSArguments& init_data)
     BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
 
     this->tilings = std::vector<BinaryTiling>(init_data.btc.tilings);
-    for (auto& tiling : this->tilings)
-    {
-        tiling.tiles = std::vector<BinaryTile>(init_data.btc.tiles_x * init_data.btc.tiles_y);
-    }
 }
 
 void BinaryTileCoding::preprocess()
 {
+    // Allocate tiles space
+    int base_tiles = tile_dims.x * tile_dims.y;
+    int max_cap = (1 << (MAX_DEPTH + 1)) - 1;
+
+    for (auto& tiling : this->tilings)
+    {
+        tiling.tiles.reserve(base_tiles * max_cap);
+        tiling.tiles.push_back(BinaryTile());
+    }
+
     // Calculate tiling offset
     auto num_tilings = this->tilings.size();
 
@@ -388,10 +391,12 @@ void BinaryTileCoding::postprocess()
             Point2 local_x_bounds(tiling.x_bounds.x + step.x * pos.x, tiling.x_bounds.x + step.x * (pos.x + 1));
             Point2 local_y_bounds(tiling.y_bounds.x + step.y * pos.y, tiling.y_bounds.x + step.y * (pos.y + 1));
             tracker.boundaries(local_x_bounds, local_y_bounds);
-            
+
             BinaryTile& tile = tiling.tiles.at(i);
             tiling.recurse_statistics(tile, tracker, this->leaf_sum);
         }
+
+        tiling.tiles.shrink_to_fit();
     }
 }
 
@@ -538,7 +543,7 @@ void BinaryTileCoding::wipe()
     for (auto& tiling : this->tilings)
     {
         tiling = BinaryTiling();
-        tiling.tiles = std::vector<BinaryTile>(tile_dims.x * tile_dims.y);
+        tiling.tiles.clear();
     }
 }
 

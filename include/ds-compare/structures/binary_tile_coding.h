@@ -129,7 +129,7 @@ struct BinaryTiling {
     /// Finds a tile at a given position within the bounds of this tiling.
     BinaryTile& find_tile(const Point2& pos);
 
-    /// Finds a tile at a given position within the bounds of this tiling, but with the option to pass a TileTracker to obtain information about further data the tile.
+    /// Finds a tile at a given position within the bounds of this tiling, but with the option to pass a TileTracker to obtain further data about the tile.
     BinaryTile& find_tile(const Point2& pos, TileTracker& counter);
 
     /// Stores a sample in a binary tiling.
