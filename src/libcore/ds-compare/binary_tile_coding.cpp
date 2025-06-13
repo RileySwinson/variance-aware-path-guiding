@@ -173,19 +173,23 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker)
         Float local = (split_dir == HORIZONTAL) ? pos.x : pos.y;
         Float split = (bounds.x + bounds.y) * 0.5;
 
-        if (local < split) // we're in the left or upper subtree
+        bool is_first = local < split;
+        auto child_index = is_first ? curr_tile->idx_first : curr_tile->idx_second;
+        BinaryTile* child = &this->tiles.at(child_index);
+
+        if (is_first)
         {
-            bounds.y = split;
-            curr_tile = &this->tiles.at(curr_tile->idx_first);
+            bounds.y = split; // we're in the left or upper subtree
         }
-        else // we're in the right or lower subtree
+        else
         {
-            bounds.x = split;
-            curr_tile = &this->tiles.at(curr_tile->idx_second);
+            bounds.x = split; // we're in the right or lower subtree
         }
 
+        curr_tile = child;
+
         tracker.increment(split_dir);
-        tracker.side(local < split);
+        tracker.side(is_first);
     }
 
     tracker.boundaries(x_bounds, y_bounds);
@@ -209,8 +213,9 @@ void BinaryTiling::insert(const Sample& sample)
     tile.idx_first = this->tiles.size();
     tile.idx_second = tile.idx_first + 1;
 
-    this->tiles.push_back(BinaryTile());
-    this->tiles.push_back(BinaryTile());
+    BinaryTile child;
+    this->tiles.push_back(child);
+    this->tiles.push_back(child);
 }
 
 std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum)
@@ -242,8 +247,6 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
         value = (bounds.x + bounds.y) * 0.5;
 
         BinaryTile* child = children.at(i);
-        if (!child->mean()) continue;
-
         auto stats = recurse_statistics(*child, c_tracker, leaf_sum);
 
         curr_tile.sample_count += stats.first;
