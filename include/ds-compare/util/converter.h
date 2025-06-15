@@ -51,6 +51,18 @@ struct DS_COMPARE Converter {
 			boost::algorithm::clamp(v, 0, 1 - Epsilon)
 		);
 	}
+
+	template<typename T>
+	static T lerp(T value, std::pair<T, T>& input, std::pair<T, T>& output)
+	{
+		if (input.first == input.second)
+		{
+			return output.first;
+		}
+
+		T slope = (output.second - output.first) / (T) (input.second - input.first);
+		return (output.first + std::floor(slope * (value - input.first) + 0.5));
+	}
 };
 
 MTS_NAMESPACE_END

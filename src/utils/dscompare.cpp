@@ -126,37 +126,6 @@ public:
 
 				tracker.timer_end("store");
 
-				/* Sample the base map using the approximation stored within the data structure and store the values for further MD calculation */
-				std::vector<Float> observations;
-				observations.reserve(samples_guiding);
-
-				EnvironmentMap sample_map = envmap.deep_copy(true);
-				for (int i = 0; i < samples_guiding; ++i)
-				{
-					Point2 rnd(random->nextFloat(), random->nextFloat());
-					Sample sample = ds->sample(rnd);
-
-					if (!sample.is_valid())
-					{
-						Log(EWarn, "%s Obtained invalid sample [φ: %f, θ: %f, p: %f] -- ignoring it!",
-							(std::string(ds_counter.length() + 2, ' ') + " └").c_str(), sample.phi, sample.theta, sample.pdf
-						);
-						continue;
-					}
-
-					Point2 spherical(sample.phi, sample.theta);
-					auto uv_coords = Converter::spherical_to_uv(spherical);
-					auto im_coords = Converter::uv_to_image(uv_coords, envmap.bitmap->getSize());
-
-					auto f_x = envmap.get_pixel_luminance(im_coords);
-					auto p_x = sample.pdf;
-					observations.push_back((f_x / p_x) * INV_FOURPI);
-
-					Point3 col(std::max((Float) 0.0, 1 - 500 * sample.pdf), 0, std::min((Float) 1.0, 500 * sample.pdf));
-					sample_map.set_pixel_rgb(im_coords, col);
-				}
-				sample_map.write(folder_path + "/" + std::to_string(ds->type()) + "_samples.exr");
-
 				/* Evaluate function approximation per pixel and store the results in a new envmap */
 				double d_sum = 0;
 				EnvironmentMap eval_map = envmap
@@ -181,12 +150,56 @@ public:
 					);
 				}
 
+				/* Sample the base map using the approximation stored within the data structure and store the values for further MD calculation */
+				umap_samples observations;
+
+				for (int i = 0; i < samples_guiding; ++i)
+				{
+					Point2 rnd(random->nextFloat(), random->nextFloat());
+					Sample sample = ds->sample(rnd);
+
+					if (!sample.is_valid())
+					{
+						Log(EWarn, "%s Obtained invalid sample [φ: %f, θ: %f, p: %f] -- ignoring it!",
+							(std::string(ds_counter.length() + 2, ' ') + " └").c_str(), sample.phi, sample.theta, sample.pdf
+						);
+						continue;
+					}
+
+					Point2 spherical(sample.phi, sample.theta);
+					auto uv_coords = Converter::spherical_to_uv(spherical);
+					auto im_coords = Converter::uv_to_image(uv_coords, envmap.bitmap->getSize());
+
+					auto f_x = envmap.get_pixel_luminance(im_coords);
+					auto p_x = sample.pdf;
+					auto value = (f_x / p_x) * INV_FOURPI;
+
+					int pos = (im_coords.y * envmap.bitmap->getWidth()) + im_coords.x;
+					observations[pos].push_back(value);
+				}
+
+				if (this->args.comparer.visualize)
+				{
+					envmap
+						.deep_copy(true)
+						.visualize(this->args.comparer.vis_mode, observations)
+						.write(folder_path + "/" + std::to_string(ds->type()) + "_samples.exr");
+				}
+
 				/* Write envmap to .exr file */
 				const std::string envmap_path = folder_path + "/" + std::to_string(ds->type()) + ".exr";
 				eval_map.write(envmap_path);
 
 				/* Compute metrics and store them */
-				tracker.store(MD, ErrorMetrics::MD(observations, gt_mean));
+				std::vector<Float> flat_samples;
+				flat_samples.reserve(samples_guiding);
+
+				for (const auto& observation : observations)
+				{
+					flat_samples.insert(flat_samples.end(), observation.second.begin(), observation.second.end());
+				}
+
+				tracker.store(MD, ErrorMetrics::MD(flat_samples, gt_mean));
 				tracker.store(RMSE, ErrorMetrics::RMSE(gt_map, eval_map));
 				tracker.store(MSE, ErrorMetrics::MSE(gt_map, eval_map));
 				tracker.store(MAE, ErrorMetrics::MAE(gt_map, eval_map));
@@ -235,6 +248,8 @@ private:
 				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.comparer.mode), "Envmap sampling mode.")
 				("blacklist,b", p_opt::value<std::vector<int>>(&this->args.comparer.blacklist)->multitoken(), "List of data structure indices that won't be run.")
 				("normalize,n", p_opt::value<bool>(&this->args.comparer.normalize), "Normalize?")
+				("visualize,v", p_opt::value<bool>(&this->args.comparer.visualize), "Visualize samples?")
+				("vis-mode,vm", p_opt::value<EnvironmentMap::VisualizationMode>(&this->args.comparer.vis_mode), "Visualization mode for guiding samples.")
 				// Noise
 				("noisy-envmap,ne", p_opt::value<bool>(&this->args.noise.envmap), "Noisify input envmap?")
 				("noisy-samples,ns", p_opt::value<bool>(&this->args.noise.samples), "Noisify learning samples?")

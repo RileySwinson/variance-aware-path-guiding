@@ -37,6 +37,8 @@ struct DS_COMPARE DSArguments {
         uint32_t samples_guiding = 65536; // 2^16
         std::vector<int> blacklist;
         bool normalize = false;
+        bool visualize = true;
+        EnvironmentMap::VisualizationMode vis_mode = EnvironmentMap::VisualizationMode::Heatmap;
     };
 
     struct Noise {

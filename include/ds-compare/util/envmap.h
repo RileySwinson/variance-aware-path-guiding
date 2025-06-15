@@ -18,6 +18,37 @@ struct DS_COMPARE EnvironmentMap {
 	Float bitmap_integral;
 	std::vector<Float> row_avgs;
 
+	enum VisualizationMode {
+		Flat,
+		Mono,
+		Heatmap
+	};
+
+	friend std::istream& operator>>(std::istream& in, EnvironmentMap::VisualizationMode& mode)
+	{
+		std::string token;
+		in >> token;
+
+		if (token == "flat")
+		{
+			mode = EnvironmentMap::VisualizationMode::Flat;
+			return in;
+		}
+		if (token == "heatmap")
+		{
+			mode = EnvironmentMap::VisualizationMode::Heatmap;
+			return in;
+		}
+		if (token == "mono")
+		{
+			mode = EnvironmentMap::VisualizationMode::Mono;
+			return in;
+		}
+
+		in.setstate(std::ios_base::failbit);
+		return in;
+	};
+
 	static OptionalEnvMap fetch(const boost::filesystem::path& path)
 	{
 		if (path.extension() != ".exr" && path.extension() != ".hdr")
@@ -40,7 +71,7 @@ struct DS_COMPARE EnvironmentMap {
 
 	Sample sample(const Sample::Mode mode, const Point2& sample)
 	{
-		switch(mode)
+		switch (mode)
 		{
 			case Sample::Mode::Native: return sample_envmap(sample);
 			case Sample::Mode::Cosine: return sample_cosine(sample);
@@ -184,6 +215,18 @@ struct DS_COMPARE EnvironmentMap {
 		return *this;
 	}
 
+	EnvironmentMap& visualize(const VisualizationMode vis_mode, umap_samples& data)
+	{
+		switch (vis_mode)
+		{
+			case VisualizationMode::Flat:		return vis_flat(data);
+			case VisualizationMode::Mono:		return vis_mono(data);
+			case VisualizationMode::Heatmap:	return vis_heatmap(data);
+		}
+
+		return *this;
+	}
+
 	/// Calculate the weighted mean (w.r.t. solid angle) of the entire envmap
 	Float mean()
 	{
@@ -316,6 +359,111 @@ struct DS_COMPARE EnvironmentMap {
 		}
 	}
 private:
+	EnvironmentMap& vis_flat(umap_samples& data)
+	{
+		int size_x = this->bitmap->getWidth();
+
+		for (int px = 0; px < this->bitmap->getPixelCount(); ++px)
+		{
+			int x = px % size_x;
+			int y = px / size_x;
+			Point2i curr_pos(x, y);
+
+			auto it = data.find(px);
+			if (it == data.end())
+			{
+				continue;
+			}
+
+			Point3 color(1.0, 1.0, 1.0);
+			set_pixel_rgb(curr_pos, color);
+		}
+
+		return *this;
+	}
+
+	EnvironmentMap& vis_mono(umap_samples& data)
+	{
+		int size_x = this->bitmap->getWidth();
+		auto pair_max = std::max_element(data.begin(), data.end(), [](const auto& a, const auto& b) { return a.second.size() < b.second.size(); });
+
+		for (int px = 0; px < this->bitmap->getPixelCount(); ++px)
+		{
+			int x = px % size_x;
+			int y = px / size_x;
+			Point2i curr_pos(x, y);
+
+			auto it = data.find(px);
+			
+			std::size_t s_count = 0;
+			if (it != data.end())
+			{
+				s_count = it->second.size();
+			}
+
+			float value = s_count / (float) pair_max->second.size();
+
+			Point3 color(value, value, value);
+			set_pixel_rgb(curr_pos, color);
+		}
+
+		return *this;
+	}
+
+	EnvironmentMap& vis_heatmap(umap_samples& data)
+	{
+		int size_x = this->bitmap->getWidth();
+		auto pair_max = std::max_element(data.begin(), data.end(), [](const auto& a, const auto& b) { return a.second.size() < b.second.size(); });
+		
+		std::pair<float, float> range(0.0f, pair_max->second.size());
+		std::pair<float, float> hsv_h(60.0f, 240.0f);
+		std::pair<float, float> hsv_s(0.8f, 0.8f);
+		std::pair<float, float> hsv_v(0.5f, 1.0f);
+
+		for (int px = 0; px < this->bitmap->getPixelCount(); ++px)
+		{
+			int x = px % size_x;
+			int y = px / size_x;
+			Point2i curr_pos(x, y);
+			auto it = data.find(px);
+
+			std::size_t s_count = 0;
+			if (it != data.end())
+			{
+				s_count = it->second.size();
+			}
+
+			// Refer to https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB for details
+			float h = Converter::lerp<float>(s_count, range, hsv_h);
+			float s = Converter::lerp<float>(s_count, range, hsv_s);
+			float v = Converter::lerp<float>(s_count, range, hsv_v);
+
+			float chroma = v * s;
+			float h_prime = h / 60;
+			float _x = chroma * (1.0f - std::abs(std::fmod(h_prime, 2.0f) - 1.0f));
+
+			Point3 color(0.0, 0.0, 0.0);
+			switch ((int) h_prime)
+			{
+				case 0: color = Point3(chroma, _x, 0); break;
+				case 1: color = Point3(_x, chroma, 0); break;
+				case 2: color = Point3(0, chroma, _x); break;
+				case 3: color = Point3(0, _x, chroma); break;
+				case 4: color = Point3(_x, 0, chroma); break;
+				case 5: color = Point3(chroma, 0, _x); break;
+			}
+
+			float m = v - chroma;
+			color.x += m;
+			color.y += m;
+			color.z += m;
+
+			set_pixel_rgb(curr_pos, color);
+		}
+
+		return *this;
+	}
+
 	Sample sample_helper(const Vector& dir, const Sample::Mode mode)
 	{
 		/* Transform to (hemi)spherical coordinates */
