@@ -416,9 +416,9 @@ private:
 		auto pair_max = std::max_element(data.begin(), data.end(), [](const auto& a, const auto& b) { return a.second.size() < b.second.size(); });
 		
 		std::pair<float, float> range(0.0f, pair_max->second.size());
-		std::pair<float, float> hsv_h(60.0f, 240.0f);
-		std::pair<float, float> hsv_s(0.8f, 0.8f);
-		std::pair<float, float> hsv_v(0.5f, 1.0f);
+		std::pair<float, float> hsv_h(29.0f, 235.0f);	// 0 - 360
+		std::pair<float, float> hsv_s(0.116f, 0.885f);	// 0 - 1
+		std::pair<float, float> hsv_v(0.98f, 0.102f);	// 0 - 1
 
 		for (int px = 0; px < this->bitmap->getPixelCount(); ++px)
 		{

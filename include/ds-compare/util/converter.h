@@ -61,7 +61,7 @@ struct DS_COMPARE Converter {
 		}
 
 		T slope = (output.second - output.first) / (T) (input.second - input.first);
-		return (output.first + std::floor(slope * (value - input.first) + 0.5));
+		return (slope * (value - input.first) + output.first);
 	}
 };
 
