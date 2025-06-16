@@ -74,6 +74,80 @@ struct DS_COMPARE Sample {
 	}
 };
 
+struct SampleStorage {
+	SampleStorage(const Vector2i& map_dims) : map_dims(map_dims) { }
+
+	void store(const Point2i& im_coords, Float value)
+	{
+		int pos = (im_coords.y * this->map_dims.x) + im_coords.x;
+		this->umap_samples[pos].push_back(value);
+	}
+
+	std::vector<mitsuba::Float> obtain(const Point2i& im_coords)
+	{
+		int pos = (im_coords.y * this->map_dims.x) + im_coords.x;
+		
+		auto it = this->umap_samples.find(pos);
+		if (it == this->umap_samples.end())
+		{
+			return std::vector<Float>();
+		}
+
+		return it->second;
+	}
+
+	inline std::size_t max() const
+	{
+		return std::max_element(
+			this->umap_samples.begin(), 
+			this->umap_samples.end(),
+			[](const auto& a, const auto& b) { 
+				return a.second.size() < b.second.size();
+			}
+		)->second.size();
+	}
+
+	std::vector<Float> to_flat(std::size_t init_size = 0) const
+	{
+		std::vector<Float> flat_vector;
+		flat_vector.reserve(init_size);
+
+		for (const auto& observation : this->umap_samples)
+		{
+			flat_vector.insert(flat_vector.end(), observation.second.begin(), observation.second.end());
+		}
+
+		return flat_vector;
+	}
+
+	void write(const std::string& path)
+	{
+		std::ofstream output;
+		output.open(path, std::ios::out);
+
+		for (int y = 0; y < this->map_dims.y; ++y)
+		{
+			std::string data = "";
+
+			for (int x = 0; x < this->map_dims.x; ++x)
+			{
+				Point2i pos(x, y);
+				auto sample_count = obtain(pos).size();
+				data += std::to_string(sample_count) + ",";
+			}
+
+			output << data;
+			output << "\n";
+		}
+
+		output.close();
+	}
+
+private:
+	std::unordered_map<uint32_t, std::vector<mitsuba::Float>> umap_samples;
+	const Vector2i map_dims;
+};
+
 MTS_NAMESPACE_END
 
 #endif /* __DSCOMPARE_UTIL_SAMPLE_H_ */

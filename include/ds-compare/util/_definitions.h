@@ -31,6 +31,4 @@
     #define DS_COMPARE MTS_IMPORT
 #endif
 
-typedef std::unordered_map<uint32_t, std::vector<mitsuba::Float>> umap_samples;
-
 #endif /* __DSCOMPARE_UTIL_DEFINITIONS_H_ */

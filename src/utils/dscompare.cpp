@@ -151,7 +151,7 @@ public:
 				}
 
 				/* Sample the base map using the approximation stored within the data structure and store the values for further MD calculation */
-				umap_samples observations;
+				SampleStorage observations(envmap.bitmap->getSize());
 
 				for (int i = 0; i < samples_guiding; ++i)
 				{
@@ -174,16 +174,20 @@ public:
 					auto p_x = sample.pdf;
 					auto value = (f_x / p_x) * INV_FOURPI;
 
-					int pos = (im_coords.y * envmap.bitmap->getWidth()) + im_coords.x;
-					observations[pos].push_back(value);
+					observations.store(im_coords, value);
 				}
 
+				/* Visualize output if enabled */
 				if (this->args.comparer.visualize)
 				{
+					std::string vis_path = folder_path + "/" + std::to_string(ds->type());
+
 					envmap
 						.deep_copy(true)
 						.visualize(this->args.comparer.vis_mode, observations)
-						.write(folder_path + "/" + std::to_string(ds->type()) + "_samples.exr");
+						.write(vis_path + "_samples.exr");
+
+					observations.write(vis_path + "_raw.csv");
 				}
 
 				/* Write envmap to .exr file */
@@ -191,15 +195,7 @@ public:
 				eval_map.write(envmap_path);
 
 				/* Compute metrics and store them */
-				std::vector<Float> flat_samples;
-				flat_samples.reserve(samples_guiding);
-
-				for (const auto& observation : observations)
-				{
-					flat_samples.insert(flat_samples.end(), observation.second.begin(), observation.second.end());
-				}
-
-				tracker.store(MD, ErrorMetrics::MD(flat_samples, gt_mean));
+				tracker.store(MD, ErrorMetrics::MD(observations.to_flat(samples_guiding), gt_mean));
 				tracker.store(RMSE, ErrorMetrics::RMSE(gt_map, eval_map));
 				tracker.store(MSE, ErrorMetrics::MSE(gt_map, eval_map));
 				tracker.store(MAE, ErrorMetrics::MAE(gt_map, eval_map));
@@ -285,6 +281,11 @@ private:
 			{
 				std::cout << desc << std::endl;
 				exit(EXIT_SUCCESS);
+			}
+
+			if (!boost::filesystem::is_directory(this->args.comparer.path))
+			{
+				Log(EError, "Provided input data path is not a directory!");
 			}
 		}
 		catch (std::exception& e)

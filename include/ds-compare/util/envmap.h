@@ -215,7 +215,7 @@ struct DS_COMPARE EnvironmentMap {
 		return *this;
 	}
 
-	EnvironmentMap& visualize(const VisualizationMode vis_mode, umap_samples& data)
+	EnvironmentMap& visualize(const VisualizationMode vis_mode, SampleStorage& data)
 	{
 		switch (vis_mode)
 		{
@@ -285,7 +285,7 @@ struct DS_COMPARE EnvironmentMap {
 		return (sum_luminance / sum_weights);
 	}
 
-	void write(std::string path)
+	void write(const std::string& path)
 	{
 		this->bitmap->write(Bitmap::EFileFormat::EOpenEXR, path);
 	}
@@ -359,7 +359,7 @@ struct DS_COMPARE EnvironmentMap {
 		}
 	}
 private:
-	EnvironmentMap& vis_flat(umap_samples& data)
+	EnvironmentMap& vis_flat(SampleStorage& data)
 	{
 		int size_x = this->bitmap->getWidth();
 
@@ -369,8 +369,8 @@ private:
 			int y = px / size_x;
 			Point2i curr_pos(x, y);
 
-			auto it = data.find(px);
-			if (it == data.end())
+			auto samples = data.obtain(curr_pos);
+			if (samples.empty())
 			{
 				continue;
 			}
@@ -382,26 +382,19 @@ private:
 		return *this;
 	}
 
-	EnvironmentMap& vis_mono(umap_samples& data)
+	EnvironmentMap& vis_mono(SampleStorage& data)
 	{
 		int size_x = this->bitmap->getWidth();
-		auto pair_max = std::max_element(data.begin(), data.end(), [](const auto& a, const auto& b) { return a.second.size() < b.second.size(); });
+		int max_samples = data.max();
 
 		for (int px = 0; px < this->bitmap->getPixelCount(); ++px)
 		{
 			int x = px % size_x;
 			int y = px / size_x;
 			Point2i curr_pos(x, y);
-
-			auto it = data.find(px);
 			
-			std::size_t s_count = 0;
-			if (it != data.end())
-			{
-				s_count = it->second.size();
-			}
-
-			float value = s_count / (float) pair_max->second.size();
+			std::size_t s_count = data.obtain(curr_pos).size();
+			float value = s_count / (float) max_samples;
 
 			Point3 color(value, value, value);
 			set_pixel_rgb(curr_pos, color);
@@ -410,12 +403,12 @@ private:
 		return *this;
 	}
 
-	EnvironmentMap& vis_heatmap(umap_samples& data)
+	EnvironmentMap& vis_heatmap(SampleStorage& data)
 	{
 		int size_x = this->bitmap->getWidth();
-		auto pair_max = std::max_element(data.begin(), data.end(), [](const auto& a, const auto& b) { return a.second.size() < b.second.size(); });
+		auto max_samples = data.max();
 		
-		std::pair<float, float> range(0.0f, pair_max->second.size());
+		std::pair<float, float> range(0.0f, max_samples);
 		std::pair<float, float> hsv_h(29.0f, 235.0f);	// 0 - 360
 		std::pair<float, float> hsv_s(0.116f, 0.885f);	// 0 - 1
 		std::pair<float, float> hsv_v(0.98f, 0.102f);	// 0 - 1
@@ -425,13 +418,8 @@ private:
 			int x = px % size_x;
 			int y = px / size_x;
 			Point2i curr_pos(x, y);
-			auto it = data.find(px);
 
-			std::size_t s_count = 0;
-			if (it != data.end())
-			{
-				s_count = it->second.size();
-			}
+			std::size_t s_count = data.obtain(curr_pos).size();
 
 			// Refer to https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB for details
 			float h = Converter::lerp<float>(s_count, range, hsv_h);
