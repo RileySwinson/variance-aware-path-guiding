@@ -209,21 +209,6 @@ public:
         return this->m_map.size();
     }
 
-    /// Returns the "largest" enum value in the cluster. If the cluster is empty, -1 is returned.
-    int largest()
-    {
-        int largest = -1;
-        if (this->m_map.empty()) return largest;
-
-        for (DSIter it = this->m_map.begin(); it != this->m_map.end(); ++it)
-        {
-            auto key = it->first;
-            if (key > largest) largest = key;
-        }
-
-        return largest;
-    }
-
     /// Reverts the cluster back to its blank state.
     void clear()
     {

@@ -30,14 +30,6 @@ struct DS_COMPARE StatTrak {
         return instance;
     }
 
-    void reserve(int capacity)
-    {
-        for (int i = 0; i < capacity; ++i)
-        {
-            this->m_data[static_cast<DSType>(i)];
-        }
-    }
-
     void follow(DSType ds)
     {
         this->m_active = ds;
@@ -54,7 +46,7 @@ struct DS_COMPARE StatTrak {
         this->m_data.at(this->m_active).m_errors.emplace(metric, value);
     }
 
-    /// Resets all entries for each envmap within the tracker back to 0.
+    /// Resets all entries for each data structure within the tracker back to 0.
     void reset()
     {
         const auto size = this->m_data.size();

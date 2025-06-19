@@ -41,7 +41,6 @@ public:
 
 		/* Initialize error metrics storage */
 		StatTrak& tracker = StatTrak::get();
-		tracker.reserve(cluster.largest() + 1);
 
 		/* Iterate over all environment maps */
 		for (const auto& entry : boost::filesystem::recursive_directory_iterator(this->args.comparer.path))
