@@ -154,7 +154,11 @@ settings = {
         # A blacklist specifying which data structures should be skipped in the overall test.
         'blacklist': Value('b', [0]),
         # Whether to normalize the envmap each data structure is 'learning' with. (Keep this true unless you know what you're doing.)
-        'normalize': Value('n', True)
+        'normalize': Value('n', True),
+        # Whether to visualize guided samples
+        'visualize': Value('v', True),
+        # Specifies the method used for the sample visualization. Possible values: 'flat', 'mono', 'heatmap'. If 'visualize' is set to False, this setting has no effect.
+        'vis_mode': Value('vm', 'mono')
     },
     'noise': {
         # Whether the initial envmap should be noisified.
@@ -607,7 +611,7 @@ def restore_old_folders():
         path = os.path.join(res_path, folder_name)
         shutil.rmtree(path)
 
-def shutdown(signum, frame):
+def shutdown(signum, _):
     """
     Gracefully stops script interruptions and restores the initial folder structure.
     """
