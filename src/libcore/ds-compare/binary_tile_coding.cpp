@@ -131,13 +131,13 @@ float BinaryTile::area(const TileTracker& tracker) const
 /* BinaryTiling */
 /* ============ */
 
-BinaryTile& BinaryTiling::find_tile(const Point2& pos)
+BinaryTile& BinaryTiling::find_tile(const Point2& pos, bool find_empty)
 {
     TileTracker unused;
-    return find_tile(pos, unused);
+    return find_tile(pos, unused, find_empty);
 }
 
-BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker)
+BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker, bool find_empty)
 {
     const Point2i td = BinaryTileCoding::tile_dims;
 
@@ -167,17 +167,26 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker)
     // Iterate through tree if necessary
     while (!curr_tile->is_leaf())
     {
+        std::array<BinaryTile*, 2> children = {
+            &this->tiles.at(curr_tile->idx_first),
+            &this->tiles.at(curr_tile->idx_second)
+        };
+
         Direction split_dir = curr_tile->split_direction(tracker);
 
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
         Float local = (split_dir == HORIZONTAL) ? pos.x : pos.y;
         Float split = (bounds.x + bounds.y) * 0.5;
 
-        bool is_first = local < split;
-        auto child_index = is_first ? curr_tile->idx_first : curr_tile->idx_second;
-        BinaryTile* child = &this->tiles.at(child_index);
+        if (!find_empty && children_empty(*curr_tile))
+        {
+            break;
+        }
 
-        if (is_first)
+        bool first_child = local < split;
+        BinaryTile* child = children.at(!first_child);
+
+        if (first_child)
         {
             bounds.y = split; // we're in the left or upper subtree
         }
@@ -189,7 +198,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker)
         curr_tile = child;
 
         tracker.increment(split_dir);
-        tracker.side(is_first);
+        tracker.side(first_child);
     }
 
     tracker.boundaries(x_bounds, y_bounds);
@@ -237,6 +246,11 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
     Direction split_dir = curr_tile.split_direction(tracker);
     tracker.increment(split_dir);
 
+    if (!children_empty(curr_tile))
+    {
+        curr_tile.sum = 0;
+    }
+
     for (int i = 0; i < 2; ++i)
     {
         TileTracker c_tracker = tracker;
@@ -247,8 +261,9 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
         value = (bounds.x + bounds.y) * 0.5;
 
         BinaryTile* child = children.at(i);
-        auto stats = recurse_statistics(*child, c_tracker, leaf_sum);
+        if (child->mean() == 0) continue;
 
+        auto stats = recurse_statistics(*child, c_tracker, leaf_sum);
         curr_tile.sample_count += stats.first;
         curr_tile.sum += stats.second;
     }
@@ -285,9 +300,9 @@ Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
     total_mean /= (td.x * td.y);
 
     // y-dir sampling
-    float sum_y = 0.0f; int y = 0;
+    float sum_y = 0.0f; size_t y = 0;
     size_t y_len = row_means.size();
-    for (y; y < y_len; ++y)
+    for (; y < y_len; ++y)
     {
         sum_y += row_means.at(y) / total_mean;
         if (sum_y / y_len >= pos.y) break;
@@ -295,9 +310,9 @@ Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
     if (y == y_len) y -= 1;
 
     // x-dir sampling
-    float sum_x = 0.0f; int x = 0;
+    float sum_x = 0.0f; size_t x = 0;
     size_t x_len = td.x;
-    for (x; x < x_len; ++x)
+    for (; x < x_len; ++x)
     {
         int i = (y * x_len) + x;
         sum_x += this->tiles.at(i).mean() / row_means.at(y);
@@ -306,6 +321,13 @@ Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
     if (x == x_len) x -= 1;
 
     return Point2i(x, y);
+}
+
+inline bool BinaryTiling::children_empty(BinaryTile& tile) const
+{
+    if (tile.is_leaf()) return false;
+
+    return (this->tiles[tile.idx_first].mean() == 0 && this->tiles[tile.idx_second].mean() == 0);
 }
 
 /* ================ */
@@ -340,7 +362,11 @@ void BinaryTileCoding::preprocess()
     for (auto& tiling : this->tilings)
     {
         tiling.tiles.reserve(base_tiles * max_cap);
-        tiling.tiles.push_back(BinaryTile());
+        
+        for (int i = 0; i < base_tiles; ++i)
+        {
+            tiling.tiles.push_back(BinaryTile());
+        }
     }
 
     // Calculate tiling offset
@@ -446,8 +472,8 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
         BinaryTile* first = &tiling.tiles.at(curr_tile->idx_first);
         BinaryTile* second = &tiling.tiles.at(curr_tile->idx_second);
-        
-        if (!first->mean() && !second->mean()) // We want to break in case both children are empty.
+
+        if (first->mean() == 0 && second->mean() == 0)
         {
             break;
         }
@@ -513,7 +539,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
     for (int ti = 0; ti < tiling_count; ++ti)
     {
         if (ti == i) continue;
-        BinaryTile& tile = this->tilings.at(ti).find_tile(coords);
+        BinaryTile& tile = this->tilings.at(ti).find_tile(coords, false);
         prob += tile.mean();
     }
 
@@ -533,7 +559,7 @@ Float BinaryTileCoding::eval(Point2& pos)
     float prob = 0.0f;
     for (auto& tiling : this->tilings)
     {
-        BinaryTile& tile = tiling.find_tile(pos);
+        BinaryTile& tile = tiling.find_tile(pos, false);
         prob += tile.mean();
     }
     

@@ -126,11 +126,11 @@ struct BinaryTiling {
     Point2 x_bounds;
     Point2 y_bounds;
 
-    /// Finds a tile at a given position within the bounds of this tiling.
-    BinaryTile& find_tile(const Point2& pos);
+    /// Finds a tile at a given position within the bounds of this tiling. If find_empty is false, the parent will be returned in case both children are empty.
+    BinaryTile& find_tile(const Point2& pos, bool find_empty = true);
 
-    /// Finds a tile at a given position within the bounds of this tiling, but with the option to pass a TileTracker to obtain further data about the tile.
-    BinaryTile& find_tile(const Point2& pos, TileTracker& counter);
+    /// Finds a tile at a given position within the bounds of this tiling, but with the option to pass a TileTracker to obtain further data about the tile. If find_empty is false, the parent will be returned in case both children are empty.
+    BinaryTile& find_tile(const Point2& pos, TileTracker& counter, bool find_empty = true);
 
     /// Stores a sample in a binary tiling.
     void insert(const Sample& sample);
@@ -143,6 +143,9 @@ struct BinaryTiling {
 
     /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
     Point2i base_tile_pos_from_cdf(const Point2& pos) const;
+
+    /// Checks if the children of the passed in tile are both empty, i.e., their mean equals 0.
+    inline bool children_empty(BinaryTile& tile) const;
 };
 
 /**
