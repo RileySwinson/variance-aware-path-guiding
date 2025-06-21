@@ -7,8 +7,10 @@
 MTS_NAMESPACE_BEGIN
 
 struct Tile {
-    float value = 0;
+    float sum = 0;
     int entries = 0;
+
+    static Float area(int y, Point2i& inner);
 };
 
 typedef std::vector<Tile> Tiling;
@@ -38,7 +40,7 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
 
 private:
     std::vector<Tiling> tilings;
-    std::vector<float> guiding_map;
+    std::vector<Tile> guiding_map;
 
     int m_tiling_count = 4;
     Point2i m_tiling_dims; // x = width, y = height
@@ -46,6 +48,7 @@ private:
     
     Float m_integral = 0;
     std::vector<Float> m_row_avgs;
+    Float m_total_sum = 0;
 
     static RandomGen random;
 
