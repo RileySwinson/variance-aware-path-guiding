@@ -229,7 +229,7 @@ void BinaryTiling::insert(const Sample& sample)
 
 std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum)
 {
-    if (curr_tile.is_leaf())
+    if (curr_tile.is_leaf() || children_empty(curr_tile))
     {
         float area = curr_tile.area(tracker);
         float mu = curr_tile.mean();
@@ -246,11 +246,7 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
     Direction split_dir = curr_tile.split_direction(tracker);
     tracker.increment(split_dir);
 
-    if (!children_empty(curr_tile))
-    {
-        curr_tile.sum = 0;
-    }
-
+    curr_tile.sum = 0;
     for (int i = 0; i < 2; ++i)
     {
         TileTracker c_tracker = tracker;
