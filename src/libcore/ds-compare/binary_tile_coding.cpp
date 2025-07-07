@@ -37,13 +37,13 @@ Direction BinaryTile::split_direction(const TileTracker& tracker) const
     float covar_x = 0.0f;
     if (x_norm.x != x_norm.y)
     {
-        covar_x = std::sqrt(std::abs(this->cov.x / (this->sample_count - 1)));
+        covar_x = std::abs(this->cov.x / (this->sample_count - 1)));
     }
 
     float covar_y = 0.0f;
     if (y_norm.x != y_norm.y)
     {
-        covar_y = std::sqrt(std::abs(this->cov.y / (this->sample_count - 1)));
+        covar_y = std::abs(this->cov.y / (this->sample_count - 1)));
     }
 
     if (covar_x > covar_y)
@@ -249,15 +249,11 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
     curr_tile.sum = 0;
     for (int i = 0; i < 2; ++i)
     {
-        TileTracker c_tracker = tracker;
-        c_tracker.side(i == 0);
-
-        Point2& bounds = (c_tracker.last == HORIZONTAL) ? c_tracker.x_bounds : c_tracker.y_bounds;
-        Float& value = c_tracker.before_split ? bounds.y : bounds.x;
-        value = (bounds.x + bounds.y) * 0.5;
-
         BinaryTile* child = children.at(i);
         if (child->mean() == 0) continue;
+
+        TileTracker c_tracker = tracker;
+        c_tracker.side(i == 0);
 
         auto stats = recurse_statistics(*child, c_tracker, leaf_sum);
         curr_tile.sample_count += stats.first;
