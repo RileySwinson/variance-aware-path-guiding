@@ -152,8 +152,8 @@ struct BinaryTiling {
  * @brief Uppermost layer of the Binary Tile Coding (BTC).
  */
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
-    static float SUBDIV_THRESHOLD;
     static int MAX_DEPTH;
+    static TTable::CI ci;
     static Point2i tile_dims;
     float leaf_sum = 0.0f;
 

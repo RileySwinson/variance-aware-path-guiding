@@ -18,11 +18,11 @@ bool BinaryTile::should_split(const TileTracker& tracker) const
         return false;
     }
     
-    float diff = meandev(tracker) - BinaryTileCoding::SUBDIV_THRESHOLD;
+    // We assume that the population mean is 0.
     float stderr = std::sqrt(var(tracker) / this->sample_count);
     
-    float t_own = diff / stderr;
-    float t_req = TTable95::fetch(this->sample_count - 1);
+    float t_own = meandev(tracker) / stderr;
+    float t_req = TTable::fetch(BinaryTileCoding::ci, this->sample_count - 1);
 
     return (t_own > t_req);
 }
@@ -37,13 +37,13 @@ Direction BinaryTile::split_direction(const TileTracker& tracker) const
     float covar_x = 0.0f;
     if (x_norm.x != x_norm.y)
     {
-        covar_x = std::abs(this->cov.x / (this->sample_count - 1)));
+        covar_x = std::abs(this->cov.x / (this->sample_count - 1));
     }
 
     float covar_y = 0.0f;
     if (y_norm.x != y_norm.y)
     {
-        covar_y = std::abs(this->cov.y / (this->sample_count - 1)));
+        covar_y = std::abs(this->cov.y / (this->sample_count - 1));
     }
 
     if (covar_x > covar_y)
@@ -332,9 +332,8 @@ inline bool BinaryTiling::children_empty(BinaryTile& tile) const
 
 RandomGen BinaryTileCoding::random = RandomGen();
 Point2i BinaryTileCoding::tile_dims = Point2i(1, 1);
-
-float BinaryTileCoding::SUBDIV_THRESHOLD = 0.001f;
 int BinaryTileCoding::MAX_DEPTH = 10;
+TTable::CI BinaryTileCoding::ci = TTable::CI::P950;
 
 void BinaryTileCoding::construct(DSArguments& init_data)
 {
@@ -343,8 +342,8 @@ void BinaryTileCoding::construct(DSArguments& init_data)
     SAssert(init_data.btc.max_depth > 0);
 
     BinaryTileCoding::tile_dims = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
-    BinaryTileCoding::SUBDIV_THRESHOLD = init_data.btc.subdiv_threshold;
     BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
+    BinaryTileCoding::ci = static_cast<TTable::CI>(init_data.btc.eagerness);
 
     this->tilings = std::vector<BinaryTiling>(init_data.btc.tilings);
 }
