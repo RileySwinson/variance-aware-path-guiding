@@ -13,6 +13,12 @@ struct Tile {
     static Float area(int y, Point2i& inner);
 };
 
+struct GuidingMap {
+    std::vector<Tile> tiles;
+
+    float mean(int pos);
+};
+
 typedef std::vector<Tile> Tiling;
 
 struct MTS_EXPORT_CORE TileCoding : public DataStructure {
@@ -40,7 +46,7 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
 
 private:
     std::vector<Tiling> tilings;
-    std::vector<Tile> guiding_map;
+    GuidingMap guiding_map;
 
     int m_tiling_count = 4;
     Point2i m_tiling_dims; // x = width, y = height

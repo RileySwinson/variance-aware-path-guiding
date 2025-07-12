@@ -53,7 +53,7 @@ struct DS_COMPARE Converter {
 	}
 
 	template<typename T>
-	static T lerp(T value, std::pair<T, T>& input, std::pair<T, T>& output)
+	static T lerp(T value, const std::pair<T, T>& input, const std::pair<T, T>& output)
 	{
 		if (input.first == input.second)
 		{

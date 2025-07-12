@@ -13,6 +13,17 @@ Float Tile::area(int y, Point2i& inner)
     return (d_phi * d_theta);
 }
 
+float GuidingMap::mean(int pos)
+{
+    Tile& t = this->tiles.at(pos);
+    if (t.entries == 0)
+    {
+        return Epsilon;
+    }
+
+    return (t.sum / t.entries);
+}
+
 void TileCoding::construct(DSArguments& init_data)
 {
     SAssert(init_data.tc.tilings > 0 && init_data.tc.tiles_x > 0 && init_data.tc.tiles_y > 0);
@@ -40,36 +51,23 @@ void TileCoding::store(std::vector<Sample>& samples)
     Float overhead = 1.0 / this->m_tiling_count;
     if (this->m_tiling_count == 1) overhead = 0; // No offset shenanigans if we only have a single tile. Just span it over the whole thing.
 
-    Point2 offset(tile_width * overhead, tile_height * overhead);
-
-    // Precompute mapping ranges and factors
-    std::vector<Point2> start_vals(this->m_tiling_count);
-    std::vector<Float> x_slopes(this->m_tiling_count);
-    std::vector<Float> y_slopes(this->m_tiling_count);
-    for (int i = 0; i < this->m_tiling_count; ++i)
-    {
-        Point2 x_new(0 - (i * offset.x), 1 + ((this->m_tiling_count - 1 - i) * offset.x));
-        Point2 y_new(0 - ((this->m_tiling_count - 1 - i) * offset.y), 1 + (i * offset.y));
-    
-        Float slope_x = 1.0 / (x_new.y - x_new.x);
-        Float slope_y = 1.0 / (y_new.y - y_new.x);
-
-        start_vals.at(i) = Point2(x_new.x, y_new.x);
-        x_slopes.at(i) = slope_x;
-        y_slopes.at(i) = slope_y;
-    }
+    Point2 shift(tile_width * overhead, tile_height * overhead);
+    Float x_len = 1 + ((this->m_tiling_count - 1) * shift.x);
+    Float y_len = 1 + ((this->m_tiling_count - 1) * shift.y);
 
     // Store samples by mapping (sample range & offset) -> [0, 1) -> [0, dim(axis))
     for (const auto& sample : samples)
     {
-        Point2 uv = Converter::spherical_to_uv(Point2f(sample.phi, sample.theta));
+        Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
 
-        for (int t_i = 0; t_i < this->m_tiling_count; ++t_i)
+        for (int ti = 0; ti < this->m_tiling_count; ++ti)
         {
-            Tiling& tiling = this->tilings.at(t_i);
+            Tiling& tiling = this->tilings.at(ti);
 
-            Float warped_x = x_slopes.at(t_i) * (uv.x - start_vals.at(t_i).x);
-            Float warped_y = y_slopes.at(t_i) * (uv.y - start_vals.at(t_i).y);
+            Point2 t_origin(0 - (ti * shift.x), 0 - (ti * shift.y));
+
+            Float warped_x = Converter::lerp(uv.x, { t_origin.x, t_origin.x + x_len }, { (Float) 0, (Float) (1 - Epsilon) });
+            Float warped_y = Converter::lerp(uv.y, { t_origin.y, t_origin.y + y_len }, { (Float) 0, (Float) (1 - Epsilon) });
 
             Point2i index(
                 warped_x * this->m_tiling_dims.x,
@@ -94,13 +92,13 @@ void TileCoding::postprocess()
     Point2i inner(x - total_overhead, y - total_overhead);
     int map_size = inner.x * inner.y;
 
-    this->guiding_map.resize(map_size);
+    this->guiding_map.tiles.resize(map_size);
 
     // Track the total sum for normalization
     Float tile_area = 0;
     for (int i = 0; i < map_size; ++i)
     {
-        Tile& t_final = this->guiding_map.at(i);
+        Tile& t_final = this->guiding_map.tiles.at(i);
 
         const int pos_x = i % inner.x;
         const int pos_y = i / inner.x;
@@ -116,13 +114,8 @@ void TileCoding::postprocess()
         {
             Tiling& tiling = this->tilings.at(t_i);
 
-            const Point2i pos(
-                (base.x + t_i) + pos_x,
-                (base.y - t_i) + pos_y
-            );
-
-            const int t_x = pos.x / this->m_tiling_count;
-            const int t_y = pos.y / this->m_tiling_count;
+            const int t_x = (t_i + pos_x) / this->m_tiling_count;
+            const int t_y = (t_i + pos_y) / this->m_tiling_count;
 
             Tile& tile = tiling.at((t_y * this->m_tiling_dims.x) + t_x);
             if (tile.entries == 0) continue;
@@ -131,7 +124,7 @@ void TileCoding::postprocess()
             t_final.entries += tile.entries;
         }
 
-        Float p_x = (t_final.sum / (t_final.entries * this->m_tiling_count));
+        Float p_x = this->guiding_map.mean(i) / this->m_tiling_count;
         this->m_total_sum += p_x * tile_area;
     }
 
@@ -145,15 +138,7 @@ void TileCoding::postprocess()
         for (int x = 0; x < inner.x; ++x)
         {
             int tile_i = (y * inner.x) + x;
-
-            Tile& tile = this->guiding_map.at(tile_i);
-            auto p_x = tile.sum / (tile.entries * this->m_total_sum);
-
-            if (!(p_x > 0))
-            {
-                p_x = Epsilon;
-            }
-
+            auto p_x = this->guiding_map.mean(tile_i) / this->m_total_sum;
             row_pdf_sum += p_x;
         }
 
@@ -173,26 +158,20 @@ Sample TileCoding::sample(Point2& sample)
     int x_len = (this->m_tiling_dims.x * this->m_tiling_count) - total_overhead;
     int y_len = this->m_row_avgs.size();
 
-    Float sum_y = 0;
-    int y = 0;
+    Float sum_y = 0; int y = 0;
     for (y = 0; y < y_len; ++y)
     {
-        sum_y += this->m_row_avgs.at(y) / this->m_integral;
-        if (sum_y / y_len >= sample.y) break;
+        sum_y += this->m_row_avgs.at(y);
+        if (sum_y / (y_len * this->m_integral) >= sample.y) break;
     }
     if (y == y_len) y -= 1;
 
-    Float sum_x = 0;
-    int x = 0;
+    Float sum_x = 0; int x = 0;
     for (x = 0; x < x_len; ++x)
     {
         int i = (y * x_len) + x;
-        Tile& t = this->guiding_map.at(i);
-
-        auto p_x = t.sum / (t.entries * this->m_total_sum);
-        sum_x += p_x / this->m_row_avgs.at(y);
-
-        if (sum_x / x_len >= sample.x) break;
+        sum_x += this->guiding_map.mean(i) / this->m_row_avgs.at(y);
+        if (sum_x / (x_len * this->m_total_sum) >= sample.x) break;
     }
     if (x == x_len) x -= 1;
 
@@ -223,7 +202,7 @@ Float TileCoding::eval(Point2& pos)
 
 void TileCoding::wipe()
 {
-    this->guiding_map.clear();
+    this->guiding_map.tiles.clear();
     this->m_row_avgs.clear();
     this->m_integral = 0;
 }
@@ -249,10 +228,9 @@ Float TileCoding::pdf(Point2& pos)
         pos.y * (y - total_overhead)
     );
 
-    Tile& tile = this->guiding_map.at((index.y * (x - total_overhead)) + index.x);
-    auto p_x = tile.sum / (tile.entries * this->m_tiling_count * this->m_total_sum);
-
-    return p_x;
+    int i = (index.y * (x - total_overhead)) + index.x;
+    float t_mu = this->guiding_map.mean(i);
+    return t_mu / (this->m_tiling_count * this->m_total_sum);
 }
 
 int TileCoding::memory()
@@ -268,7 +246,7 @@ int TileCoding::memory()
     tilings_size += sizeof(this->tilings);
 
     // Calc size of map
-    int map_size = sizeof(float) * this->guiding_map.capacity() + sizeof(this->guiding_map);
+    int map_size = sizeof(float) * this->guiding_map.tiles.capacity() + sizeof(this->guiding_map.tiles);
 
     return sizeof(this) + tilings_size + map_size;
 }
