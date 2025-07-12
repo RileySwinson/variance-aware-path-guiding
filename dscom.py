@@ -190,7 +190,7 @@ settings = {
             'tiles_x': Range('btx', start=1, end=8),
             'tiles_y': Range('bty', start=1, end=8),
             'max_depth': Range('btd', start=2, end=20),
-            'subdiv_thresh': Range('btt', start=0.0001, end=0.01, func=lambda x: x * 2)
+            'eagerness': Range('bte', start=0, end=4, func=lambda x: x + 1)
         },
         'von Mises-Fisher Mixtures': {
             'components': Range('vc', start=1, end=32),
