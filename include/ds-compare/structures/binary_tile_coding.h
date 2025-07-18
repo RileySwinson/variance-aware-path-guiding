@@ -19,6 +19,17 @@ enum Direction {
 };
 
 /**
+ * @brief Used to specify how a tile is split.
+ * 
+ * PLANAR = the tile will be split as if on a 2D plane.
+ * SPHERICAL = the tile will be split with spherical trafo in mind.
+ */
+enum SplitBehavior {
+    PLANAR,
+    SPHERICAL
+};
+
+/**
  * @brief Helper struct to track tile data.
  */
 struct TileTracker {
@@ -29,7 +40,7 @@ struct TileTracker {
     bool before_split = true;
 
     inline int depth() const
-    { 
+    {
         return this->splits.x + this->splits.y;
     }
 
@@ -138,11 +149,11 @@ struct BinaryTiling {
     /// Utility function to recursively add the sum and sample count statistics from child tiles to parent tiles.
     std::pair<uint32_t, float> recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum);
 
-    /// Utility function to warp a 2D coordinate in [0, 1]^2 to the range of the current tiling.
-    Point2 warp_to_range(const Point2& uv) const;
-
     /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
     Point2i base_tile_pos_from_cdf(const Point2& pos) const;
+
+    /// Calculates the split position of a tile depending on the used split behavior.
+    Float split_position(const Point2& bounds, const Direction split_dir) const;
 
     /// Checks if the children of the passed in tile are both empty, i.e., their mean equals 0.
     inline bool children_empty(BinaryTile& tile) const;
@@ -154,6 +165,7 @@ struct BinaryTiling {
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     static int MAX_DEPTH;
     static TTable::CI ci;
+    static SplitBehavior split_behavior;
     static Point2i tile_dims;
     float leaf_sum = 0.0f;
 

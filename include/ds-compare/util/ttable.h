@@ -704,6 +704,8 @@ private:
                 };
             }
         }
+
+        throw std::invalid_argument("Invalid confidence interval passed into generating function. How did you manage to do that?");
     }
 };
 

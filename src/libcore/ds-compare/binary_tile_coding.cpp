@@ -54,6 +54,21 @@ Direction BinaryTile::split_direction(const TileTracker& tracker) const
     return VERTICAL;
 }
 
+Float BinaryTiling::split_position(const Point2& bounds, const Direction split_dir) const
+{
+    if (split_dir == HORIZONTAL || BinaryTileCoding::split_behavior == PLANAR)
+    {
+        return (bounds.x + bounds.y) * 0.5;
+    }
+
+    auto bound_start = Converter::lerp(bounds.x, { this->y_bounds.x, this->y_bounds.y }, { 0.0, 1.0 });
+    auto bound_end = Converter::lerp(bounds.y, { this->y_bounds.x, this->y_bounds.y }, { 0.0, 1.0 });
+
+    auto split_pos = std::acos((std::cos(bound_start * M_PI) + std::cos(bound_end * M_PI)) * 0.5) * INV_PI;
+
+    return Converter::lerp(split_pos, { 0.0, 1.0 }, { this->y_bounds.x, this->y_bounds.y });
+}
+
 void BinaryTile::update_statistics(const Sample& sample)
 {
     auto samples = this->sample_count;
@@ -142,10 +157,12 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker, boo
     const Point2i td = BinaryTileCoding::tile_dims;
 
     // Find right base tile by mapping the pos within the range of the tiling to the range [0, 1]
-    auto warped_pos = warp_to_range(pos);
+    auto x_warped = Converter::lerp(pos.x, { this->x_bounds.x, this->x_bounds.y }, { (Float) 0, (Float) 1 });
+    auto y_warped = Converter::lerp(pos.y, { this->y_bounds.x, this->y_bounds.y }, { (Float) 0, (Float) 1 });
+
     Point2i bt_pos(
-        warped_pos.x * td.x,
-        warped_pos.y * td.y
+        x_warped * td.x,
+        y_warped * td.y
     );
 
     int i = (bt_pos.y * td.x) + bt_pos.x;
@@ -176,7 +193,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker, boo
 
         Point2& bounds = (split_dir == HORIZONTAL) ? x_bounds : y_bounds;
         Float local = (split_dir == HORIZONTAL) ? pos.x : pos.y;
-        Float split = (bounds.x + bounds.y) * 0.5;
+        Float split = split_position(bounds, split_dir);
 
         if (!find_empty && children_empty(*curr_tile))
         {
@@ -257,7 +274,7 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
 
         Point2& bounds = (c_tracker.last == HORIZONTAL) ? c_tracker.x_bounds : c_tracker.y_bounds;
         Float& value = c_tracker.before_split ? bounds.y : bounds.x;
-        value = (bounds.x + bounds.y) * 0.5;
+        value = split_position(bounds, split_dir);
         
         auto stats = recurse_statistics(*child, c_tracker, leaf_sum);
         curr_tile.sample_count += stats.first;
@@ -265,14 +282,6 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
     }
 
     return { curr_tile.sample_count, curr_tile.sum };
-}
-
-Point2 BinaryTiling::warp_to_range(const Point2& uv) const
-{
-    return Point2(
-        (uv.x - this->x_bounds.x) / (this->x_bounds.y - this->x_bounds.x),
-        (uv.y - this->y_bounds.x) / (this->y_bounds.y - this->y_bounds.x)
-    );
 }
 
 Point2i BinaryTiling::base_tile_pos_from_cdf(const Point2& pos) const
@@ -334,6 +343,7 @@ RandomGen BinaryTileCoding::random = RandomGen();
 Point2i BinaryTileCoding::tile_dims = Point2i(1, 1);
 int BinaryTileCoding::MAX_DEPTH = 10;
 TTable::CI BinaryTileCoding::ci = TTable::CI::P950;
+SplitBehavior BinaryTileCoding::split_behavior = SplitBehavior::SPHERICAL;
 
 void BinaryTileCoding::construct(DSArguments& init_data)
 {
@@ -344,6 +354,7 @@ void BinaryTileCoding::construct(DSArguments& init_data)
     BinaryTileCoding::tile_dims = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
     BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
     BinaryTileCoding::ci = static_cast<TTable::CI>(init_data.btc.eagerness);
+    BinaryTileCoding::split_behavior = static_cast<SplitBehavior>(init_data.btc.spherical_split);
 
     this->tilings = std::vector<BinaryTiling>(init_data.btc.tilings);
 }
@@ -474,7 +485,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
         }
 
         Point2& bounds = h_split ? x_bounds : y_bounds;
-        Float halved = (bounds.x + bounds.y) * 0.5;
+        Float halved = tiling.split_position(bounds, split_dir);
         
         Point2 first_bounds[2]; // boundaries of first tile (x, y)
         Point2 second_bounds[2]; // boundaries of second tile (x, y)
