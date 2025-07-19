@@ -5,7 +5,7 @@
 
 #include <ds-compare/util/sample.h>
 #include <ds-compare/util/converter.h>
-#include <ds-compare/util/dtreeparams.h>
+#include <ds-compare/util/dsparams.h>
 #include <ds-compare/util/errormetrics.h>
 #include <ds-compare/util/stattrak.h>
 #include <ds-compare/util/envmap.h>

@@ -66,8 +66,8 @@ void TileCoding::store(std::vector<Sample>& samples)
 
             Point2 t_origin(0 - (ti * shift.x), 0 - (ti * shift.y));
 
-            Float x_warped = Converter::lerp(uv.x, { t_origin.x, t_origin.x + x_len }, { (Float) 0, (Float) 1 });
-            Float y_warped = Converter::lerp(uv.y, { t_origin.y, t_origin.y + y_len }, { (Float) 0, (Float) 1 });
+            Float x_warped = Converter::map(uv.x).from({ t_origin.x, t_origin.x + x_len }).to({ 0.0, 1.0 });
+            Float y_warped = Converter::map(uv.y).from({ t_origin.y, t_origin.y + y_len }).to({ 0.0, 1.0 });
 
             Point2i index(
                 x_warped * this->m_tiling_dims.x,

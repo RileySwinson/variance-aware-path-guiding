@@ -268,7 +268,7 @@ private:
 				("btc-tiles-y,bty", p_opt::value<int>(&this->args.btc.tiles_y), "Number of base tiles in y direction.")
 				("btc-max-depth,btd", p_opt::value<int>(&this->args.btc.max_depth), "Maximum tree depth.")
 				("btc-eagerness,bte", p_opt::value<int>(&this->args.btc.eagerness), "The confidence interval used to determine if a split should occur. The higher, the more eager it is to split. [0 = .999, 4 = .95]")
-				("btc-split,bts", p_opt::value<bool>(&this->args.btc.spherical_split), "Split tiles with spherical trafo in mind?")
+				("btc-transform,btt", p_opt::value<TCParams::Transformation>(&this->args.btc.transformation_mode), "BTC transformation mode.")
 				// VMM
 				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf.components), "Number of initial VMM components.")
 				("vmm-mode,vr", p_opt::value<bool>(&this->args.vmf.use_ruppert), "Use ruppert implementation?");

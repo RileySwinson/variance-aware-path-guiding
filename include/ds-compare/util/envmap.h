@@ -422,9 +422,9 @@ private:
 			std::size_t s_count = data.obtain(curr_pos).size();
 
 			// Refer to https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB for details
-			float h = Converter::lerp<float>(s_count, range, hsv_h);
-			float s = Converter::lerp<float>(s_count, range, hsv_s);
-			float v = Converter::lerp<float>(s_count, range, hsv_v);
+			float h = Converter::map<float>(s_count).from(range).to(hsv_h);
+			float s = Converter::map<float>(s_count).from(range).to(hsv_s);
+			float v = Converter::map<float>(s_count).from(range).to(hsv_v);
 
 			float chroma = v * s;
 			float h_prime = h / 60;

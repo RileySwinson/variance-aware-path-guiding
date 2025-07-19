@@ -72,7 +72,7 @@ struct DS_COMPARE DSArguments {
         int tiles_y = 1;
         int max_depth = 10;
         int eagerness = 4;
-        bool spherical_split = true;
+        TCParams::Transformation transformation_mode = TCParams::Transformation::Planar;
     };
 
     struct VMF {

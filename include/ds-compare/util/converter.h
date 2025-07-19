@@ -8,6 +8,36 @@
 MTS_NAMESPACE_BEGIN
 
 struct DS_COMPARE Converter {
+private:
+	template<typename T>
+	class Mapper
+	{
+	public:
+		explicit Mapper(T value) : value(value) {};
+
+		Mapper<T>& from(const std::pair<T, T>& from_range)
+		{
+			this->from_range = from_range;
+			return *this;
+		}
+
+		T to(const std::pair<T, T>& to_range)
+		{
+			if (this->from_range.first == this->from_range.second)
+			{
+				return to_range.first;
+			}
+
+			T slope = (to_range.second - to_range.first) / (T)(this->from_range.second - this->from_range.first);
+			return (slope * (this->value - this->from_range.first) + to_range.first);
+		}
+
+	private:
+		T value;
+		std::pair<T, T> from_range;
+	};
+
+public:
 	/// Converts spherical coordinates [phi, theta] in the domain [0, 2pi) x [0, pi] to uv coordinates in the domain [0, 1)^2
 	static Point2 spherical_to_uv(const Point2& spherical)
 	{
@@ -41,6 +71,7 @@ struct DS_COMPARE Converter {
 		);
 	}
 
+	/// Converts image coordinates to uv coordinates in the domain [0, 1)^2
 	static Point2 image_to_uv(const Point2i& coords, const Vector2i& dims)
 	{
 		Float u = coords.x / (Float) dims.x;
@@ -52,16 +83,11 @@ struct DS_COMPARE Converter {
 		);
 	}
 
+	/// Maps a value linearly from one range to another range
 	template<typename T>
-	static T lerp(T value, const std::pair<T, T>& input, const std::pair<T, T>& output)
+	static Mapper<T> map(T value)
 	{
-		if (input.first == input.second)
-		{
-			return output.first;
-		}
-
-		T slope = (output.second - output.first) / (T) (input.second - input.first);
-		return (slope * (value - input.first) + output.first);
+		return Mapper<T>(value);
 	}
 };
 

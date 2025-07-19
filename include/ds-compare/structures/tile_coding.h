@@ -25,23 +25,15 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     ~TileCoding() { }
 
     void construct(DSArguments& init_data) override;
-
     void preprocess() override;
-
     void store(std::vector<Sample>& samples) override;
-
     void postprocess() override;
 
     Sample sample(Point2& pos) override;
-
     Float eval(Point2& pos) override;
-    
     void wipe() override;
-
     DSType type() override;
-
     std::string name() override;
-
     int memory() override;
 
 private:

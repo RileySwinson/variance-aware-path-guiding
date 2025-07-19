@@ -14,19 +14,8 @@ MTS_NAMESPACE_BEGIN
  * VERTICAL = divides vertically, i.e. the split goes from left to right.
  */
 enum Direction {
-    HORIZONTAL,
-    VERTICAL
-};
-
-/**
- * @brief Used to specify how a tile is split.
- * 
- * PLANAR = the tile will be split as if on a 2D plane.
- * SPHERICAL = the tile will be split with spherical trafo in mind.
- */
-enum SplitBehavior {
-    PLANAR,
-    SPHERICAL
+    Horizontal,
+    Vertical
 };
 
 /**
@@ -34,7 +23,7 @@ enum SplitBehavior {
  */
 struct TileTracker {
     Point2i splits = Point2i(0);
-    Direction last = HORIZONTAL;
+    Direction last = Horizontal;
     Point2 x_bounds;
     Point2 y_bounds;
     bool before_split = true;
@@ -57,13 +46,13 @@ struct TileTracker {
 
     inline void increment(const Direction split)
     {
-        ((split == HORIZONTAL) ? this->splits.x : this->splits.y)++;
+        ((split == Horizontal) ? this->splits.x : this->splits.y)++;
         this->last = split;
     }
 
     inline Point2 clamped(const Direction dir) const
     {
-        Point2 bounds = (dir == HORIZONTAL) ? this->x_bounds : this->y_bounds;
+        Point2 bounds = (dir == Horizontal) ? this->x_bounds : this->y_bounds;
         return Point2(
             boost::algorithm::clamp(bounds.x, 0.0, 1.0),
             boost::algorithm::clamp(bounds.y, 0.0, 1.0)
@@ -163,10 +152,11 @@ struct BinaryTiling {
  * @brief Uppermost layer of the Binary Tile Coding (BTC).
  */
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
+    static TTable::CI CI;
+    static TCParams::Transformation TRANSFORM_MODE;
     static int MAX_DEPTH;
-    static TTable::CI ci;
-    static SplitBehavior split_behavior;
-    static Point2i tile_dims;
+    static Point2i TILE_DIMS;
+
     float leaf_sum = 0.0f;
 
     ~BinaryTileCoding() { }
@@ -183,11 +173,14 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     std::string name() override;
     int memory() override;
 
+    template <typename T>
+    static T transform(T value, const std::function<T(T)>& f = nullptr);
+
 private:
     static RandomGen random;
     std::vector<BinaryTiling> tilings;
 };
 
-MTS_NAMESPACE_END 
+MTS_NAMESPACE_END
 
 #endif /* __DSCOMPARE_STRUCTURES_BINARY_TILE_CODING_H_ */
