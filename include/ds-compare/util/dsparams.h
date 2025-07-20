@@ -70,7 +70,7 @@ struct DS_COMPARE TCParams {
 	enum Transformation {
 		Planar,
 		Spherical,
-		Cosine
+		Cosine,
 		// Feel free to add more here. Make sure to adjust the function below accordingly.
 	};
 
@@ -81,17 +81,17 @@ struct DS_COMPARE TCParams {
 
 		if (token == "planar")
 		{
-			mode == Transformation::Planar;
+			mode = Transformation::Planar;
 			return in;
 		}
 		if (token == "spherical")
 		{
-			mode == Transformation::Spherical;
+			mode = Transformation::Spherical;
 			return in;
 		}
 		if (token == "cosine")
 		{
-			mode == Transformation::Cosine;
+			mode = Transformation::Cosine;
 			return in;
 		}
 

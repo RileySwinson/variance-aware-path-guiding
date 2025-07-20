@@ -16,12 +16,14 @@ Float Tile::area(int y, Point2i& inner)
 float GuidingMap::mean(int pos)
 {
     Tile& t = this->tiles.at(pos);
-    if (t.entries == 0)
+
+    float mu = t.sum / t.entries;
+    if (mu == 0 || std::isnan(mu))
     {
         return Epsilon;
     }
 
-    return (t.sum / t.entries);
+    return mu;
 }
 
 void TileCoding::construct(DSArguments& init_data)
@@ -205,6 +207,7 @@ void TileCoding::wipe()
     this->guiding_map.tiles.clear();
     this->m_row_avgs.clear();
     this->m_integral = 0;
+    this->m_total_sum = 0;
 }
 
 DSType TileCoding::type()
