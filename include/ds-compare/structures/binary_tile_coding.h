@@ -138,14 +138,21 @@ struct BinaryTiling {
     /// Utility function to recursively add the sum and sample count statistics from child tiles to parent tiles.
     std::pair<uint32_t, float> recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum);
 
-    /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
-    Point2i base_tile_pos_from_cdf(const Point2& pos) const;
+    /// Utility function to calculate the planar (!) boundaries of a base tile.
+    std::pair<Point2, Point2> base_tile_bounds(int x, int y) const;
 
-    /// Calculates the split position of a tile depending on the used split behavior.
-    Float split_position(const Point2& bounds, const Direction split_dir) const;
+    /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
+    Point2i base_tile_pos_from_cdf(const Point2& pos);
+
+    /// Calculates the split position of a tile depending on the used domain transformation.
+    Float split_position(const Float& split, const Direction split_dir);
 
     /// Checks if the children of the passed in tile are both empty, i.e., their mean equals 0.
     inline bool children_empty(BinaryTile& tile) const;
+
+    /// Transforms a value to the right domain (e.g., spherical, cosine). The user may specify a custom transformation by providing a lambda as second parameter.
+    template <typename T>
+    T transform(T value, bool inverse = false, const std::function<T(T)>& f = nullptr);
 };
 
 /**
@@ -172,9 +179,6 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     DSType type() override;
     std::string name() override;
     int memory() override;
-
-    template <typename T>
-    static T transform(T value, const std::function<T(T)>& f = nullptr);
 
 private:
     static RandomGen random;

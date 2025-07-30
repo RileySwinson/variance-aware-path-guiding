@@ -100,29 +100,51 @@ struct DS_COMPARE TCParams {
 	}
 
 	template <typename T>
-	static std::function<T(T)> f(Transformation t)
+	struct TransformationPair {
+		std::function<T(T)> f_org;
+		std::function<T(T)> f_inv;
+
+		TransformationPair(std::function<T(T)> org, std::function<T(T)> inv) : f_org(org), f_inv(inv) { };
+	};
+
+	template <typename T>
+	static std::function<T(T)> f(Transformation t, bool inverse)
 	{
-		static auto planar = [](T value) {
-			return value;
-		};
+		static TransformationPair<T> planar(
+			[](T value) { return value; },
+			[](T value) { return value; }
+		);
 
-		static auto spherical = [](T value) {
-			auto i = std::fmod(value + 1, 2.0) - 1.0;
-			auto j = std::floor((value + 1) * 0.5);
-			return (j * M_PI) + std::asin(i);
-		};
+		static TransformationPair<T> spherical(
+			[](T value) {
+				auto j = std::floor(value);
+				auto pos = value - j;
+				auto i = (2.0 * pos) - 1.0;
+				return (std::acos(-i) * INV_PI) + j;
+			},
+			[](T value) {
+				auto j = std::floor(value);
+				auto pos = value - j;
+				return (1.0 - std::cos(pos * M_PI)) * 0.5 + j;
+			}
+		);
 
-		static auto cosine = [](T value) {
-			// WIP. Not verified, yields weird results.
+		static TransformationPair<T> cosine(
+			[](T value) { return value; },
+			[](T value) { return value; }
+		);
+
+		// WIP. Not verified, yields weird results.
+		/*static auto cosine = [](T value) {
 			float i = std::fmod(value, 0.5 * M_PI);
 			if (i < 0) i += 0.5 * M_PI;
 			int j = std::floor(value / (0.5 * M_PI));
 			return (j + 0.5 * (1 - std::pow(-1, j) * std::cos(2 * i)));
-		};
+		};*/
 
-		if (t == Planar)	return planar;
-		if (t == Spherical) return spherical;
-		if (t == Cosine)	return cosine;
+		if (t == Planar)	return inverse ? planar.f_inv    : planar.f_org;
+		if (t == Spherical) return inverse ? spherical.f_inv : spherical.f_org;
+		if (t == Cosine)	return inverse ? spherical.f_inv : spherical.f_org;
 
 		return nullptr;
 	}
