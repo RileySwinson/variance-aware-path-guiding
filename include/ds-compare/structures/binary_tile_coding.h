@@ -126,6 +126,10 @@ struct BinaryTiling {
     Point2 x_bounds;
     Point2 y_bounds;
 
+    float total_base_mean = 0.0f;
+    std::vector<float> row_means;
+    std::vector<float> tile_areas;
+
     /// Finds a tile at a given position within the bounds of this tiling. If find_empty is false, the parent will be returned in case both children are empty.
     BinaryTile& find_tile(const Point2& pos, bool find_empty = true);
 
@@ -150,7 +154,7 @@ struct BinaryTiling {
     /// Checks if the children of the passed in tile are both empty, i.e., their mean equals 0.
     inline bool children_empty(BinaryTile& tile) const;
 
-    /// Transforms a value to the right domain (e.g., spherical, cosine). The user may specify a custom transformation by providing a lambda as second parameter.
+    /// Transforms a value to the right domain (e.g., spherical, cosine). The user may specify a custom transformation by providing a lambda as last parameter.
     template <typename T>
     T transform(T value, bool inverse = false, const std::function<T(T)>& f = nullptr);
 };
