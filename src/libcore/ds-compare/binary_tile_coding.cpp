@@ -544,12 +544,15 @@ Sample BinaryTileCoding::sample(Point2& pos)
     y_bounds = tracker.clamped(Vertical);
     
     y_bounds.x = tiling.transform(y_bounds.x);
+    y_bounds.x = std::cos(y_bounds.x * M_PI);
     y_bounds.y = tiling.transform(y_bounds.y);
+    y_bounds.y = std::cos(y_bounds.y * M_PI);
 
     Point2 coords(
         x_bounds.x + random2d.x * (x_bounds.y - x_bounds.x),
         y_bounds.x + random2d.y * (y_bounds.y - y_bounds.x)
     );
+    coords.y = std::acos(coords.y) * INV_PI;
 
     // [5] Calculate PDF value based on position
     float prob = curr_tile->mean();

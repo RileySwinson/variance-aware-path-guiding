@@ -177,16 +177,20 @@ Sample TileCoding::sample(Point2& sample)
     }
     if (x == x_len) x -= 1;
 
-    Point2 tile_start(x / (Float) x_len, y / (Float) y_len);
-
     Point2 rng = random.next2D();
+
+    Point2 x_bounds(x / (Float) x_len, (x + 1) / (Float) x_len);
+    Point2 y_bounds(y / (Float) y_len, (y + 1) / (Float) y_len);
+    y_bounds.x = std::cos(y_bounds.x * M_PI);
+    y_bounds.y = std::cos(y_bounds.y * M_PI);
+
     Point2 uv(
-        boost::algorithm::clamp(tile_start.x + rng.x * (1.0 / x_len), 0.0, 1.0 - Epsilon),
-        boost::algorithm::clamp(tile_start.y + rng.y * (1.0 / y_len), 0.0, 1.0 - Epsilon)
+        x_bounds.x + rng.x * (x_bounds.y - x_bounds.x),
+        y_bounds.x + rng.y * (y_bounds.y - y_bounds.x)
     );
+    uv.y = std::acos(uv.y) * INV_PI;
 
     Point2 spherical = Converter::uv_to_spherical(uv);
-
     Sample sample_data = {
         .value = 0,
         .pdf = pdf(uv),
