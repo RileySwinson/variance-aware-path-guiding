@@ -50,7 +50,7 @@ struct DS_COMPARE StatTrak {
     void reset()
     {
         const auto size = this->m_data.size();
-        for (int i = 0; i < size; ++i)
+        for (size_t i = 0; i < size; ++i)
         {
             this->m_data[static_cast<DSType>(i)] = StatData();
         }
@@ -239,15 +239,15 @@ private:
         if (it == times.end())
             SLog(EError, "Identifier '%s' could not be found.", identifier.c_str());
 
-        auto tm = it->second;
+        auto& tm = it->second;
 
         if (slot < -1 || slot >= (int) tm.size())
             SLog(EError, "Timing slot index is out of bounds in StatTrak::get_duration");
 
         Float total_duration = 0;
-        for (int i = 0; i < tm.size(); ++i)
+        for (size_t i = 0; i < tm.size(); ++i)
         {
-            if (slot != -1 && slot != i) continue;
+            if (slot != -1 && (size_t) slot != i) continue;
 
             auto& measure = tm.at(i);
             if (!measure.finished) continue;

@@ -200,7 +200,7 @@ struct DS_COMPARE EnvironmentMap {
 	EnvironmentMap& normalize(Float max)
 	{
 		int y = 0;
-		for (std::size_t v_i = 0; v_i < this->bitmap->getPixelCount(); ++v_i)
+		for (size_t v_i = 0; v_i < this->bitmap->getPixelCount(); ++v_i)
 		{
 			if (v_i != 0 && (v_i % this->bitmap->getWidth()) == 0) y += 1;
 
@@ -363,7 +363,7 @@ private:
 	{
 		int size_x = this->bitmap->getWidth();
 
-		for (int px = 0; px < this->bitmap->getPixelCount(); ++px)
+		for (size_t px = 0; px < this->bitmap->getPixelCount(); ++px)
 		{
 			int x = px % size_x;
 			int y = px / size_x;
@@ -387,13 +387,13 @@ private:
 		int size_x = this->bitmap->getWidth();
 		int max_samples = data.max();
 
-		for (int px = 0; px < this->bitmap->getPixelCount(); ++px)
+		for (size_t px = 0; px < this->bitmap->getPixelCount(); ++px)
 		{
 			int x = px % size_x;
 			int y = px / size_x;
 			Point2i curr_pos(x, y);
 			
-			std::size_t s_count = data.obtain(curr_pos).size();
+			size_t s_count = data.obtain(curr_pos).size();
 			float value = s_count / (float) max_samples;
 
 			Point3 color(value, value, value);
@@ -413,13 +413,13 @@ private:
 		std::pair<float, float> hsv_s(0.116f, 0.885f);	// 0 - 1
 		std::pair<float, float> hsv_v(0.98f, 0.102f);	// 0 - 1
 
-		for (int px = 0; px < this->bitmap->getPixelCount(); ++px)
+		for (size_t px = 0; px < this->bitmap->getPixelCount(); ++px)
 		{
 			int x = px % size_x;
 			int y = px / size_x;
 			Point2i curr_pos(x, y);
 
-			std::size_t s_count = data.obtain(curr_pos).size();
+			size_t s_count = data.obtain(curr_pos).size();
 
 			// Refer to https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB for details
 			float h = Converter::map<float>(s_count).from(range).to(hsv_h);
@@ -496,11 +496,11 @@ private:
 	{
 		Float sum_y = 0;
 		/* Iterate over rows until our sample is bigger than the respective avg. density */
-		int y = 0;
-		for (y = 0; y < this->row_avgs.size(); ++y)
+		int y = 0; int y_len = this->row_avgs.size();
+		for (y = 0; y < y_len; ++y)
 		{
-			sum_y += this->row_avgs.at(y) / this->bitmap_integral;
-			if ((sum_y / this->bitmap->getHeight()) >= sample.y) break;
+			sum_y += this->row_avgs.at(y);
+			if ((sum_y / (this->bitmap->getHeight() * this->bitmap_integral)) >= sample.y) break;
 		}
 
 		// In case (sum_y / height) is smaller than sample.y (happens with samples *very* close to 1), we just subtract by 1.
@@ -509,12 +509,12 @@ private:
 
 		Float sum_x = 0;
 		/* Iterate over entries in row until our sample is bigger than the respective value */
-		int x = 0;
-		for (x = 0; x < this->bitmap->getWidth(); ++x)
+		int x = 0; int x_len = this->bitmap->getWidth();
+		for (x = 0; x < x_len; ++x)
 		{
 			const Point2i pt(x, y);
-			sum_x += get_pixel_luminance(pt) / this->row_avgs.at(y);
-			if ((sum_x / this->bitmap->getWidth()) >= sample.x) break;
+			sum_x += get_pixel_luminance(pt);
+			if ((sum_x / (this->bitmap->getWidth() * this->row_avgs.at(y))) >= sample.x) break;
 		}
 
 		if (x == this->bitmap->getWidth()) x -= 1;
@@ -547,7 +547,7 @@ private:
 		const Bitmap::EPixelFormat px_format = Bitmap::EPixelFormat::ERGB;
 		const Bitmap::EComponentFormat cmp_format = Bitmap::EComponentFormat::EFloat32;
 		const Vector2i size = envmap.bitmap->getSize();
-		const std::size_t channels = 3;
+		const size_t channels = 3;
 
 		ref<Bitmap> bm = new Bitmap(px_format, cmp_format, size, channels, NULL);
 		envmap.bitmap->convert(bm);

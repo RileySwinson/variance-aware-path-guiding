@@ -112,7 +112,7 @@ void TileCoding::postprocess()
         }
 
         const Point2i base(0, total_overhead);
-        for (int t_i = 0; t_i < this->tilings.size(); ++t_i)
+        for (size_t t_i = 0; t_i < this->tilings.size(); ++t_i)
         {
             Tiling& tiling = this->tilings.at(t_i);
 

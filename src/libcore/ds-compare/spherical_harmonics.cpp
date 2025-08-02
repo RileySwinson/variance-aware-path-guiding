@@ -58,12 +58,12 @@ void SphericalHarmonics::preprocess()
 
 void SphericalHarmonics::store(std::vector<Sample>& samples)
 {
-    SAssert(samples.size() == this->m_num_samples);
+    SAssert(samples.size() == (size_t) this->m_num_samples);
 
-    std::size_t total_bands = getBands();
-    std::size_t total_samples = this->m_num_samples;
+    int total_bands = getBands();
+    int total_samples = this->m_num_samples;
 
-    for (std::size_t s_i = 0; s_i < total_samples; ++s_i)
+    for (int s_i = 0; s_i < total_samples; ++s_i)
     {
         Sample sample = samples.at(s_i);
 
@@ -88,7 +88,7 @@ void SphericalHarmonics::store(std::vector<Sample>& samples)
 
 void SphericalHarmonics::postprocess()
 {
-    std::size_t total_bands = getBands();
+    int total_bands = getBands();
     const double weight = (4.0 * M_PI) / this->m_num_samples;
 
     for (int l = 0; l < total_bands; ++l)

@@ -152,7 +152,7 @@ public:
 				/* Sample the base map using the approximation stored within the data structure and store the values for further MD calculation */
 				SampleStorage observations(envmap.bitmap->getSize());
 
-				for (int i = 0; i < samples_guiding; ++i)
+				for (uint32_t i = 0; i < samples_guiding; ++i)
 				{
 					Point2 rnd(random->nextFloat(), random->nextFloat());
 					Sample sample = ds->sample(rnd);
