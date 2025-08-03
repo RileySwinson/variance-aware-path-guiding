@@ -38,7 +38,7 @@ struct DS_COMPARE DSArguments {
         std::vector<int> blacklist;
         bool normalize = false;
         bool visualize = true;
-        EnvironmentMap::VisualizationMode vis_mode = EnvironmentMap::VisualizationMode::Heatmap;
+        EnvironmentMap::VisualizationMode vis_mode = EnvironmentMap::VisualizationMode::Mono;
     };
 
     struct Noise {
@@ -71,8 +71,8 @@ struct DS_COMPARE DSArguments {
         int tiles_x = 1;
         int tiles_y = 1;
         int max_depth = 10;
-        int eagerness = 4;
-        TCParams::Transformation transformation_mode = TCParams::Transformation::Planar;
+        int eagerness = 0;
+        TCParams::Transformation transformation_mode = TCParams::Transformation::Spherical;
     };
 
     struct VMF {

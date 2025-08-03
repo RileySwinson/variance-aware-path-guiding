@@ -29,22 +29,11 @@ bool BinaryTile::should_split(const TileTracker& tracker) const
 
 Direction BinaryTile::split_direction(const TileTracker& tracker) const
 {
-    SAssert(this->sample_count > 1);
-
     auto x_norm = tracker.clamped(Horizontal);
     auto y_norm = tracker.clamped(Vertical);
 
-    float covar_x = 0.0f;
-    if (x_norm.x != x_norm.y)
-    {
-        covar_x = std::abs(this->cov.x / (this->sample_count - 1));
-    }
-
-    float covar_y = 0.0f;
-    if (y_norm.x != y_norm.y)
-    {
-        covar_y = std::abs(this->cov.y / (this->sample_count - 1));
-    }
+    const float covar_x = (x_norm.x != x_norm.y) ? std::abs(this->cov.x) : 0.0f;
+    const float covar_y = (y_norm.x != y_norm.y) ? std::abs(this->cov.y) : 0.0f;
 
     if (covar_x > covar_y)
     {
@@ -255,6 +244,8 @@ std::pair<uint32_t, float> BinaryTiling::recurse_statistics(BinaryTile& curr_til
     tracker.increment(split_dir);
 
     curr_tile.sum = 0;
+    curr_tile.sample_count = 0;
+
     for (int i = 0; i < 2; ++i)
     {
         BinaryTile* child = children[i];
@@ -478,9 +469,6 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
     while (!curr_tile->is_leaf())
     {
-        Direction split_dir = curr_tile->split_direction(tracker);
-        bool h_split = (split_dir == Horizontal);
-
         BinaryTile* first = &tiling.tiles[curr_tile->idx_first];
         BinaryTile* second = &tiling.tiles[curr_tile->idx_second];
 
@@ -489,6 +477,8 @@ Sample BinaryTileCoding::sample(Point2& pos)
             break;
         }
 
+        Direction split_dir = curr_tile->split_direction(tracker);
+        bool h_split = (split_dir == Horizontal);
         Point2& bounds = h_split ? x_bounds : y_bounds;
         Float halved = (bounds.x + bounds.y) * 0.5;
 
@@ -501,8 +491,8 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
         if (h_split)
         {
-            first_bounds[0] = Point2(x_bounds.x, halved);
-            second_bounds[0] = Point2(halved, x_bounds.y);
+            first_bounds[0] = Point2(x_bounds.x, halved_transformed);
+            second_bounds[0] = Point2(halved_transformed, x_bounds.y);
 
             first_bounds[1] = second_bounds[1] = Point2(ys_transformed, ye_transformed);
         }

@@ -172,8 +172,8 @@ Sample TileCoding::sample(Point2& sample)
     for (x = 0; x < x_len; ++x)
     {
         int i = (y * x_len) + x;
-        sum_x += this->guiding_map.mean(i) / this->m_row_avgs.at(y);
-        if (sum_x / (x_len * this->m_total_sum) >= sample.x) break;
+        sum_x += this->guiding_map.mean(i);
+        if (sum_x / (x_len * this->m_total_sum * this->m_row_avgs.at(y)) >= sample.x) break;
     }
     if (x == x_len) x -= 1;
 
@@ -228,14 +228,14 @@ Float TileCoding::pdf(Point2& pos)
 {
     int x = this->m_tiling_dims.x * this->m_tiling_count;
     int y = this->m_tiling_dims.y * this->m_tiling_count;
-    int total_overhead = this->m_tiling_count - 1;
+    int x_tiles = x - (this->m_tiling_count - 1);
+    int y_tiles = y - (this->m_tiling_count - 1);
 
-    Point2i index(
-        pos.x * (x - total_overhead),
-        pos.y * (y - total_overhead)
-    );
+    Point2i index(pos.x * x_tiles, pos.y * y_tiles);
+    if (index.x == x_tiles) index.x--;
+    if (index.y == y_tiles) index.y--;
 
-    int i = (index.y * (x - total_overhead)) + index.x;
+    int i = (index.y * x_tiles) + index.x;
     float t_mu = this->guiding_map.mean(i);
     return t_mu / (this->m_tiling_count * this->m_total_sum);
 }
