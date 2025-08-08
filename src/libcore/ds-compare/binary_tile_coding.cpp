@@ -220,7 +220,7 @@ float BinaryTiling::recurse_statistics(BinaryTile& curr_tile, TileTracker tracke
         tracker.y_bounds.y = transform(tracker.y_bounds.y);
 
         float power = curr_tile.mean() * curr_tile.area(tracker);
-        leaf_sum += std::max(Epsilon, power);
+        leaf_sum += power;
 
         return power;
     }
