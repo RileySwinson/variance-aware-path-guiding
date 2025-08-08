@@ -66,7 +66,7 @@ struct TileTracker {
  * The most low-level entity in the 'Binary Tile Coding' data structure, storing luminance information
  * in a specific area of the sample space (and beyond). Can be both leaf and non-leaf based on the two
  * sub-leaf indices it may hold. To access a child, use the tiles vector in combination with the child
- * vertices.
+ * indices.
  */
 struct BinaryTile {
     /* ==== Statistics (24 bytes) ==== */
@@ -76,10 +76,10 @@ struct BinaryTile {
     float m2 = 0;
     float diff_sum = 0;
 
-    /* ==== Data (16 bytes) ==== */
+    /* ==== Data (24 bytes) ==== */
 
-    uint32_t idx_first = UINT32_MAX;
-    uint32_t idx_second = UINT32_MAX;
+    std::array<float, 2> power = { 0.0f, 0.0f };
+    std::array<uint32_t, 2> children = { UINT32_MAX, UINT32_MAX };
     uint32_t sample_count = 0;
     float sum = 0;
 
@@ -139,17 +139,14 @@ struct BinaryTiling {
     /// Stores a sample in a binary tiling.
     void insert(const Sample& sample);
 
-    /// Utility function to recursively add the sum and sample count statistics from child tiles to parent tiles.
-    std::pair<uint32_t, float> recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum);
+    /// Utility function to recursively add the power (mean * area) from all children to their parent tiles.
+    float recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum);
 
     /// Utility function to calculate the planar (!) boundaries of a base tile.
     std::pair<Point2, Point2> base_tile_bounds(int x, int y) const;
 
     /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
-    Point2i base_tile_pos_from_cdf(const Point2& pos);
-
-    /// Calculates the split position of a tile depending on the used domain transformation.
-    Float split_position(const Float& split, const Direction split_dir);
+    Point2i base_tile_pos(const Point2& pos);
 
     /// Checks if the children of the passed in tile are both empty, i.e., their mean equals 0.
     inline bool children_empty(BinaryTile& tile) const;
