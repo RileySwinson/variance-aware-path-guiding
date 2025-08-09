@@ -6,8 +6,8 @@
 
 MTS_NAMESPACE_BEGIN
 
-// Uncomment this to enable multithreading which should speed things up a fair bit IFF a somewhat significant number of samples are proccessed at once.
-#define BTC_MULTITHREADING
+// Set this to true to enable multithreading which should speed things up a fair bit IFF a somewhat significant number of samples are proccessed at once.
+#define BTC_MULTITHREADING false
 
 /**
  * @brief Used to specify the direction of an entity, e.g. a split, amongst other things.
