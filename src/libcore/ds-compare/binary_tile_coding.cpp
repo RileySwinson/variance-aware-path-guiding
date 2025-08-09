@@ -371,6 +371,29 @@ void BinaryTileCoding::preprocess()
 
 void BinaryTileCoding::store(std::vector<Sample>& samples)
 {
+#if BTC_MULTITHREADING
+    auto insert = [&](BinaryTiling& tiling) {
+        for (auto& sample : samples)
+        {
+            tiling.insert(sample);
+        }
+    };
+    
+    std::vector<std::thread> pool;
+    for (BinaryTiling& tiling : this->tilings)
+    {
+        std::thread t(insert, std::ref(tiling));
+        pool.push_back(std::move(t));
+    }
+
+    for (auto& t : pool)
+    {
+        if (t.joinable())
+        {
+            t.join();
+        }
+    }
+#else
     for (auto& sample : samples)
     {
         for (auto& tiling : this->tilings)
@@ -378,6 +401,7 @@ void BinaryTileCoding::store(std::vector<Sample>& samples)
             tiling.insert(sample);
         }
     }
+#endif
 }
 
 void BinaryTileCoding::postprocess()
@@ -537,7 +561,6 @@ void BinaryTileCoding::wipe()
     for (auto& tiling : this->tilings)
     {
         tiling = BinaryTiling();
-        tiling.tiles.clear();
     }
 }
 

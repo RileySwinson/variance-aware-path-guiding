@@ -26,6 +26,7 @@
 #include <chrono>
 #include <bit>
 #include <numeric>
+#include <thread>
 
 #if !defined(DS_COMPARE)
     #define DS_COMPARE MTS_IMPORT
