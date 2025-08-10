@@ -21,6 +21,11 @@ enum Direction {
     Vertical
 };
 
+enum TileType {
+    Node,
+    Leaf
+};
+
 /**
  * @brief Helper struct to track tile data.
  */
@@ -72,19 +77,43 @@ struct TileTracker {
  * indices.
  */
 struct BinaryTile {
-    /* ==== Statistics (24 bytes) ==== */
+    struct TileData {
+        uint32_t sample_count : 31;
+        TileType tile_type    : 1;
 
-    Point2f cov = Point2f(0.0f);
-    Point2f sample_mean = Point2f(0.0f);
-    float m2 = 0;
-    float diff_sum = 0;
+        TileData() : sample_count(0), tile_type(Leaf) { };
+    };
 
-    /* ==== Data (24 bytes) ==== */
+    struct NodeData {
+        /* ==== Traversal Data (20 bytes) ==== */
+        std::array<float, 2> power = { 0.0f, 0.0f };
+        std::array<uint32_t, 2> children = { UINT32_MAX, UINT32_MAX };
+        Direction split_direction = Horizontal;
+    };
 
-    std::array<float, 2> power = { 0.0f, 0.0f };
-    std::array<uint32_t, 2> children = { UINT32_MAX, UINT32_MAX };
-    uint32_t sample_count = 0;
-    float sum = 0;
+    struct LeafData {
+        /* ==== Statistics (24 bytes) ==== */
+        Point2f cov = Point2f(0.0f);
+        Point2f sample_mean = Point2f(0.0f);
+        float m2 = 0;
+        float diff_sum = 0;
+    };
+
+    TileData data;
+    float sum = 0.0f;
+    union {
+        NodeData node;
+        LeafData leaf;
+    };
+
+    BinaryTile(const TileType type)
+    {
+        this->data = TileData();
+        if (type == TileType::Node)
+            this->node = NodeData();
+        else
+            this->leaf = LeafData();
+    };
 
     /// Checks if the current tile is a leaf by comparing if the two member indices are assigned.
     bool is_leaf() const;
@@ -113,6 +142,9 @@ struct BinaryTile {
 
     /// Returns the normalized area of this tile.
     float area(const TileTracker& tracker) const;
+
+private:
+    BinaryTile() = default;
 };
 
 /**
