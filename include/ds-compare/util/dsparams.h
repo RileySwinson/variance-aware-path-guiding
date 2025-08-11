@@ -132,19 +132,14 @@ struct DS_COMPARE TCParams {
 		static TransformationPair<T> cosine(
 			[](T value) {
 				auto i = std::floor(value);
-				auto f = value - i;
-				auto pos = (2.0 * f) - 1.0;
-				auto sign = (pos < 0) ? -1.0 : 1.0;
-				auto v = std::sqrt(std::abs(pos));
-				return 0.5 * (1.0 + sign * v) + i;
+				auto sgn = (i % 2 == 0) ? 1 : -1;
+				return 0.5 * (1 - sgn * std::cos(value * M_PI)) + i;
 			},
 			[](T value) {
 				auto i = std::floor(value);
 				auto f = value - i;
-				auto pos = (2.0 * f) - 1.0;
-				auto sign = (pos < 0) ? -1.0 : 1.0;
-				auto v = pos * pos;
-				return 0.5 * (1.0 + sign * v) + i;
+				auto pos = 1.0 - (2.0 * f);
+				return (std::acos(pos) / M_PI) + i;
 			}
 		);
 
