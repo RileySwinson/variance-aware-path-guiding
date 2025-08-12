@@ -179,8 +179,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, TileTracker& tracker, boo
 
         curr_tile = child;
 
-        tracker.increment(split_dir);
-        tracker.side(first_child);
+        tracker.increment();
     }
 
     tracker.boundaries(x_bounds, y_bounds);
@@ -195,10 +194,6 @@ void BinaryTiling::insert(const Sample& sample)
     BinaryTile& tile = find_tile(uv, tracker);
 
     // Store value & update covariance
-    // Sample data = sample;
-    // data.phi = uv.x;
-    // data.theta = uv.y; // TODO transform(uv.y)?
-
     tile.update_statistics(sample);
     tile.update_sum(sample);
     
@@ -206,7 +201,7 @@ void BinaryTiling::insert(const Sample& sample)
     if (tracker.depth() > BinaryTileCoding::MAX_DEPTH || !tile.should_split(tracker)) return;
 
     tile.node.split_direction = tile.split_direction(tracker);
-    auto tiles = this->tiles.size();
+    uint32_t tiles = this->tiles.size();
     tile.node.children = { tiles, tiles + 1 };
     tile.node.power = { 0.0f, 0.0f };
     tile.data.tile_type = TileType::Node;
@@ -229,19 +224,19 @@ float BinaryTiling::recurse_statistics(BinaryTile& curr_tile, TileTracker tracke
         return power;
     }
 
-    Direction split_dir = curr_tile.node.split_direction;
-    tracker.increment(split_dir);
-
     for (int i = 0; i < 2; ++i)
     {
         BinaryTile& child = this->tiles[curr_tile.node.children[i]];
         if (child.mean() == 0) continue;
 
         TileTracker c_tracker = tracker;
-        c_tracker.side(i == 0);
+        c_tracker.increment();
 
-        Point2& bounds = (c_tracker.last == Horizontal) ? c_tracker.x_bounds : c_tracker.y_bounds;
-        Float& value = c_tracker.before_split ? bounds.y : bounds.x;
+        Point2& bounds = (curr_tile.node.split_direction == Horizontal) 
+            ? c_tracker.x_bounds 
+            : c_tracker.y_bounds;
+
+        Float& value = (i == 0) ? bounds.y : bounds.x;
         value = (bounds.x + bounds.y) * 0.5;
         
         curr_tile.node.power[i] += recurse_statistics(child, c_tracker, leaf_sum);
@@ -485,8 +480,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
             break;
         }
 
-        Direction split_dir = curr_tile->node.split_direction;
-        bool h_split = (split_dir == Horizontal);
+        bool h_split = (curr_tile->node.split_direction == Horizontal);
         Point2& bounds = h_split ? x_bounds : y_bounds;
         Float halved = (bounds.x + bounds.y) * 0.5;
 
@@ -507,7 +501,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
             curr_tile = second;
         }
 
-        tracker.increment(split_dir);
+        tracker.increment();
         tracker.boundaries(x_bounds, y_bounds);
     }
 
@@ -580,7 +574,7 @@ std::string BinaryTileCoding::name()
 
 int BinaryTileCoding::memory()
 {
-    size_t size_self = sizeof(this) + sizeof(BinaryTileCoding); // base layer size
+    size_t size_self = sizeof(*this); // base layer size
     size_t size_tilings = this->tilings.capacity() * sizeof(BinaryTiling); // #tilings * base tiling size
     
     size_t size_tiles = 0;

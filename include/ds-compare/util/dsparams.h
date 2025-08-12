@@ -131,7 +131,7 @@ struct DS_COMPARE TCParams {
 
 		static TransformationPair<T> cosine(
 			[](T value) {
-				auto i = std::floor(value);
+				int i = std::floor(value);
 				auto sgn = (i % 2 == 0) ? 1 : -1;
 				return 0.5 * (1 - sgn * std::cos(value * M_PI)) + i;
 			},

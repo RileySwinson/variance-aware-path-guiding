@@ -30,32 +30,24 @@ enum TileType {
  * @brief Helper struct to track tile data.
  */
 struct TileTracker {
-    Point2i splits = Point2i(0);
-    Direction last = Horizontal;
+    int depth = 0;
     Point2 x_bounds;
     Point2 y_bounds;
-    bool before_split = true;
+
+    inline void increment()
+    {
+        this->depth++;
+    }
 
     inline int depth() const
     {
-        return this->splits.x + this->splits.y;
-    }
-
-    inline void side(const bool decision)
-    {
-        this->before_split = decision;
+        return this->depth;
     }
 
     inline void boundaries(const Point2 x, const Point2 y)
     {
         this->x_bounds = x;
         this->y_bounds = y;
-    }
-
-    inline void increment(const Direction split)
-    {
-        ((split == Horizontal) ? this->splits.x : this->splits.y)++;
-        this->last = split;
     }
 
     inline Point2 clamped(const Direction dir) const
@@ -71,10 +63,10 @@ struct TileTracker {
 /**
  * @brief Tile in a tiling.
  * 
- * The most low-level entity in the 'Binary Tile Coding' data structure, storing luminance information
- * in a specific area of the sample space (and beyond). Can be both leaf and non-leaf based on the two
- * sub-leaf indices it may hold. To access a child, use the tiles vector in combination with the child
- * indices.
+ * The most low-level entity in the 'Binary Tile Coding' data structure, storing radiance information
+ * in a specific area of the sample space (and beyond). Can be both leaf and non-leaf (node), determined
+ * by the should_split() method that returns true if the collected sample statistics implicate that the
+ * tile should be split. To access a child, use the tiles vector in combination with the child indices.
  */
 struct BinaryTile {
     struct TileData {
@@ -115,14 +107,13 @@ struct BinaryTile {
             this->leaf = LeafData();
     };
 
-    /// Checks if the current tile is a leaf by comparing if the two member indices are assigned.
+    /// Returns whether the current tile is a leaf.
     bool is_leaf() const;
 
-    /// Determines if the leaf should be split by performing a One-Sample T-Test against the subdivision threshold.
-    /// Important: is_leaf() should be called before to ensure this operation is only performed in a leaf!
+    /// Determines if a leaf tile should be split by performing a One-Sample T-Test against the subdivision threshold.
     bool should_split(const TileTracker& tracker) const;
     
-    /// Returns the split direction of this tile by calculating the absolute covariance in both x and y direction.
+    /// Returns the split direction of a leaf tile by calculating the absolute covariance in both x and y direction.
     Direction split_direction(const TileTracker& tracker) const;
 
     /// Correctly updates the covariance, variance and mean deviation statistics.
@@ -131,13 +122,13 @@ struct BinaryTile {
     /// Correctly updates sum and sample count. Must be called after update_statistics()!
     void update_sum(const Sample& sample);
 
-    /// Returns the area-adjusted mean deviation of the current tile.
+    /// Returns the area-adjusted mean deviation of the current leaf.
     float meandev(const TileTracker& tracker) const;
 
-    /// Returns the area-adjusted variance of the current tile.
+    /// Returns the area-adjusted variance of the current leaf.
     float var(const TileTracker& tracker) const;
 
-    /// Returns the mean of the luminance stored in this tile.
+    /// Returns the mean of the radiance stored in this tile.
     float mean() const;
 
     /// Returns the normalized area of this tile.
