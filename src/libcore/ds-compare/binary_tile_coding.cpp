@@ -198,7 +198,7 @@ void BinaryTiling::insert(const Sample& sample)
     tile.update_sum(sample);
     
     // Only split if necessary
-    if (tracker.depth() > BinaryTileCoding::MAX_DEPTH || !tile.should_split(tracker)) return;
+    if (tracker.depth > BinaryTileCoding::MAX_DEPTH || !tile.should_split(tracker)) return;
 
     tile.node.split_direction = tile.split_direction(tracker);
     uint32_t tiles = this->tiles.size();

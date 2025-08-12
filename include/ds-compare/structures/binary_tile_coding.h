@@ -39,11 +39,6 @@ struct TileTracker {
         this->depth++;
     }
 
-    inline int depth() const
-    {
-        return this->depth;
-    }
-
     inline void boundaries(const Point2 x, const Point2 y)
     {
         this->x_bounds = x;
