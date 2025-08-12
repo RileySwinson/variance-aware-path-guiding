@@ -49,10 +49,9 @@ struct DS_COMPARE StatTrak {
     /// Resets all entries for each data structure within the tracker back to 0.
     void reset()
     {
-        const auto size = this->m_data.size();
-        for (size_t i = 0; i < size; ++i)
+        for (auto& entry : this->m_data)
         {
-            this->m_data[static_cast<DSType>(i)] = StatData();
+            entry.second = StatData();
         }
     }
 
@@ -155,16 +154,21 @@ struct DS_COMPARE StatTrak {
         std::ofstream output;
         output.open(path, std::ios::out);
 
+        /* Accumulate timer headers */
+        std::set<std::string> time_headers;
+        for (const auto& entry : this->m_data)
+        {
+            for (const auto& time_pair : entry.second.m_times)
+            {
+                time_headers.insert(time_pair.first);
+            }
+        }
+
         /* Initialize header with errors + time measurements */
         std::string header = ",MD,RMSE,MSE,MAE,Memory,";
-        const auto& f_times = this->m_data.begin()->second.m_times;
-
-        std::vector<std::string> time_headers;
-        for (const auto& value : f_times)
+        for (const auto& time_header : time_headers)
         {
-            const std::string time_header = value.first;
             header += time_header + " (s),";
-            time_headers.push_back(time_header);
         }
         header += "\n";
 

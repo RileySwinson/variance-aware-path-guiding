@@ -152,6 +152,7 @@ public:
 				/* Sample the base map using the approximation stored within the data structure and store the values for further MD calculation */
 				SampleStorage observations(envmap.bitmap->getSize());
 
+				tracker.timer_start("sample");
 				for (uint32_t i = 0; i < samples_guiding; ++i)
 				{
 					Point2 rnd(random->nextFloat(), random->nextFloat());
@@ -175,6 +176,7 @@ public:
 
 					observations.store(im_coords, value);
 				}
+				tracker.timer_end("sample");
 
 				/* Visualize output if enabled */
 				if (this->args.comparer.visualize)
