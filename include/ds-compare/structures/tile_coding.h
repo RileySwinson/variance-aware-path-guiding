@@ -48,7 +48,7 @@ private:
     std::vector<Float> m_row_avgs;
     Float m_total_sum = 0;
 
-    static RandomGen random;
+    RandomGen random;
 
     Float pdf(Point2& pos);
 };

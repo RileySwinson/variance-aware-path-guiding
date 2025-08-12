@@ -2,8 +2,6 @@
 
 MTS_NAMESPACE_BEGIN
 
-RandomGen TileCoding::random = RandomGen();
-
 Float Tile::area(int y, Point2i& inner)
 {
     Float theta_step = M_PI / inner.y;
@@ -17,13 +15,12 @@ float GuidingMap::mean(int pos)
 {
     Tile& t = this->tiles.at(pos);
 
-    float mu = t.sum / t.entries;
-    if (mu == 0 || std::isnan(mu))
+    if (t.sum == 0 || t.entries == 0)
     {
         return Epsilon;
     }
 
-    return mu;
+    return t.sum / t.entries;
 }
 
 void TileCoding::construct(DSArguments& init_data)
@@ -46,9 +43,12 @@ void TileCoding::preprocess()
 
 void TileCoding::store(std::vector<Sample>& samples)
 {
+    const auto dims_x = this->m_tiling_dims.x;
+    const auto dims_y = this->m_tiling_dims.y;
+
     // Calculate offset
-    Float tile_width = 1.0 / this->m_tiling_dims.x;
-    Float tile_height = 1.0 / this->m_tiling_dims.y;
+    Float tile_width = 1.0 / dims_x;
+    Float tile_height = 1.0 / dims_y;
 
     Float overhead = 1.0 / this->m_tiling_count;
     if (this->m_tiling_count == 1) overhead = 0; // No offset shenanigans if we only have a single tile. Just span it over the whole thing.
@@ -72,11 +72,14 @@ void TileCoding::store(std::vector<Sample>& samples)
             Float y_warped = Converter::map(uv.y).from({ t_origin.y, t_origin.y + y_len }).to({ 0.0, 1.0 });
 
             Point2i index(
-                x_warped * this->m_tiling_dims.x,
-                y_warped * this->m_tiling_dims.y
+                x_warped * dims_x,
+                y_warped * dims_y
             );
 
-            int i = (index.y * this->m_tiling_dims.x) + index.x;
+            if (index.x == dims_x) index.x--;
+            if (index.y == dims_y) index.y--;
+
+            int i = (index.y * dims_x) + index.x;
             Tile& tile = tiling.at(i);
             tile.sum += sample.value;
             tile.entries++;
@@ -177,7 +180,7 @@ Sample TileCoding::sample(Point2& sample)
     }
     if (x == x_len) x -= 1;
 
-    Point2 rng = random.next2D();
+    Point2 rng = this->random.next2D();
 
     Point2 x_bounds(x / (Float) x_len, (x + 1) / (Float) x_len);
     Point2 y_bounds(y / (Float) y_len, (y + 1) / (Float) y_len);
@@ -251,7 +254,7 @@ int TileCoding::memory()
         size_tiles += tiling.capacity() * sizeof(Tile);
     }
 
-    size_t size_map = this->guiding_map.tiles.capacity() + sizeof(float);
+    size_t size_map = this->guiding_map.tiles.capacity() * sizeof(Tile);
 
     return size_self + size_tilings + size_tiles + size_map;
 }
