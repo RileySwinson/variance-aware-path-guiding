@@ -242,20 +242,18 @@ Float TileCoding::pdf(Point2& pos)
 
 int TileCoding::memory()
 {
-    // Calc size of tilings
-    int tilings_size = 0;
+    size_t size_self = sizeof(*this);
+    size_t size_tilings = this->tilings.capacity() * sizeof(Tiling);
+
+    size_t size_tiles = 0;
     for (const auto& tiling : this->tilings)
     {
-        // tile bytes * number of Tiles + vector bytes
-        const int tiling_size = (sizeof(Tile) * tiling.capacity()) + sizeof(Tiling);
-        tilings_size += tiling_size;
+        size_tiles += tiling.capacity() * sizeof(Tile);
     }
-    tilings_size += sizeof(this->tilings);
 
-    // Calc size of map
-    int map_size = sizeof(float) * this->guiding_map.tiles.capacity() + sizeof(this->guiding_map.tiles);
+    size_t size_map = this->guiding_map.tiles.capacity() + sizeof(float);
 
-    return sizeof(this) + tilings_size + map_size;
+    return size_self + size_tilings + size_tiles + size_map;
 }
 
 MTS_NAMESPACE_END
