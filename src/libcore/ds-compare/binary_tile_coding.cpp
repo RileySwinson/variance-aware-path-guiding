@@ -69,7 +69,7 @@ void BinaryTile::update_statistics(const Sample& sample)
     value_mean += dx / n;
     float dx2 = sample.value - value_mean;
     this->leaf.m2 += dx * dx2;
-    this->leaf.diff_sum += std::abs(dx);
+    this->leaf.diff_sum += std::abs(dx2);
 }
 
 void BinaryTile::update_sum(const Sample& sample)
