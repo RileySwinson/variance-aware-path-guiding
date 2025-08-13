@@ -164,7 +164,7 @@ settings = {
         # Enables multithreading for concurrent evaluation of environment maps.
         'multithreading': True,
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
-        'batches': 8,
+        'batches': os.cpu_count(),
         # Metrics to store in the benchmark.csv files. Names must match the metrics specified in ds::compare.
         'metrics': ['MD', 'Memory', 'store (s)', 'sample (s)']
     },
