@@ -35,11 +35,12 @@ from collections.abc import Iterable
 #
 # Fixed settings (Value) consist of a single value, as well as its command line flag.
 #
-# Fluid settings (Range, Toggle) on the other hand allow for a parameter to increase,
-# decrease or toggle within this test script. For instance, the Range class takes an
-# optional 'func' parameter which allows the user to specify how exactly the value
-# should increase within the range. The Toggle class allows the user to easily toggle
-# between a truthy/falsy value.
+# Fluid settings (Range, Toggle, Sequence) on the other hand allow for a parameter to
+# increase, decrease or toggle within this test script. For instance, the Range class
+# takes an optional 'func' parameter which allows the user to specify how exactly the
+# value should increase within the range. The Toggle class allows the user to easily
+# toggle between a truthy/falsy value. If you want to cycle through a bunch of values,
+# you can also use a Sequence.
 #
 # Feel free to extend the FluidSetting class for custom behavior if needed.
 #
@@ -129,6 +130,31 @@ class Toggle(FluidSetting):
     def final(self):
         return (self._value != self._default)
 
+class Sequence(FluidSetting):
+    def __init__(self, flag, values):
+        if not values:
+            raise ValueError('Sequence setting values may not be empty.')
+
+        super().__init__(flag, values[0])
+
+        self._values = values
+        self._index = 0
+
+    def steps(self):
+        return len(self._values)
+
+    def next(self):
+        if not self.final():
+            self._index += 1
+            self._value = self._values[self._index]
+
+    def final(self):
+        return self._index >= len(self._values) - 1
+
+    def reset(self):
+        super().reset()
+        self._index = 0
+
 ##############################################
 # Base config.
 ##############################################
@@ -140,7 +166,7 @@ settings = {
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
         'batches': 8,
         # Metrics to store in the benchmark.csv files. Names must match the metrics specified in ds::compare.
-        'metrics': ['MD', 'Memory', 'store() (s)']
+        'metrics': ['MD', 'Memory', 'store (s)', 'sample (s)']
     },
     'general': {
         # Path to folder containing the envmaps.
@@ -150,11 +176,11 @@ settings = {
         # Number of learning samples per data structure. These samples are used to create a guiding distribution.
         'samples_learning': Range('sl', start=64, end=65536, func=lambda x: x * 2),
         # Number of guiding samples per data structure. These samples are used to recreate the sampled distribution from the guiding distribution.
-        'samples_guiding': Value('sg', 65536),
+        'samples_guiding': Value('sg', 1048576),
         # A blacklist specifying which data structures should be skipped in the overall test.
         'blacklist': Value('b', [0]),
-        # Whether to normalize the envmap each data structure is 'learning' with. (Keep this true unless you know what you're doing.)
-        'normalize': Value('n', True),
+        # Whether to normalize the envmap each data structure is 'learning' with. (Keep this false unless you know what you're doing.)
+        'normalize': Value('n', False),
         # Whether to visualize guided samples
         'visualize': Value('v', True),
         # Specifies the method used for the sample visualization. Possible values: 'flat', 'mono', 'heatmap'. If 'visualize' is set to False, this setting has no effect.
@@ -163,7 +189,7 @@ settings = {
     'noise': {
         # Whether the initial envmap should be noisified.
         'envmap': Value('ne', False),
-        # Whether a variable amount of noise should be introduced to each learning sample.
+        # Whether some noise should be introduced to each learning sample.
         'samples': Value('ns', False)
     },
     'structures': {
@@ -182,15 +208,16 @@ settings = {
         },
         'Tile Coding': {
             'tilings': Range('t', start=1, end=8),
-            'tiles_x': Range('tx', start=2, end=32),
-            'tiles_y': Range('ty', start=2, end=32)
+            'tiles_x': Range('tx', start=2, end=32, func=lambda x: x * 2),
+            'tiles_y': Range('ty', start=2, end=32, func=lambda x: x * 2)
         },
         'Binary Tile Coding': {
-            'tilings': Range('bt', start=1, end=8),
+            'tilings': Range('bt', start=1, end=6),
             'tiles_x': Range('btx', start=1, end=8),
             'tiles_y': Range('bty', start=1, end=8),
-            'max_depth': Range('btd', start=2, end=20),
-            'eagerness': Range('bte', start=0, end=4, func=lambda x: x + 1)
+            'max_depth': Range('btd', start=1, end=12),
+            'eagerness': Range('bte', start=0, end=4, func=lambda x: x + 1),
+            'transformation': Sequence('btt', ['planar', 'spherical', 'cosine'])
         },
         'von Mises-Fisher Mixtures': {
             'components': Range('vc', start=1, end=32),
