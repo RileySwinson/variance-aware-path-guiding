@@ -170,58 +170,58 @@ settings = {
     },
     'general': {
         # Path to folder containing the envmaps.
-        'envmap_path': Value('path', './data/tests/envmaps/'),
+        'envmap_path': Value('p', './data/tests/envmaps/'),
         # Path to folder containing the results.
-        'result_path': Value('result-path', './data/results/'),
+        'result_path': Value('rp', './data/results/'),
         # Number of learning samples per data structure. These samples are used to create a guiding distribution.
-        'samples_learning': Range('samples-learning', start=64, end=65536, func=lambda x: x * 2),
+        'samples_learning': Range('sl', start=64, end=65536, func=lambda x: x * 2),
         # Number of guiding samples per data structure. These samples are used to recreate the sampled distribution from the guiding distribution.
-        'samples_guiding': Value('samples-guiding', 1048576),
+        'samples_guiding': Value('sg', 1048576),
         # A blacklist specifying which data structures should be skipped in the overall test.
-        'blacklist': Value('blacklist', [0]),
+        'blacklist': Value('b', [0]),
         # Whether to normalize the envmap each data structure is 'learning' with. (Keep this false unless you know what you're doing.)
-        'normalize': Value('normalize', False),
+        'normalize': Value('n', False),
         # Whether to visualize guided samples
-        'visualize': Value('visualize', True),
+        'visualize': Value('v', True),
         # Specifies the method used for the sample visualization. Possible values: 'flat', 'mono', 'heatmap'. If 'visualize' is set to False, this setting has no effect.
-        'vis_mode': Value('vis-mode', 'mono')
+        'vis_mode': Value('vm', 'mono')
     },
     'noise': {
         # Whether the initial envmap should be noisified.
-        'envmap': Value('noisy-envmap', False),
+        'envmap': Value('ne', False),
         # Whether some noise should be introduced to each learning sample.
-        'samples': Value('noisy-samples', False)
+        'samples': Value('ns', False)
     },
     'structures': {
         'Unidirectional': { },
         'Spherical Harmonics': {
-            'bands': Range('sh-bands', start=1, end=10),
-            'depth': Range('sh-depth', start=1, end=20),
-            'use_offset': Toggle('sh-use-offset', True)
+            'bands': Range('shb', start=1, end=10),
+            'depth': Range('shd', start=1, end=20),
+            'use_offset': Toggle('sho', True)
         },
         'D-Tree': {
-            'frac_loss': Value('dt-fracloss', 'none'),
-            'dir_filter': Value('dt-dirfilter', 'nearest'),
-            'threshold': Range('dt-threshold', start=0.01, end=0.5, func=lambda x: x + 0.01),
-            'iterations': Value('dt-iter', -1),
-            'max_depth': Range('dt-max-depth', start=2, end=20)
+            'frac_loss': Value('dtl', 'none'),
+            'dir_filter': Value('dtf', 'nearest'),
+            'threshold': Range('dtt', start=0.01, end=0.5, func=lambda x: x + 0.01),
+            'iterations': Value('dti', -1),
+            'max_depth': Range('dtd', start=2, end=20)
         },
         'Tile Coding': {
-            'tilings': Range('tilings', start=1, end=8),
-            'tiles_x': Range('tiles-x', start=2, end=32, func=lambda x: x * 2),
-            'tiles_y': Range('tiles-y', start=2, end=32, func=lambda x: x * 2)
+            'tilings': Range('t', start=1, end=8),
+            'tiles_x': Range('tx', start=2, end=32, func=lambda x: x * 2),
+            'tiles_y': Range('ty', start=2, end=32, func=lambda x: x * 2)
         },
         'Binary Tile Coding': {
-            'tilings': Range('btc-tilings', start=1, end=6),
-            'tiles_x': Range('btc-tiles-x', start=1, end=8),
-            'tiles_y': Range('btc-tiles-y', start=1, end=8),
-            'max_depth': Range('btc-max-depth', start=1, end=12),
-            'eagerness': Range('btc-eagerness', start=0, end=4, func=lambda x: x + 1),
-            'transformation': Sequence('btc-transform', ['planar', 'spherical', 'cosine'])
+            'tilings': Range('bt', start=1, end=6),
+            'tiles_x': Range('btx', start=1, end=8),
+            'tiles_y': Range('bty', start=1, end=8),
+            'max_depth': Range('btd', start=1, end=12),
+            'eagerness': Range('bte', start=0, end=4, func=lambda x: x + 1),
+            'transformation': Sequence('btt', ['planar', 'spherical', 'cosine'])
         },
         'von Mises-Fisher Mixtures': {
-            'components': Range('vmm-components', start=1, end=32),
-            'use_ruppert': Toggle('vmm-mode', True)
+            'components': Range('vc', start=1, end=32),
+            'use_ruppert': Toggle('vr', True)
         }
     }
 }
