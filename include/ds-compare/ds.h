@@ -60,6 +60,11 @@ struct DS_COMPARE DSArguments {
         int max_depth = 20;
     };
 
+    struct VMF {
+        uint32_t components = 16;
+        bool use_ruppert = true;
+    };
+
     struct TC {
         int tilings = 4;
         int tiles_x = 16;
@@ -75,18 +80,13 @@ struct DS_COMPARE DSArguments {
         TCParams::Transformation transformation_mode = TCParams::Transformation::Spherical;
     };
 
-    struct VMF {
-        uint32_t components = 16;
-        bool use_ruppert = true;
-    };
-
     Comparer comparer;
     Noise noise;
     SH sh;
     DTree dt;
+    VMF vmf;
     TC tc;
     BTC btc;
-    VMF vmf;
 };
 
 /**

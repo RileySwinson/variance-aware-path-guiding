@@ -206,6 +206,10 @@ settings = {
             'iterations': Value('dti', -1),
             'max_depth': Range('dtd', start=2, end=20)
         },
+        'von Mises-Fisher Mixtures': {
+            'components': Range('vc', start=1, end=32),
+            'use_ruppert': Toggle('vr', True)
+        },
         'Tile Coding': {
             'tilings': Range('t', start=1, end=8),
             'tiles_x': Range('tx', start=2, end=32, func=lambda x: x * 2),
@@ -218,10 +222,6 @@ settings = {
             'max_depth': Range('btd', start=1, end=12),
             'eagerness': Range('bte', start=0, end=4, func=lambda x: x + 1),
             'transformation': Sequence('btt', ['planar', 'spherical', 'cosine'])
-        },
-        'von Mises-Fisher Mixtures': {
-            'components': Range('vc', start=1, end=32),
-            'use_ruppert': Toggle('vr', True)
         }
     }
 }
@@ -398,14 +398,32 @@ def create_batches():
             os.makedirs(p)
         return p
 
-    for i, path in enumerate(folders):
-        folder_name = os.fsdecode(path)
+    def folder_data(p) -> tuple:
+        folder_name = os.fsdecode(p)
         full_path = os.path.join(base_name, folder_name)
         _, _, files = next(os.walk(full_path))
+        return (folder_name, full_path, files)
 
-        if batch_count < 0:
+    # process disabled batching first
+    if batch_count <= 0:
+        print('Batching disabled. Processing all folders as is...')
+        for path in folders:
+            folder_name, full_path, files = folder_data(path)
+            
+            if len(files) == 0:
+                continue
+
             stats.progress[folder_name] = [0, len(files)]
             batch_paths.append(full_path)
+
+        return
+
+    # otherwise, first obtain all files
+    file_storage = { }
+    for i, path in enumerate(folders):
+        folder_name, full_path, files = folder_data(path)
+
+        if len(files) == 0:
             continue
 
         for file in files:
@@ -414,30 +432,41 @@ def create_batches():
             _, file_ext = os.path.splitext(file)
             new_name = str(file_id) + file_ext
 
-            # store old folder path
-            base_pairing[new_name] = os.path.join(full_path, file)
+            # store new path with metadata
+            file_storage[file_id] = (new_name, os.path.join(full_path, file))
+    
+    # drop files into batches
+    bytes_per_batch = total_bytes / batch_count
+    for file in file_storage.items():
+        (file_id, file_data) = file
+        (new_name, old_path) = file_data
 
-            # create new results and testing folders
-            create_folder(os.path.join(res_name, batch_key()))
-            new_path = create_folder(os.path.join(base_name, 'testing', batch_key()))
-
-            # move to new testing folder
-            Path(os.path.join(full_path, file)).rename(os.path.join(new_path, new_name))
-
-            curr_bytes += os.path.getsize(os.path.join(new_path, new_name))
-            curr_files += 1
-
-            if (curr_bytes >= (total_bytes / batch_count)) and (b_id < batch_count):
-                stats.progress[batch_key()] = [0, curr_files]
-                batch_paths.append(new_path)
-                
-                b_id += 1
-                curr_bytes = 0
-                curr_files = 0
-
-        if (i == len(folders) - 1) and (batch_key() not in stats.progress.keys()):
+        if (curr_bytes > bytes_per_batch) and (b_id < batch_count - 1):
             stats.progress[batch_key()] = [0, curr_files]
-            batch_paths.append(f'{base_name}testing/{batch_key()}/')
+            batch_paths.append(new_path)
+
+            b_id += 1
+            curr_bytes = 0
+            curr_files = 0
+
+        # create a folder in the results folder and testing folder respectively
+        create_folder(os.path.join(res_name, batch_key()))
+        new_path = create_folder(os.path.join(base_name, 'testing', batch_key()))
+        new_path_with_name = os.path.join(new_path, new_name)
+
+        # store the old path
+        base_pairing[new_name] = old_path
+
+        # move the file to the new folder
+        Path(old_path).rename(new_path_with_name)
+
+        # update stats
+        curr_bytes += os.path.getsize(new_path_with_name)
+        curr_files += 1
+
+    if curr_files > 0:
+        stats.progress[batch_key()] = [0, curr_files]
+        batch_paths.append(os.path.join(base_name, 'testing', batch_key()))
 
 def collect_data(curr_settings, wipe=False):
     """
@@ -470,7 +499,7 @@ def collect_data(curr_settings, wipe=False):
                         base_path = base_pairing.get(f'{out_folder}.exr', base_pairing.get(f'{out_folder}.hdr'))
                         name = Path(base_path).stem
                         collector[metric].append((name, data[index]))
-    
+
     # Wipe folders if requested
     if wipe:
         pause_event.set()
@@ -517,7 +546,7 @@ def collect_data(curr_settings, wipe=False):
             writer = csv.writer(file, delimiter=',', quotechar='"')
 
             for envmap, values in payload.items():
-                writer.writerow([envmap, *values])
+                writer.writerow([envmap, *[str(v) for v in values]])
 
 def start_comparer(command):
     """
@@ -528,7 +557,7 @@ def start_comparer(command):
 
 def rcall(data, pos=0):
     """
-    Recursively goes through all possible setting permutations and creates multiple workers that each start
+    Recursively goes through all possible setting combinations and creates multiple workers that each start
     Mitsuba with their respective envmap batch for the current settings state.
     """
     
