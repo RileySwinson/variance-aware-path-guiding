@@ -186,6 +186,14 @@ settings = {
         # Specifies the method used for the sample visualization. Possible values: 'flat', 'mono', 'heatmap'. If 'visualize' is set to False, this setting has no effect.
         'vis_mode': Value('vm', 'mono')
     },
+    'strategy': {
+        # Learning strategy to employ. 'preprocess' for 1-pass learning, 'forward' for geometric series.
+        'strategy': Value('s', 'forward'),
+        # Number of samples the forward strategy should start with. The number is doubled for every subsequent batch, until samples_learning is reached. If the strategy is 'preprocess', this setting is ignored.
+        'samples_start': Value('ss', 4),
+        # The probability that the data structure is used to generate samples for the next batch. 1 - P(A) = Probability to sample uniformly.
+        'chance': Value('c', 0.75)
+    },
     'noise': {
         # Whether the initial envmap should be noisified.
         'envmap': Value('ne', False),
@@ -203,7 +211,6 @@ settings = {
             'frac_loss': Value('dtl', 'none'),
             'dir_filter': Value('dtf', 'nearest'),
             'threshold': Range('dtt', start=0.01, end=0.5, func=lambda x: x + 0.01),
-            'iterations': Value('dti', -1),
             'max_depth': Range('dtd', start=2, end=20)
         },
         'von Mises-Fisher Mixtures': {

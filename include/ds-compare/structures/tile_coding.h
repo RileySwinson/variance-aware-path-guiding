@@ -13,13 +13,14 @@ struct Tile {
     static Float area(int y, Point2i& inner);
 };
 
+typedef std::vector<Tile> Tiling;
+
 struct GuidingMap {
-    std::vector<Tile> tiles;
+    Tiling tiles;
+    Point2i dims;
 
     float mean(int pos);
 };
-
-typedef std::vector<Tile> Tiling;
 
 struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     ~TileCoding() { }
@@ -39,7 +40,6 @@ struct MTS_EXPORT_CORE TileCoding : public DataStructure {
 private:
     std::vector<Tiling> tilings;
     GuidingMap guiding_map;
-
     int m_tiling_count = 4;
     Point2i m_tiling_dims; // x = width, y = height
     Sample::Mode m_mode;
@@ -51,6 +51,9 @@ private:
     RandomGen random;
 
     Float pdf(Point2& pos);
+    void build_map();
+    void calc_cdf();
+    void reset_tilings();
 };
 
 MTS_NAMESPACE_END

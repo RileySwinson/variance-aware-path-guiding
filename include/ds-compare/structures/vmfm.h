@@ -10,6 +10,7 @@
 #include <mitsuba/guiding/pathguidingmixturestats.h>
 
 #include <ds-compare/ds.h>
+#include <boost/variant.hpp>
 
 MTS_NAMESPACE_BEGIN
 
@@ -28,41 +29,93 @@ using VMMRuppertFactory = Guiding::GuidingFieldFactory<VMM4, VMMStatistics>;
 using VMMFactoryProperties = ::lightpmm::VMMFactoryProperties;
 using VMMSample = ::lightpmm::DirectionalData;
 
+struct NativeStrategy {
+    VMMNativeFactory factory;
+    VMM4 vmm;
+};
+
+struct RuppertStrategy {
+    VMMRuppertFactory factory;
+    VMMGuidingRegion vmm;
+};
+
+struct VMMStrategy {
+    using VMMVariant = boost::variant<NativeStrategy, RuppertStrategy>;
+    VMMStrategy() : m_strategy(NativeStrategy()) { };
+    VMMStrategy(VMMVariant strategy) : m_strategy(strategy) { };
+
+    VMM4& vmm() // Do not trust the linter. Do not make this const.
+    {
+        struct VMM4Visitor : public boost::static_visitor<VMM4&>
+        {
+            VMM4& operator()(NativeStrategy& strategy) const { return strategy.vmm; }
+            VMM4& operator()(RuppertStrategy& strategy) const { return strategy.vmm.distribution; }
+        };
+
+        return boost::apply_visitor(VMM4Visitor(), this->m_strategy);
+    }
+
+    VMMVariant& get() { return this->m_strategy; }
+    const VMMVariant& get() const { return this->m_strategy; }
+private:
+    VMMVariant m_strategy;
+};
+
+struct FitVisitor : public boost::static_visitor<>
+{
+    std::vector<VMMSample>& samples_ref;
+    mutable bool first_fit = true;
+    FitVisitor(std::vector<VMMSample>& samples) : samples_ref(samples) {}
+
+    void operator()(NativeStrategy& strategy) const {
+        if (this->first_fit)
+        {
+            strategy.factory.fit(this->samples_ref.begin(), this->samples_ref.end(), strategy.vmm, true);
+            this->first_fit = false;
+            return;
+        }
+
+        strategy.factory.updateFit(this->samples_ref.begin(), this->samples_ref.end(), strategy.vmm);
+    }
+    void operator()(RuppertStrategy& strategy) const {
+        if (this->first_fit)
+        {
+            strategy.factory.fit(strategy.vmm, this->samples_ref);
+            this->first_fit = false;
+            return;
+        }
+        
+        strategy.factory.updateFit(strategy.vmm, this->samples_ref);
+    }
+};
+
+struct WipeVisitor : public boost::static_visitor<>
+{
+    void operator()(NativeStrategy& strategy) const {
+        strategy.vmm = VMM4();
+    }
+    void operator()(RuppertStrategy& strategy) const {
+        strategy.vmm = VMMGuidingRegion();
+    }
+};
+
 struct MTS_EXPORT_CORE VMFM : public DataStructure {
     ~VMFM() { }
 
     void construct(DSArguments& init_data) override;
-
     void preprocess() override;
-
     void store(std::vector<Sample>& samples) override;
-
     void postprocess() override;
 
     Sample sample(Point2& pos) override;
-
     Float eval(Point2& pos) override;
-
     void wipe() override;
-
     DSType type() override;
-
     std::string name() override;
-
     int memory() override;
 
 private:
-    bool use_ruppert{ false };
-
-    // Native factory + vmm
-    VMMNativeFactory factory_native;
-    VMM4 vmm_native;
-
-    // Ruppert factory + vmm
-    VMMRuppertFactory factory_ruppert;
-    VMMGuidingRegion vmm_ruppert;
-
-    std::vector<VMMSample> samples;
+    VMMStrategy strategy;
 };
 
 MTS_NAMESPACE_END

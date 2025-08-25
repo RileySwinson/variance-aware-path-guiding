@@ -133,6 +133,14 @@ struct DS_COMPARE EnvironmentMap {
 		return rgb[0] * 0.212671f + rgb[1] * 0.715160f + rgb[2] * 0.072169f;
 	}
 
+	inline Float get_pixel_luminance(Float phi, Float theta) const
+	{
+		const Point2 spherical(phi, theta);
+		auto uv_coords = Converter::spherical_to_uv(spherical);
+		auto im_coords = Converter::uv_to_image(uv_coords, this->bitmap->getSize());
+		return get_pixel_luminance(im_coords);
+	}
+
 	/// Set rgb color information at the specified position (x, y).
 	inline void set_pixel_rgb(const Point2i& pos, const Point3& rgb)
 	{

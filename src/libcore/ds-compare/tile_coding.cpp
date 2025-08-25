@@ -13,7 +13,7 @@ Float Tile::area(int y, Point2i& inner)
 
 float GuidingMap::mean(int pos)
 {
-    Tile& t = this->tiles.at(pos);
+    Tile& t = this->tiles[pos];
 
     if (t.sum == 0 || t.entries == 0)
     {
@@ -27,18 +27,22 @@ void TileCoding::construct(DSArguments& init_data)
 {
     SAssert(init_data.tc.tilings > 0 && init_data.tc.tiles_x > 0 && init_data.tc.tiles_y > 0);
 
-    this->m_tiling_count = init_data.tc.tilings;
     this->m_tiling_dims = Point2i(init_data.tc.tiles_x, init_data.tc.tiles_y);
     this->m_mode = init_data.comparer.mode;
+    this->m_tiling_count = init_data.tc.tilings;
 }
 
 void TileCoding::preprocess()
 {
-    tilings.resize(this->m_tiling_count);
-    for (auto& tiling : this->tilings)
-    {
-        tiling.resize(this->m_tiling_dims.x * this->m_tiling_dims.y);
-    }
+    reset_tilings();
+
+    Point2i inner(
+        (this->m_tiling_dims.x * this->m_tiling_count) - (this->m_tiling_count - 1),
+        (this->m_tiling_dims.y * this->m_tiling_count) - (this->m_tiling_count - 1)
+    );
+
+    this->guiding_map.tiles.resize(inner.x * inner.y);
+    this->guiding_map.dims = inner;
 }
 
 void TileCoding::store(std::vector<Sample>& samples)
@@ -64,7 +68,7 @@ void TileCoding::store(std::vector<Sample>& samples)
 
         for (int ti = 0; ti < this->m_tiling_count; ++ti)
         {
-            Tiling& tiling = this->tilings.at(ti);
+            Tiling& tiling = this->tilings[ti];
 
             Point2 t_origin(0 - (ti * shift.x), 0 - (ti * shift.y));
 
@@ -80,81 +84,22 @@ void TileCoding::store(std::vector<Sample>& samples)
             if (index.y == dims_y) index.y--;
 
             int i = (index.y * dims_x) + index.x;
-            Tile& tile = tiling.at(i);
+            Tile& tile = tiling[i];
             tile.sum += sample.value;
             tile.entries++;
         }
     }
+
+    build_map();
+    calc_cdf();
+    reset_tilings();
 }
 
 void TileCoding::postprocess()
 {
-    /* Smush tilings to a single map */
-    int x = this->m_tiling_dims.x * this->m_tiling_count;
-    int y = this->m_tiling_dims.y * this->m_tiling_count;
-    int total_overhead = this->m_tiling_count - 1;
-
-    Point2i inner(x - total_overhead, y - total_overhead);
-    int map_size = inner.x * inner.y;
-
-    this->guiding_map.tiles.resize(map_size);
-
-    // Track the total sum for normalization
-    Float tile_area = 0;
-    for (int i = 0; i < map_size; ++i)
-    {
-        Tile& t_final = this->guiding_map.tiles.at(i);
-
-        const int pos_x = i % inner.x;
-        const int pos_y = i / inner.x;
-
-        // Calculate area to consider spherical trafo!
-        if (pos_x == 0)
-        {
-            tile_area = Tile::area(pos_y, inner);
-        }
-
-        const Point2i base(0, total_overhead);
-        for (size_t t_i = 0; t_i < this->tilings.size(); ++t_i)
-        {
-            Tiling& tiling = this->tilings.at(t_i);
-
-            const int t_x = (t_i + pos_x) / this->m_tiling_count;
-            const int t_y = (t_i + pos_y) / this->m_tiling_count;
-
-            Tile& tile = tiling.at((t_y * this->m_tiling_dims.x) + t_x);
-            if (tile.entries == 0) continue;
-
-            t_final.sum += tile.sum;
-            t_final.entries += tile.entries;
-        }
-
-        Float p_x = this->guiding_map.mean(i) / this->m_tiling_count;
-        this->m_total_sum += p_x * tile_area;
-    }
-
-    /* Normalize & Precompute means */
-    this->m_row_avgs.reserve(inner.y);
-
-    float total_pdf_sum = 0.0f;
-    for (int y = 0; y < inner.y; ++y)
-    {
-        float row_pdf_sum = 0.0f;
-        for (int x = 0; x < inner.x; ++x)
-        {
-            int tile_i = (y * inner.x) + x;
-            auto p_x = this->guiding_map.mean(tile_i) / this->m_total_sum;
-            row_pdf_sum += p_x;
-        }
-
-        total_pdf_sum += row_pdf_sum;
-        this->m_row_avgs.push_back(row_pdf_sum / inner.x);
-    }
-
-    this->m_integral = total_pdf_sum / map_size;
-
-    /* Clear tilings -- we only need the map */
+    /* Wipe tilings completely -- we only need the map */
     this->tilings.clear();
+    this->tilings.shrink_to_fit();
 }
 
 Sample TileCoding::sample(Point2& sample)
@@ -166,7 +111,7 @@ Sample TileCoding::sample(Point2& sample)
     Float sum_y = 0; int y = 0;
     for (y = 0; y < y_len; ++y)
     {
-        sum_y += this->m_row_avgs.at(y);
+        sum_y += this->m_row_avgs[y];
         if (sum_y / (y_len * this->m_integral) >= sample.y) break;
     }
     if (y == y_len) y -= 1;
@@ -176,7 +121,7 @@ Sample TileCoding::sample(Point2& sample)
     {
         int i = (y * x_len) + x;
         sum_x += this->guiding_map.mean(i);
-        if (sum_x / (x_len * this->m_total_sum * this->m_row_avgs.at(y)) >= sample.x) break;
+        if (sum_x / (x_len * this->m_total_sum * this->m_row_avgs[y]) >= sample.x) break;
     }
     if (x == x_len) x -= 1;
 
@@ -227,6 +172,22 @@ std::string TileCoding::name()
     return "Tile Coding";
 }
 
+int TileCoding::memory()
+{
+    size_t size_self = sizeof(*this);
+    size_t size_tilings = this->tilings.capacity() * sizeof(Tiling);
+
+    size_t size_tiles = 0;
+    for (const auto& tiling : this->tilings)
+    {
+        size_tiles += tiling.capacity() * sizeof(Tile);
+    }
+
+    size_t size_map = this->guiding_map.tiles.capacity() * sizeof(Tile);
+
+    return size_self + size_tilings + size_tiles + size_map;
+}
+
 Float TileCoding::pdf(Point2& pos)
 {
     int x = this->m_tiling_dims.x * this->m_tiling_count;
@@ -243,20 +204,80 @@ Float TileCoding::pdf(Point2& pos)
     return t_mu / (this->m_tiling_count * this->m_total_sum);
 }
 
-int TileCoding::memory()
+void TileCoding::build_map()
 {
-    size_t size_self = sizeof(*this);
-    size_t size_tilings = this->tilings.capacity() * sizeof(Tiling);
+    this->m_total_sum = 0;
 
-    size_t size_tiles = 0;
-    for (const auto& tiling : this->tilings)
+    Tiling& map = this->guiding_map.tiles;
+    Point2i dims = this->guiding_map.dims;
+    const int map_size = dims.x * dims.y;
+
+    // Track the total sum for normalization
+    Float tile_area = 0;
+    for (int i = 0; i < map_size; ++i)
     {
-        size_tiles += tiling.capacity() * sizeof(Tile);
+        const int pos_x = i % dims.x;
+        const int pos_y = i / dims.x;
+
+        // Calculate area to consider spherical trafo!
+        if (pos_x == 0)
+        {
+            tile_area = Tile::area(pos_y, dims);
+        }
+
+        const Point2i base(0, this->tilings.size() - 1);
+        for (size_t t_i = 0; t_i < this->tilings.size(); ++t_i)
+        {
+            Tiling& tiling = this->tilings[t_i];
+
+            const int t_x = (t_i + pos_x) / this->tilings.size();
+            const int t_y = (t_i + pos_y) / this->tilings.size();
+
+            Tile& tile = tiling[(t_y * this->m_tiling_dims.x) + t_x];
+            if (tile.entries == 0) continue;
+
+            map[i].sum += tile.sum;
+            map[i].entries += tile.entries;
+        }
+
+        Float p_x = this->guiding_map.mean(i) / this->tilings.size();
+        this->m_total_sum += p_x * tile_area;
+    }
+}
+
+void TileCoding::calc_cdf()
+{
+    const Point2i dims = this->guiding_map.dims;
+
+    /* Normalize & Precompute means */
+    this->m_row_avgs = std::vector<Float>(dims.y);
+    this->m_integral = 0.0;
+
+    float total_pdf_sum = 0.0f;
+    for (int y = 0; y < dims.y; ++y)
+    {
+        float row_pdf_sum = 0.0f;
+        for (int x = 0; x < dims.x; ++x)
+        {
+            int tile_i = (y * dims.x) + x;
+            auto p_x = this->guiding_map.mean(tile_i) / this->m_total_sum;
+            row_pdf_sum += p_x;
+        }
+
+        total_pdf_sum += row_pdf_sum;
+        this->m_row_avgs[y] = row_pdf_sum / dims.x;
     }
 
-    size_t size_map = this->guiding_map.tiles.capacity() * sizeof(Tile);
+    this->m_integral = total_pdf_sum / (dims.x * dims.y);
+}
 
-    return size_self + size_tilings + size_tiles + size_map;
+void TileCoding::reset_tilings()
+{
+    this->tilings = std::vector<Tiling>(this->m_tiling_count);
+    for (auto& tiling : this->tilings)
+    {
+        tiling.resize(this->m_tiling_dims.x * this->m_tiling_dims.y);
+    }
 }
 
 MTS_NAMESPACE_END

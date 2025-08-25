@@ -227,12 +227,14 @@ public:
     }
 
     /// Access coefficient m (in {-l, ..., l}) on band l
-    inline Float &operator()(int l, int m) {
+    inline Float &operator()(int l, int m, bool usable = true) {
+        if (usable) return m_coeffs_usable[l * (l + 1) + m];
         return m_coeffs[l*(l+1) + m];
     }
 
     /// Access coefficient m (in {-l, ..., l}) on band l
-    inline const Float &operator()(int l, int m) const {
+    inline const Float &operator()(int l, int m, bool usable = true) const {
+        if (usable) return m_coeffs_usable[l * (l + 1) + m];
         return m_coeffs[l*(l+1) + m];
     }
 
@@ -434,14 +436,17 @@ protected:
     static Float computeNormalization(int l, int m);
 private:
     int m_bands;
-    int m_num_samples;
+    uint32_t m_num_samples = 0;
     Sample::Mode m_sample_mode;
     bool m_use_offset;
 
     static Float* m_normalization;
     Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
+    Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs_usable;
 
     ref<SphericalHarmonicsSampler> sampler = nullptr;
+
+    void update_usable_coeffs();
 };
 
 inline Float dot(const SphericalHarmonics &v1, const SphericalHarmonics &v2) {

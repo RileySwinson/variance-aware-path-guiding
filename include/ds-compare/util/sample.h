@@ -20,6 +20,11 @@ struct DS_COMPARE Sample {
 		Sphere
 	};
 
+	enum Strategy {
+		Preprocess,
+		Forward
+	};
+
 	friend std::istream& operator>>(std::istream& in, Sample::Mode& mode)
 	{
 		std::string token;
@@ -38,6 +43,26 @@ struct DS_COMPARE Sample {
 		if (token == "sphere")
 		{
 			mode = Sample::Mode::Sphere;
+			return in;
+		}
+
+		in.setstate(std::ios_base::failbit);
+		return in;
+	};
+
+	friend std::istream& operator>>(std::istream& in, Sample::Strategy& strategy)
+	{
+		std::string token;
+		in >> token;
+
+		if (token == "preprocess")
+		{
+			strategy = Sample::Strategy::Preprocess;
+			return in;
+		}
+		if (token == "forward")
+		{
+			strategy = Sample::Strategy::Forward;
 			return in;
 		}
 

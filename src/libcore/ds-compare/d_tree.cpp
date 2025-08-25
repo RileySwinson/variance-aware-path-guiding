@@ -567,12 +567,9 @@ void DirectionalTree::dump(BlobWriter& blob, const Point& p, const Vector& size)
 
 void DirectionalTree::construct(DSArguments& init_data)
 {
-    SAssert(init_data.dt.iterations >= -1);
-
     this->param_sampling_frac_loss = init_data.dt.frac_loss;
     this->param_dir_filter = init_data.dt.dir_filter;
     this->param_d_tree_thresh = init_data.dt.threshold;
-    this->param_max_iter = init_data.dt.iterations;
     this->param_max_depth = init_data.dt.max_depth;
 }
 
@@ -583,14 +580,11 @@ void DirectionalTree::preprocess()
 
 void DirectionalTree::store(std::vector<Sample>& samples)
 {
-    // Müller et al. states that the geometric series uses twice as many samples as in the previous
-    // iteration. We therefore iterate over all stored samples, building and resetting when we hit a threshold.
-    // We start with 4 samples and go from there.
+    // Keep in mind that Müller et al. only works with the "forward" strategy.
+    // Using "preprocess" won't fail, but it will stop after a single subdivision
+    // as we only call reset() once.
 
-    size_t t = 4;
-    int i = 0;
     auto total_samples = samples.size();
-
     for (size_t s_i = 0; s_i < total_samples; ++s_i)
     {
         Sample& sample = samples.at(s_i);
@@ -605,30 +599,15 @@ void DirectionalTree::store(std::vector<Sample>& samples)
         rec.isDelta = false;
         rec.d = directional;
         rec.radiance = sample.value;
-        rec.product = 0; // Unsure what this parameter does. It is set to 0 for now to prevent unwanted optimizations in this simulated setting.
-        rec.woPdf = 1;
+        rec.product = 0; // We set the product to 0 to prevent possibly unwanted optimizations in this simulated setting.
+        rec.woPdf = sample.pdf;
         rec.statisticalWeight = 1;
 
         record(rec, this->param_dir_filter, this->param_sampling_frac_loss);
-
-        // Important: Müller et al. don't state what to do if there's less than half the samples left in total than
-        // in the previous learning iteration for learning with a fixed sample contingent. In this specific case we
-        // decide that these samples should belong to the same, final learning iteration.
-        // Edit: Turns out Müller et al. does the exact same thing. :>
-        if ((s_i == t - 1) && (total_samples - t >= t))
-        {
-            build();
-
-            t += 2 * t;
-            if (i == this->param_max_iter) break;
-
-            reset(this->param_max_depth, this->param_d_tree_thresh);
-
-            i++;
-        }
     }
 
     build();
+    reset(this->param_max_depth, this->param_d_tree_thresh);
 }
 
 void DirectionalTree::postprocess()

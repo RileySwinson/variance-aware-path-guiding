@@ -61,7 +61,11 @@ public:
 			uint32_t samples_guiding = this->args.comparer.samples_guiding;
 			samples.reserve(samples_learning);
 
-			for (uint32_t s_i = 0; s_i < samples_learning; ++s_i)
+			uint32_t samples_base = (this->args.comparer.strategy == Sample::Strategy::Forward) 
+				? this->args.comparer.samples_start
+				: samples_learning;
+
+			for (uint32_t s_i = 0; s_i < samples_base; ++s_i)
 			{
 				Point2 coords(random->nextFloat(), random->nextFloat());
 				Sample sample = envmap.sample(this->args.comparer.mode, coords);
@@ -116,13 +120,56 @@ public:
 				tracker.follow(ds->type());
 				tracker.timer_start("store");
 
-				/* Optional: Preprocess whatever has to be preprocessed per data structure */
-				ds->preprocess();
-				/* Store samples into the data structure */
-				ds->store(samples);
-				/* Optional: Postprocess whatever has to be postprocessed per data structure */
-				ds->postprocess();
+				if (this->args.comparer.strategy == Sample::Strategy::Preprocess)
+				{
+					/* Optional: Preprocess whatever has to be preprocessed per data structure */
+					ds->preprocess();
+					/* Store samples into the data structure */
+					ds->store(samples);
+					/* Optional: Postprocess whatever has to be postprocessed per data structure */
+					ds->postprocess();
+				}
+				else if (this->args.comparer.strategy == Sample::Strategy::Forward)
+				{
+					ds->preprocess();
 
+					uint32_t samples_batch = samples_base;
+					std::vector<Sample> curr_samples = samples;
+
+					for (uint32_t i = samples_base; i < samples_learning; ++i)
+					{
+						if ((curr_samples.size() == samples_batch) && (i <= samples_learning * 0.5))
+						{
+							ds->store(curr_samples);
+							samples_batch <<= 1;
+							curr_samples.clear();
+						}
+
+						Point2 coords(random->nextFloat(), random->nextFloat());
+						Float rng = random->nextFloat();
+
+						Sample sample;
+						if (rng < this->args.comparer.chance)
+						{
+							sample = ds->sample(coords);
+						}
+						else
+						{
+							sample = envmap.sample(Sample::Mode::Sphere, coords);
+						}
+
+						sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
+						curr_samples.push_back(sample);
+					}
+
+					if (!curr_samples.empty())
+					{
+						ds->store(curr_samples);
+					}
+
+					ds->postprocess();
+				}
+				
 				tracker.timer_end("store");
 
 				/* Evaluate function approximation per pixel and store the results in a new envmap */
@@ -170,7 +217,7 @@ public:
 					auto uv_coords = Converter::spherical_to_uv(spherical);
 					auto im_coords = Converter::uv_to_image(uv_coords, envmap.bitmap->getSize());
 
-					auto f_x = envmap.get_pixel_luminance(im_coords);
+					auto f_x = envmap.get_pixel_luminance(sample.phi, sample.theta);
 					auto p_x = sample.pdf;
 					auto value = (f_x / p_x) * INV_FOURPI;
 
@@ -247,6 +294,10 @@ private:
 				("normalize,n", p_opt::value<bool>(&this->args.comparer.normalize), "Normalize?")
 				("visualize,v", p_opt::value<bool>(&this->args.comparer.visualize), "Visualize samples?")
 				("vis-mode,vm", p_opt::value<EnvironmentMap::VisualizationMode>(&this->args.comparer.vis_mode), "Visualization mode for guiding samples.")
+				// Strategy
+				("strategy,s", p_opt::value<Sample::Strategy>(&this->args.comparer.strategy), "DS learning strategy.")
+				("samples-start,ss", p_opt::value<uint32_t>(&this->args.comparer.samples_start), "Number of samples to start with if strategy is set to \"forward\".")
+				("chance,c", p_opt::value<Float>(&this->args.comparer.chance), "Chance to sample from the DS if strategy is set to \"forward\".")
 				// Noise
 				("noisy-envmap,ne", p_opt::value<bool>(&this->args.noise.envmap), "Noisify input envmap?")
 				("noisy-samples,ns", p_opt::value<bool>(&this->args.noise.samples), "Noisify learning samples?")
@@ -258,7 +309,6 @@ private:
 				("dt-fracloss,dtl", p_opt::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt.frac_loss), "Loss function during gradient descent.")
 				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt.dir_filter), "Directional filter for splatting radiance samples.")
 				("dt-threshold,dtt", p_opt::value<Float>(&this->args.dt.threshold), "Threshold for subdividing leaf nodes (percentage).")
-				("dt-iter,dti", p_opt::value<int>(&this->args.dt.iterations), "Stop after nth iteration, starting at 0 (-1 to disable).")
 				("dt-max-depth,dtd", p_opt::value<int>(&this->args.dt.max_depth), "Maximum tree depth.")
 				// TileCoding
 				("tilings,t", p_opt::value<int>(&this->args.tc.tilings), "Number of tilings.")

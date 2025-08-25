@@ -39,6 +39,10 @@ struct DS_COMPARE DSArguments {
         bool normalize = false;
         bool visualize = true;
         EnvironmentMap::VisualizationMode vis_mode = EnvironmentMap::VisualizationMode::Mono;
+
+        Sample::Strategy strategy = Sample::Strategy::Preprocess;
+        uint32_t samples_start = 4;
+        Float chance = 0.75;
     };
 
     struct Noise {
@@ -56,7 +60,6 @@ struct DS_COMPARE DSArguments {
         DTreeParams::EBsdfSamplingFractionLoss frac_loss = DTreeParams::EBsdfSamplingFractionLoss::ENone;
         DTreeParams::EDirectionalFilter dir_filter = DTreeParams::EDirectionalFilter::ENearest;
         Float threshold = 0.01;
-        int iterations = -1;
         int max_depth = 20;
     };
 

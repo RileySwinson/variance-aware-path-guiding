@@ -4,9 +4,7 @@ MTS_NAMESPACE_BEGIN
 
 void VMFM::construct(DSArguments& init_data)
 {
-    this->use_ruppert = init_data.vmf.use_ruppert;
-
-    if (this->use_ruppert)
+    if (init_data.vmf.use_ruppert)
     {
         Properties props;
         props.setSize("vmmFactory.numInitialComponents", init_data.vmf.components);
@@ -15,7 +13,7 @@ void VMFM::construct(DSArguments& init_data)
         props.setBoolean("parallaxCompensation", false);
         props.setBoolean("safetyMerge", false);
 
-        this->factory_ruppert = VMMRuppertFactory(props);
+        this->strategy = VMMStrategy(RuppertStrategy{ VMMRuppertFactory(props), VMMGuidingRegion() });
     }
     else
     {
@@ -24,10 +22,8 @@ void VMFM::construct(DSArguments& init_data)
         vmm_native_props.maxKappa = 32768.0f;
         vmm_native_props.rPriorWeight = 0.2f;
 
-        this->factory_native = VMMNativeFactory(vmm_native_props);
+        this->strategy = VMMStrategy(NativeStrategy{ VMMNativeFactory(vmm_native_props), VMM4() });
     }
-    
-    samples.reserve(init_data.comparer.samples_learning);
 }
 
 void VMFM::preprocess()
@@ -37,6 +33,8 @@ void VMFM::preprocess()
 
 void VMFM::store(std::vector<Sample>& input_samples)
 {
+    std::vector<VMMSample> samples;
+
     for (const auto& sample : input_samples)
     {
         Vector3 direction(
@@ -45,28 +43,22 @@ void VMFM::store(std::vector<Sample>& input_samples)
             std::cos(sample.theta)
         );
 
-        this->samples.emplace_back(
+        samples.emplace_back(
             VMMSample(Point3(), direction, sample.value, sample.pdf, Epsilon)
         );
     }
+
+    boost::apply_visitor(FitVisitor(samples), this->strategy.get());
 }
 
 void VMFM::postprocess()
 {
-    if (!this->use_ruppert)
-    {
-        this->factory_native.fit(this->samples.begin(), this->samples.end(), this->vmm_native, true);
-        return;
-    }
-
-    this->factory_ruppert.fit(this->vmm_ruppert, this->samples);
+    return;
 }
 
 Sample VMFM::sample(Point2& pos)
 {
-    VMM4& vmm = this->use_ruppert
-        ? this->vmm_ruppert.distribution
-        : this->vmm_native;
+    VMM4& vmm = this->strategy.vmm();
 
     Vector3 dir = vmm.sample(pos);
     float pdf = vmm.pdf(dir);
@@ -93,25 +85,13 @@ Float VMFM::eval(Point2& pos)
         std::cos(spherical.y)
     );
     
-    VMM4& vmm = this->use_ruppert
-        ? this->vmm_ruppert.distribution
-        : this->vmm_native;
-
+    VMM4& vmm = this->strategy.vmm();
     return vmm.pdf(directional);
 }
 
 void VMFM::wipe()
 {
-    if (this->use_ruppert)
-    {
-        this->vmm_ruppert = VMMGuidingRegion();
-    } 
-    else
-    {
-        this->vmm_native = VMM4();
-    }
-
-    this->samples.clear();
+    boost::apply_visitor(WipeVisitor(), this->strategy.get());
 }
 
 std::string VMFM::name()
@@ -131,12 +111,7 @@ int VMFM::memory()
     // lower bound, as there still may be platform-dependent dynamic allocations
     // happening, but this generally applies to all memory approximations.
 
-    if (!this->use_ruppert)
-    {
-        return sizeof(this->vmm_native);
-    }
-
-    return sizeof(this->vmm_ruppert);
+    return sizeof(this->strategy.vmm());
 }
 
 MTS_NAMESPACE_END

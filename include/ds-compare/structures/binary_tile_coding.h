@@ -106,7 +106,7 @@ struct BinaryTile {
     bool is_leaf() const;
 
     /// Determines if a leaf tile should be split by performing a One-Sample T-Test against the subdivision threshold.
-    bool should_split(const TileTracker& tracker) const;
+    bool should_split() const;
     
     /// Returns the split direction of a leaf tile by calculating the absolute covariance in both x and y direction.
     Direction split_direction(const TileTracker& tracker) const;
@@ -118,10 +118,10 @@ struct BinaryTile {
     void update_sum(const Sample& sample);
 
     /// Returns the area-adjusted mean deviation of the current leaf.
-    float meandev(const TileTracker& tracker) const;
+    float meandev() const;
 
     /// Returns the area-adjusted variance of the current leaf.
-    float var(const TileTracker& tracker) const;
+    float var() const;
 
     /// Returns the mean of the radiance stored in this tile.
     float mean() const;
@@ -205,6 +205,8 @@ struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
 private:
     static RandomGen random;
     std::vector<BinaryTiling> tilings;
+
+    void build();
 };
 
 MTS_NAMESPACE_END

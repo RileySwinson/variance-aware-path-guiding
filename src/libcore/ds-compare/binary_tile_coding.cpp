@@ -11,7 +11,7 @@ bool BinaryTile::is_leaf() const
     return this->data.tile_type == TileType::Leaf;
 }
 
-bool BinaryTile::should_split(const TileTracker& tracker) const
+bool BinaryTile::should_split() const
 {
     auto sample_count = this->data.sample_count;
     if (sample_count < 2)
@@ -20,9 +20,9 @@ bool BinaryTile::should_split(const TileTracker& tracker) const
     }
     
     // We assume that the population mean is 0.
-    float stderr = std::sqrt(var(tracker) / sample_count);
+    float std_err = std::sqrt(var() / sample_count);
     
-    float t_own = meandev(tracker) / stderr;
+    float t_own = meandev() / std_err;
     float t_req = TTable::fetch(BinaryTileCoding::CI, sample_count - 1);
 
     return (t_own > t_req);
@@ -68,8 +68,14 @@ void BinaryTile::update_statistics(const Sample& sample)
     // Update mean deviation
     value_mean += dx / n;
     float dx2 = sample.value - value_mean;
-    this->leaf.m2 += dx * dx2;
+    float old_md = meandev();
     this->leaf.diff_sum += std::abs(dx2);
+    float new_md = this->leaf.diff_sum / n;
+
+    // Update variance of absolute deviations
+    float d1 = std::abs(dx2) - old_md;
+    float d2 = std::abs(dx2) - new_md;
+    this->leaf.m2 += d1 * d2;
 }
 
 void BinaryTile::update_sum(const Sample& sample)
@@ -78,19 +84,18 @@ void BinaryTile::update_sum(const Sample& sample)
     this->data.sample_count++;
 }
 
-float BinaryTile::meandev(const TileTracker& tracker) const
+float BinaryTile::meandev() const
 {
     if (this->data.sample_count == 0) return 0.0f;
 
-    return area(tracker) * (this->leaf.diff_sum / this->data.sample_count);
+    return (this->leaf.diff_sum / this->data.sample_count);
 }
 
-float BinaryTile::var(const TileTracker& tracker) const
+float BinaryTile::var() const
 {
     if (this->data.sample_count < 2) return 0.0f;
 
-    float a = area(tracker);
-    return a * a * (this->leaf.m2 / (this->data.sample_count - 1));
+    return (this->leaf.m2 / (this->data.sample_count - 1));
 }
 
 float BinaryTile::mean() const
@@ -198,7 +203,7 @@ void BinaryTiling::insert(const Sample& sample)
     tile.update_sum(sample);
     
     // Only split if necessary
-    if (tracker.depth > BinaryTileCoding::MAX_DEPTH || !tile.should_split(tracker)) return;
+    if (tracker.depth > BinaryTileCoding::MAX_DEPTH || !tile.should_split()) return;
 
     tile.node.split_direction = tile.split_direction(tracker);
     uint32_t tiles = this->tiles.size();
@@ -223,6 +228,8 @@ float BinaryTiling::recurse_statistics(BinaryTile& curr_tile, TileTracker tracke
 
         return power;
     }
+
+    curr_tile.node.power.fill(0.0f);
 
     for (int i = 0; i < 2; ++i)
     {
@@ -401,14 +408,19 @@ void BinaryTileCoding::store(std::vector<Sample>& samples)
         }
     }
 #endif
+
+    build();
 }
 
-void BinaryTileCoding::postprocess()
+void BinaryTileCoding::build()
 {
     const Point2i td = BinaryTileCoding::TILE_DIMS;
+    this->leaf_sum = 0.0f;
 
     for (BinaryTiling& tiling : this->tilings)
     {
+        tiling.total_base_mean = 0.0f;
+
         for (int y = 0; y < td.y; ++y)
         {
             float row_mean = 0.0f;
@@ -438,6 +450,13 @@ void BinaryTileCoding::postprocess()
         }
 
         tiling.total_base_mean /= (td.x * td.y);
+    }
+}
+
+void BinaryTileCoding::postprocess()
+{
+    for (BinaryTiling& tiling : this->tilings)
+    {
         tiling.tiles.shrink_to_fit();
     }
 }
