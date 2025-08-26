@@ -51,15 +51,16 @@ void BinaryTile::update_statistics(const Sample& sample)
         ? (this->sum / samples)
         : 0;
 
+    const float contribution = sample.value / sample.pdf;
     auto n = samples + 1;
 
-    float dx = sample.value - value_mean;
+    float dx = contribution - value_mean;
     auto dy_x = [&]() { return sample.phi - this->leaf.sample_mean.x; };
     auto dy_y = [&]() { return sample.theta - this->leaf.sample_mean.y; };
 
     // Update x covariance
     this->leaf.sample_mean.x += dy_x() / n;
-    this->leaf.cov.x += dx * dy_x();
+    this->leaf.cov.x += dx * dy_x() * std::sin(sample.theta);
 
     // Update y covariance
     this->leaf.sample_mean.y += dy_y() / n;
@@ -67,7 +68,7 @@ void BinaryTile::update_statistics(const Sample& sample)
 
     // Update mean deviation
     value_mean += dx / n;
-    float dx2 = sample.value - value_mean;
+    float dx2 = contribution - value_mean;
     float old_md = meandev();
     this->leaf.diff_sum += std::abs(dx2);
     float new_md = this->leaf.diff_sum / n;
@@ -80,7 +81,8 @@ void BinaryTile::update_statistics(const Sample& sample)
 
 void BinaryTile::update_sum(const Sample& sample)
 {
-    this->sum += sample.value;
+    const float contribution = sample.value / sample.pdf;
+    this->sum += contribution;
     this->data.sample_count++;
 }
 
@@ -549,7 +551,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
         BinaryTile& tile = this->tilings[ti].find_tile(coords, false);
         prob += tile.mean();
     }
-    prob = std::max(Epsilon, (prob / this->leaf_sum));
+    prob = std::max(Epsilon, prob / this->leaf_sum);
 
     Sample sample = {
         .value = 0,
