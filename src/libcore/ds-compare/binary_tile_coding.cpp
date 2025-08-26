@@ -465,6 +465,19 @@ void BinaryTileCoding::postprocess()
 
 Sample BinaryTileCoding::sample(Point2& pos)
 {
+    if (this->leaf_sum <= 0.0f)
+    {
+        Point2 random = BinaryTileCoding::random.next2D();
+
+        Sample empty = {
+            .value = 0,
+            .pdf = INV_FOURPI,
+            .theta = std::acos(1.0f - 2.0f * random.y),
+            .phi = 2.0f * M_PI * random.x
+        };
+        return empty;
+    }
+
     int tiling_count = this->tilings.size();
 
     // [1] Pick one of the tilings with equal weight
@@ -564,6 +577,11 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
 Float BinaryTileCoding::eval(Point2& pos)
 {
+    if (this->leaf_sum <= 0.0f)
+    {
+        return INV_FOURPI;
+    }
+
     float prob = 0.0f;
     for (auto& tiling : this->tilings)
     {
