@@ -85,7 +85,7 @@ void TileCoding::store(std::vector<Sample>& samples)
 
             int i = (index.y * dims_x) + index.x;
             Tile& tile = tiling[i];
-            tile.sum += sample.value;
+            tile.sum += sample.value / sample.pdf;
             tile.entries++;
         }
     }
