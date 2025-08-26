@@ -227,7 +227,7 @@ settings = {
             'tiles_x': Range('btx', start=1, end=8),
             'tiles_y': Range('bty', start=1, end=8),
             'max_depth': Range('btd', start=1, end=12),
-            'eagerness': Range('bte', start=0, end=4, func=lambda x: x + 1),
+            'eagerness': Range('bte', start=0, end=5, func=lambda x: x + 1),
             'transformation': Sequence('btt', ['planar', 'spherical', 'cosine'])
         }
     }
