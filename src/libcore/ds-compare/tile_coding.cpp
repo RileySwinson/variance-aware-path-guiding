@@ -11,16 +11,16 @@ Float Tile::area(int y, Point2i& inner)
     return (d_phi * d_theta);
 }
 
-float GuidingMap::mean(int pos)
+float GuidingMap::get(int pos)
 {
     Tile& t = this->tiles[pos];
 
-    if (t.sum == 0 || t.entries == 0)
+    if (t.sum == 0)
     {
         return Epsilon;
     }
 
-    return t.sum / t.entries;
+    return t.sum;
 }
 
 void TileCoding::construct(DSArguments& init_data)
@@ -34,7 +34,7 @@ void TileCoding::construct(DSArguments& init_data)
 
 void TileCoding::preprocess()
 {
-    reset_tilings();
+    empty_tilings();
 
     Point2i inner(
         (this->m_tiling_dims.x * this->m_tiling_count) - (this->m_tiling_count - 1),
@@ -86,13 +86,12 @@ void TileCoding::store(std::vector<Sample>& samples)
             int i = (index.y * dims_x) + index.x;
             Tile& tile = tiling[i];
             tile.sum += sample.value / sample.pdf;
-            tile.entries++;
         }
     }
 
     build_map();
     calc_cdf();
-    reset_tilings();
+    empty_tilings();
 }
 
 void TileCoding::postprocess()
@@ -120,7 +119,7 @@ Sample TileCoding::sample(Point2& sample)
     for (x = 0; x < x_len; ++x)
     {
         int i = (y * x_len) + x;
-        sum_x += this->guiding_map.mean(i);
+        sum_x += this->guiding_map.get(i);
         if (sum_x / (x_len * this->m_total_sum * this->m_row_avgs[y]) >= sample.x) break;
     }
     if (x == x_len) x -= 1;
@@ -200,7 +199,7 @@ Float TileCoding::pdf(Point2& pos)
     if (index.y == y_tiles) index.y--;
 
     int i = (index.y * x_tiles) + index.x;
-    float t_mu = this->guiding_map.mean(i);
+    float t_mu = this->guiding_map.get(i);
     return t_mu / (this->m_tiling_count * this->m_total_sum);
 }
 
@@ -234,13 +233,10 @@ void TileCoding::build_map()
             const int t_y = (t_i + pos_y) / this->tilings.size();
 
             Tile& tile = tiling[(t_y * this->m_tiling_dims.x) + t_x];
-            if (tile.entries == 0) continue;
-
             map[i].sum += tile.sum;
-            map[i].entries += tile.entries;
         }
 
-        Float p_x = this->guiding_map.mean(i) / this->tilings.size();
+        Float p_x = this->guiding_map.get(i) / this->tilings.size();
         this->m_total_sum += p_x * tile_area;
     }
 }
@@ -260,7 +256,7 @@ void TileCoding::calc_cdf()
         for (int x = 0; x < dims.x; ++x)
         {
             int tile_i = (y * dims.x) + x;
-            auto p_x = this->guiding_map.mean(tile_i) / this->m_total_sum;
+            auto p_x = this->guiding_map.get(tile_i) / this->m_total_sum;
             row_pdf_sum += p_x;
         }
 
@@ -271,7 +267,7 @@ void TileCoding::calc_cdf()
     this->m_integral = total_pdf_sum / (dims.x * dims.y);
 }
 
-void TileCoding::reset_tilings()
+void TileCoding::empty_tilings()
 {
     this->tilings = std::vector<Tiling>(this->m_tiling_count);
     for (auto& tiling : this->tilings)

@@ -8,7 +8,6 @@ MTS_NAMESPACE_BEGIN
 
 struct Tile {
     float sum = 0;
-    int entries = 0;
 
     static Float area(int y, Point2i& inner);
 };
@@ -19,7 +18,8 @@ struct GuidingMap {
     Tiling tiles;
     Point2i dims;
 
-    float mean(int pos);
+    /// Returns the weighted sum stored at the passed in position. If the position contains no value, Epsilon is returned instead.
+    float get(int pos);
 };
 
 struct MTS_EXPORT_CORE TileCoding : public DataStructure {
@@ -53,7 +53,7 @@ private:
     Float pdf(Point2& pos);
     void build_map();
     void calc_cdf();
-    void reset_tilings();
+    void empty_tilings();
 };
 
 MTS_NAMESPACE_END
