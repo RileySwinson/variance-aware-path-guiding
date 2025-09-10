@@ -8,8 +8,6 @@ void VMFM::construct(DSArguments& init_data)
     {
         Properties props;
         props.setSize("vmmFactory.numInitialComponents", init_data.vmf.components);
-        props.setFloat("vmmFactory.maxKappa", 32768.0f);
-        props.setFloat("vmmFactory.rPriorWeight", 0.2f);
         props.setBoolean("parallaxCompensation", false);
         props.setBoolean("safetyMerge", false);
 
@@ -19,8 +17,6 @@ void VMFM::construct(DSArguments& init_data)
     {
         VMMFactoryProperties vmm_native_props;
         vmm_native_props.numInitialComponents = init_data.vmf.components;
-        vmm_native_props.maxKappa = 32768.0f;
-        vmm_native_props.rPriorWeight = 0.2f;
 
         this->strategy = VMMStrategy(NativeStrategy{ VMMNativeFactory(vmm_native_props), VMM4() });
     }
@@ -37,6 +33,11 @@ void VMFM::store(std::vector<Sample>& input_samples)
 
     for (const auto& sample : input_samples)
     {
+        if (sample.pdf == 0)
+        {
+            continue;
+        }
+
         Vector3 direction(
             std::sin(sample.theta) * std::cos(sample.phi),
             std::sin(sample.theta) * std::sin(sample.phi),
@@ -44,7 +45,7 @@ void VMFM::store(std::vector<Sample>& input_samples)
         );
 
         samples.emplace_back(
-            VMMSample(Point3(), direction, sample.value, sample.pdf, Epsilon)
+            VMMSample(Point3(), direction, sample.value / sample.pdf, sample.pdf, Epsilon)
         );
     }
 

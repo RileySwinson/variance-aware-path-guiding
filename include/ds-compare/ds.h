@@ -64,7 +64,7 @@ struct DS_COMPARE DSArguments {
     };
 
     struct VMF {
-        uint32_t components = 16;
+        uint32_t components = 8;
         bool use_ruppert = true;
     };
 

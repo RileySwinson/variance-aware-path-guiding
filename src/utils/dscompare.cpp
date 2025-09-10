@@ -310,6 +310,9 @@ private:
 				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt.dir_filter), "Directional filter for splatting radiance samples.")
 				("dt-threshold,dtt", p_opt::value<Float>(&this->args.dt.threshold), "Threshold for subdividing leaf nodes (percentage).")
 				("dt-max-depth,dtd", p_opt::value<int>(&this->args.dt.max_depth), "Maximum tree depth.")
+				// VMM
+				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf.components), "Number of initial VMM components.")
+				("vmm-mode,vr", p_opt::value<bool>(&this->args.vmf.use_ruppert), "Use ruppert implementation?")
 				// TileCoding
 				("tilings,t", p_opt::value<int>(&this->args.tc.tilings), "Number of tilings.")
 				("tiles-x,tx", p_opt::value<int>(&this->args.tc.tiles_x), "Number of tiles in x direction.")
@@ -320,10 +323,7 @@ private:
 				("btc-tiles-y,bty", p_opt::value<int>(&this->args.btc.tiles_y), "Number of base tiles in y direction.")
 				("btc-max-depth,btd", p_opt::value<int>(&this->args.btc.max_depth), "Maximum tree depth.")
 				("btc-eagerness,bte", p_opt::value<int>(&this->args.btc.eagerness), "The confidence interval used to determine if a split should occur. The higher, the more eager it is to split. [0 = .9999, 5 = .95]")
-				("btc-transform,btt", p_opt::value<TCParams::Transformation>(&this->args.btc.transformation_mode), "BTC transformation mode.")
-				// VMM
-				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf.components), "Number of initial VMM components.")
-				("vmm-mode,vr", p_opt::value<bool>(&this->args.vmf.use_ruppert), "Use ruppert implementation?");
+				("btc-transform,btt", p_opt::value<TCParams::Transformation>(&this->args.btc.transformation_mode), "BTC transformation mode.");
 
 			BoostOptionsMap op_map;
 			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), op_map);
