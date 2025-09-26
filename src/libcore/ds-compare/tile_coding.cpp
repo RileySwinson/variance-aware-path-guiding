@@ -200,7 +200,7 @@ Float TileCoding::pdf(Point2& pos)
 
     int i = (index.y * x_tiles) + index.x;
     float t_mu = this->guiding_map.get(i);
-    return t_mu / (this->m_tiling_count * this->m_total_sum);
+    return t_mu / this->m_total_sum;
 }
 
 void TileCoding::build_map()
@@ -236,7 +236,7 @@ void TileCoding::build_map()
             map[i].sum += tile.sum;
         }
 
-        Float p_x = this->guiding_map.get(i) / this->tilings.size();
+        Float p_x = this->guiding_map.get(i);
         this->m_total_sum += p_x * tile_area;
     }
 }

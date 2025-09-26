@@ -313,7 +313,7 @@ private:
 				// VMM
 				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf.components), "Number of initial VMM components.")
 				("vmm-mode,vr", p_opt::value<bool>(&this->args.vmf.use_ruppert), "Use ruppert implementation?")
-				// TileCoding
+				// TCTC
 				("tilings,t", p_opt::value<int>(&this->args.tc.tilings), "Number of tilings.")
 				("tiles-x,tx", p_opt::value<int>(&this->args.tc.tiles_x), "Number of tiles in x direction.")
 				("tiles-y,ty", p_opt::value<int>(&this->args.tc.tiles_y), "Number of tiles in y direction.")
