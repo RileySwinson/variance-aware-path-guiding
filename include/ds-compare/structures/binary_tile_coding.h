@@ -25,7 +25,6 @@ enum Direction {
  * @brief Helper struct to track tile data.
  */
 struct BTTracker {
-    uint32_t index = 0;
     int depth = 0;
     Point2 x_bounds;
     Point2 y_bounds;
@@ -41,11 +40,6 @@ struct BTTracker {
         this->y_bounds = y;
     }
 
-    inline void set_index(const uint32_t index)
-    {
-        this->index = index;
-    }
-
     inline Point2 clamped(const Direction dir) const
     {
         Point2 bounds = (dir == Horizontal) ? this->x_bounds : this->y_bounds;
@@ -56,31 +50,26 @@ struct BTTracker {
     }
 };
 
+enum TileType {
+    Internal,
+    Leaf
+};
+
+struct BTBitfield {
+    uint32_t sample_count : 31;
+    TileType tile_type : 1;
+
+    BTBitfield() : sample_count(0), tile_type(Leaf) {};
+};
+
 /**
  * @brief Tracks the statistics of a tile.
  *
- * Similarly to how each tile is stored, a tiling also stores a vector of statistics objects, one per non-leaf tile.
- * Upon sample storage, the respective stats object is fetched and its statistics are updated via a 1-pass
- * Welfold algorithm.
- * 
- * The stats primarily decide two things:
- * 1) Checking if a tile should be split, by conducting a Student's 1-sample t-test
- * 2) Checking how a tile should be split, by looking at the covariances in both directions (phi, theta)
- * 
- * Keep in mind that after the final learning iteration (i.e., when the learning phase is over) the stats vector
- * gets cleared by a user-initialized postprocess() call.
+ * Upon sample storage, the statistics are updated via a 1-pass Welfold algorithm and used to determine...
+ * (a) if a tile should be split, by conducting a Student's 1-sample t-test.
+ * (b) how a tile should be split, by looking at the covariances in both directions (phi, theta).
  */
-struct BTStatistics {
-    /// Correctly updates all required statistics.
-    void update(const Sample& sample, const float tile_sum);
-
-    /// Returns the split direction of a leaf tile by calculating the absolute covariance in both x (phi) and y (theta) direction.
-    Direction split_direction(const BTTracker& tracker) const;
-
-    /// Determines if a leaf tile should be split by performing a one-sample t-test, trying to see if we can reject our null hypothesis that the MD is significantly different from 0.
-    bool should_split() const;
-
-private:
+struct LeafNode {
     // The covariance in x and y direction to determine how to split.
     Point2f cov = Point2f(0.0f);
     // Sample mean required for covariance updates.
@@ -89,38 +78,78 @@ private:
     float m2 = 0.0f;
     // Sum of absolute differences used for MD metric.
     float diff_sum = 0.0f;
-    // Number of samples that arrived in a tile.
-    uint32_t sample_count = 0;
+};
 
-    /// Returns the mean deviation of the current leaf.
-    float meandev() const;
-
-    /// Returns the variance *of the mean deviations* of the current leaf.
-    float var() const;
+/**
+ * @brief Stores relevant data about child tiles.
+ */
+struct InternalNode {
+    // The total radiance in each child (including sub-children).
+    std::array<float, 2> power = { 0.0f, 0.0f };
+    // The indices of the children. Use in combination with the tiles vector.
+    std::array<uint32_t, 2> children = { UINT32_MAX, UINT32_MAX };
+    // How the children are positioned.
+    Direction split_direction = Horizontal;
 };
 
 /**
  * @brief Tile in a tiling.
  * 
  * The most low-level entity in the 'Binary Tile Coding' data structure, storing radiance information
- * in a specific area of the sample space (and beyond). Can be both leaf and non-leaf (node), determined
- * by the is_leaf() method that returns true if both children are set to valid indices.
+ * in a specific area of the sample space (and beyond). Can be both leaf and non-leaf ("internal").
+ * Normally, a binary tile is initialized as a leaf and collects statistics about samples falling into
+ * its region until the should_split() method determines that the data implicates that the tile should
+ * be split, after which it turns into an internal node.
+ * 
  * To access a child, use the tiles vector in combination with the child indices.
  */
 struct BinaryTile {
+    // Total radiance that arrived in this tile.
     float sum = 0.0f;
-    std::array<float, 2> power = { 0.0f, 0.0f };
-    std::array<uint32_t, 2> children = { UINT32_MAX, UINT32_MAX };
-    Direction split_direction = Horizontal;
+    // Sample count + tile flag
+    BTBitfield data;
 
-    /// Returns whether the current tile is a leaf.
-    bool is_leaf() const;
+    union {
+        InternalNode internal;
+        LeafNode leaf;
+    };
+
+    BinaryTile(const TileType type)
+    {
+        this->data = BTBitfield();
+        if (type == TileType::Internal)
+        {
+            this->internal = InternalNode();
+        }
+        else
+        {
+            this->leaf = LeafNode();
+        }
+    }
+
+    /// Correctly updates all required statistics & total radiance.
+    inline void update(const Sample& sample);
+
+    /// Returns the split direction of a leaf tile by calculating the absolute covariance in both x (phi) and y (theta) direction.
+    Direction split_direction(const BTTracker& tracker) const;
+
+    /// Determines if a leaf tile should be split by performing a one-sample t-test, trying to see if we can reject our null hypothesis that the MD is significantly different from 0.
+    bool should_split() const;
+
+    /// Returns the mean deviation of the current leaf.
+    float meandev() const;
+
+    /// Returns the variance *of the mean deviations* of the current leaf.
+    float var() const;
 
     /// Returns the normalized area of this tile.
     float area(const BTTracker& tracker);
 
-    /// Update the weighted sum stored in this tile.
-    void update(const Sample& sample);
+    /// Returns whether the current tile is a leaf.
+    inline bool is_leaf() const;
+
+private:
+    BinaryTile() = default;
 };
 
 /**
@@ -133,10 +162,9 @@ struct BinaryTile {
  * however initialized with x = y = 4, it will contain 16 b-trees, as each base tile acts as its own tree.
  */
 struct BinaryTiling {
-    std::vector<BinaryTile> tiles;
-    std::vector<BTStatistics> stats;
     Point2 x_bounds;
     Point2 y_bounds;
+    std::vector<BinaryTile> tiles;
 
     /* Information used for marginal and conditional sampling (CDF-based sampling) */
     float total_power = 0.0f;
@@ -156,10 +184,10 @@ struct BinaryTiling {
     float recurse_statistics(BinaryTile& curr_tile, BTTracker tracker, float& leaf_sum);
 
     /// Utility function to calculate the planar (!) boundaries of a base tile.
-    std::pair<Point2, Point2> base_tile_bounds(int x, int y) const;
+    inline std::pair<Point2, Point2> base_tile_bounds(int x, int y) const;
 
     /// Utility function to obtain the 2D index of a base tile.
-    Point2i base_tile_pos(const Point2& pos);
+    inline Point2i base_tile_pos(const Point2& pos);
 
     /// Checks if the children of the passed in tile are both empty, i.e., their weighted sum equals 0.
     inline bool children_empty(BinaryTile& tile) const;
