@@ -74,8 +74,6 @@ bool BinaryTile::should_split() const
     float t_own = meandev() / std_err;
     float t_req = TTable::fetch(BinaryTileCoding::CI, sample_count - 1);
 
-    if (t_own > t_req) std::cout << sample_count << ", " << t_own << " > " << t_req << std::endl;
-
     return (t_own > t_req);
 }
 
@@ -190,7 +188,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, BTTracker& tracker, bool 
     return *curr_tile;
 }
 
-void BinaryTiling::insert(const Sample& sample)
+void BinaryTiling::insert(const Sample& sample, uint32_t& split_count)
 {
     // Find initial tile
     BTTracker tracker;
@@ -199,9 +197,12 @@ void BinaryTiling::insert(const Sample& sample)
 
     // Store value & update covariance
     tile.update(sample);
-    
+
     // Only split if necessary
-    if ((tracker.depth < BinaryTileCoding::MAX_DEPTH) && tile.should_split())
+    bool below_max_depth = (tracker.depth < BinaryTileCoding::MAX_DEPTH);
+    bool below_max_splits = (split_count < BinaryTileCoding::MAX_SPLITS);
+
+    if (below_max_depth && below_max_splits && tile.should_split())
     {
         uint32_t tiles = this->tiles.size();
 
@@ -212,11 +213,11 @@ void BinaryTiling::insert(const Sample& sample)
         tile.internal = parent;
         tile.data.tile_type = TileType::Internal;
 
-        std::cout << tiles << "\n";
-
         BinaryTile child(Leaf);
         this->tiles.push_back(child);
         this->tiles.push_back(child);
+
+        split_count++;
     }
 }
 
@@ -342,8 +343,9 @@ T BinaryTiling::transform(T value, bool inverse, const std::function<T(T)>& f)
 
 RandomGen BinaryTileCoding::random = RandomGen();
 Point2i BinaryTileCoding::TILE_DIMS = Point2i(1, 1);
-int BinaryTileCoding::MAX_DEPTH = 10;
-TTable::CI BinaryTileCoding::CI = TTable::CI::P950;
+uint32_t BinaryTileCoding::MAX_DEPTH = 10;
+uint32_t BinaryTileCoding::MAX_SPLITS = UINT32_MAX;
+TTable::CI BinaryTileCoding::CI = TTable::CI::P999;
 TCParams::Transformation BinaryTileCoding::TRANSFORM_MODE = TCParams::Transformation::Spherical;
 
 void BinaryTileCoding::construct(DSArguments& init_data)
@@ -354,6 +356,7 @@ void BinaryTileCoding::construct(DSArguments& init_data)
 
     BinaryTileCoding::TILE_DIMS = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
     BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
+    BinaryTileCoding::MAX_SPLITS = init_data.btc.max_splits;
     BinaryTileCoding::CI = static_cast<TTable::CI>(init_data.btc.eagerness);
     BinaryTileCoding::TRANSFORM_MODE = init_data.btc.transformation_mode;
 
@@ -407,7 +410,7 @@ void BinaryTileCoding::store(std::vector<Sample>& samples)
     auto insert = [&](BinaryTiling& tiling) {
         for (auto& sample : samples)
         {
-            tiling.insert(sample);
+            tiling.insert(sample, split_count);
         }
     };
     
@@ -430,7 +433,7 @@ void BinaryTileCoding::store(std::vector<Sample>& samples)
     {
         for (auto& tiling : this->tilings)
         {
-            tiling.insert(sample);
+            tiling.insert(sample, split_count);
         }
     }
 #endif
@@ -618,6 +621,8 @@ Float BinaryTileCoding::eval(Point2& pos)
 void BinaryTileCoding::wipe()
 {
     this->leaf_sum = 0.0f;
+    this->split_count = 0;
+
     for (auto& tiling : this->tilings)
     {
         tiling = BinaryTiling();

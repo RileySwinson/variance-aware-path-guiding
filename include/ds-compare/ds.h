@@ -78,7 +78,8 @@ struct DS_COMPARE DSArguments {
         int tilings = 4;
         int tiles_x = 1;
         int tiles_y = 1;
-        int max_depth = 10;
+        uint32_t max_depth = 10;
+        uint32_t max_splits = UINT32_MAX;
         int eagerness = 0;
         TCParams::Transformation transformation_mode = TCParams::Transformation::Spherical;
     };

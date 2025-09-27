@@ -165,6 +165,7 @@ struct BinaryTiling {
     Point2 x_bounds;
     Point2 y_bounds;
     std::vector<BinaryTile> tiles;
+    uint32_t split_count = 0;
 
     /* Information used for marginal and conditional sampling (CDF-based sampling) */
     float total_power = 0.0f;
@@ -178,7 +179,7 @@ struct BinaryTiling {
     BinaryTile& find_tile(const Point2& pos, BTTracker& counter, bool find_empty = true);
 
     /// Stores a sample in a binary tiling.
-    void insert(const Sample& sample);
+    void insert(const Sample& sample, uint32_t& split_count);
 
     /// Utility function to recursively add the power (weighted sum * area) from all children to their parent tiles.
     float recurse_statistics(BinaryTile& curr_tile, BTTracker tracker, float& leaf_sum);
@@ -203,10 +204,12 @@ struct BinaryTiling {
 struct MTS_EXPORT_CORE BinaryTileCoding : public DataStructure {
     static TTable::CI CI;
     static TCParams::Transformation TRANSFORM_MODE;
-    static int MAX_DEPTH;
+    static uint32_t MAX_DEPTH;
+    static uint32_t MAX_SPLITS;
     static Point2i TILE_DIMS;
 
     float leaf_sum = 0.0f;
+    uint32_t split_count = 0;
 
     ~BinaryTileCoding() { }
 

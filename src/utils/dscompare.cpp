@@ -321,7 +321,8 @@ private:
 				("btc-tilings,bt", p_opt::value<int>(&this->args.btc.tilings), "Number of tilings.")
 				("btc-tiles-x,btx", p_opt::value<int>(&this->args.btc.tiles_x), "Number of base tiles in x direction.")
 				("btc-tiles-y,bty", p_opt::value<int>(&this->args.btc.tiles_y), "Number of base tiles in y direction.")
-				("btc-max-depth,btd", p_opt::value<int>(&this->args.btc.max_depth), "Maximum tree depth.")
+				("btc-max-depth,btd", p_opt::value<uint32_t>(&this->args.btc.max_depth), "Maximum tree depth.")
+				("btc-max-splits,bts", p_opt::value<uint32_t>(&this->args.btc.max_splits), "Maximum total splits.")
 				("btc-eagerness,bte", p_opt::value<int>(&this->args.btc.eagerness), "The confidence interval used to determine if a split should occur. The higher, the more eager it is to split. [0 = .9999, 5 = .95]")
 				("btc-transform,btt", p_opt::value<TCParams::Transformation>(&this->args.btc.transformation_mode), "BTC transformation mode.");
 
