@@ -2,13 +2,12 @@
 
 MTS_NAMESPACE_BEGIN
 
-Float Tile::area(int y, Point2i& inner)
+Float Tile::area(const Point2& y_pos_norm, const int map_tiles_x)
 {
-    Float theta_step = M_PI / inner.y;
-    Float d_phi = (2 * M_PI) / inner.x;
-    Float d_theta = std::abs(std::cos(y * theta_step) - std::cos((y + 1) * theta_step));
+    Float d_theta = std::cos(M_PI * y_pos_norm.x) - std::cos(M_PI * y_pos_norm.y);
+    Float d_phi = (2 * M_PI) / map_tiles_x;
     
-    return (d_phi * d_theta);
+    return d_theta * d_phi;
 }
 
 float GuidingMap::get(int pos)
@@ -30,6 +29,7 @@ void TileCoding::construct(DSArguments& init_data)
     this->m_tiling_dims = Point2i(init_data.tc.tiles_x, init_data.tc.tiles_y);
     this->m_mode = init_data.comparer.mode;
     this->m_tiling_count = init_data.tc.tilings;
+    this->m_transform_mode = init_data.tc.transformation_mode;
 }
 
 void TileCoding::preprocess()
@@ -65,6 +65,7 @@ void TileCoding::store(std::vector<Sample>& samples)
     for (const auto& sample : samples)
     {
         Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
+        uv.y = transform(uv.y, true);
 
         for (int ti = 0; ti < this->m_tiling_count; ++ti)
         {
@@ -128,8 +129,8 @@ Sample TileCoding::sample(Point2& sample)
 
     Point2 x_bounds(x / (Float) x_len, (x + 1) / (Float) x_len);
     Point2 y_bounds(y / (Float) y_len, (y + 1) / (Float) y_len);
-    y_bounds.x = std::cos(y_bounds.x * M_PI);
-    y_bounds.y = std::cos(y_bounds.y * M_PI);
+    y_bounds.x = std::cos(transform(y_bounds.x) * M_PI);
+    y_bounds.y = std::cos(transform(y_bounds.y) * M_PI);
 
     Point2 uv(
         x_bounds.x + rng.x * (x_bounds.y - x_bounds.x),
@@ -194,7 +195,13 @@ Float TileCoding::pdf(Point2& pos)
     int x_tiles = x - (this->m_tiling_count - 1);
     int y_tiles = y - (this->m_tiling_count - 1);
 
-    Point2i index(pos.x * x_tiles, pos.y * y_tiles);
+    Point2 warped_pos(pos.x, transform(pos.y, true));
+
+    Point2i index(
+        warped_pos.x * x_tiles,
+        warped_pos.y * y_tiles
+    );
+
     if (index.x == x_tiles) index.x--;
     if (index.y == y_tiles) index.y--;
 
@@ -221,7 +228,12 @@ void TileCoding::build_map()
         // Calculate area to consider spherical trafo!
         if (pos_x == 0)
         {
-            tile_area = Tile::area(pos_y, dims);
+            Point2 y_bounds_norm(
+                transform(pos_y / (Float) dims.y),
+                transform((pos_y + 1) / (Float) dims.y)
+            );
+
+            tile_area = Tile::area(y_bounds_norm, dims.x);
         }
 
         const Point2i base(0, this->tilings.size() - 1);
@@ -274,6 +286,13 @@ void TileCoding::empty_tilings()
     {
         tiling.resize(this->m_tiling_dims.x * this->m_tiling_dims.y);
     }
+}
+
+template <typename T>
+T TileCoding::transform(T value, bool inverse, const std::function<T(T)>& f)
+{
+    if (f) return f(value);
+    return TCParams::f<T>(this->m_transform_mode, inverse)(value);
 }
 
 MTS_NAMESPACE_END

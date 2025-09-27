@@ -72,6 +72,7 @@ struct DS_COMPARE DSArguments {
         int tilings = 4;
         int tiles_x = 16;
         int tiles_y = 16;
+        TCParams::Transformation transformation_mode = TCParams::Transformation::Spherical;
     };
 
     struct BTC {

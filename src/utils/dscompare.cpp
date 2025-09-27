@@ -313,10 +313,11 @@ private:
 				// VMM
 				("vmm-components,vc", p_opt::value<uint32_t>(&this->args.vmf.components), "Number of initial VMM components.")
 				("vmm-mode,vr", p_opt::value<bool>(&this->args.vmf.use_ruppert), "Use ruppert implementation?")
-				// TCTC
+				// Tile Coding
 				("tilings,t", p_opt::value<int>(&this->args.tc.tilings), "Number of tilings.")
 				("tiles-x,tx", p_opt::value<int>(&this->args.tc.tiles_x), "Number of tiles in x direction.")
 				("tiles-y,ty", p_opt::value<int>(&this->args.tc.tiles_y), "Number of tiles in y direction.")
+				("tc-transform,tt", p_opt::value<TCParams::Transformation>(&this->args.tc.transformation_mode), "TC transformation mode.")
 				// Binary Tile Coding
 				("btc-tilings,bt", p_opt::value<int>(&this->args.btc.tilings), "Number of tilings.")
 				("btc-tiles-x,btx", p_opt::value<int>(&this->args.btc.tiles_x), "Number of base tiles in x direction.")

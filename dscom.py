@@ -220,13 +220,15 @@ settings = {
         'Tile Coding': {
             'tilings': Range('t', start=1, end=8),
             'tiles_x': Range('tx', start=2, end=32, func=lambda x: x * 2),
-            'tiles_y': Range('ty', start=2, end=32, func=lambda x: x * 2)
+            'tiles_y': Range('ty', start=2, end=32, func=lambda x: x * 2),
+            'transformation': Sequence('tt', ['planar', 'spherical', 'cosine'])
         },
         'Binary Tile Coding': {
             'tilings': Range('bt', start=1, end=6),
             'tiles_x': Range('btx', start=1, end=8),
             'tiles_y': Range('bty', start=1, end=8),
             'max_depth': Range('btd', start=1, end=12),
+            'max_splits': Value('bts', -1),
             'eagerness': Range('bte', start=0, end=5, func=lambda x: x + 1),
             'transformation': Sequence('btt', ['planar', 'spherical', 'cosine'])
         }

@@ -9,7 +9,7 @@ MTS_NAMESPACE_BEGIN
 struct Tile {
     float sum = 0;
 
-    static Float area(int y, Point2i& inner);
+    static Float area(const Point2& y_pos_norm, const int map_tiles_x);
 };
 
 typedef std::vector<Tile> Tiling;
@@ -43,6 +43,7 @@ private:
     int m_tiling_count = 4;
     Point2i m_tiling_dims; // x = width, y = height
     Sample::Mode m_mode;
+    TCParams::Transformation m_transform_mode;
     
     Float m_integral = 0;
     std::vector<Float> m_row_avgs;
@@ -54,6 +55,9 @@ private:
     void build_map();
     void calc_cdf();
     void empty_tilings();
+
+    template <typename T>
+    T transform(T value, bool inverse = false, const std::function<T(T)>& f = nullptr);
 };
 
 MTS_NAMESPACE_END
