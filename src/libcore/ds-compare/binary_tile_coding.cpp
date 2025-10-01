@@ -388,7 +388,7 @@ void BinaryTileCoding::preprocess()
     Float overhead = 0.0;
     if (num_tilings > 1)
     {
-        overhead = 1.0 / num_tilings;
+        overhead = 1.0 / (num_tilings * (num_tilings - 1));
     }
 
     // Store start and end thresholds in each tiling
