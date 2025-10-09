@@ -165,7 +165,6 @@ struct BinaryTiling {
     Point2 x_bounds;
     Point2 y_bounds;
     std::vector<BinaryTile> tiles;
-    uint32_t split_count = 0;
 
     /* Information used for marginal and conditional sampling (CDF-based sampling) */
     float total_power = 0.0f;
