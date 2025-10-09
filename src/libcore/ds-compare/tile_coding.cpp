@@ -51,15 +51,14 @@ void TileCoding::store(std::vector<Sample>& samples)
     const auto dims_y = this->m_tiling_dims.y;
 
     // Calculate offset
-    Float tile_width = 1.0 / dims_x;
-    Float tile_height = 1.0 / dims_y;
+    int total_shifts = this->m_tiling_count - 1;
+    Point2 shift(
+        1.0 / (dims_x * this->m_tiling_count - total_shifts),
+        1.0 / (dims_y * this->m_tiling_count - total_shifts)
+    );
 
-    Float overhead = 1.0 / this->m_tiling_count;
-    if (this->m_tiling_count == 1) overhead = 0; // No offset shenanigans if we only have a single tile. Just span it over the whole thing.
-
-    Point2 shift(tile_width * overhead, tile_height * overhead);
-    Float x_len = 1 + ((this->m_tiling_count - 1) * shift.x);
-    Float y_len = 1 + ((this->m_tiling_count - 1) * shift.y);
+    Float x_len = 1 + (total_shifts * shift.x);
+    Float y_len = 1 + (total_shifts * shift.y);
 
     // Store samples by mapping (sample range & offset) -> [0, 1) -> [0, dim(axis))
     for (const auto& sample : samples)
@@ -104,14 +103,14 @@ void TileCoding::postprocess()
 
 Sample TileCoding::sample(Point2& sample)
 {
-    int total_overhead = this->m_tiling_count - 1;
-    int x_len = (this->m_tiling_dims.x * this->m_tiling_count) - total_overhead;
-    int y_len = this->m_row_avgs.size();
+    int total_shifts = this->m_tiling_count - 1;
+    int x_len = (this->m_tiling_dims.x * this->m_tiling_count) - total_shifts;
+    int y_len = this->m_cdf.size();
 
     Float sum_y = 0; int y = 0;
     for (y = 0; y < y_len; ++y)
     {
-        sum_y += this->m_row_avgs[y];
+        sum_y += this->m_cdf[y];
         if (sum_y / (y_len * this->m_integral) >= sample.y) break;
     }
     if (y == y_len) y -= 1;
@@ -121,7 +120,7 @@ Sample TileCoding::sample(Point2& sample)
     {
         int i = (y * x_len) + x;
         sum_x += this->guiding_map.get(i);
-        if (sum_x / (x_len * this->m_total_sum * this->m_row_avgs[y]) >= sample.x) break;
+        if (sum_x / (x_len * this->m_total_sum * this->m_cdf[y]) >= sample.x) break;
     }
     if (x == x_len) x -= 1;
 
@@ -157,7 +156,7 @@ Float TileCoding::eval(Point2& pos)
 void TileCoding::wipe()
 {
     this->guiding_map.tiles.clear();
-    this->m_row_avgs.clear();
+    this->m_cdf.clear();
     this->m_integral = 0;
     this->m_total_sum = 0;
 }
@@ -219,7 +218,7 @@ void TileCoding::build_map()
     const int map_size = dims.x * dims.y;
 
     // Track the total sum for normalization
-    Float tile_area = 0;
+    Float tile_area = 0.0;
     for (int i = 0; i < map_size; ++i)
     {
         const int pos_x = i % dims.x;
@@ -228,15 +227,21 @@ void TileCoding::build_map()
         // Calculate area to consider spherical trafo!
         if (pos_x == 0)
         {
-            Point2 y_bounds_norm(
-                transform(pos_y / (Float) dims.y),
-                transform((pos_y + 1) / (Float) dims.y)
-            );
+            if (this->m_transform_mode == TCParams::Transformation::Spherical)
+            {
+                tile_area = (4 * M_PI) / map_size;
+            }
+            else
+            {
+                Point2 y_bounds_norm(
+                    transform(pos_y / (Float) dims.y),
+                    transform((pos_y + 1) / (Float) dims.y)
+                );
 
-            tile_area = Tile::area(y_bounds_norm, dims.x);
+                tile_area = Tile::area(y_bounds_norm, dims.x);
+            }
         }
 
-        const Point2i base(0, this->tilings.size() - 1);
         for (size_t t_i = 0; t_i < this->tilings.size(); ++t_i)
         {
             Tiling& tiling = this->tilings[t_i];
@@ -257,8 +262,7 @@ void TileCoding::calc_cdf()
 {
     const Point2i dims = this->guiding_map.dims;
 
-    /* Normalize & Precompute means */
-    this->m_row_avgs = std::vector<Float>(dims.y);
+    this->m_cdf = std::vector<Float>(dims.y);
     this->m_integral = 0.0;
 
     float total_pdf_sum = 0.0f;
@@ -273,7 +277,7 @@ void TileCoding::calc_cdf()
         }
 
         total_pdf_sum += row_pdf_sum;
-        this->m_row_avgs[y] = row_pdf_sum / dims.x;
+        this->m_cdf[y] = row_pdf_sum / dims.x;
     }
 
     this->m_integral = total_pdf_sum / (dims.x * dims.y);

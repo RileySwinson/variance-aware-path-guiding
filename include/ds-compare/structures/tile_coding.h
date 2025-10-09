@@ -46,7 +46,7 @@ private:
     TCParams::Transformation m_transform_mode;
     
     Float m_integral = 0;
-    std::vector<Float> m_row_avgs;
+    std::vector<Float> m_cdf;
     Float m_total_sum = 0;
 
     RandomGen random;
