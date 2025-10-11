@@ -70,8 +70,8 @@ struct DS_COMPARE DSArguments {
 
     struct TC {
         int tilings = 4;
-        int tiles_x = 32;
-        int tiles_y = 16;
+        int tiles_x = 16;
+        int tiles_y = 8;
         TCParams::Transformation transformation_mode = TCParams::Transformation::Spherical;
     };
 
