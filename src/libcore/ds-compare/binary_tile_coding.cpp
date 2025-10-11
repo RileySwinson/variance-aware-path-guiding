@@ -343,6 +343,7 @@ T BinaryTiling::transform(T value, bool inverse, const std::function<T(T)>& f)
 
 RandomGen BinaryTileCoding::random = RandomGen();
 Point2i BinaryTileCoding::TILE_DIMS = Point2i(1, 1);
+float BinaryTileCoding::TILING_EXCESS = 0.2f;
 uint32_t BinaryTileCoding::MAX_DEPTH = 10;
 uint32_t BinaryTileCoding::MAX_SPLITS = UINT32_MAX;
 TTable::CI BinaryTileCoding::CI = TTable::CI::P999;
@@ -355,6 +356,7 @@ void BinaryTileCoding::construct(DSArguments& init_data)
     SAssert(init_data.btc.max_depth > 0);
 
     BinaryTileCoding::TILE_DIMS = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
+    BinaryTileCoding::TILING_EXCESS = init_data.btc.excess;
     BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
     BinaryTileCoding::MAX_SPLITS = init_data.btc.max_splits;
     BinaryTileCoding::CI = static_cast<TTable::CI>(init_data.btc.eagerness);
@@ -383,21 +385,21 @@ void BinaryTileCoding::preprocess()
     }
 
     // Calculate tiling offset
-    auto num_tilings = this->tilings.size();
+    auto tiling_count = this->tilings.size();
 
-    Float overhead = 0.0;
-    if (num_tilings > 1)
+    Float shift = 0.0;
+    if (tiling_count > 1)
     {
-        overhead = 1.0 / (num_tilings * (num_tilings - 1));
+        shift = TILING_EXCESS / (tiling_count - 1);
     }
 
     // Store start and end thresholds in each tiling
-    for (size_t i = 0; i < num_tilings; ++i)
+    for (size_t i = 0; i < tiling_count; ++i)
     {
         BinaryTiling& tiling = this->tilings[i];
 
-        Point2 x_range(0 - (i * overhead), 1 + ((num_tilings - 1 - i) * overhead));
-        Point2 y_range(0 - ((num_tilings - 1 - i) * overhead), 1 + (i * overhead));
+        Point2 x_range(0 - (i * shift), 1 + ((tiling_count - 1 - i) * shift)); 
+        Point2 y_range(0 - ((tiling_count - 1 - i) * shift), 1 + (i * shift));
 
         tiling.x_bounds = x_range;
         tiling.y_bounds = y_range;

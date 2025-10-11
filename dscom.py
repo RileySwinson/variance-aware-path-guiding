@@ -227,9 +227,10 @@ settings = {
             'tilings': Range('bt', start=1, end=6),
             'tiles_x': Range('btx', start=1, end=8),
             'tiles_y': Range('bty', start=1, end=8),
-            'max_depth': Range('btd', start=1, end=12),
-            'max_splits': Value('bts', -1),
-            'eagerness': Range('bte', start=0, end=5, func=lambda x: x + 1),
+            'max_depth': Range('btmd', start=1, end=12),
+            'max_splits': Value('btms', -1),
+            'eagerness': Range('btea', start=0, end=5, func=lambda x: x + 1),
+            'excess': Value('btex', 0.2),
             'transformation': Sequence('btt', ['planar', 'spherical', 'cosine'])
         }
     }
