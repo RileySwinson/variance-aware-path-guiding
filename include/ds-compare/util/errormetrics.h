@@ -79,23 +79,23 @@ struct DS_COMPARE ErrorMetrics {
 		return err;
 	}
 
-	template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-	static float MD(const std::vector<T>& reference, const Float gt_mean)
+	static float MD(const std::vector<Sample>& reference, const Float gt_mean)
 	{
 		std::size_t sample_count = reference.size();
 		SAssert(sample_count > 0);
 
 		float sum = 0.0f;
-		for (const auto& value : reference)
+		for (const auto& sample : reference)
 		{
+			auto value = sample.value / sample.pdf;
 			sum += std::abs(value - gt_mean);
 		}
 
 		// Uncomment for estimator mean vs. gt mean comparison in console
 		/*Float mean = 0.0;
-		for (const auto& observation : reference)
+		for (const auto& sample : reference)
 		{
-			mean += observation;
+			mean += sample.value / sample.pdf;
 		}
 		mean /= reference.size();
 

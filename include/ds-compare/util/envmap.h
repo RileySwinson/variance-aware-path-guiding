@@ -21,6 +21,7 @@ struct DS_COMPARE EnvironmentMap {
 	enum VisualizationMode {
 		Flat,
 		Mono,
+		Density,
 		Heatmap
 	};
 
@@ -42,6 +43,11 @@ struct DS_COMPARE EnvironmentMap {
 		if (token == "mono")
 		{
 			mode = EnvironmentMap::VisualizationMode::Mono;
+			return in;
+		}
+		if (token == "density")
+		{
+			mode = EnvironmentMap::VisualizationMode::Density;
 			return in;
 		}
 
@@ -229,6 +235,7 @@ struct DS_COMPARE EnvironmentMap {
 		{
 			case VisualizationMode::Flat:		return vis_flat(data);
 			case VisualizationMode::Mono:		return vis_mono(data);
+			case VisualizationMode::Density:	return vis_density(data);
 			case VisualizationMode::Heatmap:	return vis_heatmap(data);
 		}
 
@@ -405,6 +412,38 @@ private:
 			float value = s_count / (float) max_samples;
 
 			Point3 color(value, value, value);
+			set_pixel_rgb(curr_pos, color);
+		}
+
+		return *this;
+	}
+
+	EnvironmentMap& vis_density(SampleStorage& data)
+	{
+		int size_x = this->bitmap->getWidth();
+
+		for (size_t px = 0; px < this->bitmap->getPixelCount(); ++px)
+		{
+			int x = px % size_x;
+			int y = px / size_x;
+			Point2i curr_pos(x, y);
+
+			const auto& samples = data.obtain(curr_pos);
+			size_t s_count = samples.size();
+
+			if (s_count == 0)
+			{
+				continue;
+			}
+
+			float p_x = 0.0f;
+			for (const auto& sample : samples)
+			{
+				p_x += sample.pdf;
+			}
+			p_x = std::min(p_x / s_count, 1.0f);
+
+			Point3 color(255 - 255 * (1 - p_x), 0, 255 * (1 - p_x));
 			set_pixel_rgb(curr_pos, color);
 		}
 

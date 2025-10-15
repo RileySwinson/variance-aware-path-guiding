@@ -102,20 +102,20 @@ struct DS_COMPARE Sample {
 struct SampleStorage {
 	SampleStorage(const Vector2i& map_dims) : map_dims(map_dims) { }
 
-	void store(const Point2i& im_coords, Float value)
+	void store(const Point2i& im_coords, Sample sample)
 	{
 		int pos = (im_coords.y * this->map_dims.x) + im_coords.x;
-		this->umap_samples[pos].push_back(value);
+		this->umap_samples[pos].push_back(sample);
 	}
 
-	std::vector<mitsuba::Float> obtain(const Point2i& im_coords)
+	std::vector<Sample> obtain(const Point2i& im_coords)
 	{
 		int pos = (im_coords.y * this->map_dims.x) + im_coords.x;
 		
 		auto it = this->umap_samples.find(pos);
 		if (it == this->umap_samples.end())
 		{
-			return std::vector<Float>();
+			return std::vector<Sample>();
 		}
 
 		return it->second;
@@ -132,9 +132,9 @@ struct SampleStorage {
 		)->second.size();
 	}
 
-	std::vector<Float> to_flat(std::size_t init_size = 0) const
+	std::vector<Sample> to_flat(std::size_t init_size = 0) const
 	{
-		std::vector<Float> flat_vector;
+		std::vector<Sample> flat_vector;
 		flat_vector.reserve(init_size);
 
 		for (const auto& observation : this->umap_samples)
@@ -169,7 +169,7 @@ struct SampleStorage {
 	}
 
 private:
-	std::unordered_map<uint32_t, std::vector<mitsuba::Float>> umap_samples;
+	std::unordered_map<uint32_t, std::vector<Sample>> umap_samples;
 	const Vector2i map_dims;
 };
 
