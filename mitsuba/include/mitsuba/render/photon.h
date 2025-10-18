@@ -127,11 +127,11 @@ protected:
 	/// @{ \name Precomputed lookup tables
 	// ======================================================================
 
-	static Float m_cosTheta[256];
-	static Float m_sinTheta[256];
-	static Float m_cosPhi[256];
-	static Float m_sinPhi[256];
-	static Float m_expTable[256];
+	static float m_cosTheta[256];
+	static float m_sinTheta[256];
+	static float m_cosPhi[256];
+	static float m_sinPhi[256];
+	static float m_expTable[256];
 	static bool m_precompTableReady;
 
 	/// @}

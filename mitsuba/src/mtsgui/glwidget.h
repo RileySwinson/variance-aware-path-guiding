@@ -99,13 +99,13 @@ public slots:
 	void setShadowMapResolution(int shadowMapResolution);
 	void setPreviewMethod(EPreviewMethod method);
 	void setToneMappingMethod(EToneMappingMethod method);
-	void setClamping(Float clamping);
-	void setGamma(bool srgb, Float gamma);
-	void setReinhardKey(Float value);
-	void setReinhardBurn(Float value);
+	void setClamping(float clamping);
+	void setGamma(bool srgb, float gamma);
+	void setReinhardKey(float value);
+	void setReinhardBurn(float value);
 	void setDiffuseSources(bool value);
 	void setDiffuseReceivers(bool value);
-	void setExposure(Float exposure);
+	void setExposure(float exposure);
 	void onException(const QString &what);
 	void onScroll();
 
@@ -126,7 +126,7 @@ protected:
 	void oglRenderKDTree(const KDTreeBase<AABB> *kdtree);
 	Point2i upperLeft(bool flipY = false) const;
 	void reveal(const AABB &aabb);
-	Float autoFocus() const;
+	float autoFocus() const;
 	bool askReallyCancelRendering();
 
 	inline ProjectiveCamera *getProjectiveCamera() {

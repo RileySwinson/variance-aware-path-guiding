@@ -85,8 +85,8 @@ public:
 			m_permutations2D[i] = new uint32_t[m_sampleCount];
 		}
 
-		m_invResolution = 1 / (Float) m_resolution;
-		m_invResolutionSquare = 1 / (Float) m_sampleCount;
+		m_invResolution = 1 / (float) m_resolution;
+		m_invResolutionSquare = 1 / (float) m_sampleCount;
 		m_random = new Random();
 	}
 
@@ -158,7 +158,7 @@ public:
 		for (size_t i=0; i<m_req1D.size(); i++)
 			latinHypercube(m_random, m_sampleArrays1D[i], m_req1D[i] * m_sampleCount, 1);
 		for (size_t i=0; i<m_req2D.size(); i++)
-			latinHypercube(m_random, reinterpret_cast<Float *>(m_sampleArrays2D[i]),
+			latinHypercube(m_random, reinterpret_cast<float *>(m_sampleArrays2D[i]),
 				m_req2D[i] * m_sampleCount, 2);
 
 		m_sampleIndex = 0;
@@ -178,13 +178,13 @@ public:
 		m_dimension1DArray = m_dimension2DArray = 0;
 	}
 
-	Float next1D() {
+	float next1D() {
 		Assert(m_sampleIndex < m_sampleCount);
 		if (m_dimension1D < m_maxDimension) {
 			int k = m_permutations1D[m_dimension1D++][m_sampleIndex];
-			return (k + m_random->nextFloat()) * m_invResolutionSquare;
+			return (k + m_random->nextfloat()) * m_invResolutionSquare;
 		} else {
-			return m_random->nextFloat();
+			return m_random->nextfloat();
 		}
 	}
 
@@ -195,13 +195,13 @@ public:
 			int x = k % m_resolution;
 			int y = k / m_resolution;
 			return Point2(
-				(x + m_random->nextFloat()) * m_invResolution,
-				(y + m_random->nextFloat()) * m_invResolution
+				(x + m_random->nextfloat()) * m_invResolution,
+				(y + m_random->nextfloat()) * m_invResolution
 			);
 		} else {
 			return Point2(
-				m_random->nextFloat(),
-				m_random->nextFloat()
+				m_random->nextfloat(),
+				m_random->nextfloat()
 			);
 		}
 	}
@@ -223,7 +223,7 @@ private:
 	ref<Random> m_random;
 	int m_resolution;
 	int m_maxDimension;
-	Float m_invResolution, m_invResolutionSquare;
+	float m_invResolution, m_invResolutionSquare;
 	uint32_t **m_permutations1D, **m_permutations2D;
 	int m_dimension1D, m_dimension2D;
 };

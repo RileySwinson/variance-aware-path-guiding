@@ -265,7 +265,7 @@ public:
 	inline Point2 nextSample2D();
 
 	/// Retrieve a 1D sample
-	inline Float nextSample1D();
+	inline float nextSample1D();
 
 	/// Return a string representation
 	std::string toString() const;
@@ -292,13 +292,13 @@ public:
 	Intersection its;
 
 	/// Opacity value of the associated pixel (*)
-	Float alpha;
+	float alpha;
 
 	/**
 	 * Ray distance to the first surface interaction
 	 * (if requested by the query type EDistance) (*)
 	 */
-	Float dist;
+	float dist;
 
 	/**
 	 * Internal flag, which can be used to pass additional information

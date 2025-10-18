@@ -40,7 +40,7 @@ public:
 	 */
 	inline SurfaceAreaHeuristic4(const AABB4 &aabb) : m_aabb(aabb) {
 		const Vector4 extents(aabb.getExtents());
-		const Float temp = 1.0f / (extents.x * extents.y
+		const float temp = 1.0f / (extents.x * extents.y
 				+ extents.y*extents.z + extents.x*extents.z);
 
 		m_temp0 = Vector4(
@@ -62,15 +62,15 @@ public:
 	 * of traversing the left and right child during a typical query
 	 * operation.
 	 */
-	inline std::pair<Float, Float> operator()(int axis, Float leftWidth, Float rightWidth) const {
-		if (axis == 3 && m_temp1.w == std::numeric_limits<Float>::infinity()) {
-			return std::pair<Float, Float>(
-				std::numeric_limits<Float>::infinity(),
-				std::numeric_limits<Float>::infinity()
+	inline std::pair<float, float> operator()(int axis, float leftWidth, float rightWidth) const {
+		if (axis == 3 && m_temp1.w == std::numeric_limits<float>::infinity()) {
+			return std::pair<float, float>(
+				std::numeric_limits<float>::infinity(),
+				std::numeric_limits<float>::infinity()
 			);
 		}
 
-		return std::pair<Float, Float>(
+		return std::pair<float, float>(
 			m_temp0[axis] + m_temp1[axis] * leftWidth,
 			m_temp0[axis] + m_temp1[axis] * rightWidth);
 	}
@@ -79,9 +79,9 @@ public:
 	 * Compute the underlying quantity used by the tree construction
 	 * heuristic. This is used to compute the final cost of a kd-tree.
 	 */
-	inline static Float getQuantity(const AABB4 &aabb) {
+	inline static float getQuantity(const AABB4 &aabb) {
 		const Vector4 extents(aabb.getExtents());
-		Float result = 2 * (extents[0] * extents[1] + extents[1] * extents[2]
+		float result = 2 * (extents[0] * extents[1] + extents[1] * extents[2]
 				  + extents[2] * extents[0]);
 		if (extents[3] != 0)
 			result *= extents[3];
@@ -101,7 +101,7 @@ private:
  * /// Some temporary space is supplied, which can be used to cache
  * /// information about the intersection
  * bool intersect(const Ray &ray, IndexType idx,
- *     Float mint, Float maxt, Float &t, void *tmp);
+ *     float mint, float maxt, float &t, void *tmp);
  *
  * This class implements an epsilon-free version of the optimized ray
  * traversal algorithm (TA^B_{rec}), which is explained in Vlastimil
@@ -147,7 +147,7 @@ protected:
 		/* Pointer to the far child */
 		const KDNode * __restrict node;
 		/* Distance traveled along the ray (entry or exit) */
-		Float t;
+		float t;
 		/* Previous stack item */
 		uint32_t prev;
 		/* Associated point */
@@ -161,8 +161,8 @@ protected:
 	 * of the methods implemented in this class.
 	 */
 	template<bool shadowRay> FINLINE
-			bool rayIntersectHavran(const Ray &ray, Float mint, Float maxt,
-			Float &t, void *temp) const {
+			bool rayIntersectHavran(const Ray &ray, float mint, float maxt,
+			float &t, void *temp) const {
 		KDStackEntryHavran stack[MTS_KD_MAXDEPTH];
 		#if 0
 		static const int prevAxisTable[] = { 2, 0, 1 };
@@ -188,7 +188,7 @@ protected:
 		const KDNode * __restrict currNode = this->m_nodes;
 		while (currNode != NULL) {
 			while (EXPECT_TAKEN(!currNode->isLeaf())) {
-				const Float splitVal = (Float) currNode->getSplit();
+				const float splitVal = (float) currNode->getSplit();
 				const int axis = currNode->getAxis();
 				const KDNode * __restrict farChild;
 
@@ -229,7 +229,7 @@ protected:
 				}
 
 				/* Cases P4 and N4 -- calculate the distance to the split plane */
-				Float distToSplit = (splitVal - ray.o[axis]) * ray.dRcp[axis];
+				float distToSplit = (splitVal - ray.o[axis]) * ray.dRcp[axis];
 
 				/* Set up a new exit point */
 				const uint32_t tmp = exPt++;

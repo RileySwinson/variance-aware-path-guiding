@@ -20,7 +20,7 @@
 
 MTS_NAMESPACE_BEGIN
 
-void Path::initialize(const Scene *scene, Float time,
+void Path::initialize(const Scene *scene, float time,
 		ETransportMode mode, MemoryPool &pool) {
 	release(pool);
 	m_vertices.push_back(pool.allocVertex());
@@ -263,7 +263,7 @@ bool Path::operator==(const Path &path) const {
 	return true;
 }
 
-Float Path::miWeight(const Scene *scene, const Path &emitterSubpath,
+float Path::miWeight(const Scene *scene, const Path &emitterSubpath,
 		const PathEdge *connectionEdge, const Path &sensorSubpath,
 		int s, int t, bool sampleDirect, bool lightImage) {
 	int k = s+t+1, n = k+1;
@@ -278,9 +278,9 @@ Float Path::miWeight(const Scene *scene, const Path &emitterSubpath,
 	   'i' when sampled from the adjacent vertex in the emitter
 	   and sensor direction, respectively. */
 
-	Float ratioEmitterDirect = 0.0f, ratioSensorDirect = 0.0f;
-	Float *pdfImp      = (Float *) alloca(n * sizeof(Float)),
-		  *pdfRad      = (Float *) alloca(n * sizeof(Float));
+	float ratioEmitterDirect = 0.0f, ratioSensorDirect = 0.0f;
+	float *pdfImp      = (float *) alloca(n * sizeof(float)),
+		  *pdfRad      = (float *) alloca(n * sizeof(float));
 	bool  *connectable = (bool *)  alloca(n * sizeof(bool)),
 		  *isNull      = (bool *)  alloca(n * sizeof(bool));
 
@@ -425,10 +425,10 @@ Float Path::miWeight(const Scene *scene, const Path &emitterSubpath,
 		const PathVertex *after  = end+1 <= s ? emitterSubpath.vertex(end+1) : sensorSubpath.vertex(k-end-1);
 
 		Vector d = before->getPosition() - after->getPosition();
-		Float lengthSquared = d.lengthSquared();
+		float lengthSquared = d.lengthSquared();
 		d /= std::sqrt(lengthSquared);
 
-		Float geoTerm = std::abs(
+		float geoTerm = std::abs(
 			(before->isOnSurface() ? dot(before->getGeometricNormal(), d) : 1) *
 			(after->isOnSurface()  ? dot(after->getGeometricNormal(),  d) : 1)) / lengthSquared;
 
@@ -526,7 +526,7 @@ Float Path::miWeight(const Scene *scene, const Path &emitterSubpath,
 		pdf = next;
 	}
 
-	return (Float) (1.0 / weight);
+	return (float) (1.0 / weight);
 }
 
 void Path::collapseTo(PathEdge &target) const {

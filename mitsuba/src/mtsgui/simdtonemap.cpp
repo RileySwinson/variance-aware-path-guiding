@@ -92,13 +92,13 @@ union PixelRGBA8Group
 inline mitsuba::math::SSEVector4f am_log(const mitsuba::math::SSEVector4f& x) {
 	typedef mitsuba::math::SSEVector4f v4f;
 	typedef mitsuba::math::SSEVector4i v4i;
-	using mitsuba::math::castAsFloat;
+	using mitsuba::math::castAsfloat;
 	using mitsuba::math::clamp_ps;
 	using mitsuba::math::fastpow_ps;
 
 	// Constants
-	const v4f min_normal(castAsFloat(v4i::constant<0x00800000>()));
-	const v4f inv_mantissa_mask(castAsFloat(v4i::constant<~0x7f800000>()));
+	const v4f min_normal(castAsfloat(v4i::constant<0x00800000>()));
+	const v4f inv_mantissa_mask(castAsfloat(v4i::constant<~0x7f800000>()));
 	const v4f const_1(1.0f);
 	const v4i const_127(v4i::constant<127>());
 
@@ -126,7 +126,7 @@ inline mitsuba::math::SSEVector4f am_log(const mitsuba::math::SSEVector4f& x) {
 
 	// Extract the original exponent and undo the bias
 	const v4i biasedExponent = srl(castAsInt(x0), 23);
-	const v4f origExponent = toFloat(biasedExponent - const_127);
+	const v4f origExponent = tofloat(biasedExponent - const_127);
 
 	v4f vFrac = v_min1 * rcp(v_plus1); // Is it worth it to use rcp_nr?
 	vFrac += vFrac;
@@ -347,8 +347,8 @@ bool tonemap(const mitsuba::Bitmap* source, mitsuba::Bitmap* target,
 		SLog(EWarn, "TonemapCPU: the images are not in RGBA format");
 		return false;
 	}
-	else if (source->getComponentFormat() != Bitmap::EFloat32) {
-		SLog(EWarn, "TonemapCPU: the source component format is not Float32");
+	else if (source->getComponentFormat() != Bitmap::Efloat32) {
+		SLog(EWarn, "TonemapCPU: the source component format is not float32");
 		return false;
 	}
 	else if (target->getComponentFormat() != Bitmap::EUInt8) {
@@ -357,7 +357,7 @@ bool tonemap(const mitsuba::Bitmap* source, mitsuba::Bitmap* target,
 	}
 
 	// Raw pointers to the data, checking for alignment
-	const float *sourceData = source->getFloat32Data();
+	const float *sourceData = source->getfloat32Data();
 	uint8_t *targetData = static_cast<uint8_t*>(target->getData());
 	if (reinterpret_cast<uintptr_t>(sourceData) % 16 != 0) {
 		SLog(EWarn, "TonemapCPU: the source data is not 16-byte aligned");
@@ -484,13 +484,13 @@ bool luminance(const mitsuba::Bitmap* source, const float multiplier,
 		SLog(EWarn, "TonemapCPU: the image is not in RGBA format");
 		return false;
 	}
-	else if (source->getComponentFormat() != Bitmap::EFloat32) {
-		SLog(EWarn, "TonemapCPU: the image component format is not Float32");
+	else if (source->getComponentFormat() != Bitmap::Efloat32) {
+		SLog(EWarn, "TonemapCPU: the image component format is not float32");
 		return false;
 	}
 
 	// Raw pointers to the data, checking for alignment
-	const float *sourceData = source->getFloat32Data();
+	const float *sourceData = source->getfloat32Data();
 	if (reinterpret_cast<uintptr_t>(sourceData) % 16 != 0) {
 		SLog(EWarn, "TonemapCPU: the source data is not 16-byte aligned");
 		return false;
@@ -530,7 +530,7 @@ bool luminance(const mitsuba::Bitmap* source, const float multiplier,
 			break;
 		}
 		// maxLuminance contains zeros in the invalid positions which is OK
-		rTail.sumLogLuminance &= castAsFloat(tailMask);
+		rTail.sumLogLuminance &= castAsfloat(tailMask);
 
 		result.sumLogLuminance += rTail.sumLogLuminance;
 		result.maxLuminance = max(rTail.maxLuminance, result.maxLuminance);
@@ -573,7 +573,7 @@ bool TonemapCPU::reinhardTonemap(const mitsuba::Bitmap* source,
 
 
 bool TonemapCPU::setLuminanceInfo(const mitsuba::Bitmap* source,
-	mitsuba::Float multiplier)
+	mitsuba::float multiplier)
 {
 	return luminance(source, static_cast<float>(multiplier),
 		m_params.maxLum, m_params.avgLogLum);

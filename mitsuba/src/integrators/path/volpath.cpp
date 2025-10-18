@@ -90,7 +90,7 @@ public:
 		MediumSamplingRecord mRec;
 		RayDifferential ray(r);
 		Spectrum Li(0.0f);
-		Float eta = 1.0f;
+		float eta = 1.0f;
 
 		/* Perform the first ray intersection (or ignore if the
 		   intersection has already been provided). */
@@ -133,16 +133,16 @@ public:
 
 						/* Evaluate the phase function */
 						PhaseFunctionSamplingRecord pRec(mRec, -ray.d, dRec.d);
-						Float phaseVal = phase->eval(pRec);
+						float phaseVal = phase->eval(pRec);
 
 						if (phaseVal != 0) {
 							/* Calculate prob. of having sampled that direction using
 							   phase function sampling */
-							Float phasePdf = (emitter->isOnSurface() && dRec.measure == ESolidAngle)
-									? phase->pdf(pRec) : (Float) 0.0f;
+							float phasePdf = (emitter->isOnSurface() && dRec.measure == ESolidAngle)
+									? phase->pdf(pRec) : (float) 0.0f;
 
 							/* Weight using the power heuristic */
-							const Float weight = miWeight(dRec.pdf, phasePdf);
+							const float weight = miWeight(dRec.pdf, phasePdf);
 							Li += throughput * value * phaseVal * weight;
 						}
 					}
@@ -152,9 +152,9 @@ public:
 				/*                         Phase function sampling                      */
 				/* ==================================================================== */
 
-				Float phasePdf;
+				float phasePdf;
 				PhaseFunctionSamplingRecord pRec(mRec, -ray.d);
-				Float phaseVal = phase->sample(pRec, phasePdf, rRec.sampler);
+				float phaseVal = phase->sample(pRec, phasePdf, rRec.sampler);
 				if (phaseVal == 0)
 					break;
 				throughput *= phaseVal;
@@ -170,7 +170,7 @@ public:
 				/* If a luminaire was hit, estimate the local illumination and
 				   weight using the power heuristic */
 				if (!value.isZero() && (rRec.type & RadianceQueryRecord::EDirectMediumRadiance)) {
-					const Float emitterPdf = scene->pdfEmitterDirect(dRec);
+					const float emitterPdf = scene->pdfEmitterDirect(dRec);
 					Li += throughput * value * miWeight(phasePdf, emitterPdf);
 				}
 
@@ -217,7 +217,7 @@ public:
 					break;
 
 				/* Prevent light leaks due to the use of shading normals */
-				Float wiDotGeoN = -dot(its.geoFrame.n, ray.d),
+				float wiDotGeoN = -dot(its.geoFrame.n, ray.d),
 					  wiDotShN  = Frame::cosTheta(its.wi);
 				if (wiDotGeoN * wiDotShN < 0 && m_strictNormals)
 					break;
@@ -245,19 +245,19 @@ public:
 						BSDFSamplingRecord bRec(its, its.toLocal(dRec.d));
 						const Spectrum bsdfVal = bsdf->eval(bRec);
 
-						Float woDotGeoN = dot(its.geoFrame.n, dRec.d);
+						float woDotGeoN = dot(its.geoFrame.n, dRec.d);
 
 						/* Prevent light leaks due to the use of shading normals */
 						if (!bsdfVal.isZero() && (!m_strictNormals ||
 							woDotGeoN * Frame::cosTheta(bRec.wo) > 0)) {
 							/* Calculate prob. of having generated that direction
 							   using BSDF sampling */
-							Float bsdfPdf = (emitter->isOnSurface()
+							float bsdfPdf = (emitter->isOnSurface()
 									&& dRec.measure == ESolidAngle)
-									? bsdf->pdf(bRec) : (Float) 0.0f;
+									? bsdf->pdf(bRec) : (float) 0.0f;
 
 							/* Weight using the power heuristic */
-							const Float weight = miWeight(dRec.pdf, bsdfPdf);
+							const float weight = miWeight(dRec.pdf, bsdfPdf);
 							Li += throughput * value * bsdfVal * weight;
 						}
 					}
@@ -270,14 +270,14 @@ public:
 
 				/* Sample BSDF * cos(theta) */
 				BSDFSamplingRecord bRec(its, rRec.sampler, ERadiance);
-				Float bsdfPdf;
+				float bsdfPdf;
 				Spectrum bsdfWeight = bsdf->sample(bRec, bsdfPdf, rRec.nextSample2D());
 				if (bsdfWeight.isZero())
 					break;
 
 				/* Prevent light leaks due to the use of shading normals */
 				const Vector wo = its.toWorld(bRec.wo);
-				Float woDotGeoN = dot(its.geoFrame.n, wo);
+				float woDotGeoN = dot(its.geoFrame.n, wo);
 				if (woDotGeoN * Frame::cosTheta(bRec.wo) <= 0 && m_strictNormals)
 					break;
 
@@ -309,7 +309,7 @@ public:
 				/* If a luminaire was hit, estimate the local illumination and
 				   weight using the power heuristic */
 				if (!value.isZero() && (rRec.type & RadianceQueryRecord::EDirectSurfaceRadiance)) {
-					const Float emitterPdf = (m_nee && !(bRec.sampledType & BSDF::EDelta)) ?
+					const float emitterPdf = (m_nee && !(bRec.sampledType & BSDF::EDelta)) ?
 						scene->pdfEmitterDirect(dRec) : 0;
 					Li += throughput * value * miWeight(bsdfPdf, emitterPdf);
 				}
@@ -331,7 +331,7 @@ public:
 				   index boundaries. Stop with at least some probability to avoid
 				   getting stuck (e.g. due to total internal reflection) */
 
-				Float q = std::min(throughput.max() * eta * eta, (Float) 0.95f);
+				float q = std::min(throughput.max() * eta * eta, (float) 0.95f);
 				if (rRec.nextSample1D() >= q)
 					break;
 				throughput /= q;
@@ -429,7 +429,7 @@ public:
 		}
 	}
 
-	inline Float miWeight(Float pdfA, Float pdfB) const {
+	inline float miWeight(float pdfA, float pdfB) const {
 		pdfA *= pdfA; pdfB *= pdfB;
 		return pdfA / (pdfA + pdfB);
 	}

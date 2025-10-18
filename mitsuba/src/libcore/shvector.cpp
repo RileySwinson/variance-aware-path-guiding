@@ -22,20 +22,20 @@
 
 MTS_NAMESPACE_BEGIN
 
-Float *SHVector::m_normalization = NULL;
+float *SHVector::m_normalization = NULL;
 
 SHVector::SHVector(Stream *stream) {
 	m_bands = stream->readInt();
 	unsigned int size = m_bands*m_bands;
 	m_coeffs.resize(size);
 	for (size_t i=0; i<size; ++i)
-		m_coeffs[i] = stream->readFloat();
+		m_coeffs[i] = stream->readfloat();
 }
 
 void SHVector::serialize(Stream *stream) const {
 	stream->writeInt(m_bands);
 	for (size_t i=0; i<(size_t) m_coeffs.size(); ++i)
-		stream->writeFloat(m_coeffs[i]);
+		stream->writefloat(m_coeffs[i]);
 }
 
 bool SHVector::isAzimuthallyInvariant() const {
@@ -49,11 +49,11 @@ bool SHVector::isAzimuthallyInvariant() const {
 	return true;
 }
 
-Float SHVector::eval(Float theta, Float phi) const {
-	Float result = 0;
-	Float cosTheta = std::cos(theta);
-	Float *sinPhi = (Float *) alloca(sizeof(Float)*m_bands),
-		  *cosPhi = (Float *) alloca(sizeof(Float)*m_bands);
+float SHVector::eval(float theta, float phi) const {
+	float result = 0;
+	float cosTheta = std::cos(theta);
+	float *sinPhi = (float *) alloca(sizeof(float)*m_bands),
+		  *cosPhi = (float *) alloca(sizeof(float)*m_bands);
 
 	for (int m=0; m<m_bands; ++m) {
 		sinPhi[m] = std::sin((m+1) * phi);
@@ -62,7 +62,7 @@ Float SHVector::eval(Float theta, Float phi) const {
 
 	for (int l=0; l<m_bands; ++l) {
 		for (int m=1; m<=l; ++m) {
-			Float L = legendreP(l, m, cosTheta) * normalization(l, m);
+			float L = legendreP(l, m, cosTheta) * normalization(l, m);
 			result += operator()(l, -m) * SQRT_TWO * sinPhi[m-1] * L;
 			result += operator()(l, m)  * SQRT_TWO * cosPhi[m-1] * L;
 		}
@@ -72,14 +72,14 @@ Float SHVector::eval(Float theta, Float phi) const {
 	return result;
 }
 
-Float SHVector::findMinimum(int res = 32) const {
-	Float hExt = (Float) M_PI / res, hInt = (2 * (Float) M_PI)/(res*2);
-	Float minimum = std::numeric_limits<Float>::infinity();
+float SHVector::findMinimum(int res = 32) const {
+	float hExt = (float) M_PI / res, hInt = (2 * (float) M_PI)/(res*2);
+	float minimum = std::numeric_limits<float>::infinity();
 
 	for (int i=0; i<=res; ++i) {
-		Float theta = hExt*i;
+		float theta = hExt*i;
 		for (int j=0; j<=res*2; ++j) {
-			Float phi = hInt*j;
+			float phi = hInt*j;
 			minimum = std::min(minimum, eval(theta, phi));
 		}
 	}
@@ -87,16 +87,16 @@ Float SHVector::findMinimum(int res = 32) const {
 	return minimum;
 }
 
-void SHVector::addOffset(Float value) {
-	operator()(0, 0) += 2 * value * (Float) std::sqrt(M_PI);
+void SHVector::addOffset(float value) {
+	operator()(0, 0) += 2 * value * (float) std::sqrt(M_PI);
 }
 
-Float SHVector::eval(const Vector &v) const {
-	Float result = 0;
-	Float cosTheta = v.z, phi = std::atan2(v.y, v.x);
+float SHVector::eval(const Vector &v) const {
+	float result = 0;
+	float cosTheta = v.z, phi = std::atan2(v.y, v.x);
 	if (phi < 0) phi += 2*M_PI;
-	Float *sinPhi = (Float *) alloca(sizeof(Float)*m_bands),
-		  *cosPhi = (Float *) alloca(sizeof(Float)*m_bands);
+	float *sinPhi = (float *) alloca(sizeof(float)*m_bands),
+		  *cosPhi = (float *) alloca(sizeof(float)*m_bands);
 
 	for (int m=0; m<m_bands; ++m) {
 		sinPhi[m] = std::sin((m+1) * phi);
@@ -105,7 +105,7 @@ Float SHVector::eval(const Vector &v) const {
 
 	for (int l=0; l<m_bands; ++l) {
 		for (int m=1; m<=l; ++m) {
-			Float L = legendreP(l, m, cosTheta) * normalization(l, m);
+			float L = legendreP(l, m, cosTheta) * normalization(l, m);
 			result += operator()(l, -m) * SQRT_TWO * sinPhi[m-1] * L;
 			result += operator()(l, m)  * SQRT_TWO * cosPhi[m-1] * L;
 		}
@@ -115,22 +115,22 @@ Float SHVector::eval(const Vector &v) const {
 	return result;
 }
 
-Float SHVector::evalAzimuthallyInvariant(Float theta, Float phi) const {
-	Float result = 0, cosTheta = std::cos(theta);
+float SHVector::evalAzimuthallyInvariant(float theta, float phi) const {
+	float result = 0, cosTheta = std::cos(theta);
 	for (int l=0; l<m_bands; ++l)
 		result += operator()(l, 0) * legendreP(l, 0, cosTheta) * normalization(l, 0);
 	return result;
 }
 
-Float SHVector::evalAzimuthallyInvariant(const Vector &v) const {
-	Float result = 0, cosTheta = v.z;
+float SHVector::evalAzimuthallyInvariant(const Vector &v) const {
+	float result = 0, cosTheta = v.z;
 	for (int l=0; l<m_bands; ++l)
 		result += operator()(l, 0) * legendreP(l, 0, cosTheta) * normalization(l, 0);
 	return result;
 }
 
 void SHVector::normalize() {
-	Float correction = 1/(2 * (Float) std::sqrt(M_PI)*operator()(0,0));
+	float correction = 1/(2 * (float) std::sqrt(M_PI)*operator()(0,0));
 
 	for (size_t i=0; i<(size_t) m_coeffs.size(); ++i)
 		m_coeffs[i] *= correction;
@@ -140,15 +140,15 @@ void SHVector::convolve(const SHVector &kernel) {
 	SAssert(kernel.getBands() == m_bands);
 
 	for (int l=0; l<m_bands; ++l) {
-		Float alpha = std::sqrt(4 * (Float) M_PI / (2*l + 1));
+		float alpha = std::sqrt(4 * (float) M_PI / (2*l + 1));
 		for (int m=-l; m<=l; ++m)
 			operator()(l, m) *= alpha * kernel(l, 0);
 	}
 }
 
 Matrix3x3 SHVector::mu2() const {
-	const Float sqrt5o3 = std::sqrt((Float) 5/ (Float) 3);
-	const Float sqrto3 = std::sqrt((Float) 1/ (Float) 3);
+	const float sqrt5o3 = std::sqrt((float) 5/ (float) 3);
+	const float sqrto3 = std::sqrt((float) 1/ (float) 3);
 	Matrix3x3 result;
 	result.setZero();
 
@@ -168,7 +168,7 @@ Matrix3x3 SHVector::mu2() const {
 		result(2, 2) += 2*sqrto3*operator()(2,0);
 	}
 
-	return result * (2*std::sqrt((Float) M_PI / 15));
+	return result * (2*std::sqrt((float) M_PI / 15));
 }
 
 std::string SHVector::toString() const {
@@ -190,15 +190,15 @@ std::string SHVector::toString() const {
 	return oss.str();
 }
 
-Float SHVector::computeNormalization(int l, int m) {
+float SHVector::computeNormalization(int l, int m) {
 	SAssert(m>=0);
 	return std::sqrt(
-			((2*l+1) * boost::math::factorial<Float>(l-m))
-		/    (4 * (Float) M_PI * boost::math::factorial<Float>(l+m)));
+			((2*l+1) * boost::math::factorial<float>(l-m))
+		/    (4 * (float) M_PI * boost::math::factorial<float>(l+m)));
 }
 
 void SHVector::staticInitialization() {
-	m_normalization = new Float[SH_NORMTBL_SIZE*(SH_NORMTBL_SIZE+1)/2];
+	m_normalization = new float[SH_NORMTBL_SIZE*(SH_NORMTBL_SIZE+1)/2];
 	for (int l=0; l<SH_NORMTBL_SIZE; ++l)
 		for (int m=0; m<=l; ++m)
 			m_normalization[l*(l+1)/2 + m] = computeNormalization(l, m);
@@ -221,15 +221,15 @@ struct RotationBlockHelper {
 		: M1(M1), Mp(Mp), Mn(Mn), prevLevel((int) Mp.rows()/2),
 		level((int) Mp.rows()/2+1) { }
 
-	inline Float delta(int i, int j) const {
-		return (i == j) ? (Float) 1 : (Float) 0;
+	inline float delta(int i, int j) const {
+		return (i == j) ? (float) 1 : (float) 0;
 	}
 
-	inline Float U(int l, int m, int n) const {
+	inline float U(int l, int m, int n) const {
 		return P(l, m, n, 0);
 	}
 
-	inline Float V(int l, int m, int n) const {
+	inline float V(int l, int m, int n) const {
 		if (m == 0) {
 			return P(l, 1, n, 1) + P(l, -1, n, -1);
 		} else if (m > 0) {
@@ -245,7 +245,7 @@ struct RotationBlockHelper {
 		}
 	}
 
-	inline Float W(int l, int m, int n) const {
+	inline float W(int l, int m, int n) const {
 		if (m > 0) {
 			return P(l, m+1, n, 1) + P(l, -m-1, n, -1);
 		} else {
@@ -253,28 +253,28 @@ struct RotationBlockHelper {
 		}
 	}
 
-	inline Float u(int l, int m, int n) const {
+	inline float u(int l, int m, int n) const {
 		int denom = (std::abs(n) == l) ? (2*l*(2*l-1)) : ((l+n)*(l-n));
-		return std::sqrt((Float) ((l+m)*(l-m)) / (Float) denom);
+		return std::sqrt((float) ((l+m)*(l-m)) / (float) denom);
 	}
 
-	inline Float v(int l, int m, int n) const {
+	inline float v(int l, int m, int n) const {
 		int denom = (std::abs(n) == l) ? (2*l*(2*l-1)) : ((l+n)*(l-n)), absM = std::abs(m);
 		return .5f * (1-2*delta(m, 0)) * std::sqrt(
-			(Float) ((1+delta(m, 0)) * (l+absM-1)*(l+absM)) / (Float) denom
+			(float) ((1+delta(m, 0)) * (l+absM-1)*(l+absM)) / (float) denom
 		);
 	}
 
-	inline Float w(int l, int m, int n) const {
+	inline float w(int l, int m, int n) const {
 		if (m == 0)
 			return 0.0f;
 		int absM = std::abs(m);
 		int denom = (std::abs(n) < l) ? ((l+n)*(l-n)) : (2*l*(2*l-1));
 
-		return -.5f * std::sqrt((Float) ((l-absM-1)*(l-absM)) / (Float) denom);
+		return -.5f * std::sqrt((float) ((l-absM-1)*(l-absM)) / (float) denom);
 	}
 
-	inline Float P(int l, int m, int n, int i) const {
+	inline float P(int l, int m, int n, int i) const {
 		if (std::abs(n) < l)
 			return R(i, 0) * M(m, n);
 		else if (n == l)
@@ -287,22 +287,22 @@ struct RotationBlockHelper {
 		}
 	}
 
-	inline Float R(int m, int n) const {
+	inline float R(int m, int n) const {
 		return M1(m+1, n+1);
 	}
 
-	inline Float M(int m, int n) const {
+	inline float M(int m, int n) const {
 		return Mp(m+prevLevel, n+prevLevel);
 	}
 
 	void compute() {
 		for (int m=-level; m<=level; ++m) {
 			for (int n=-level; n<=level; ++n) {
-				Float uVal = u(level, m, n), vVal = v(level, m, n), wVal = w(level, m, n);
+				float uVal = u(level, m, n), vVal = v(level, m, n), wVal = w(level, m, n);
 				Mn(m+level, n+level) =
-					  (uVal != 0 ? (uVal * U(level, m, n)) : (Float) 0)
-					+ (vVal != 0 ? (vVal * V(level, m, n)) : (Float) 0)
-					+ (wVal != 0 ? (wVal * W(level, m, n)) : (Float) 0);
+					  (uVal != 0 ? (uVal * U(level, m, n)) : (float) 0)
+					+ (vVal != 0 ? (vVal * V(level, m, n)) : (float) 0)
+					+ (wVal != 0 ? (wVal * W(level, m, n)) : (float) 0);
 			}
 		}
 	}
@@ -344,7 +344,7 @@ void SHRotation::operator()(const SHVector &source, SHVector &target) const {
 	for (int l=0; l<source.getBands(); ++l) {
 		const SHRotation::Matrix &M = blocks[l];
 		for (int m1=-l; m1<=l; ++m1) {
-			Float result = 0;
+			float result = 0;
 			for (int m2=-l; m2<=l; ++m2)
 				result += M(m1+l, m2+l)*source(l, m2);
 			target(l, m1) = result;
@@ -353,18 +353,18 @@ void SHRotation::operator()(const SHVector &source, SHVector &target) const {
 }
 
 SHSampler::SHSampler(int bands, int depth) : m_bands(bands), m_depth(depth) {
-	m_phiMap = new Float**[depth+1];
-	m_legendreMap = new Float**[depth+1];
-	m_normalization = new Float[m_bands*(m_bands+1)/2];
+	m_phiMap = new float**[depth+1];
+	m_legendreMap = new float**[depth+1];
+	m_normalization = new float[m_bands*(m_bands+1)/2];
 	m_dataSize = m_bands*(m_bands+1)/2;
 	Assert(depth >= 1);
 
 	for (int i=0; i<=depth; ++i) {
 		int res = 1 << i;
-		Float zStep  = -2 / (Float) res;
-		Float phiStep = 2 * (Float) M_PI / (Float) res;
-		m_phiMap[i] = new Float*[res];
-		m_legendreMap[i] = new Float*[res];
+		float zStep  = -2 / (float) res;
+		float phiStep = 2 * (float) M_PI / (float) res;
+		m_phiMap[i] = new float*[res];
+		m_legendreMap[i] = new float*[res];
 
 		for (int j=0; j<res; ++j) {
 			m_phiMap[i][j] = phiIntegrals(phiStep*j, phiStep*(j+1));
@@ -374,9 +374,9 @@ SHSampler::SHSampler(int bands, int depth) : m_bands(bands), m_depth(depth) {
 
 	for (int l=0; l<m_bands; ++l) {
 		for (int m=0; m<=l; ++m) {
-			Float normFactor = boost::math::tgamma_delta_ratio(
-				(Float) (l - m + 1), (Float) (2 * m), boost::math::policies::policy<>());
-			normFactor = std::sqrt(normFactor * (2 * l + 1) / (4 * (Float) M_PI));
+			float normFactor = boost::math::tgamma_delta_ratio(
+				(float) (l - m + 1), (float) (2 * m), boost::math::policies::policy<>());
+			normFactor = std::sqrt(normFactor * (2 * l + 1) / (4 * (float) M_PI));
 			if (m != 0)
 				normFactor *= SQRT_TWO;
 			m_normalization[I(l, m)] = normFactor;
@@ -391,19 +391,19 @@ std::string SHSampler::toString() const {
 	return oss.str();
 }
 
-Float SHSampler::warp(const SHVector &f, Point2 &sample) const {
+float SHSampler::warp(const SHVector &f, Point2 &sample) const {
 	int i = 0, j = 0;
-	Float integral = 0, integralRoot = integrate(0, 0, 0, f);
+	float integral = 0, integralRoot = integrate(0, 0, 0, f);
 
 	for (int depth = 1; depth <= m_depth; ++depth) {
 		/* Do not sample negative areas */
-		Float q00 = std::max(integrate(depth, i, j, f), (Float) 0);
-		Float q10 = std::max(integrate(depth, i, j+1, f), (Float) 0);
-		Float q01 = std::max(integrate(depth, i+1, j, f), (Float) 0);
-		Float q11 = std::max(integrate(depth, i+1, j+1, f), (Float) 0);
+		float q00 = std::max(integrate(depth, i, j, f), (float) 0);
+		float q10 = std::max(integrate(depth, i, j+1, f), (float) 0);
+		float q01 = std::max(integrate(depth, i+1, j, f), (float) 0);
+		float q11 = std::max(integrate(depth, i+1, j+1, f), (float) 0);
 
-		Float z1 = q00 + q10, z2 = q01 + q11, phi1, phi2;
-		Float zNorm = (Float) 1 / (z1+z2);
+		float z1 = q00 + q10, z2 = q01 + q11, phi1, phi2;
+		float zNorm = (float) 1 / (z1+z2);
 		z1 *= zNorm; z2 *= zNorm;
 
 		if (sample.x < z1) {
@@ -416,8 +416,8 @@ Float SHSampler::warp(const SHVector &f, Point2 &sample) const {
 			i = (i+1) << 1;
 		}
 
-		Float phiNorm = (Float) 1 / (phi1+phi2);
-		Float phi1Norm = phi1*phiNorm, phi2Norm = phi2*phiNorm;
+		float phiNorm = (float) 1 / (phi1+phi2);
+		float phi1Norm = phi1*phiNorm, phi2Norm = phi2*phiNorm;
 
 		if (sample.y <= phi1Norm) {
 			sample.y /= phi1Norm;
@@ -430,19 +430,19 @@ Float SHSampler::warp(const SHVector &f, Point2 &sample) const {
 		}
 	}
 
-	Float zStep = -2 / (Float) (1 << m_depth);
-	Float phiStep = 2 * (Float) M_PI / (Float) (1 << m_depth);
+	float zStep = -2 / (float) (1 << m_depth);
+	float phiStep = 2 * (float) M_PI / (float) (1 << m_depth);
 	i >>= 1; j >>= 1;
 
-	Float z = 1 + zStep * i + zStep * sample.x;
+	float z = 1 + zStep * i + zStep * sample.x;
 	sample.x = std::acos(z);
 	sample.y = phiStep * j + phiStep * sample.y;
 
 	/* PDF of sampling the mip-map bin */
-	Float pdfBin = integral/integralRoot;
+	float pdfBin = integral/integralRoot;
 
 	/* Density within the bin */
-	Float density = -1/(zStep*phiStep);
+	float density = -1/(zStep*phiStep);
 
 	return density*pdfBin;
 }
@@ -462,12 +462,12 @@ SHSampler::~SHSampler() {
 	delete[] m_normalization;
 }
 
-Float SHSampler::integrate(int depth, int zBlock, int phiBlock, const SHVector &f) const {
-	Float result = 0;
+float SHSampler::integrate(int depth, int zBlock, int phiBlock, const SHVector &f) const {
+	float result = 0;
 
 	for (int l=0; l<m_bands; ++l) {
 		for (int m=-l; m<=l; ++m) {
-			Float basisIntegral = m_normalization[I(l, std::abs(m))]
+			float basisIntegral = m_normalization[I(l, std::abs(m))]
 				* lookupIntegral(depth, zBlock, phiBlock, l, m);
 			result += basisIntegral * f(l, m);
 		}
@@ -475,12 +475,12 @@ Float SHSampler::integrate(int depth, int zBlock, int phiBlock, const SHVector &
 	return result;
 }
 
-Float *SHSampler::phiIntegrals(Float a, Float b) {
-	Float *sinPhiA = new Float[m_bands+1];
-	Float *sinPhiB = new Float[m_bands+1];
-	Float *cosPhiA = new Float[m_bands+1];
-	Float *cosPhiB = new Float[m_bands+1];
-	Float *result = new Float[2*m_bands+1];
+float *SHSampler::phiIntegrals(float a, float b) {
+	float *sinPhiA = new float[m_bands+1];
+	float *sinPhiB = new float[m_bands+1];
+	float *cosPhiA = new float[m_bands+1];
+	float *cosPhiB = new float[m_bands+1];
+	float *result = new float[2*m_bands+1];
 	m_dataSize += 2*m_bands+1;
 
 	cosPhiA[0] = 1; sinPhiA[0] = 0;
@@ -514,8 +514,8 @@ Float *SHSampler::phiIntegrals(Float a, Float b) {
 	return result;
 }
 
-Float *SHSampler::legendreIntegrals(Float a, Float b) {
-	Float *P = new Float[m_bands*(m_bands+1)/2];
+float *SHSampler::legendreIntegrals(float a, float b) {
+	float *P = new float[m_bands*(m_bands+1)/2];
 	m_dataSize += m_bands*(m_bands+1)/2;
 
 	P[I(0, 0)] = b-a;
@@ -523,8 +523,8 @@ Float *SHSampler::legendreIntegrals(Float a, Float b) {
 	if (m_bands == 1)
 		return P;
 
-	Float *Pa = new Float[m_bands*(m_bands+1)/2];
-	Float *Pb = new Float[m_bands*(m_bands+1)/2];
+	float *Pa = new float[m_bands*(m_bands+1)/2];
+	float *Pb = new float[m_bands*(m_bands+1)/2];
 
 	for (int l=0; l<m_bands; ++l) {
 		for (int m=0; m<=l; ++m) {
@@ -538,13 +538,13 @@ Float *SHSampler::legendreIntegrals(Float a, Float b) {
 
 	for (int l=2; l<m_bands; ++l) {
 		for (int m=0; m<=l-2; ++m) {
-			Float ga = (2*l-1)*(1-a*a) * Pa[I(l-1,m)];
-			Float gb = (2*l-1)*(1-b*b) * Pb[I(l-1,m)];
+			float ga = (2*l-1)*(1-a*a) * Pa[I(l-1,m)];
+			float gb = (2*l-1)*(1-b*b) * Pb[I(l-1,m)];
 			P[I(l, m)] = ((l-2)*(l-1+m)*P[I(l-2, m)]-gb+ga)/((l+1)*(l-m));
 		}
 
-		P[I(l, l-1)] = (2*l-1)/(Float)(l+1) * ((1-a*a)*Pa[I(l-1, l-1)] - (1-b*b)*Pb[I(l-1, l-1)]);
-		P[I(l, l)] = 1/(Float)(l+1) * (l*(2*l-3)*(2*l-1) * P[I(l-2, l-2)] + b*Pb[I(l,l)] - a*Pa[I(l, l)]);
+		P[I(l, l-1)] = (2*l-1)/(float)(l+1) * ((1-a*a)*Pa[I(l-1, l-1)] - (1-b*b)*Pb[I(l-1, l-1)]);
+		P[I(l, l)] = 1/(float)(l+1) * (l*(2*l-3)*(2*l-1) * P[I(l-2, l-2)] + b*Pb[I(l,l)] - a*Pa[I(l, l)]);
 	}
 
 	delete[] Pa;

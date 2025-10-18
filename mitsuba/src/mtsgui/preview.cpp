@@ -340,7 +340,7 @@ void PreviewThread::run() {
 					target.sync->decRef();
 				}
 				target.buffer = m_renderer->createGPUTexture(formatString("Communication buffer %i", target.id));
-				target.buffer->setComponentFormat(GPUTexture::EFloat32);
+				target.buffer->setComponentFormat(GPUTexture::Efloat32);
 				target.buffer->setPixelFormat(GPUTexture::ERGB);
 				target.buffer->setSize(size);
 				target.buffer->setFilterType(GPUTexture::ENearest);
@@ -368,7 +368,7 @@ void PreviewThread::run() {
 				if (initializeFramebuffer) {
 					if (m_framebuffer)
 						m_framebuffer->cleanup();
-					m_framebuffer->setComponentFormat(GPUTexture::EFloat32);
+					m_framebuffer->setComponentFormat(GPUTexture::Efloat32);
 					m_framebuffer->setPixelFormat(GPUTexture::ERGB);
 					m_framebuffer->setSize(size);
 					m_framebuffer->setFilterType(GPUTexture::ENearest);
@@ -383,7 +383,7 @@ void PreviewThread::run() {
 				m_shaderManager->setDiffuseReceivers(m_context->diffuseReceivers);
 
 				if (m_timer->getMilliseconds() > 1000) {
-					Float count = m_vplsPerSecond / (Float) m_timer->getMilliseconds() * 1000;
+					float count = m_vplsPerSecond / (float) m_timer->getMilliseconds() * 1000;
 					if (!m_motion)
 						emit statusMessage(QString(formatString("%.1f VPLs/sec", count).c_str()));
 					m_vplsPerSecond = 0;
@@ -494,15 +494,15 @@ void PreviewThread::oglRenderVPL(PreviewQueueEntry &target, const VPL &vpl) {
 		(m_context->scene->getSensor());
 	Point2 aaSample(.5f), apertureSample(0.5f);
 	if (!m_motion && !m_context->showKDTree && m_accumBuffer != NULL) {
-		aaSample = Point2(m_random->nextFloat(), m_random->nextFloat());
+		aaSample = Point2(m_random->nextfloat(), m_random->nextfloat());
 		if (sensor->needsApertureSample())
-			apertureSample = Point2(m_random->nextFloat(), m_random->nextFloat());
+			apertureSample = Point2(m_random->nextfloat(), m_random->nextfloat());
 	}
 
 	Transform projTransform = sensor->getProjectionTransform(apertureSample, aaSample);
 	Transform worldTransform = m_camTransform->eval(
 		sensor->getShutterOpen() +
-			(m_motion ? 0.5f : m_random->nextFloat()) * sensor->getShutterOpenTime()
+			(m_motion ? 0.5f : m_random->nextfloat()) * sensor->getShutterOpenTime()
 	);
 
 	target.vplSampleOffset = m_vplSampleOffset;

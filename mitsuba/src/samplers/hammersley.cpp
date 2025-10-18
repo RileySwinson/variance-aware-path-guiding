@@ -112,7 +112,7 @@ public:
 		m_scramble = stream->readInt();
 		m_logHeight = stream->readUInt();
 		m_samplesPerBatch = stream->readSize();
-		m_factor = stream->readFloat();
+		m_factor = stream->readfloat();
 		m_resolution = Vector2i(stream);
 		m_pixelPosition = Point2i(0);
 		configure();
@@ -127,7 +127,7 @@ public:
 		stream->writeInt(m_scramble);
 		stream->writeUInt(m_logHeight);
 		stream->writeSize(m_samplesPerBatch);
-		stream->writeFloat(m_factor);
+		stream->writefloat(m_factor);
 		m_resolution.serialize(stream);
 	}
 
@@ -188,14 +188,14 @@ public:
 			m_logHeight = math::log2i((uint32_t) m_resolution.y);
 
 			m_samplesPerBatch = m_sampleCount;
-			m_factor = (Float) 1.0f / (m_sampleCount *
+			m_factor = (float) 1.0f / (m_sampleCount *
 				(size_t) m_resolution.x * (size_t) m_resolution.y);
 			m_offset = 0;
 			m_stride = m_resolution.y;
 		} else {
 			m_samplesPerBatch = m_sampleCount *
 				(size_t) res.x * (size_t) res.y;
-			m_factor = (Float) 1.0f / m_samplesPerBatch;
+			m_factor = (float) 1.0f / m_samplesPerBatch;
 			m_resolution = Vector2i(1);
 			m_offset = 0;
 			m_stride = 1;
@@ -232,7 +232,7 @@ public:
 		m_sampleIndex = sampleIndex;
 	}
 
-	inline Float nextFloat(uint64_t idx) {
+	inline float nextfloat(uint64_t idx) {
 		uint32_t dim = m_dimension++;
 		if (dim == 0)
 			return idx * m_factor;
@@ -243,7 +243,7 @@ public:
 			return radicalInverseFast(dim-1, idx);
 	}
 
-	Float next1D() {
+	float next1D() {
 		/* Skip over dimensions that were reserved to arrays */
 		if (m_dimension >= m_arrayStartDim && m_dimension < m_arrayEndDim)
 			m_dimension = m_arrayEndDim;
@@ -253,7 +253,7 @@ public:
 		if (m_sampleIndex >= m_samplesPerBatch)
 			Log(EError, "Sample index exceeded the maximum count!");
 
-		return nextFloat(m_offset + m_stride * m_sampleIndex);
+		return nextfloat(m_offset + m_stride * m_sampleIndex);
 	}
 
 	Point2 next2D() {
@@ -268,13 +268,13 @@ public:
 
 		uint64_t index = m_offset + m_stride * m_sampleIndex;
 
-		Float value1, value2;
+		float value1, value2;
 		if (m_dimension == 0) {
-			value1 = nextFloat(index) * m_resolution.x - m_pixelPosition.x;
-			value2 = nextFloat(index) * m_resolution.y - m_pixelPosition.y;
+			value1 = nextfloat(index) * m_resolution.x - m_pixelPosition.x;
+			value2 = nextfloat(index) * m_resolution.y - m_pixelPosition.y;
 		} else {
-			value1 = nextFloat(index);
-			value2 = nextFloat(index);
+			value1 = nextfloat(index);
+			value2 = nextfloat(index);
 		}
 
 		return Point2(value1, value2);
@@ -306,7 +306,7 @@ private:
 	uint32_t m_arrayStartDim;
 	uint32_t m_arrayEndDim;
 	int m_scramble;
-	Float m_factor;
+	float m_factor;
 
 	/* Faure permutation */
 	ref<const PermutationStorage> m_permutations;

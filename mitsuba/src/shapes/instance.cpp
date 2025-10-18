@@ -81,11 +81,11 @@ AABB Instance::getAABB() const {
 	if (!aabb.isValid()) // the geometry group is empty
 		return aabb;
 
-	std::set<Float> times;
+	std::set<float> times;
 	m_transform->collectKeyframes(times);
 
 	AABB result;
-	for (std::set<Float>::iterator it = times.begin(); it != times.end(); ++it) {
+	for (std::set<float>::iterator it = times.begin(); it != times.end(); ++it) {
 		const Transform &trafo = m_transform->eval(*it);
 
 		for (int i=0; i<8; ++i)
@@ -112,8 +112,8 @@ size_t Instance::getEffectivePrimitiveCount() const {
 	return m_shapeGroup->getPrimitiveCount();
 }
 
-bool Instance::rayIntersect(const Ray &_ray, Float mint,
-		Float maxt, Float &t, void *temp) const {
+bool Instance::rayIntersect(const Ray &_ray, float mint,
+		float maxt, float &t, void *temp) const {
 	const ShapeKDTree *kdtree = m_shapeGroup->getKDTree();
 	const Transform &trafo = m_transform->eval(_ray.time);
 	Ray ray;
@@ -121,7 +121,7 @@ bool Instance::rayIntersect(const Ray &_ray, Float mint,
 	return kdtree->rayIntersect(ray, mint, maxt, t, temp);
 }
 
-bool Instance::rayIntersect(const Ray &_ray, Float mint, Float maxt) const {
+bool Instance::rayIntersect(const Ray &_ray, float mint, float maxt) const {
 	const ShapeKDTree *kdtree = m_shapeGroup->getKDTree();
 	Ray ray;
 	const Transform &trafo = m_transform->eval(_ray.time);
@@ -129,7 +129,7 @@ bool Instance::rayIntersect(const Ray &_ray, Float mint, Float maxt) const {
 	return kdtree->rayIntersect(ray, mint, maxt);
 }
 
-void Instance::adjustTime(Intersection &its, Float time) const {
+void Instance::adjustTime(Intersection &its, float time) const {
 	Transform trafo = m_transform->eval(its.time).inverse();
 	trafo = m_transform->eval(time) * trafo;
 
@@ -174,7 +174,7 @@ void Instance::getNormalDerivative(const Intersection &its,
 	/* Determine the length of the transformed normal
 	   *before* it was re-normalized */
 	Normal tn = trafo(normalize(invTrafo(its.shFrame.n)));
-	Float invLen = 1 / tn.length();
+	float invLen = 1 / tn.length();
 	tn *= invLen;
 
 	its.shape->getNormalDerivative(temp, dndu, dndv, shadingFrame);

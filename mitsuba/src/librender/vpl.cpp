@@ -29,7 +29,7 @@ static void appendVPL(const Scene *scene, Random *random,
 	prunedVPLs.incrementBase();
 
 	const Sensor *sensor = scene->getSensor();
-	Float time = random->nextFloat();
+	float time = random->nextfloat();
 
 	if (prune) {
 		/* Possibly reject VPLs if they are unlikely to be
@@ -42,16 +42,16 @@ static void appendVPL(const Scene *scene, Random *random,
 		Vector2i size = sensor->getFilm()->getCropSize();
 		for (int i=0; i<nSamples; ++i) {
 			if (sensor->needsTimeSample())
-				time = random->nextFloat();
+				time = random->nextfloat();
 
-			sensor->sampleRay(ray, Point2(random->nextFloat() * size.x,
-					random->nextFloat() * size.y), Point2(0.5f), time);
+			sensor->sampleRay(ray, Point2(random->nextfloat() * size.x,
+					random->nextfloat() * size.y), Point2(0.5f), time);
 
-			Float t;
+			float t;
 			if (scene->rayIntersect(ray, t, shape, n, uv)) {
 				Point p = ray(t);
 				Vector d = vpl.its.p - p;
-				Float length = d.length();
+				float length = d.length();
 				Ray shadowRay(p, d/length, Epsilon, length*(1-ShadowEpsilon), time);
 
 				if (!scene->rayIntersect(shadowRay))
@@ -61,8 +61,8 @@ static void appendVPL(const Scene *scene, Random *random,
 			}
 		}
 		/// Have a small chance of acceptance in any case
-		Float acceptanceProb = (nSuccesses+1) / (Float) (nSamples+1);
-		if (random->nextFloat() < acceptanceProb) {
+		float acceptanceProb = (nSuccesses+1) / (float) (nSamples+1);
+		if (random->nextfloat() < acceptanceProb) {
 			vpl.P /= acceptanceProb;
 			vpls.push_back(vpl);
 		} else {
@@ -89,7 +89,7 @@ size_t generateVPLs(const Scene *scene, Random *random,
 	}
 
 	const Sensor *sensor = scene->getSensor();
-	Float time = sensor->getShutterOpen()
+	float time = sensor->getShutterOpen()
 		+ sensor->getShutterOpenTime() * sampler->next1D();
 
 	const Frame stdFrame(Vector(1,0,0), Vector(0,1,0), Vector(0,0,1));
@@ -165,7 +165,7 @@ size_t generateVPLs(const Scene *scene, Random *random,
 			/* Assuming that BSDF importance sampling is perfect,
 				the following should equal the maximum albedo
 				over all spectral samples */
-			Float approxAlbedo = std::min((Float) 0.95f, bsdfVal.max());
+			float approxAlbedo = std::min((float) 0.95f, bsdfVal.max());
 			if (sampler->next1D() > approxAlbedo)
 				break;
 			else
@@ -183,7 +183,7 @@ size_t generateVPLs(const Scene *scene, Random *random,
 			ray = Ray(its.p, wo, 0.0f);
 
 			/* Prevent light leaks due to the use of shading normals -- [Veach, p. 158] */
-			Float wiDotGeoN = dot(its.geoFrame.n, wi),
+			float wiDotGeoN = dot(its.geoFrame.n, wi),
 				woDotGeoN = dot(its.geoFrame.n, wo);
 			if (wiDotGeoN * Frame::cosTheta(bRec.wi) <= 0 ||
 				woDotGeoN * Frame::cosTheta(bRec.wo) <= 0)

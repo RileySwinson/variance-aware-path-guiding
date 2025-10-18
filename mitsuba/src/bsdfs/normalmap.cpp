@@ -142,7 +142,7 @@ public:
 
 		Vector worldN = base.toWorld(n);
 
-		Float invLength_n = 1/worldN.length();
+		float invLength_n = 1/worldN.length();
 		worldN *= invLength_n;
 
 		du.n = invLength_n * (base.toWorld(dndu) + base_du.toWorld(n));
@@ -151,7 +151,7 @@ public:
 		dv.n -= dot(dv.n, worldN) * worldN;
 
 		Vector s = its.dpdu - worldN * dot(worldN, its.dpdu);
-		Float invLen_s = 1.0f / s.length();
+		float invLen_s = 1.0f / s.length();
 		s *= invLen_s;
 
 		du.s = invLen_s * (-du.n * dot(worldN, its.dpdu) - worldN * dot(du.n, its.dpdu));
@@ -183,7 +183,7 @@ public:
 		return m_nested->eval(perturbedQuery, measure);
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		const Intersection& its = bRec.its;
 		Intersection perturbed(its);
 		perturbed.shFrame = getFrame(its);
@@ -222,7 +222,7 @@ public:
 		return result;
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		const Intersection& its = bRec.its;
 		Intersection perturbed(its);
 		perturbed.shFrame = getFrame(its);
@@ -245,7 +245,7 @@ public:
 		return result;
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return m_nested->getRoughness(its, component);
 	}
 

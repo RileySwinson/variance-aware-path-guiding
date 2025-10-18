@@ -132,10 +132,10 @@ public:
 	size_t nextSize(size_t n);
 
 	/// Return a floating point value on the [0, 1) interval
-	Float nextFloat();
+	float nextfloat();
 
 	/// Return a normally distributed value
-	Float nextStandardNormal();
+	float nextStandardNormal();
 
 	/**
 	 * \brief Draw a uniformly distributed permutation and permute the

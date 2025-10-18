@@ -28,19 +28,19 @@
  */
 MTS_NAMESPACE_BEGIN
 
-BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
-		Float min, Float max) const {
+BrentSolver::Result BrentSolver::solve(const boost::function<float (float)> &f,
+		float min, float max) const {
 	// return the first endpoint if it is good enough
-	Float yMin = f(min);
+	float yMin = f(min);
 	if (std::abs(yMin) <= m_absAccuracy)
 		return Result(true, 0, min, yMin);
 
 	// return the second endpoint if it is good enough
-	Float yMax = f(max);
+	float yMax = f(max);
 	if (std::abs(yMax) <= m_absAccuracy)
 		return Result(true, 0, max, yMax);
 
-	Float sign = yMin * yMax;
+	float sign = yMin * yMax;
 	if (sign > 0) {
 		SLog(EWarn, "BrentSolver: Function values at the endpoints do not have different signs -- "
 			"endpoints: [%f, %f], values: [%f, %f]", min, max, yMin, yMax);
@@ -51,8 +51,8 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 	}
 }
 
-BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
-		Float min, Float max, Float initial) const {
+BrentSolver::Result BrentSolver::solve(const boost::function<float (float)> &f,
+		float min, float max, float initial) const {
 	if (initial < min || initial > max) {
 		SLog(EWarn, "BrentSolver: Invalid interval: lower=%f, initial=%f, upper=%f",
 			min, max, initial);
@@ -60,12 +60,12 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 	}
 
 	// return the initial guess if it is good enough
-	Float yInitial = f(initial);
+	float yInitial = f(initial);
 	if (std::abs(yInitial) <= m_absAccuracy)
 		return Result(true, 0, initial, yInitial);
 
 	// return the first endpoint if it is good enough
-	Float yMin = f(min);
+	float yMin = f(min);
 	if (std::abs(yMin) <= m_absAccuracy)
 		return Result(true, 0, min, yMin);
 
@@ -74,7 +74,7 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 		return solve(f, min, yMin, initial, yInitial, min, yMin);
 
 	// return the second endpoint if it is good enough
-	Float yMax = f(max);
+	float yMax = f(max);
 	if (std::abs(yMax) <= m_absAccuracy)
 		return Result(true, 0, max, yMax);
 
@@ -88,12 +88,12 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 	return Result(false, 0, 0, 0);
 }
 
-BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
-			 Float x0, Float y0,
-			 Float x1, Float y1,
-			 Float x2, Float y2) const {
-	Float delta = x1 - x0;
-	Float oldDelta = delta;
+BrentSolver::Result BrentSolver::solve(const boost::function<float (float)> &f,
+			 float x0, float y0,
+			 float x1, float y1,
+			 float x2, float y2) const {
+	float delta = x1 - x0;
+	float oldDelta = delta;
 
 	size_t i = 0;
 	while (i < m_maxIterations) {
@@ -112,8 +112,8 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 			// still be ill conditioned)
 			return Result(true, i, x1, y1);
 		}
-		Float dx = x2 - x1;
-		Float tolerance =
+		float dx = x2 - x1;
+		float tolerance =
 			std::max(m_relAccuracyPos * std::abs(x1), m_absAccuracyPos);
 
 		if (std::abs(dx) <= tolerance)
@@ -121,12 +121,12 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 		if ((std::abs(oldDelta) < tolerance) ||
 				(std::abs(y0) <= std::abs(y1))) {
 			// Force bisection.
-			delta = (Float) 0.5f * dx;
+			delta = (float) 0.5f * dx;
 			oldDelta = delta;
 		} else {
-			Float r3 = y1 / y0;
-			Float p;
-			Float p1;
+			float r3 = y1 / y0;
+			float p;
+			float p1;
 			// the equality test (x0 == x2) is intentional,
 			// it is part of the original Brent's method,
 			// it should NOT be replaced by proximity test
@@ -136,8 +136,8 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 				p1 = 1 - r3;
 			} else {
 				// Inverse quadratic interpolation.
-				Float r1 = y0 / y2;
-				Float r2 = y1 / y2;
+				float r1 = y0 / y2;
+				float r2 = y1 / y2;
 				p = r3 * (dx * r1 * (r1 - r2) - (x1 - x0) * (r2 - 1));
 				p1 = (r1 - 1) * (r2 - 1) * (r3 - 1);
 			}
@@ -146,12 +146,12 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 			} else {
 				p = -p;
 			}
-			if (2 * p >= (Float) 1.5f * dx * p1 - std::abs(tolerance * p1) ||
-					p >= std::abs((Float) 0.5f * oldDelta * p1)) {
+			if (2 * p >= (float) 1.5f * dx * p1 - std::abs(tolerance * p1) ||
+					p >= std::abs((float) 0.5f * oldDelta * p1)) {
 				// Inverse quadratic interpolation gives a value
 				// in the wrong direction, or progress is slow.
 				// Fall back to bisection.
-				delta = (Float) 0.5f * dx;
+				delta = (float) 0.5f * dx;
 				oldDelta = delta;
 			} else {
 				oldDelta = delta;
@@ -165,9 +165,9 @@ BrentSolver::Result BrentSolver::solve(const boost::function<Float (Float)> &f,
 		if (std::abs(delta) > tolerance) {
 			x1 = x1 + delta;
 		} else if (dx > 0) {
-			x1 = x1 + (Float) 0.5f * tolerance;
+			x1 = x1 + (float) 0.5f * tolerance;
 		} else if (dx <= 0) {
-			x1 = x1 - (Float) 0.5f * tolerance;
+			x1 = x1 - (float) 0.5f * tolerance;
 		}
 		y1 = f(x1);
 		if ((y1 > 0) == (y2 > 0)) {

@@ -53,7 +53,7 @@ public:
 	void setParameter(int id, bool value);
 
 	/// Set a float parameter
-	void setParameter(int id, Float value);
+	void setParameter(int id, float value);
 
 	/// Set a integer parameter
 	void setParameter(int id, int value);

@@ -699,8 +699,8 @@ static void glnvg__renderFill(void* uptr, struct NVGpaint* paint, struct NVGscis
 		for (i = 0; i < npaths; i++) {
 			path = &paths[i];
 			offset = n * sizeof(struct NVGvertex);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(offset + 2*sizeof(float)));
+			glVertexAttribPointer(0, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
+			glVertexAttribPointer(1, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(offset + 2*sizeof(float)));
 			glDrawArrays(GL_TRIANGLE_FAN, 0, path->nfill);
 			n += path->nfill + path->nstroke;
 		}
@@ -713,8 +713,8 @@ static void glnvg__renderFill(void* uptr, struct NVGpaint* paint, struct NVGscis
 			for (i = 0; i < npaths; i++) {
 				path = &paths[i];
 				offset = (n + path->nfill) * sizeof(struct NVGvertex);
-				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
-				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(offset + 2*sizeof(float)));
+				glVertexAttribPointer(0, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
+				glVertexAttribPointer(1, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(offset + 2*sizeof(float)));
 				glDrawArrays(GL_TRIANGLE_STRIP, 0, path->nstroke);
 				n += path->nfill + path->nstroke;
 			}
@@ -752,7 +752,7 @@ static void glnvg__renderFill(void* uptr, struct NVGpaint* paint, struct NVGscis
 		for (i = 0; i < npaths; i++) {
 			path = &paths[i];
 			offset = n * sizeof(struct NVGvertex);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
+			glVertexAttribPointer(0, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
 			glDrawArrays(GL_TRIANGLE_FAN, 0, path->nfill);
 			n += path->nfill + path->nstroke;
 		}
@@ -775,8 +775,8 @@ static void glnvg__renderFill(void* uptr, struct NVGpaint* paint, struct NVGscis
 			for (i = 0; i < npaths; i++) {
 				path = &paths[i];
 				offset = (n + path->nfill) * sizeof(struct NVGvertex);
-				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
-				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(offset + 2*sizeof(float)));
+				glVertexAttribPointer(0, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
+				glVertexAttribPointer(1, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(offset + 2*sizeof(float)));
 				glDrawArrays(GL_TRIANGLE_STRIP, 0, path->nstroke);
 				n += path->nfill + path->nstroke;
 			}
@@ -793,7 +793,7 @@ static void glnvg__renderFill(void* uptr, struct NVGpaint* paint, struct NVGscis
 			bounds[0], bounds[3], bounds[2], bounds[1], bounds[0], bounds[1],
 		};
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * 2*sizeof(float), quad);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (const GLvoid*)0);
+		glVertexAttribPointer(0, 2, GL_float, GL_FALSE, 2*sizeof(float), (const GLvoid*)0);
 		glVertexAttrib2f(1, 0.5f, 1.0f);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -833,8 +833,8 @@ static void glnvg__renderStroke(void* uptr, struct NVGpaint* paint, struct NVGsc
 	for (i = 0; i < npaths; i++) {
 		path = &paths[i];
 		offset = (n + path->nfill) * sizeof(struct NVGvertex);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(offset + 2*sizeof(float)));
+		glVertexAttribPointer(0, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(size_t)offset);
+		glVertexAttribPointer(1, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(offset + 2*sizeof(float)));
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, path->nstroke);
 		n += path->nfill + path->nstroke;
 	}
@@ -871,8 +871,8 @@ static void glnvg__renderTriangles(void* uptr, struct NVGpaint* paint, struct NV
 	glBindBuffer(GL_ARRAY_BUFFER, gl->vertBuf);
 	glBufferData(GL_ARRAY_BUFFER, nverts * sizeof(struct NVGvertex), verts, GL_STREAM_DRAW);
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(2 * sizeof(float)));
+	glVertexAttribPointer(0, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)0);
+	glVertexAttribPointer(1, 2, GL_float, GL_FALSE, sizeof(struct NVGvertex), (const GLvoid*)(2 * sizeof(float)));
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 

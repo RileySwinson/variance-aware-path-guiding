@@ -41,15 +41,15 @@ struct PSSMLTConfiguration {
 	bool directSampling;
 	int rrDepth;
 	bool separateDirect;
-	Float luminance;
-	Float pLarge;
+	float luminance;
+	float pLarge;
 	int workUnits;
 	int directSamples;
 	int luminanceSamples;
 	size_t nMutations;
 	bool kelemenStyleWeights;
-	Float mutationSizeLow;
-	Float mutationSizeHigh;
+	float mutationSizeLow;
+	float mutationSizeHigh;
 	bool twoStage;
 	bool firstStage;
 	int firstStageSizeReduction;
@@ -93,22 +93,22 @@ struct PSSMLTConfiguration {
 		directSampling = stream->readBool();
 		rrDepth = stream->readInt();
 		separateDirect = stream->readBool();
-		luminance = stream->readFloat();
-		pLarge = stream->readFloat();
+		luminance = stream->readfloat();
+		pLarge = stream->readfloat();
 		workUnits = stream->readInt();
 		directSamples = stream->readInt();
 		luminanceSamples = stream->readInt();
 		nMutations = stream->readSize();
 		kelemenStyleWeights = stream->readBool();
-		mutationSizeLow = stream->readFloat();
-		mutationSizeHigh = stream->readFloat();
+		mutationSizeLow = stream->readfloat();
+		mutationSizeHigh = stream->readfloat();
 		twoStage = stream->readBool();
 		firstStage = stream->readBool();
 		firstStageSizeReduction = stream->readInt();
 		Vector2i size(stream);
 		if (size != Vector2i(0)) {
-			importanceMap = new Bitmap(Bitmap::ELuminance, Bitmap::EFloat, size);
-			stream->readFloatArray(importanceMap->getFloatData(),
+			importanceMap = new Bitmap(Bitmap::ELuminance, Bitmap::Efloat, size);
+			stream->readfloatArray(importanceMap->getfloatData(),
 				(size_t) size.x * (size_t) size.y);
 		}
 		timeout = stream->readSize();
@@ -120,21 +120,21 @@ struct PSSMLTConfiguration {
 		stream->writeBool(directSampling);
 		stream->writeInt(rrDepth);
 		stream->writeBool(separateDirect);
-		stream->writeFloat(luminance);
-		stream->writeFloat(pLarge);
+		stream->writefloat(luminance);
+		stream->writefloat(pLarge);
 		stream->writeInt(workUnits);
 		stream->writeInt(directSamples);
 		stream->writeInt(luminanceSamples);
 		stream->writeSize(nMutations);
 		stream->writeBool(kelemenStyleWeights);
-		stream->writeFloat(mutationSizeLow);
-		stream->writeFloat(mutationSizeHigh);
+		stream->writefloat(mutationSizeLow);
+		stream->writefloat(mutationSizeHigh);
 		stream->writeBool(twoStage);
 		stream->writeBool(firstStage);
 		stream->writeInt(firstStageSizeReduction);
 		if (importanceMap.get()) {
 			importanceMap->getSize().serialize(stream);
-			stream->writeFloatArray(importanceMap->getFloatData(),
+			stream->writefloatArray(importanceMap->getfloatData(),
 				(size_t) importanceMap->getWidth() * (size_t) importanceMap->getHeight());
 		} else {
 			Vector2i(0, 0).serialize(stream);

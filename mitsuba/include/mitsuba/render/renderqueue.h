@@ -77,7 +77,7 @@ public:
 	void removeJob(RenderJob *thr, bool wasCancelled);
 
 	/// Return the amount of time spent rendering the given job (in seconds)
-	Float getRenderTime(const RenderJob *job) const;
+	float getRenderTime(const RenderJob *job) const;
 
 	/// Register a render listener
 	void registerListener(RenderListener *listener);

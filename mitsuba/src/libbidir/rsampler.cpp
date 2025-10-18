@@ -72,20 +72,20 @@ void ReplayableSampler::setSampleIndex(size_t sampleIndex) {
 	}
 
 	while (m_sampleIndex != sampleIndex) {
-		m_random->nextFloat();
+		m_random->nextfloat();
 		++m_sampleIndex;
 	}
 }
 
-Float ReplayableSampler::next1D() {
+float ReplayableSampler::next1D() {
 	++m_sampleIndex;
-	return m_random->nextFloat();
+	return m_random->nextfloat();
 }
 
 Point2 ReplayableSampler::next2D() {
 	/// Enforce a specific order of evaluation
-	Float value1 = m_random->nextFloat();
-	Float value2 = m_random->nextFloat();
+	float value1 = m_random->nextfloat();
+	float value2 = m_random->nextfloat();
 	m_sampleIndex += 2;
 	return Point2(value1, value2);
 }

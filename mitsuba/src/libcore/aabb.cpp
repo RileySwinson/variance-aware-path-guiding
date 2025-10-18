@@ -28,13 +28,13 @@ Point AABB::getCorner(uint8_t corner) const {
 
 
 bool AABB::overlaps(const BSphere &sphere) const {
-	Float distance = 0;
+	float distance = 0;
 	for (int i=0; i<3; ++i) {
 		if (sphere.center[i] < min[i]) {
-			Float d = sphere.center[i]-min[i];
+			float d = sphere.center[i]-min[i];
 			distance += d*d;
 		} else if (sphere.center[i] > max[i]) {
-			Float d = sphere.center[i]-max[i];
+			float d = sphere.center[i]-max[i];
 			distance += d*d;
 		}
 	}

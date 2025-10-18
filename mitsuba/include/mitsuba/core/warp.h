@@ -40,19 +40,19 @@ namespace warp {
 	extern MTS_EXPORT_CORE Vector squareToUniformSphere(const Point2 &sample);
 
 	/// Density of \ref squareToUniformSphere() with respect to solid angles
-	extern MTS_EXPORT_CORE inline Float squareToUniformSpherePdf() { return INV_FOURPI; }
+	extern MTS_EXPORT_CORE inline float squareToUniformSpherePdf() { return INV_FOURPI; }
 
 	/// Uniformly sample a vector on the unit hemisphere with respect to solid angles
 	extern MTS_EXPORT_CORE Vector squareToUniformHemisphere(const Point2 &sample);
 
 	/// Density of \ref squareToUniformHemisphere() with respect to solid angles
-	extern MTS_EXPORT_CORE inline Float squareToUniformHemispherePdf() { return INV_TWOPI; }
+	extern MTS_EXPORT_CORE inline float squareToUniformHemispherePdf() { return INV_TWOPI; }
 
 	/// Sample a cosine-weighted vector on the unit hemisphere with respect to solid angles
 	extern MTS_EXPORT_CORE Vector squareToCosineHemisphere(const Point2 &sample);
 
 	/// Density of \ref squareToCosineHemisphere() with respect to solid angles
-	extern MTS_EXPORT_CORE inline Float squareToCosineHemispherePdf(const Vector &d)
+	extern MTS_EXPORT_CORE inline float squareToCosineHemispherePdf(const Vector &d)
 		{ return INV_PI * Frame::cosTheta(d); }
 
 	/**
@@ -62,7 +62,7 @@ namespace warp {
 	 * \param cosCutoff Cosine of the cutoff angle
 	 * \param sample A uniformly distributed sample on \f$[0,1]^2\f$
 	 */
-	extern MTS_EXPORT_CORE Vector squareToUniformCone(Float cosCutoff, const Point2 &sample);
+	extern MTS_EXPORT_CORE Vector squareToUniformCone(float cosCutoff, const Point2 &sample);
 
 	/**
 	 * \brief Uniformly sample a vector that lies within a given
@@ -71,7 +71,7 @@ namespace warp {
 	 * \param cosCutoff Cosine of the cutoff angle
 	 * \param sample A uniformly distributed sample on \f$[0,1]^2\f$
 	 */
-	extern MTS_EXPORT_CORE inline Float squareToUniformConePdf(Float cosCutoff) {
+	extern MTS_EXPORT_CORE inline float squareToUniformConePdf(float cosCutoff) {
 		return INV_TWOPI / (1-cosCutoff);
 	}
 
@@ -86,7 +86,7 @@ namespace warp {
 	extern MTS_EXPORT_CORE Point2 squareToUniformDisk(const Point2 &sample);
 
 	/// Density of \ref squareToUniformDisk per unit area
-	extern MTS_EXPORT_CORE inline Float squareToUniformDiskPdf() { return INV_PI; }
+	extern MTS_EXPORT_CORE inline float squareToUniformDiskPdf() { return INV_PI; }
 
 	/// Low-distortion concentric square to disk mapping by Peter Shirley (PDF: 1/PI)
 	extern MTS_EXPORT_CORE Point2 squareToUniformDiskConcentric(const Point2 &sample);
@@ -95,7 +95,7 @@ namespace warp {
 	extern MTS_EXPORT_CORE Point2 uniformDiskToSquareConcentric(const Point2 &p);
 
 	/// Density of \ref squareToUniformDisk per unit area
-	extern MTS_EXPORT_CORE inline Float squareToUniformDiskConcentricPdf() { return INV_PI; }
+	extern MTS_EXPORT_CORE inline float squareToUniformDiskConcentricPdf() { return INV_PI; }
 
 	/// Convert an uniformly distributed square sample into barycentric coordinates
 	extern MTS_EXPORT_CORE Point2 squareToUniformTriangle(const Point2 &sample);
@@ -108,7 +108,7 @@ namespace warp {
 	extern MTS_EXPORT_CORE Point2 squareToStdNormal(const Point2 &sample);
 
 	/// Density of \ref squareToStdNormal per unit area
-	extern MTS_EXPORT_CORE Float squareToStdNormalPdf(const Point2 &pos);
+	extern MTS_EXPORT_CORE float squareToStdNormalPdf(const Point2 &pos);
 
 	/// Warp a uniformly distributed square sample to a 2D tent distribution
 	extern MTS_EXPORT_CORE Point2 squareToTent(const Point2 &sample);
@@ -117,7 +117,7 @@ namespace warp {
 	 * \brief Warp a uniformly distributed sample on [0, 1] to a nonuniform
 	 * tent distribution with nodes <tt>{a, b, c}</tt>
 	 */
-	extern MTS_EXPORT_CORE Float intervalToNonuniformTent(Float a, Float b, Float c, Float sample);
+	extern MTS_EXPORT_CORE float intervalToNonuniformTent(float a, float b, float c, float sample);
 
 	//! @}
 	// =============================================================

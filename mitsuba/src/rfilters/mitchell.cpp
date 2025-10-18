@@ -34,28 +34,28 @@ public:
 		/* Filter radius */
 		m_radius = 2.0f;
 		/* B parameter from the paper */
-		m_B = props.getFloat("B", 1.0f / 3.0f);
+		m_B = props.getfloat("B", 1.0f / 3.0f);
 		/* C parameter from the paper */
-		m_C = props.getFloat("C", 1.0f / 3.0f);
+		m_C = props.getfloat("C", 1.0f / 3.0f);
 	}
 
 	MitchellNetravaliFilter(Stream *stream, InstanceManager *manager)
 		: ReconstructionFilter(stream, manager) {
-		m_B = stream->readFloat();
-		m_C = stream->readFloat();
+		m_B = stream->readfloat();
+		m_C = stream->readfloat();
 		configure();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		ReconstructionFilter::serialize(stream, manager);
-		stream->writeFloat(m_B);
-		stream->writeFloat(m_C);
+		stream->writefloat(m_B);
+		stream->writefloat(m_C);
 	}
 
-	Float eval(Float x) const {
+	float eval(float x) const {
 		x = std::abs(x);
 
-		Float x2 = x*x, x3 = x2*x;
+		float x2 = x*x, x3 = x2*x;
 
 		if (x < 1) {
 			return 1.0f/6.0f * ((12-9*m_B-6*m_C)*x3
@@ -74,7 +74,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 protected:
-	Float m_B, m_C;
+	float m_B, m_C;
 };
 
 MTS_IMPLEMENT_CLASS_S(MitchellNetravaliFilter, false, ReconstructionFilter);

@@ -31,12 +31,12 @@ MTS_NAMESPACE_BEGIN
  *	      Specifies an optional camera-to-world transformation.
  *        \default{none (i.e. camera space $=$ world space)}
  *     }
- *     \parameter{shutterOpen, shutterClose}{\Float}{
+ *     \parameter{shutterOpen, shutterClose}{\float}{
  *         Specifies the time interval of the measurement---this
  *         is only relevant when the scene is in motion.
  *         \default{0}
  *     }
- *     \parameter{nearClip, farClip}{\Float}{
+ *     \parameter{nearClip, farClip}{\float}{
  *         Distance to the near/far clip
  *         planes.\default{\code{near\code}-\code{Clip=1e-2} (i.e.
  *         \code{0.01}) and {\code{farClip=1e4} (i.e. \code{10000})}}
@@ -87,10 +87,10 @@ public:
 		const Vector2i &cropSize   = m_film->getCropSize();
 		const Point2i  &cropOffset = m_film->getCropOffset();
 
-		Vector2 relSize((Float) cropSize.x / (Float) filmSize.x,
-			(Float) cropSize.y / (Float) filmSize.y);
-		Point2 relOffset((Float) cropOffset.x / (Float) filmSize.x,
-			(Float) cropOffset.y / (Float) filmSize.y);
+		Vector2 relSize((float) cropSize.x / (float) filmSize.x,
+			(float) cropSize.y / (float) filmSize.y);
+		Point2 relOffset((float) cropOffset.x / (float) filmSize.x,
+			(float) cropOffset.y / (float) filmSize.y);
 
 		/**
 		 * These do the following (in reverse order):
@@ -135,7 +135,7 @@ public:
 	}
 
 	Spectrum sampleRay(Ray &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 		const Transform &trafo = m_worldTransform->eval(ray.time);
 
@@ -155,7 +155,7 @@ public:
 	}
 
 	Spectrum sampleRayDifferential(RayDifferential &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 		const Transform &trafo = m_worldTransform->eval(ray.time);
 
@@ -207,7 +207,7 @@ public:
 		return Spectrum((pRec.measure == EArea) ? m_invSurfaceArea : 0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EArea) ? m_invSurfaceArea : 0.0f;
 	}
 
@@ -222,7 +222,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		return (dRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
@@ -236,7 +236,7 @@ public:
 		const Transform &trafo = m_worldTransform->eval(dRec.time);
 
 		dRec.n = trafo(Vector(0, 0, 1));
-		Float scale = dRec.n.length();
+		float scale = dRec.n.length();
 
 		Point localP = trafo.inverse().transformAffine(dRec.ref);
 		localP.z *= scale;
@@ -261,7 +261,7 @@ public:
 		return Spectrum(m_invSurfaceArea);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return (dRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -321,7 +321,7 @@ private:
 	Transform m_cameraToSample;
 	Transform m_sampleToCamera;
 	Transform m_clipTransform;
-	Float m_invSurfaceArea, m_scale;
+	float m_invSurfaceArea, m_scale;
 	Vector m_dx, m_dy;
 };
 

@@ -60,8 +60,8 @@ protected:
 	AABB buildHierarchy(IndexType index);
 
 	/// Blurring kernel used by the BRE
-	inline Float K2(Float sqrParam) const {
-		Float tmp = 1-sqrParam;
+	inline float K2(float sqrParam) const {
+		float tmp = 1-sqrParam;
 		return (3/M_PI) * tmp * tmp;
 	}
 
@@ -83,11 +83,11 @@ protected:
 	struct BRENode {
 		AABB aabb;
 		Photon photon;
-		Float radius;
+		float radius;
 	};
 
 	BRENode *m_nodes;
-	Float m_scaleFactor;
+	float m_scaleFactor;
 	size_t m_photonCount;
 	size_t m_depth;
 };

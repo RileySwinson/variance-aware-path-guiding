@@ -99,8 +99,8 @@ MTS_NAMESPACE_BEGIN
 class GridDataSource : public VolumeDataSource {
 public:
 	enum EVolumeType {
-		EFloat32 = 1,
-		EFloat16 = 2,
+		Efloat32 = 1,
+		Efloat16 = 2,
 		EUInt8 = 3,
 		EQuantizedDirections = 4
 	};
@@ -157,8 +157,8 @@ public:
 		size_t nEntries = (size_t) m_res.x
 			* (size_t) m_res.y * (size_t) m_res.z;
 		switch (m_volumeType) {
-			case EFloat32: return 4 * nEntries * m_channels;
-			case EFloat16: return 2 * nEntries * m_channels;
+			case Efloat32: return 4 * nEntries * m_channels;
+			case Efloat16: return 2 * nEntries * m_channels;
 			case EUInt8:   return 1 * nEntries * m_channels;
 			case EQuantizedDirections:  return 2 * nEntries;
 			default:
@@ -193,16 +193,16 @@ public:
 				(m_res[1] - 1) / extents[1],
 				(m_res[2] - 1) / extents[2])
 			) * Transform::translate(-Vector(m_dataAABB.min)) * m_worldToVolume;
-		m_stepSize = std::numeric_limits<Float>::infinity();
+		m_stepSize = std::numeric_limits<float>::infinity();
 		for (int i=0; i<3; ++i)
-			m_stepSize = std::min(m_stepSize, 0.5f * extents[i] / (Float) (m_res[i]-1));
+			m_stepSize = std::min(m_stepSize, 0.5f * extents[i] / (float) (m_res[i]-1));
 		m_aabb.reset();
 		for (int i=0; i<8; ++i)
 			m_aabb.expandBy(m_volumeToWorld(m_dataAABB.getCorner(i)));
 
 		/* Precompute cosine and sine lookup tables */
 		for (int i=0; i<255; i++) {
-			Float angle = (float) i * ((float) M_PI / 255.0f);
+			float angle = (float) i * ((float) M_PI / 255.0f);
 			m_cosPhi[i] = std::cos(2.0f * angle);
 			m_sinPhi[i] = std::sin(2.0f * angle);
 			m_cosTheta[i] = std::cos(angle);
@@ -241,14 +241,14 @@ public:
 		std::string format;
 
 		switch (type) {
-			case EFloat32:
+			case Efloat32:
 				if (m_channels != 1 && m_channels != 3)
 					Log(EError, "Encountered an unsupported float32 volume data "
 						"file (%i channels, only 1 and 3 are supported)",
 						m_channels);
 				format = "float32";
 				break;
-			case EFloat16:
+			case Efloat16:
 				format = "float16";
 				Log(EError, "Error: float16 volumes are not yet supported!");
 			case EUInt8:
@@ -271,10 +271,10 @@ public:
 		m_volumeType = (EVolumeType) type;
 
 		if (!m_dataAABB.isValid()) {
-			Float xmin = stream->readSingle(),
+			float xmin = stream->readSingle(),
 				  ymin = stream->readSingle(),
 				  zmin = stream->readSingle();
-			Float xmax = stream->readSingle(),
+			float xmax = stream->readSingle(),
 				  ymax = stream->readSingle(),
 				  zmax = stream->readSingle();
 			m_dataAABB = AABB(Point(xmin, ymin, zmin), Point(xmax, ymax, zmax));
@@ -303,7 +303,7 @@ public:
 			value[0] = (float) a; value[1] = (float) b; value[2] = (float) c;
 		}
 
-		inline float3 operator*(Float v) const {
+		inline float3 operator*(float v) const {
 			return float3((float) (value[0]*v), (float) (value[1]*v), (float) (value[2]*v));
 		}
 
@@ -334,7 +334,7 @@ public:
 		}
 	};
 
-	Float lookupFloat(const Point &_p) const {
+	float lookupfloat(const Point &_p) const {
 		const Point p = m_worldToGrid.transformAffine(_p);
 		const int x1 = math::floorToInt(p.x),
 			  y1 = math::floorToInt(p.y),
@@ -345,13 +345,13 @@ public:
 		    y2 >= m_res.y || z2 >= m_res.z)
 			return 0;
 
-		const Float fx = p.x - x1, fy = p.y - y1, fz = p.z - z1,
+		const float fx = p.x - x1, fy = p.y - y1, fz = p.z - z1,
 				_fx = 1.0f - fx, _fy = 1.0f - fy, _fz = 1.0f - fz;
 
 		switch (m_volumeType) {
-			case EFloat32: {
+			case Efloat32: {
 				const float *floatData = (float *) m_data;
-				const Float
+				const float
 					d000 = floatData[(z1*m_res.y + y1)*m_res.x + x1],
 					d001 = floatData[(z1*m_res.y + y1)*m_res.x + x2],
 					d010 = floatData[(z1*m_res.y + y2)*m_res.x + x1],
@@ -367,7 +367,7 @@ public:
 						(d110*_fx + d111*fx)*fy)*fz;
 			}
 			case EUInt8: {
-				const Float
+				const float
 					d000 = m_densityMap[m_data[(z1*m_res.y + y1)*m_res.x + x1]],
 					d001 = m_densityMap[m_data[(z1*m_res.y + y1)*m_res.x + x2]],
 					d010 = m_densityMap[m_data[(z1*m_res.y + y2)*m_res.x + x1]],
@@ -398,11 +398,11 @@ public:
 		    y2 >= m_res.y || z2 >= m_res.z)
 			return Spectrum(0.0f);
 
-		const Float fx = p.x - x1, fy = p.y - y1, fz = p.z - z1,
+		const float fx = p.x - x1, fy = p.y - y1, fz = p.z - z1,
 				_fx = 1.0f - fx, _fy = 1.0f - fy, _fz = 1.0f - fz;
 
 		switch (m_volumeType) {
-			case EFloat32: {
+			case Efloat32: {
 				const float3 *spectrumData = (float3 *) m_data;
 				const float3
 					&d000 = spectrumData[(z1*m_res.y + y1)*m_res.x + x1],
@@ -475,13 +475,13 @@ public:
 		    y2 >= m_res.y || z2 >= m_res.z)
 			return Vector(0.0f);
 
-		const Float fx = p.x - x1, fy = p.y - y1, fz = p.z - z1;
+		const float fx = p.x - x1, fy = p.y - y1, fz = p.z - z1;
 		Vector value;
 
 		#if defined(VINTERP_NEAREST_NEIGHBOR)
 			/* Nearest neighbor */
 			switch (m_volumeType) {
-				case EFloat32: {
+				case Efloat32: {
 					const float3 *vectorData = (float3 *) m_data;
 					value = vectorData[
 						(((fz < .5) ? z1 : z2) * m_res.y +
@@ -500,16 +500,16 @@ public:
 					return Vector(0.0f);
 			}
 		#else
-			Float _fx = 1.0f - fx, _fy = 1.0f - fy, _fz = 1.0f - fz;
+			float _fx = 1.0f - fx, _fy = 1.0f - fy, _fz = 1.0f - fz;
 
 			Matrix3x3 tensor(0.0f);
 			switch (m_volumeType) {
-				case EFloat32: {
+				case Efloat32: {
 						const float3 *vectorData = (float3 *) m_data;
 						for (int k=0; k<8; ++k) {
 							uint32_t index = (((k & 4) ? z2 : z1) * m_res.y +
 								((k & 2) ? y2 : y1)) * m_res.x + ((k & 1) ? x2 : x1);
-							Float factor = ((k & 1) ? fx : _fx) * ((k & 2) ? fy : _fy)
+							float factor = ((k & 1) ? fx : _fx) * ((k & 2) ? fy : _fy)
 								* ((k & 4) ? fz : _fz);
 							Vector d = vectorData[index].toVector();
 							tensor(0, 0) += factor * d.x * d.x;
@@ -525,7 +525,7 @@ public:
 						for (int k=0; k<8; ++k) {
 							uint32_t index = (((k & 4) ? z2 : z1) * m_res.y +
 								((k & 2) ? y2 : y1)) * m_res.x + ((k & 1) ? x2 : x1);
-							Float factor = ((k & 1) ? fx : _fx) * ((k & 2) ? fy : _fy)
+							float factor = ((k & 1) ? fx : _fx) * ((k & 2) ? fy : _fy)
 								* ((k & 4) ? fz : _fz);
 							Vector d = lookupQuantizedDirection(index);
 							tensor(0, 0) += factor * d.x * d.x;
@@ -549,15 +549,15 @@ public:
 				return Vector(0.0f);
 
 #if 0
-			Float lambda[3];
+			float lambda[3];
 			eig3_noniter(tensor, lambda);
 			value = tensor.col(0);
-			Float specularity = 1-lambda[1]/lambda[0];
+			float specularity = 1-lambda[1]/lambda[0];
 #else
 			/* Square the structure tensor for faster convergence */
 			tensor *= tensor;
 
-			const Float invSqrt3 = 0.577350269189626f;
+			const float invSqrt3 = 0.577350269189626f;
 			value = Vector(invSqrt3, invSqrt3, invSqrt3);
 
 			/* Determine the dominant eigenvector using
@@ -575,12 +575,12 @@ public:
 			return Vector(0.0f);
 	}
 
-	bool supportsFloatLookups() const { return m_channels == 1; }
+	bool supportsfloatLookups() const { return m_channels == 1; }
 	bool supportsSpectrumLookups() const { return m_channels == 3; }
 	bool supportsVectorLookups() const { return m_channels == 3; }
-	Float getStepSize() const { return m_stepSize; }
+	float getStepSize() const { return m_stepSize; }
 
-	Float getMaximumFloatValue() const {
+	float getMaximumfloatValue() const {
 		return 1.0f;
 	}
 
@@ -615,12 +615,12 @@ protected:
 	Transform m_worldToGrid;
 	Transform m_worldToVolume;
 	Transform m_volumeToWorld;
-	Float m_stepSize;
+	float m_stepSize;
 	AABB m_dataAABB;
 	ref<MemoryMappedFile> m_mmap;
-	Float m_cosTheta[256], m_sinTheta[256];
-	Float m_cosPhi[256], m_sinPhi[256];
-	Float m_densityMap[256];
+	float m_cosTheta[256], m_sinTheta[256];
+	float m_cosPhi[256], m_sinPhi[256];
+	float m_densityMap[256];
 };
 
 MTS_IMPLEMENT_CLASS_S(GridDataSource, false, VolumeDataSource);

@@ -151,7 +151,7 @@ public:
 	Vector wo;
 
 	/// Relative index of refraction in the sampled direction
-	Float eta;
+	float eta;
 
 	/** \brief Transported mode (radiance or importance)
 	 *
@@ -394,7 +394,7 @@ public:
 	 * \remark From Python, this function is is called using the syntax
 	 *         <tt>value, pdf = bsdf.sample(bRec, sample)</tt>
 	 */
-	virtual Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf,
+	virtual Spectrum sample(BSDFSamplingRecord &bRec, float &pdf,
 		const Point2 &sample) const = 0;
 
 	/**
@@ -437,7 +437,7 @@ public:
 	 *     different measures. (E.g. a diffuse material with an
 	 *     ideally smooth dielectric coating).
 	 */
-	virtual Float pdf(const BSDFSamplingRecord &bRec,
+	virtual float pdf(const BSDFSamplingRecord &bRec,
 		EMeasure measure = ESolidAngle) const = 0;
 
 	/**
@@ -448,7 +448,7 @@ public:
 	 *
 	 * \return interior IOR / exteriorIOR
 	 */
-	virtual Float getEta() const;
+	virtual float getEta() const;
 
 	/**
 	 * \brief For rough BSDFs: return the root mean square
@@ -456,7 +456,7 @@ public:
 	 *
 	 * An infinite value indicates a component that is ideally diffuse
 	 */
-	virtual Float getRoughness(const Intersection &its, int index) const;
+	virtual float getRoughness(const Intersection &its, int index) const;
 
 	/**
 	 * \brief Sometimes, BSDF models make use of a perturbed frame for
@@ -517,7 +517,7 @@ protected:
 	 * is abided) and prints a warning.
 	 */
 	Texture *ensureEnergyConservation(Texture *tex,
-		const std::string &paramName, Float max) const;
+		const std::string &paramName, float max) const;
 
 	/**
 	 * \brief Convenience function to ensure energy conservation
@@ -531,7 +531,7 @@ protected:
 	 */
 	std::pair<Texture *, Texture *> ensureEnergyConservation(
 		Texture *tex1, Texture *tex2, const std::string &paramName1,
-		const std::string &paramName2, Float max) const;
+		const std::string &paramName2, float max) const;
 
 	/// Virtual destructor
 	virtual ~BSDF();

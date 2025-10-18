@@ -27,14 +27,14 @@ static StatsCounter statsGenerated("Multi-chain perturbation",
 		"Successful generation rate", EPercentage);
 
 MultiChainPerturbation::MultiChainPerturbation(const Scene *scene, Sampler *sampler,
-		MemoryPool &pool, Float minJump, Float coveredArea) :
+		MemoryPool &pool, float minJump, float coveredArea) :
 	m_scene(scene), m_sampler(sampler), m_pool(pool) {
 
 	if (!scene->getSensor()->getClass()->derivesFrom(MTS_CLASS(PerspectiveCamera)))
 		Log(EError, "The multi-chain perturbation requires a perspective camera.");
 
 	Vector2i sizeInPixels = scene->getFilm()->getCropSize();
-	m_filmRes = Vector2((Float) sizeInPixels.x, (Float) sizeInPixels.y);
+	m_filmRes = Vector2((float) sizeInPixels.x, (float) sizeInPixels.y);
 	m_imagePlaneArea = m_filmRes.x * m_filmRes.y;
 
 	/* Pixel jump range (in pixels) [Veach, p.354] */
@@ -52,7 +52,7 @@ Mutator::EMutationType MultiChainPerturbation::getType() const {
 	return EMultiChainPerturbation;
 }
 
-Float MultiChainPerturbation::suitability(const Path &path) const {
+float MultiChainPerturbation::suitability(const Path &path) const {
 	int k = path.length(), m = k - 1, l = m-1, nChains = 1;
 
 	while (l-1 >= 0 && (!path.vertex(l)->isConnectable()
@@ -85,8 +85,8 @@ bool MultiChainPerturbation::sampleMutation(
 	statsGenerated.incrementBase();
 
 	/* Generate a screen-space offset */
-	Float r = m_r2 * math::fastexp(m_logRatio * m_sampler->next1D());
-	Float phi = m_sampler->next1D() * 2 * M_PI;
+	float r = m_r2 * math::fastexp(m_logRatio * m_sampler->next1D());
+	float phi = m_sampler->next1D() * 2 * M_PI;
 	Vector2 offset(r*std::cos(phi), r*std::sin(phi));
 
 	Point2 proposalSamplePosition = source.getSamplePosition() + offset;
@@ -102,7 +102,7 @@ bool MultiChainPerturbation::sampleMutation(
 	if (sensor->sampleRay(ray, proposalSamplePosition, Point2(0.5f), 0.0f).isZero())
 		return false;
 
-	Float focusDistance = sensor->getFocusDistance() /
+	float focusDistance = sensor->getFocusDistance() /
 		absDot(sensor->getWorldTransform(0)(Vector(0,0,1)), ray.d);
 
 	/* Correct direction based on the current aperture sample.
@@ -127,7 +127,7 @@ bool MultiChainPerturbation::sampleMutation(
 	BDAssert(proposal.vertexCount() == source.vertexCount());
 	BDAssert(proposal.edgeCount() == source.edgeCount());
 
-	Float dist = source.edge(m-1)->length
+	float dist = source.edge(m-1)->length
 		+ perturbMediumDistance(m_sampler, source.vertex(m-1));
 
 	/* Sample a perturbation and propagate it through specular interactions */
@@ -143,7 +143,7 @@ bool MultiChainPerturbation::sampleMutation(
 	   ideally specular interactions */
 	for (int i=m-1; i>l+1; --i) {
 		if (!source.vertex(i)->isConnectable()) {
-			Float dist = source.edge(i-1)->length +
+			float dist = source.edge(i-1)->length +
 				perturbMediumDistance(m_sampler, source.vertex(i-1));
 
 			if (!proposal.vertex(i)->propagatePerturbation(m_scene,
@@ -157,11 +157,11 @@ bool MultiChainPerturbation::sampleMutation(
 		} else {
 			Vector oldD = source.vertex(i-1)->getPosition()
 				- source.vertex(i)->getPosition();
-			Float dist = oldD.length();
+			float dist = oldD.length();
 			oldD /= dist;
 
-			Float theta = m_theta2 * math::fastexp(m_thetaLogRatio * m_sampler->next1D());
-			Float phi = 2 * M_PI * m_sampler->next1D();
+			float theta = m_theta2 * math::fastexp(m_thetaLogRatio * m_sampler->next1D());
+			float phi = 2 * M_PI * m_sampler->next1D();
 			Vector newD = Frame(oldD).toWorld(sphericalDirection(theta, phi));
 
 			dist += perturbMediumDistance(m_sampler, source.vertex(i-1));
@@ -199,7 +199,7 @@ bool MultiChainPerturbation::sampleMutation(
 	return true;
 }
 
-Float MultiChainPerturbation::Q(const Path &source, const Path &proposal,
+float MultiChainPerturbation::Q(const Path &source, const Path &proposal,
 		const MutationRecord &muRec) const {
 	int l = muRec.l, m = muRec.m;
 

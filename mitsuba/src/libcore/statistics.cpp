@@ -58,7 +58,7 @@ void ProgressReporter::update(long long value) {
 		return;
 	value = std::min(std::max(value, (long long) 0), (long long) m_total);
 
-	Float perc = (value * 100.0f) / m_total;
+	float perc = (value * 100.0f) / m_total;
 	unsigned int curMs = m_timer->getMilliseconds();
 	m_value = value;
 
@@ -67,8 +67,8 @@ void ProgressReporter::update(long long value) {
 		m_percentage = (int) perc;
 		int fillEnd = (int) ((value * m_fillSize) / m_total);
 
-		Float time = curMs / 1000.0f;
-		Float remaining = (time*m_total) / value - time;
+		float time = curMs / 1000.0f;
+		float remaining = (time*m_total) / value - time;
 
 		for (int i=m_fillPos; i<fillEnd; i++)
 			m_string[i] = '+';
@@ -224,7 +224,7 @@ std::string Statistics::getStats() {
 				break;
 
 			case EPercentage: {
-					Float value2 = value, value3 = baseValue;
+					float value2 = value, value3 = baseValue;
 					while (value2 > 1000.0f && suffixIndex < lastSuffix) {
 						value2 /= 1000.0f;
 						suffixIndex++;
@@ -234,14 +234,14 @@ std::string Statistics::getStats() {
 						suffixIndex2++;
 					}
 					snprintf(temp, sizeof(temp), "    -  %s : %.2f %% (%.2f%s of %.2f%s)",
-						counter->getName().c_str(), baseValue == 0 ? (Float) 0 : value/baseValue * 100,
+						counter->getName().c_str(), baseValue == 0 ? (float) 0 : value/baseValue * 100,
 						value2, suffixesNumber[suffixIndex].c_str(),
 						value3, suffixesNumber[suffixIndex2].c_str());
 					break;
 				}
 			case EAverage: {
-					Float avg = value / (Float) baseValue;
-					Float value2 = value, value3 = baseValue;
+					float avg = value / (float) baseValue;
+					float value2 = value, value3 = baseValue;
 					while (value2 > 1000.0f && suffixIndex < lastSuffix) {
 						value2 /= 1000.0f;
 						suffixIndex++;

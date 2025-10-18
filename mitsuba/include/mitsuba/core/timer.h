@@ -52,7 +52,7 @@ public:
 	void reset(bool restart = true);
 
 	/// Stop the timer and return the total elapsed time across all intervals in seconds
-	Float stop();
+	float stop();
 
 	/// Return the number of nanoseconds that the timer has ticked so far (in total)
 	uint64_t getNanoseconds() const;
@@ -64,7 +64,7 @@ public:
 	unsigned int getMilliseconds() const;
 
 	/// Return the number of seconds that the timer has ticked so far (in total)
-	Float getSeconds() const;
+	float getSeconds() const;
 
 	/// Return the number of nanoseconds that have elapsed since the \ref start() invocation
 	uint64_t getNanosecondsSinceStart() const;
@@ -76,7 +76,7 @@ public:
 	unsigned int getMillisecondsSinceStart() const;
 
 	/// Return the number of seconds that have elapsed since the last \ref start() invocation
-	Float getSecondsSinceStart() const;
+	float getSecondsSinceStart() const;
 
 	/**
 	 * \brief "Lap"-style interface
@@ -86,7 +86,7 @@ public:
 	 * and restarting it. The resulting time value in seconds
 	 * is returned.
 	 */
-	Float lap();
+	float lap();
 
 	/// Return a string representation
 	std::string toString() const;

@@ -51,8 +51,8 @@ public:
 	 * of traversing the left and right child during a typical query
 	 * operation.
 	 */
-	inline std::pair<Float, Float> operator()(int axis, Float leftWidth, Float rightWidth) const {
-		return std::pair<Float, Float>(
+	inline std::pair<float, float> operator()(int axis, float leftWidth, float rightWidth) const {
+		return std::pair<float, float>(
 			(m_extents[1-axis] + leftWidth) * m_normalization,
 			(m_extents[1-axis] + rightWidth) * m_normalization);
 	}
@@ -61,11 +61,11 @@ public:
 	 * Compute the underlying quantity used by the tree construction
 	 * heuristic. This is used to compute the final cost of a kd-tree.
 	 */
-	inline static Float getQuantity(const AABB2 &aabb) {
+	inline static float getQuantity(const AABB2 &aabb) {
 		return aabb.getSurfaceArea();
 	}
 private:
-	Float m_normalization;
+	float m_normalization;
 	Vector2 m_extents;
 };
 
@@ -79,7 +79,7 @@ private:
  * /// Some temporary space is supplied, which can be used to cache
  * /// information about the intersection
  * bool intersect(const Ray2 &ray, IndexType idx,
- *     Float mint, Float maxt, Float &t, void *tmp);
+ *     float mint, float maxt, float &t, void *tmp);
  * \endcode
  *
  * This class implements an epsilon-free version of the optimized ray
@@ -121,7 +121,7 @@ protected:
 	/// Ray traversal stack entry for Wald-style incoherent ray tracing
 	struct KDStackEntry {
 		const KDNode * __restrict node;
-		Float mint, maxt;
+		float mint, maxt;
 	};
 
 	/// Ray traversal stack entry for Havran-style incoherent ray tracing
@@ -129,7 +129,7 @@ protected:
 		/* Pointer to the far child */
 		const KDNode * __restrict node;
 		/* Distance traveled along the ray (entry or exit) */
-		Float t;
+		float t;
 		/* Previous stack item */
 		uint32_t prev;
 		/* Associated point */
@@ -142,8 +142,8 @@ protected:
 	 * This is generally the most robust and fastest traversal routine
 	 * of the methods implemented in this class.
 	 */
-	FINLINE bool rayIntersectHavran(const Ray2 &ray, Float mint, Float maxt,
-			Float &t, void *temp) const {
+	FINLINE bool rayIntersectHavran(const Ray2 &ray, float mint, float maxt,
+			float &t, void *temp) const {
 		KDStackEntryHavran stack[MTS_KD_MAXDEPTH];
 
 		/* Set up the entry point */
@@ -161,7 +161,7 @@ protected:
 		const KDNode * __restrict currNode = m_nodes;
 		while (currNode != NULL) {
 			while (EXPECT_TAKEN(!currNode->isLeaf())) {
-				const Float splitVal = (Float) currNode->getSplit();
+				const float splitVal = (float) currNode->getSplit();
 				const int axis = currNode->getAxis();
 				const KDNode * __restrict farChild;
 
@@ -196,7 +196,7 @@ protected:
 				}
 
 				/* Cases P4 and N4 -- calculate the distance to the split plane */
-				Float distToSplit = (splitVal - ray.o[axis]) * ray.dRcp[axis];
+				float distToSplit = (splitVal - ray.o[axis]) * ray.dRcp[axis];
 
 				/* Set up a new exit point */
 				const uint32_t tmp = exPt++;

@@ -56,11 +56,11 @@ namespace {
 		Matrix4x4 mat;
 		int pos = 0;
 
-		glGetFloatv(which, temp);
+		glGetfloatv(which, temp);
 
 		for (int j=0; j<4; j++)
 			for (int i=0; i<4; i++)
-				mat(i, j) = (Float) temp[pos++];
+				mat(i, j) = (float) temp[pos++];
 
 		return mat;
 	}
@@ -116,18 +116,18 @@ void GLRenderer::init(Device *device, Renderer *other) {
 
 	if (glewIsSupported("GL_ARB_texture_float")) {
 		m_capabilities->setSupported(
-			RendererCapabilities::EFloatingPointTextures, true);
-		Log(m_logLevel, "Capabilities: Floating point textures are supported.");
+			RendererCapabilities::EfloatingPointTextures, true);
+		Log(m_logLevel, "Capabilities: floating point textures are supported.");
 	} else {
-		Log(m_warnLogLevel, "Capabilities: Floating point textures are NOT supported!");
+		Log(m_warnLogLevel, "Capabilities: floating point textures are NOT supported!");
 	}
 
 	if (glewIsSupported("GL_ARB_color_buffer_float")) {
 		m_capabilities->setSupported(
-			RendererCapabilities::EFloatingPointBuffer, true);
-		Log(m_logLevel, "Capabilities: Floating point color buffers are supported.");
+			RendererCapabilities::EfloatingPointBuffer, true);
+		Log(m_logLevel, "Capabilities: floating point color buffers are supported.");
 	} else {
-		Log(m_warnLogLevel, "Capabilities: Floating point color buffers are NOT supported!");
+		Log(m_warnLogLevel, "Capabilities: floating point color buffers are NOT supported!");
 	}
 
 	if (glewIsSupported("GL_EXT_framebuffer_blit")) {
@@ -207,7 +207,7 @@ void GLRenderer::init(Device *device, Renderer *other) {
 
 	/* Disable color value clamping */
 	if (m_capabilities->isSupported(
-			RendererCapabilities::EFloatingPointBuffer)) {
+			RendererCapabilities::EfloatingPointBuffer)) {
 		glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, GL_FALSE);
 		glClampColorARB(GL_CLAMP_READ_COLOR_ARB, GL_FALSE);
 		glClampColorARB(GL_CLAMP_FRAGMENT_COLOR_ARB, GL_FALSE);
@@ -294,7 +294,7 @@ void GLRenderer::drawMesh(const TriMesh *mesh) {
 		const GLchar *tangents = (const GLchar *) mesh->getUVTangents();
 		const GLchar *colors = (const GLchar *) mesh->getVertexColors();
 		const GLint *indices  = (const GLint *) mesh->getTriangles();
-		GLenum dataType = sizeof(Float) == 4 ? GL_FLOAT : GL_DOUBLE;
+		GLenum dataType = sizeof(float) == 4 ? GL_float : GL_DOUBLE;
 
 		glVertexPointer(3, dataType, 0, positions);
 
@@ -384,13 +384,13 @@ void GLRenderer::drawMesh(const GPUGeometry *_geo) {
 
 		int stride = geo->m_stride;
 		if (stride != m_stride) {
-			glVertexFormatNV(3, GL_FLOAT, stride);
-			glNormalFormatNV(GL_FLOAT, stride);
+			glVertexFormatNV(3, GL_float, stride);
+			glNormalFormatNV(GL_float, stride);
 			glClientActiveTexture(GL_TEXTURE0);
-			glTexCoordFormatNV(2, GL_FLOAT, stride);
+			glTexCoordFormatNV(2, GL_float, stride);
 			glClientActiveTexture(GL_TEXTURE1);
-			glTexCoordFormatNV(3, GL_FLOAT, stride);
-			glColorFormatNV(3, GL_FLOAT, stride);
+			glTexCoordFormatNV(3, GL_float, stride);
+			glColorFormatNV(3, GL_float, stride);
 			m_stride = stride;
 		}
 
@@ -468,7 +468,7 @@ void GLRenderer::drawMesh(const GPUGeometry *_geo) {
 		int stride = geo->m_stride;
 
 		/* Set up the vertex/normal arrays */
-		glVertexPointer(3, GL_FLOAT, stride, (GLfloat *) 0);
+		glVertexPointer(3, GL_float, stride, (GLfloat *) 0);
 
 		if (!m_transmitOnlyPositions) {
 			int pos = 3;
@@ -477,7 +477,7 @@ void GLRenderer::drawMesh(const GPUGeometry *_geo) {
 					glEnableClientState(GL_NORMAL_ARRAY);
 					m_normalsEnabled = true;
 				}
-				glNormalPointer(GL_FLOAT, stride, (GLfloat *) 0 + pos);
+				glNormalPointer(GL_float, stride, (GLfloat *) 0 + pos);
 				pos += 3;
 			} else if (m_normalsEnabled) {
 				glDisableClientState(GL_NORMAL_ARRAY);
@@ -490,7 +490,7 @@ void GLRenderer::drawMesh(const GPUGeometry *_geo) {
 					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 					m_texcoordsEnabled = true;
 				}
-				glTexCoordPointer(2, GL_FLOAT, stride, (GLfloat *) 0 + pos);
+				glTexCoordPointer(2, GL_float, stride, (GLfloat *) 0 + pos);
 				pos += 2;
 			} else if (m_texcoordsEnabled) {
 				glClientActiveTexture(GL_TEXTURE0);
@@ -505,7 +505,7 @@ void GLRenderer::drawMesh(const GPUGeometry *_geo) {
 					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 					m_tangentsEnabled = true;
 				}
-				glTexCoordPointer(3, GL_FLOAT, stride, (GLfloat *) 0 + pos);
+				glTexCoordPointer(3, GL_float, stride, (GLfloat *) 0 + pos);
 				pos += 3;
 			} else if (m_tangentsEnabled) {
 				glClientActiveTexture(GL_TEXTURE1);
@@ -518,7 +518,7 @@ void GLRenderer::drawMesh(const GPUGeometry *_geo) {
 					glEnableClientState(GL_COLOR_ARRAY);
 					m_colorsEnabled = true;
 				}
-				glColorPointer(3, GL_FLOAT, stride, (GLfloat *) 0 + pos);
+				glColorPointer(3, GL_float, stride, (GLfloat *) 0 + pos);
 			} else if (m_colorsEnabled) {
 				glDisableClientState(GL_COLOR_ARRAY);
 				m_colorsEnabled = false;
@@ -608,7 +608,7 @@ void GLRenderer::drawAll(const std::vector<TransformedGPUGeometry> &allGeometry)
 
 			int stride = geo->m_stride;
 			if (stride != m_stride) {
-				glVertexFormatNV(3, GL_FLOAT, stride);
+				glVertexFormatNV(3, GL_float, stride);
 				m_stride = stride;
 			}
 
@@ -655,7 +655,7 @@ void GLRenderer::drawAll(const std::vector<TransformedGPUGeometry> &allGeometry)
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geo->m_id[GLGeometry::EIndexID]);
 
 			/* Set up the vertex/normal arrays */
-			glVertexPointer(3, GL_FLOAT, geo->m_stride, (GLfloat *) 0);
+			glVertexPointer(3, GL_float, geo->m_stride, (GLfloat *) 0);
 
 			size_t size = mesh->getTriangleCount();
 
@@ -817,7 +817,7 @@ void GLRenderer::drawText(const Point2i &_pos,
 	glDisable(GL_BLEND);
 }
 
-void GLRenderer::setPointSize(Float size) {
+void GLRenderer::setPointSize(float size) {
 	glPointSize((GLfloat) size);
 }
 
@@ -930,8 +930,8 @@ Matrix4x4 GLRenderer::getMatrix(EMatrixType type) const {
 }
 
 void GLRenderer::setCamera(const ProjectiveCamera *camera,
-		const Point2 &apertureSample, const Point2 &aaSample, Float timeSample) {
-	Float time = camera->getShutterOpen() + camera->getShutterOpenTime() * timeSample;
+		const Point2 &apertureSample, const Point2 &aaSample, float timeSample) {
+	float time = camera->getShutterOpen() + camera->getShutterOpenTime() * timeSample;
 
 	glMatrixMode(GL_PROJECTION);
 	loadMatrix(camera->getProjectionTransform(
@@ -982,17 +982,17 @@ void GLRenderer::finish() {
 	m_queuedTriangles = 0;
 }
 
-void GLRenderer::setColor(const Color3 &col, Float alpha) {
+void GLRenderer::setColor(const Color3 &col, float alpha) {
 	glColor4f((GLfloat) col[0], (GLfloat) col[1], (GLfloat) col[2], (GLfloat) alpha);
 }
 
-void GLRenderer::setColor(const Spectrum &spec, Float alpha) {
-	Float r, g, b;
+void GLRenderer::setColor(const Spectrum &spec, float alpha) {
+	float r, g, b;
 	spec.toLinearRGB(r, g, b);
 	glColor4f((GLfloat) r, (GLfloat) g, (GLfloat) b, (GLfloat) alpha);
 }
 
-void GLRenderer::setClearDepth(Float depth) {
+void GLRenderer::setClearDepth(float depth) {
 	glClearDepth((GLfloat) depth);
 }
 

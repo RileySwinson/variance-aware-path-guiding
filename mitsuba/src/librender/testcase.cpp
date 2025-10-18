@@ -36,19 +36,19 @@ void TestCase::assertFalseImpl(bool value, const char *expr, const char *file, i
 		Thread::getThread()->getLogger()->log(EError, NULL, file, line, "Assertion '%s == false' failed!", expr);
 }
 
-void TestCase::assertEqualsImpl(int actual, int expected, Float epsilon, const char *file, int line) {
+void TestCase::assertEqualsImpl(int actual, int expected, float epsilon, const char *file, int line) {
 	if (std::abs(actual-expected)>epsilon)
 		Thread::getThread()->getLogger()->log(EError, NULL, file, line, "Assertion failure: "
 			"expected integer value %i, got %i.", expected, actual);
 }
 
-void TestCase::assertEqualsImpl(Float actual, Float expected, Float epsilon, const char *file, int line) {
+void TestCase::assertEqualsImpl(float actual, float expected, float epsilon, const char *file, int line) {
 	if (std::abs(actual-expected) > epsilon)
 		Thread::getThread()->getLogger()->log(EError, NULL, file, line, "Assertion failure: "
 			"expected floating point value %f, got %f.", expected, actual);
 }
 
-void TestCase::assertEqualsImpl(const Spectrum &actual, const Spectrum &expected, Float epsilon, const char *file, int line) {
+void TestCase::assertEqualsImpl(const Spectrum &actual, const Spectrum &expected, float epsilon, const char *file, int line) {
 	bool match = true;
 	for (int i=0; i<SPECTRUM_SAMPLES; ++i)
 		if (std::abs(actual[i]-expected[i]) > epsilon)
@@ -58,7 +58,7 @@ void TestCase::assertEqualsImpl(const Spectrum &actual, const Spectrum &expected
 			"expected vector %s, got %s.", expected.toString().c_str(), actual.toString().c_str());
 }
 
-void TestCase::assertEqualsImpl(const Vector2 &actual, const Vector2 &expected, Float epsilon, const char *file, int line) {
+void TestCase::assertEqualsImpl(const Vector2 &actual, const Vector2 &expected, float epsilon, const char *file, int line) {
 	bool match = true;
 	for (int i=0; i<2; ++i)
 		if (std::abs(actual[i]-expected[i]) > epsilon)
@@ -69,7 +69,7 @@ void TestCase::assertEqualsImpl(const Vector2 &actual, const Vector2 &expected, 
 }
 
 
-void TestCase::assertEqualsImpl(const Point2 &actual, const Point2 &expected, Float epsilon, const char *file, int line) {
+void TestCase::assertEqualsImpl(const Point2 &actual, const Point2 &expected, float epsilon, const char *file, int line) {
 	bool match = true;
 	for (int i=0; i<2; ++i)
 		if (std::abs(actual[i]-expected[i]) > epsilon)
@@ -79,7 +79,7 @@ void TestCase::assertEqualsImpl(const Point2 &actual, const Point2 &expected, Fl
 			"expected point %s, got %s.", expected.toString().c_str(), actual.toString().c_str());
 }
 
-void TestCase::assertEqualsImpl(const Vector &actual, const Vector &expected, Float epsilon, const char *file, int line) {
+void TestCase::assertEqualsImpl(const Vector &actual, const Vector &expected, float epsilon, const char *file, int line) {
 	bool match = true;
 	for (int i=0; i<3; ++i)
 		if (std::abs(actual[i]-expected[i]) > epsilon)
@@ -89,7 +89,7 @@ void TestCase::assertEqualsImpl(const Vector &actual, const Vector &expected, Fl
 			"expected vector %s, got %s.", expected.toString().c_str(), actual.toString().c_str());
 }
 
-void TestCase::assertEqualsImpl(const Point &actual, const Point &expected, Float epsilon, const char *file, int line) {
+void TestCase::assertEqualsImpl(const Point &actual, const Point &expected, float epsilon, const char *file, int line) {
 	bool match = true;
 	for (int i=0; i<3; ++i)
 		if (std::abs(actual[i]-expected[i]) > epsilon)
@@ -99,7 +99,7 @@ void TestCase::assertEqualsImpl(const Point &actual, const Point &expected, Floa
 			"expected point %s, got %s.", expected.toString().c_str(), actual.toString().c_str());
 }
 
-void TestCase::assertEqualsImpl(const Vector4 &actual, const Vector4 &expected, Float epsilon, const char *file, int line) {
+void TestCase::assertEqualsImpl(const Vector4 &actual, const Vector4 &expected, float epsilon, const char *file, int line) {
 	bool match = true;
 	for (int i=0; i<4; ++i)
 		if (std::abs(actual[i]-expected[i]) > epsilon)

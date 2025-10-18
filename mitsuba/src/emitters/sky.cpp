@@ -35,7 +35,7 @@ MTS_NAMESPACE_BEGIN
  * \icon{emitter_sky}
  * \order{6}
  * \parameters{
- *     \parameter{turbidity}{\Float}{
+ *     \parameter{turbidity}{\float}{
  *         This parameter determines the amount of aerosol present
  *         in the atmosphere.
  *         Valid range: 1-10. \default{3, corresponding to a clear sky in a temperate climate}
@@ -43,10 +43,10 @@ MTS_NAMESPACE_BEGIN
  *     \parameter{albedo}{\Spectrum}{Specifies the ground albedo \default{0.15}}
  *     \parameter{year, month, day}{\Integer}{Denote the date of the
  *      observation \default{2010, 07, 10}}
- *     \parameter{hour,minute,\showbreak second}{\Float}{Local time
+ *     \parameter{hour,minute,\showbreak second}{\float}{Local time
  *       at the location of the observer in 24-hour format\default{15, 00, 00,
  *       i.e. 3PM}}
- *     \parameter{latitude, longitude, timezone}{\Float}{
+ *     \parameter{latitude, longitude, timezone}{\float}{
  *       These three parameters specify the oberver's latitude and longitude
  *       in degrees, and the local timezone offset in hours, which are required
  *       to compute the sun's position. \default{35.6894, 139.6917, 9 --- Tokyo, Japan}
@@ -57,17 +57,17 @@ MTS_NAMESPACE_BEGIN
  *       of the sun direction (\code{year, hour, latitude,} etc.
  *       are unnecessary. \default{none}
  *     }
- *     \parameter{stretch}{\Float}{
+ *     \parameter{stretch}{\float}{
  *         Stretch factor to extend emitter below the horizon, must be
  *         in [1,2] \default{\code{1}, i.e. not used}
  *     }
  *     \parameter{resolution}{\Integer}{Specifies the horizontal resolution of the precomputed
  *         image that is used to represent the sun environment map \default{512, i.e. 512$\times$256}}
- *     \parameter{scale}{\Float}{
+ *     \parameter{scale}{\float}{
  *         This parameter can be used to scale the amount of illumination
  *         emitted by the sky emitter. \default{1}
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -219,9 +219,9 @@ class SkyEmitter : public Emitter {
 public:
 	SkyEmitter(const Properties &props)
 			: Emitter(props) {
-		m_scale = props.getFloat("scale", 1.0f);
-		m_turbidity = props.getFloat("turbidity", 3.0f);
-		m_stretch = props.getFloat("stretch", 1.0f);
+		m_scale = props.getfloat("scale", 1.0f);
+		m_turbidity = props.getfloat("turbidity", 3.0f);
+		m_stretch = props.getfloat("stretch", 1.0f);
 		m_resolution = props.getInteger("resolution", 512);
 		m_albedo = props.getSpectrum("albedo", Spectrum(0.2f));
 		m_sun = computeSunCoordinates(props);
@@ -236,7 +236,7 @@ public:
 				Log(EError, "The albedo parameter must be in the range [0,1]!");
 		}
 
-		Float sunElevation = 0.5f * M_PI - m_sun.elevation;
+		float sunElevation = 0.5f * M_PI - m_sun.elevation;
 
 		if (sunElevation < 0)
 			Log(EError, "The sun is below the horizon -- this is not supported by the sky model.");
@@ -256,15 +256,15 @@ public:
 
 	SkyEmitter(Stream *stream, InstanceManager *manager)
 		    : Emitter(stream, manager) {
-		m_scale = stream->readFloat();
-		m_turbidity = stream->readFloat();
-		m_stretch = stream->readFloat();
+		m_scale = stream->readfloat();
+		m_turbidity = stream->readfloat();
+		m_stretch = stream->readfloat();
 		m_resolution = stream->readInt();
 		m_extend = stream->readBool();
 		m_albedo = Spectrum(stream);
 		m_sun = SphericalCoordinates(stream);
 
-		Float sunElevation = 0.5f * M_PI - m_sun.elevation;
+		float sunElevation = 0.5f * M_PI - m_sun.elevation;
 		#if SPECTRUM_SAMPLES == 3
 			for (int i=0; i<SPECTRUM_SAMPLES; ++i)
 				m_state[i] = arhosek_rgb_skymodelstate_alloc_init(
@@ -290,9 +290,9 @@ public:
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Emitter::serialize(stream, manager);
-		stream->writeFloat(m_scale);
-		stream->writeFloat(m_turbidity);
-		stream->writeFloat(m_stretch);
+		stream->writefloat(m_scale);
+		stream->writefloat(m_turbidity);
+		stream->writefloat(m_stretch);
 		stream->writeInt(m_resolution);
 		stream->writeBool(m_extend);
 		m_albedo.serialize(stream);
@@ -310,7 +310,7 @@ public:
 		ref<Timer> timer = new Timer();
 		Log(EDebug, "Rasterizing skylight emitter to an %ix%i environment map ..",
 				m_resolution, m_resolution/2);
-		ref<Bitmap> bitmap = new Bitmap(SKY_PIXELFORMAT, Bitmap::EFloat,
+		ref<Bitmap> bitmap = new Bitmap(SKY_PIXELFORMAT, Bitmap::Efloat,
 			Vector2i(m_resolution, m_resolution/2));
 
 		Point2 factor((2*M_PI) / bitmap->getWidth(),
@@ -320,12 +320,12 @@ public:
 			#pragma omp parallel for
 		#endif
 		for (int y=0; y<bitmap->getHeight(); ++y) {
-			Float theta = (y+.5f) * factor.y;
-			Spectrum *target = (Spectrum *) bitmap->getFloatData()
+			float theta = (y+.5f) * factor.y;
+			Spectrum *target = (Spectrum *) bitmap->getfloatData()
 				+ y * bitmap->getWidth();
 
 			for (int x=0; x<bitmap->getWidth(); ++x) {
-				Float phi = (x+.5f) * factor.x;
+				float phi = (x+.5f) * factor.x;
 
 				*target++ = getSkyRadiance(SphericalCoordinates(theta, phi));
 			}
@@ -338,29 +338,29 @@ public:
 		{
 			int size = 513 /* odd-sized */, border = 2;
 			int fsize = size+2*border, hsize = size/2;
-			ref<Bitmap> debugBitmap = new Bitmap(Bitmap::ERGB, Bitmap::EFloat32, Vector2i(fsize));
+			ref<Bitmap> debugBitmap = new Bitmap(Bitmap::ERGB, Bitmap::Efloat32, Vector2i(fsize));
 			debugBitmap->clear();
 
 			#if defined(MTS_OPENMP)
 				#pragma omp parallel for
 			#endif
 			for (int y=0; y<size; ++y) {
-				float *target = debugBitmap->getFloat32Data() + ((y + border) * fsize + border) * 3;
+				float *target = debugBitmap->getfloat32Data() + ((y + border) * fsize + border) * 3;
 
 				for (int x=0; x<size; ++x) {
-					Float xp = -(x - hsize) / (Float) hsize;
-					Float yp = -(y - hsize) / (Float) hsize;
+					float xp = -(x - hsize) / (float) hsize;
+					float yp = -(y - hsize) / (float) hsize;
 
-					Float radius = std::sqrt(xp*xp + yp*yp);
+					float radius = std::sqrt(xp*xp + yp*yp);
 
 					Spectrum result(0.0f);
 					if (radius < 1) {
-						Float theta = radius * 0.5f * M_PI;
-						Float phi = std::atan2(xp, yp);
+						float theta = radius * 0.5f * M_PI;
+						float phi = std::atan2(xp, yp);
 						result = getSkyRadiance(SphericalCoordinates(theta, phi));
 					}
 
-					Float r, g, b;
+					float r, g, b;
 					result.toLinearRGB(r, g, b);
 
 					*target++ = (float) r;
@@ -381,7 +381,7 @@ public:
 		bitmapData.size = sizeof(Bitmap);
 		props.setData("bitmap", bitmapData);
 		props.setAnimatedTransform("toWorld", m_worldTransform);
-		props.setFloat("samplingWeight", m_samplingWeight);
+		props.setfloat("samplingWeight", m_samplingWeight);
 		Emitter *emitter = static_cast<Emitter *>(
 			PluginManager::getInstance()->createObject(
 			MTS_CLASS(Emitter), props));
@@ -411,7 +411,7 @@ protected:
 
 	/// Calculates the spectral radiance of the sky in the specified direction.
 	Spectrum getSkyRadiance(const SphericalCoordinates &coords) const {
-		Float theta = coords.elevation / m_stretch;
+		float theta = coords.elevation / m_stretch;
 
 		if (std::cos(theta) <= 0) {
 			if (!m_extend)
@@ -421,20 +421,20 @@ protected:
 		}
 
 		/* Compute the angle between the sun and (theta, phi) in radians */
-		Float cosGamma = std::cos(theta) * std::cos(m_sun.elevation)
+		float cosGamma = std::cos(theta) * std::cos(m_sun.elevation)
 			+ std::sin(theta) * std::sin(m_sun.elevation)
 			* std::cos(coords.azimuth - m_sun.azimuth);
 
-		Float gamma = math::safe_acos(cosGamma);
+		float gamma = math::safe_acos(cosGamma);
 
 		Spectrum result;
 	    for (int i=0; i<SPECTRUM_SAMPLES; i++) {
 			#if SPECTRUM_SAMPLES == 3
-				result[i] = (Float) (arhosek_tristim_skymodel_radiance(m_state[i],
+				result[i] = (float) (arhosek_tristim_skymodel_radiance(m_state[i],
 					theta, gamma, i) / 106.856980); // (sum of Spectrum::CIE_Y)
 			#else
-				std::pair<Float, Float> bin = Spectrum::getBinCoverage(i);
-				result[i] = (Float) arhosekskymodel_radiance(m_state[i],
+				std::pair<float, float> bin = Spectrum::getBinCoverage(i);
+				result[i] = (float) arhosekskymodel_radiance(m_state[i],
 					theta, gamma, 0.5f * (bin.first + bin.second));
 			#endif
 		}
@@ -442,7 +442,7 @@ protected:
 		result.clampNegative();
 
 		if (m_extend)
-			result *= math::smoothStep((Float) 0, (Float) 1, 2 - 2*coords.elevation*INV_PI);
+			result *= math::smoothStep((float) 0, (float) 1, 2 - 2*coords.elevation*INV_PI);
 
 		return result * m_scale;
 	}
@@ -452,13 +452,13 @@ protected:
 	/// Environment map resolution in pixels
 	int m_resolution;
 	/// Constant scale factor applied to the model
-	Float m_scale;
+	float m_scale;
 	/// Sky turbidity
-	Float m_turbidity;
+	float m_turbidity;
 	/// Position of the sun in spherical coordinates
 	SphericalCoordinates m_sun;
 	/// Stretch factor to extend to the bottom hemisphere
-	Float m_stretch;
+	float m_stretch;
 	/// Extend to the bottom hemisphere (super-unrealistic mode)
 	bool m_extend;
 	/// Ground albedo

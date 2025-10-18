@@ -44,20 +44,20 @@ MTS_NAMESPACE_BEGIN
  *
  * \code
  * struct MyFunctor {
- *     inline void operator()(const Point &input, Float &output) {
+ *     inline void operator()(const Point &input, float &output) {
  *          // .... Perform expensive function call / computation .....
  *     }
  * };
  *
  * void test() {
- *     SimpleCache<Point, Float> myCache;
+ *     SimpleCache<Point, float> myCache;
  *     MyFunctor functor;
  *
  *     // First call -- evaluate the functor for the given input
- *     Float result = myCache.get(functor, Point(1,2,3));
+ *     float result = myCache.get(functor, Point(1,2,3));
  *
  *     // Now, the evaluation can uses the cached value
- *     Float result2 = myCache.get(functor, Point(1,2,3));
+ *     float result2 = myCache.get(functor, Point(1,2,3));
  * }
  *
  * \endcode

@@ -143,7 +143,7 @@ public:
 	 * \brief Evaluate the phase function for an outward-pointing
 	 * pair of directions (wi, wo)
 	 */
-	virtual Float eval(const PhaseFunctionSamplingRecord &pRec) const = 0;
+	virtual float eval(const PhaseFunctionSamplingRecord &pRec) const = 0;
 
 	/**
 	 * \brief Sample the phase function and return the importance weight (i.e. the
@@ -159,7 +159,7 @@ public:
 	 * \return The phase function value divided by the probability
 	 *         density of the sample
 	 */
-	virtual Float sample(PhaseFunctionSamplingRecord &pRec,
+	virtual float sample(PhaseFunctionSamplingRecord &pRec,
 		Sampler *sampler) const = 0;
 
 	/**
@@ -174,8 +174,8 @@ public:
 	 * \return The phase function value divided by the probability
 	 *         density of the sample
 	 */
-	virtual Float sample(PhaseFunctionSamplingRecord &pRec,
-		Float &pdf, Sampler *sampler) const = 0;
+	virtual float sample(PhaseFunctionSamplingRecord &pRec,
+		float &pdf, Sampler *sampler) const = 0;
 
 	/**
 	 * \brief Calculate the probability of sampling wo (given wi).
@@ -183,7 +183,7 @@ public:
 	 * Assuming that the phase function can be sampled exactly,
 	 * the default implementation just evaluates \ref eval()
 	 */
-	virtual Float pdf(const PhaseFunctionSamplingRecord &pRec) const;
+	virtual float pdf(const PhaseFunctionSamplingRecord &pRec) const;
 
 	/**
 	 * \brief Does this phase function require directionally varying scattering
@@ -204,13 +204,13 @@ public:
 	 *    Angle between the axis of rotational symmetry and the
 	 *    direction of propagation
 	 */
-	virtual Float sigmaDir(Float cosTheta) const;
+	virtual float sigmaDir(float cosTheta) const;
 
 	/**
 	 * \brief Returns the maximum value take on on by \ref sigmaDirMax().
 	 * This is useful when implementing Woodcock tracking.
 	 */
-	virtual Float sigmaDirMax() const;
+	virtual float sigmaDirMax() const;
 
 	/**
 	 * \brief Returns the mean cosine (often referred to by
@@ -218,7 +218,7 @@ public:
 	 *
 	 * The default implementation throws an exception
 	 */
-	virtual Float getMeanCosine() const;
+	virtual float getMeanCosine() const;
 
 	/// Return a string representation
 	virtual std::string toString() const = 0;

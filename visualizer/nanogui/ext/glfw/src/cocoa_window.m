@@ -992,7 +992,7 @@ static GLFWbool createWindow(_GLFWwindow* window,
             [window->ns.object setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
 
         if (wndconfig->floating)
-            [window->ns.object setLevel:NSFloatingWindowLevel];
+            [window->ns.object setLevel:NSfloatingWindowLevel];
 
         if (wndconfig->maximized)
             [window->ns.object zoom:nil];
@@ -1317,7 +1317,7 @@ void _glfwPlatformSetWindowMonitor(_GLFWwindow* window,
         }
 
         if (window->floating)
-            [window->ns.object setLevel:NSFloatingWindowLevel];
+            [window->ns.object setLevel:NSfloatingWindowLevel];
         else
             [window->ns.object setLevel:NSNormalWindowLevel];
 

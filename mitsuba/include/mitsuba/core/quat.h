@@ -193,7 +193,7 @@ template <typename T> struct TQuaternion {
 	 * \brief Construct an unit quaternion, which represents a rotation
 	 * around \a axis by \a angle radians.
 	 */
-	static TQuaternion fromAxisAngle(const Vector &axis, Float angle) {
+	static TQuaternion fromAxisAngle(const Vector &axis, float angle) {
 		T sinValue = std::sin(angle/2.0f), cosValue = std::cos(angle/2.0f);
 		return TQuaternion(normalize(axis) * sinValue, cosValue);
 	}
@@ -203,14 +203,14 @@ template <typename T> struct TQuaternion {
 	 * \a from onto \a to.
 	 */
 	static TQuaternion fromDirectionPair(const Vector &from, const Vector &to) {
-		Float dp = dot(from, to);
+		float dp = dot(from, to);
 		if (dp > 1-Epsilon) {
  			// there is nothing to do
 			return TQuaternion();
 		} else if (dp < -(1-Epsilon)) {
 			// Use a better-conditioned method for opposite directions
 			Vector rotAxis = cross(from, Vector(1, 0, 0));
-			Float length = rotAxis.length();
+			float length = rotAxis.length();
 			if (length < Epsilon) {
 				rotAxis = cross(from, Vector(0, 1, 0));
 				length = rotAxis.length();
@@ -219,8 +219,8 @@ template <typename T> struct TQuaternion {
 			return TQuaternion(rotAxis, 0);
 		} else {
 			// Find cos(theta) and sin(theta) using half-angle formulae
-			Float cosTheta = std::sqrt(0.5f * (1 + dp));
-			Float sinTheta = std::sqrt(0.5f * (1 - dp));
+			float cosTheta = std::sqrt(0.5f * (1 + dp));
+			float sinTheta = std::sqrt(0.5f * (1 - dp));
 			Vector rotAxis = normalize(cross(from, to));
 			return TQuaternion(rotAxis * sinTheta, cosTheta);
 		}
@@ -273,7 +273,7 @@ template <typename T> struct TQuaternion {
 	 * rotation expressed in Euler angles (in radians)
 	 */
 	static TQuaternion fromEulerAngles(EEulerAngleConvention conv,
-			Float x, Float y, Float z) {
+			float x, float y, float z) {
 		Quaternion qx = fromAxisAngle(Vector(1.0, 0.0, 0.0), x);
 		Quaternion qy = fromAxisAngle(Vector(0.0, 1.0, 0.0), y);
 		Quaternion qz = fromAxisAngle(Vector(0.0, 0.0, 1.0), z);
@@ -300,9 +300,9 @@ template <typename T> struct TQuaternion {
 	/// Compute the rotation matrix for the given quaternion
 	Transform toTransform() const {
 		/// Implementation from PBRT
-		Float xx = v.x * v.x, yy = v.y * v.y, zz = v.z * v.z;
-		Float xy = v.x * v.y, xz = v.x * v.z, yz = v.y * v.z;
-		Float wx = v.x * w,   wy = v.y * w,   wz = v.z * w;
+		float xx = v.x * v.x, yy = v.y * v.y, zz = v.z * v.z;
+		float xy = v.x * v.y, xz = v.x * v.z, yz = v.y * v.z;
+		float wx = v.x * w,   wy = v.y * w,   wz = v.z * w;
 
 		Matrix4x4 m;
 		m.m[0][0] = 1.f - 2.f * (yy + zz);
@@ -354,7 +354,7 @@ template <typename T> inline TQuaternion<T> normalize(const TQuaternion<T> &q) {
 }
 
 template <typename T> inline TQuaternion<T> slerp(const TQuaternion<T> &q1,
-	const TQuaternion<T> &_q2, Float t) {
+	const TQuaternion<T> &_q2, float t) {
 	TQuaternion<T> q2(_q2);
 
 	T cosTheta = dot(q1, q2);
@@ -367,8 +367,8 @@ template <typename T> inline TQuaternion<T> slerp(const TQuaternion<T> &q1,
 		// Revert to plain linear interpolation
 		return normalize(q1 * (1.0f - t) +  q2 * t);
 	} else {
-		Float theta = math::safe_acos(math::clamp(cosTheta, (Float) -1.0f, (Float) 1.0f));
-		Float thetap = theta * t;
+		float theta = math::safe_acos(math::clamp(cosTheta, (float) -1.0f, (float) 1.0f));
+		float thetap = theta * t;
 		TQuaternion<T> qperp = normalize(q2 - q1 * cosTheta);
 		return q1 * std::cos(thetap) + qperp * std::sin(thetap);
 	}

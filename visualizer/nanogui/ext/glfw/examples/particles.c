@@ -412,7 +412,7 @@ static void draw_particles(GLFWwindow* window, double t, float dt)
 
     // Get modelview matrix. We will only use the upper left 3x3 part of
     // the matrix, which represents the rotation.
-    glGetFloatv(GL_MODELVIEW_MATRIX, mat);
+    glGetfloatv(GL_MODELVIEW_MATRIX, mat);
 
     // 1) & 2) We do it in one swift step:
     // Although not obvious, the following six lines represent two matrix/

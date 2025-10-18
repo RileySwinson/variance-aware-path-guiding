@@ -130,14 +130,14 @@ public:
 		ref<Timer> timer = new Timer();
 
 		/* MLT main loop */
-		Float cumulativeWeight = 0;
+		float cumulativeWeight = 0;
 		current->normalize(m_config.importanceMap);
 		for (uint64_t mutationCtr=0; mutationCtr<m_config.nMutations && !stop; ++mutationCtr) {
 			if (wu->getTimeout() > 0 && (mutationCtr % 8192) == 0
 					&& (int) timer->getMilliseconds() > wu->getTimeout())
 				break;
 
-			bool largeStep = random->nextFloat() < m_config.pLarge;
+			bool largeStep = random->nextfloat() < m_config.pLarge;
 			m_sensorSampler->setLargeStep(largeStep);
 			m_emitterSampler->setLargeStep(largeStep);
 			m_directSampler->setLargeStep(largeStep);
@@ -145,7 +145,7 @@ public:
 			m_pathSampler->sampleSplats(Point2i(-1), *proposed);
 			proposed->normalize(m_config.importanceMap);
 
-			Float a = std::min((Float) 1.0f, proposed->luminance / current->luminance);
+			float a = std::min((float) 1.0f, proposed->luminance / current->luminance);
 
 			if (std::isnan(proposed->luminance) || proposed->luminance < 0) {
 				Log(EWarn, "Encountered a sample with luminance = %f, ignoring!",
@@ -154,7 +154,7 @@ public:
 			}
 
 			bool accept;
-			Float currentWeight, proposedWeight;
+			float currentWeight, proposedWeight;
 
 			if (a > 0) {
 				if (m_config.kelemenStyleWeights && !m_config.importanceMap) {
@@ -168,7 +168,7 @@ public:
 					currentWeight = 1-a;
 					proposedWeight = a;
 				}
-				accept = (a == 1) || (random->nextFloat() < a);
+				accept = (a == 1) || (random->nextfloat() < a);
 			} else {
 				if (m_config.kelemenStyleWeights)
 					currentWeight = current->luminance
@@ -277,12 +277,12 @@ void PSSMLTProcess::develop() {
 	const Spectrum *accum = (Spectrum *) m_accum->getBitmap()->getData();
 	const Spectrum *direct = m_directImage != NULL ?
 		(Spectrum *) m_directImage->getData() : NULL;
-	const Float *importanceMap = m_config.importanceMap != NULL ?
-			m_config.importanceMap->getFloatData() : NULL;
+	const float *importanceMap = m_config.importanceMap != NULL ?
+			m_config.importanceMap->getfloatData() : NULL;
 	Spectrum *target = (Spectrum *) m_developBuffer->getData();
 
 	/* Compute the luminance correction factor */
-	Float avgLuminance = 0;
+	float avgLuminance = 0;
 	if (importanceMap) {
 		for (size_t i=0; i<pixelCount; ++i)
 			avgLuminance += accum[i].getLuminance() * importanceMap[i];
@@ -291,11 +291,11 @@ void PSSMLTProcess::develop() {
 			avgLuminance += accum[i].getLuminance();
 	}
 
-	avgLuminance /= (Float) pixelCount;
-	Float luminanceFactor = m_config.luminance / avgLuminance;
+	avgLuminance /= (float) pixelCount;
+	float luminanceFactor = m_config.luminance / avgLuminance;
 
 	for (size_t i=0; i<pixelCount; ++i) {
-		Float correction = luminanceFactor;
+		float correction = luminanceFactor;
 		if (importanceMap)
 			correction *= importanceMap[i];
 		Spectrum value = accum[i] * correction;
@@ -347,7 +347,7 @@ void PSSMLTProcess::bindResource(const std::string &name, int id) {
 		m_progress = new ProgressReporter("Rendering", m_config.workUnits, m_job);
 		m_accum = new ImageBlock(Bitmap::ESpectrum, m_film->getCropSize());
 		m_accum->clear();
-		m_developBuffer = new Bitmap(Bitmap::ESpectrum, Bitmap::EFloat, m_film->getCropSize());
+		m_developBuffer = new Bitmap(Bitmap::ESpectrum, Bitmap::Efloat, m_film->getCropSize());
 	}
 }
 

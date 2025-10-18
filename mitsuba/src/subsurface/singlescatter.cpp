@@ -36,7 +36,7 @@ MTS_NAMESPACE_BEGIN
 //////////////////////////////////////////////////////////////////////////////
 /// \brief Evaluate the Henyey-Greenstein phase function.
 ///
-Spectrum hg(Float cosTheta, const Spectrum &g) {
+Spectrum hg(float cosTheta, const Spectrum &g) {
 	Spectrum temp = Spectrum(1) + g * g + 2 * g * cosTheta;
 	return INV_FOURPI * (Spectrum(1) - g * g) / (temp * temp.sqrt());
 }
@@ -61,7 +61,7 @@ static ref<Mutex> mutex = new Mutex;
  *         These parameters are mutually exclusive with \code{sigmaA} and \code{sigmaS}
  *         \default{configured based on \code{material}}
  *     }
- *     \parameter{scale}{\Float}{
+ *     \parameter{scale}{\float}{
  *         Optional scale factor that will be applied to the \code{sigma*} parameters.
  *         It is provided for convenience when accomodating data based on different units,
  *         or to simply tweak the density of the medium. \default{1}}
@@ -167,7 +167,7 @@ public:
 		m_sigmaS = Spectrum(stream);
 		m_sigmaA = Spectrum(stream);
 		m_g = Spectrum(stream);
-		m_eta = stream->readFloat();
+		m_eta = stream->readfloat();
 		// Additions for single scatter
 		m_fastSingleScatter = stream->readBool();
 		m_fastSingleScatterSamples = stream->readInt();
@@ -187,7 +187,7 @@ public:
 		m_sigmaS.serialize(stream);
 		m_sigmaA.serialize(stream);
 		m_g.serialize(stream);
-		stream->writeFloat(m_eta);
+		stream->writefloat(m_eta);
 		// Additions for single scatter
 		stream->writeBool(m_fastSingleScatter);
 		stream->writeInt(m_fastSingleScatterSamples);
@@ -197,7 +197,7 @@ public:
 	}
 
 	//---------------- Begin set of functions for single scattering --------------------
-	Spectrum attenuation(const Spectrum &muT, Float negDistance) const {
+	Spectrum attenuation(const Spectrum &muT, float negDistance) const {
 		Spectrum result(1.0);
 		for (int c = 0; c < SPECTRUM_SAMPLES; ++c)
 			if (m_sigmaT[c])
@@ -206,20 +206,20 @@ public:
 	}
 
 	//------------------------------------------------------------------------
-	void boundingConeNormals(const Triangle &tri, Vector &axis, Float &angle,
+	void boundingConeNormals(const Triangle &tri, Vector &axis, float &angle,
 							 const Vector *normals) const {
 		// bounding sphere for the triangle:
 		const Vector tN[3] = { normals[tri.idx[0]], normals[tri.idx[1]],
 							   normals[tri.idx[2]] };
 		const Vector a(tN[1] - tN[0]);
 		const Vector b(tN[2] - tN[0]);
-		const Float a2 = dot(a, a);
-		const Float b2 = dot(b, b);
-		const Float da = std::sqrt(a2);
-		Float db = std::sqrt(b2);
+		const float a2 = dot(a, a);
+		const float b2 = dot(b, b);
+		const float da = std::sqrt(a2);
+		float db = std::sqrt(b2);
 		const Vector axb = cross(a, b);
-		const Float axb2 = dot(axb, axb);
-		const Float daxb = std::sqrt(axb2);
+		const float axb2 = dot(axb, axb);
+		const float daxb = std::sqrt(axb2);
 		if (axb2 != 0.0f) {
 			angle = math::safe_asin(da * db * (a - b).length() / (2 * daxb));
 			axis = normalize(tN[0] + cross(a2 * b - b2 * a, axb) / (2 * axb2));
@@ -239,24 +239,24 @@ public:
 		const BSphere aabbSphere = aabb.getBSphere();
 		// Bounding cone for omega_L:
 		Vector omegaL = L - aabbSphere.center;
-		const Float domegaL = omegaL.length();
+		const float domegaL = omegaL.length();
 		omegaL /= domegaL;
 		// Cone must be tangent to bounding sphere.
 		if (domegaL < aabbSphere.radius)
 			return true; // thetaL = M_PI. All tests will send true.
 
-		const Float thetaL = math::safe_asin(aabbSphere.radius / domegaL);
+		const float thetaL = math::safe_asin(aabbSphere.radius / domegaL);
 		Vector omegaV1 = (V1 - aabbSphere.center);
 		Vector omegaV2 = (V2 - aabbSphere.center);
 		Vector V1V2 = omegaV2 - omegaV1;
-		const Float dV1V2 = V1V2.length();
+		const float dV1V2 = V1V2.length();
 		V1V2 /= dV1V2;
 		// Shortest distance between C and [V1 V2]
-		Float dV1 = omegaV1.length();
+		float dV1 = omegaV1.length();
 		omegaV1 /= dV1;
-		Float dV2 = omegaV2.length();
+		float dV2 = omegaV2.length();
 		omegaV2 /= dV2;
-		Float minDist = 0, cosTheta = 0;
+		float minDist = 0, cosTheta = 0;
 		// Numerical stability issues. We can have dV1 >> dV2
 		// I pick the smallest
 		if (dV1 < dV2) {
@@ -277,26 +277,26 @@ public:
 		if (minDist < aabbSphere.radius)
 			return true; // thetaH = M_PI. All tests will send true.
 
-		const Float thetaV = math::safe_asin(aabbSphere.radius / minDist);
+		const float thetaV = math::safe_asin(aabbSphere.radius / minDist);
 		// omegaV is included in a cone whose direction is varying from omegaV1
 		// to omegaV2, angle thetaV
 		// omegaL is in the cone whose direction is omegaL, angle thetaL.
 		// Spindle test:
 		// If omegaV is inside the cone of axis -omegaL, spindleAngle,
 		// then there can be a spindle compatible intersection
-		const Float spindleAngle =
-			Float(0.5f * M_PI - math::safe_asin(m_invEta) + thetaL + thetaV);
+		const float spindleAngle =
+			float(0.5f * M_PI - math::safe_asin(m_invEta) + thetaL + thetaV);
 		if (spindleAngle < M_PI) {
-			const Float cosSpindle = std::cos(spindleAngle);
-			const Float value0 = dot(omegaV2, -omegaL);
-			const Float value1 = dot(omegaV1, -omegaL);
+			const float cosSpindle = std::cos(spindleAngle);
+			const float value0 = dot(omegaV2, -omegaL);
+			const float value1 = dot(omegaV1, -omegaL);
 			// We're looking for the smallest angle, thus the largest cosine
-			Float cosMax = (value0 > value1 ? value0 : value1);
+			float cosMax = (value0 > value1 ? value0 : value1);
 			if (cosMax < cosSpindle) {
 				// same sign as the derivative of the cosine
-				const Float deriv0 =
+				const float deriv0 =
 					dot(V1V2, cross(omegaV2, cross(omegaL, omegaV2)));
-				const Float deriv1 =
+				const float deriv1 =
 					dot(V1V2, cross(omegaV1, cross(omegaL, omegaV1)));
 				if ((deriv0 * deriv1 < 0) && (deriv0 > 0)) {
 					// cosine has a maximum in [0,1].
@@ -312,22 +312,22 @@ public:
 	}
 
 	//------------------------------------------------------------------------
-	Float minDistanceV(Float dV1, const Vector &omegaV1, Float dV2,
-					   const Vector &omegaV2, Float dV1V2,
+	float minDistanceV(float dV1, const Vector &omegaV1, float dV2,
+					   const Vector &omegaV2, float dV1V2,
 					   const Vector &V1V2) const {
 		// Numerical stability issues. We can have dV1 >> dV2
 		// I pick the smallest
-		Float minDist = 0;
+		float minDist = 0;
 		if (dV1 < dV2) {
 			minDist = dV1;
-			Float cosTheta = dot(-omegaV1, V1V2);
+			float cosTheta = dot(-omegaV1, V1V2);
 			if (dV1 * cosTheta > dV1V2)
 				minDist = dV2;
 			else if (cosTheta > 0)
 				minDist = dV1 * std::sqrt(1 - cosTheta * cosTheta);
 		} else {
 			minDist = dV2;
-			Float cosTheta = dot(-omegaV2, -V1V2);
+			float cosTheta = dot(-omegaV2, -V1V2);
 			if (dV2 * cosTheta > dV1V2)
 				minDist = dV1;
 			else if (cosTheta > 0)
@@ -340,7 +340,7 @@ public:
 	bool triangleSegmentTest(const Triangle &tri, const Point &L,
 							 const Point &V2, const Point &V1,
 							 const Point *positions, const Vector *normals,
-							 Float &alphaMin, Float &alphaMax) const {
+							 float &alphaMin, float &alphaMax) const {
 		// Is there a ray from anywhere on segment [V1, V2] through triangle tri
 		// connecting to L?
 		// Bounding sphere of the triangle:
@@ -350,50 +350,50 @@ public:
 
 		// Bounding cone for omega_L:
 		Vector omegaL = L - triSphere.center;
-		const Float domegaL = omegaL.length();
+		const float domegaL = omegaL.length();
 		omegaL /= domegaL;
 
 		// Cone must be tangent to bounding sphere.
 		if (domegaL < triSphere.radius)
 			return true; // thetaL = M_PI. All tests will send true.
 
-		const Float thetaL = math::safe_asin(triSphere.radius / domegaL);
+		const float thetaL = math::safe_asin(triSphere.radius / domegaL);
 		Vector omegaV1 = (V1 - triSphere.center);
-		const Float dV1 = omegaV1.length();
+		const float dV1 = omegaV1.length();
 		omegaV1 /= dV1;
 		Vector omegaV2 = (V2 - triSphere.center);
-		const Float dV2 = omegaV2.length();
+		const float dV2 = omegaV2.length();
 		omegaV2 /= dV2;
 		Vector V1V2 = V2 - V1;
-		Float dV1V2 = V1V2.length();
+		float dV1V2 = V1V2.length();
 		V1V2 /= dV1V2;
 
 		// Shortest distance between C and [V1 V2]
-		Float minDist = minDistanceV(dV1, omegaV1, dV2, omegaV2, dV1V2, V1V2);
+		float minDist = minDistanceV(dV1, omegaV1, dV2, omegaV2, dV1V2, V1V2);
 		if (minDist < triSphere.radius)
 			return true; // thetaH = M_PI. All tests will send true.
 
-		Float thetaV = math::safe_asin(triSphere.radius / minDist);
+		float thetaV = math::safe_asin(triSphere.radius / minDist);
 		// omegaV is included in a cone whose direction is varying from omegaV1
 		// to omegaV2, angle thetaV
 		// omegaL is in the cone whose direction is omegaL, angle thetaL.
 		// Spindle test:
 		// If omegaV is inside the cone of axis -omegaL, spindleAngle,
 		// then there is a spindle intersection
-		const Float spindleAngle =
-			Float(0.5f * M_PI - math::safe_asin(m_invEta) + thetaL + thetaV);
+		const float spindleAngle =
+			float(0.5f * M_PI - math::safe_asin(m_invEta) + thetaL + thetaV);
 		if (spindleAngle < M_PI) {
-			const Float cosSpindle = std::cos(spindleAngle);
-			const Float value0 = dot(omegaV2, -omegaL);
-			const Float value1 = dot(omegaV1, -omegaL);
+			const float cosSpindle = std::cos(spindleAngle);
+			const float value0 = dot(omegaV2, -omegaL);
+			const float value1 = dot(omegaV1, -omegaL);
 
 			// We're looking for the smallest angle, thus the largest cosine
-			Float cosMax = (value0 > value1 ? value0 : value1);
+			float cosMax = (value0 > value1 ? value0 : value1);
 			if (cosMax < cosSpindle) {
 				// same sign as the derivative of the cosine
-				const Float deriv0 =
+				const float deriv0 =
 					dot(V1V2, cross(omegaV2, cross(omegaL, omegaV2)));
-				const Float deriv1 =
+				const float deriv1 =
 					dot(V1V2, cross(omegaV1, cross(omegaL, omegaV1)));
 				if ((deriv0 * deriv1 < 0) && (deriv0 > 0)) {
 					// cosine has a maximum in [0,1].
@@ -412,20 +412,20 @@ public:
 		Vector omegaH1 = omegaV1 + omegaL_eta;
 		Vector omegaH2 = omegaV2 + omegaL_eta;
 		// 2 spheres, radius =
-		const Float rH = 2 * std::sin(thetaV / 2) + (2 * m_invEta) * std::sin(thetaL / 2);
+		const float rH = 2 * std::sin(thetaV / 2) + (2 * m_invEta) * std::sin(thetaL / 2);
 		// Shortest distance between C and [H1 H2]
 		// Again
 		// V1V2 hasn't changed.
-		Float value1 = omegaH1.length();
+		float value1 = omegaH1.length();
 		omegaH1 /= value1;
-		Float value0 = omegaH2.length();
+		float value0 = omegaH2.length();
 		omegaH2 /= value0;
-		Float minDistH = (value0 < value1) ? value0 : value1;
+		float minDistH = (value0 < value1) ? value0 : value1;
 		if (minDistH < rH)
 			return true;
 
-		const Float derivH0 = dot(V1V2, cross(omegaV2, cross(omegaL, omegaV2)));
-		const Float derivH1 = dot(V1V2, cross(omegaV1, cross(omegaL, omegaV1)));
+		const float derivH0 = dot(V1V2, cross(omegaV2, cross(omegaL, omegaV2)));
+		const float derivH1 = dot(V1V2, cross(omegaV1, cross(omegaL, omegaV1)));
 		Vector n = normalize(cross(omegaV2, omegaV1));
 		if ((derivH0 * derivH1 < 0) && (derivH0 > 0)) {
 			// omegaH.length() has a minimum in [0,1]:
@@ -438,11 +438,11 @@ public:
 		// omegaV1-omegaV2 + 1/eta omegaL
 		if (minDistH < rH)
 			return true;
-		const Float thetaH = math::safe_asin(rH / minDistH);
+		const float thetaH = math::safe_asin(rH / minDistH);
 
 		// Now we get the cone bounding the normals:
 		Vector omegaN;
-		Float thetaN;
+		float thetaN;
 		boundingConeNormals(tri, omegaN, thetaN, normals);
 
 		// Now, is there an intersection between (-omegaN, thetaN) and the
@@ -451,27 +451,27 @@ public:
 		if (thetaH + thetaN > 0.5 * M_PI)
 			return true;
 
-		const Float cosCone = std::cos(thetaH + thetaN);
-		const Float sinCone = std::sin(thetaH + thetaN);
+		const float cosCone = std::cos(thetaH + thetaN);
+		const float sinCone = std::sin(thetaH + thetaN);
 		value0 = dot(omegaH2, -omegaN);
 		value1 = dot(omegaH1, -omegaN);
 		const Vector perp0 = cross(omegaL_eta, cross(n, omegaV2)) + n;
 		const Vector perp1 = cross(omegaL_eta, cross(n, omegaV1)) + n;
-		Float deriv0 = dot(-omegaN, cross(omegaL_eta + omegaV2, perp0));
-		Float deriv1 = dot(-omegaN, cross(omegaL_eta + omegaV1, perp1));
+		float deriv0 = dot(-omegaN, cross(omegaL_eta + omegaV2, perp0));
+		float deriv1 = dot(-omegaN, cross(omegaL_eta + omegaV1, perp1));
 
 		// We are only interested by one branch of the hyperbola (Pa . (-omegaN)
 		// > 0)
 		// We must cut the other branch.
-		Float K = dot(omegaL_eta, -omegaN);
+		float K = dot(omegaL_eta, -omegaN);
 		K = K * K;
-		const Float a0 = dV1V2 * dot(-V1V2, -omegaN);
-		const Float a1 = dV2 * dot(omegaV2, -omegaN);
-		const Float a = a0 * a0 - K * dV1V2 * dV1V2;
-		const Float b = a0 * a1 - K * dV2 * dV1V2 * dot(omegaV2, -V1V2);
-		const Float c = a1 * a1 - K * dV2 * dV2;
-		Float delta = b * b - a * c;
-		Float al0 = 0, al1 = 1;
+		const float a0 = dV1V2 * dot(-V1V2, -omegaN);
+		const float a1 = dV2 * dot(omegaV2, -omegaN);
+		const float a = a0 * a0 - K * dV1V2 * dV1V2;
+		const float b = a0 * a1 - K * dV2 * dV1V2 * dot(omegaV2, -V1V2);
+		const float c = a1 * a1 - K * dV2 * dV2;
+		float delta = b * b - a * c;
+		float al0 = 0, al1 = 1;
 		if (delta > 0) {
 			delta = math::safe_sqrt(delta);
 			if (a > 0) {
@@ -556,7 +556,7 @@ public:
 		}
 
 		// Is the origin inside this branch of the hyperbola?
-		const Float lambda = dot(omegaL_eta, n) / dot(omegaN, n);
+		const float lambda = dot(omegaL_eta, n) / dot(omegaN, n);
 		const Vector vn = omegaN * lambda - omegaL_eta;
 		bool originInside = (lambda <= 0) && (dot(vn, vn) <= 1.0);
 		// Done splitting
@@ -571,21 +571,21 @@ public:
 			return false;
 		do {
 			// searching for the minimum
-			const Float alpha = 0.5f * (alphaMax + alphaMin);
+			const float alpha = 0.5f * (alphaMax + alphaMin);
 			const Vector omegaVa =
 				normalize(alpha * dV1 * omegaV1 + (1 - alpha) * dV2 * omegaV2);
 			Vector Ha = omegaL_eta + omegaVa;
-			Float dHa = Ha.length();
+			float dHa = Ha.length();
 			Vector Han = Ha / dHa;
 			if (dot(-omegaN, Han) > cosCone) {
 				return true;
 			}
 			const Vector perpa = cross(Ha, cross(n, omegaVa));
-			const Float deriv = dot(-omegaN, cross(Ha, perpa));
+			const float deriv = dot(-omegaN, cross(Ha, perpa));
 			if (!originInside) {
 				const Vector projPerpa =
 					normalize(perpa - dot(perpa, omegaN) * omegaN);
-				const Float minProjectedDistance =
+				const float minProjectedDistance =
 					(cosCone / dot(Ha, omegaN)) * dot(Ha, projPerpa);
 				if (minProjectedDistance > sinCone)
 					return false;
@@ -618,15 +618,15 @@ public:
 		Vector omegaV = PV0 + JP * params;
 		Vector omegaL = PL0 + JL * params;
 		Vector omegaN = N0 + JN * params;
-		Float dL = omegaL.length();
+		float dL = omegaL.length();
 		omegaL /= dL;
-		Float dN = omegaN.length();
+		float dN = omegaN.length();
 		omegaN /= dN;
-		Float dV = omegaV.length();
+		float dV = omegaV.length();
 		if (dV < 1e-7f) {
-			const Float bp = 2 * dot(omegaN, omegaL) * m_invEta;
-			const Float delta = bp * bp + 1 - (m_invEta * m_invEta);
-			Float x = -bp + math::safe_sqrt(delta);
+			const float bp = 2 * dot(omegaN, omegaL) * m_invEta;
+			const float delta = bp * bp + 1 - (m_invEta * m_invEta);
+			float x = -bp + math::safe_sqrt(delta);
 			omegaV = -omegaL * m_invEta - x * omegaN;
 			dV = 1.0f;
 		} else
@@ -648,7 +648,7 @@ public:
 			(JP - Matrix3x3(omegaV * lineVec.x, omegaV * lineVec.y,
 							omegaV * lineVec.z)) / dV;
 		Vector H = m_eta * omegaV + omegaL;
-		Float dH = H.length();
+		float dH = H.length();
 		H /= dH;
 		const Matrix3x3 JH = m_eta * Jov + Jol;
 		lineVec = JH.preMult(H);
@@ -663,17 +663,17 @@ public:
 									   const Vector &dNsdv, const Point &L,
 									   const Point &V0, const Vector &dInternal,
 									   const Point &P0, const Vector tN[3],
-									   const Vector &Ng, Float a11, Float a12,
-									   Float a22, const Spectrum &inputSpectrum,
+									   const Vector &Ng, float a11, float a12,
+									   float a22, const Spectrum &inputSpectrum,
 									   const Scene *scene,
-									   Float time = 0.0f) const {
+									   float time = 0.0f) const {
 		const Point Pc = P0 + paramP[1] * dPdu + paramP[2] * dPdv;
 		const Point V = V0 + paramP[0] * dInternal;
 		Vector omegaV = V - Pc;
-		Float domegaV = omegaV.length();
+		float domegaV = omegaV.length();
 		omegaV /= domegaV;
 		Vector omegaL = L - Pc;
-		Float domegaL = omegaL.length();
+		float domegaL = omegaL.length();
 		omegaL /= domegaL;
 		Spectrum result = inputSpectrum;
 
@@ -688,37 +688,37 @@ public:
 		}
 
 		Vector Ns = (tN[0] + paramP[1] * dNsdu + paramP[2] * dNsdv);
-		Float idNs = 1.0f / Ns.length();
+		float idNs = 1.0f / Ns.length();
 		Ns *= idNs;
-		const Float cosThetaL = dot(omegaL, Ns);
-		const Float cosThetaV = dot(omegaV, Ns);
+		const float cosThetaL = dot(omegaL, Ns);
+		const float cosThetaV = dot(omegaV, Ns);
 
 		/* Fresnel transmittance at the new position */
-		const Float F = fresnelDielectricExt(cosThetaL, m_eta);
+		const float F = fresnelDielectricExt(cosThetaL, m_eta);
 
 		/* Evaluate the Henyey-Greenstein model */
-		const Float cosThetaInternal = dot(omegaV, dInternal);
+		const float cosThetaInternal = dot(omegaV, dInternal);
 		Spectrum phase = hg(cosThetaInternal,
 							m_g); // reproduces results with +cosThetaInternal.
 		result *= (1 - F) * phase;
 		result *= m_sigmaS * attenuation(m_sigmaT, -(paramP[0] + domegaV));
 		// computing D with ray differentials as in [Walter 2009]
 		// u_p and u_s are omega'_V
-		const Float mu = cosThetaL + m_eta * cosThetaV;
+		const float mu = cosThetaL + m_eta * cosThetaV;
 		// u_p : perpendicular vector
 		const Vector u_p = normalize(cross(omegaV, Ns));
 		const Vector dPdu_p =
 			domegaV * (u_p - (dot(u_p, Ng) / dot(omegaV, Ng)) * omegaV);
 
 		// Normal derivatives are OK
-		const Float dudu_p =
+		const float dudu_p =
 			(a22 * dot(dPdu_p, dPdu) - a12 * dot(dPdu_p, dPdv));
-		const Float dvdu_p =
+		const float dvdu_p =
 			(-a12 * dot(dPdu_p, dPdu) + a11 * dot(dPdu_p, dPdv));
-		const Float dwdu_p = -dudu_p - dvdu_p;
+		const float dwdu_p = -dudu_p - dvdu_p;
 		const Vector dNdu_p = dwdu_p * tN[0] + dudu_p * tN[1] + dvdu_p * tN[2];
 		const Vector dNndu_p = dNdu_p * idNs - dot(Ns, dNdu_p * idNs) * Ns;
-		const Float dmudu_p =
+		const float dmudu_p =
 			m_eta * (mu / cosThetaL) * (dot(-u_p, Ns) + dot(omegaV, dNndu_p));
 		const Vector domegaLdu_p = m_eta * u_p + dmudu_p * Ns + mu * dNndu_p;
 		const Vector L_p =
@@ -729,19 +729,19 @@ public:
 		const Vector dPdu_s =
 			domegaV * (u_s - (dot(u_s, Ng) / dot(omegaV, Ng)) * omegaV);
 		// Normal derivatives
-		const Float dudu_s =
+		const float dudu_s =
 			(a22 * dot(dPdu_s, dPdu) - a12 * dot(dPdu_s, dPdv));
-		const Float dvdu_s =
+		const float dvdu_s =
 			(-a12 * dot(dPdu_s, dPdu) + a11 * dot(dPdu_s, dPdv));
-		const Float dwdu_s = -dudu_s - dvdu_s;
+		const float dwdu_s = -dudu_s - dvdu_s;
 		const Vector dNdu_s = dwdu_s * tN[0] + dudu_s * tN[1] + dvdu_s * tN[2];
 		const Vector dNndu_s = dNdu_s * idNs - dot(Ns, dNdu_s * idNs) * Ns;
-		const Float dmudu_s =
+		const float dmudu_s =
 			m_eta * (mu / cosThetaL) * (dot(-u_s, Ns) + dot(omegaV, dNndu_s));
 		const Vector domegaLdu_s = m_eta * u_s + dmudu_s * Ns + mu * dNndu_s;
 		const Vector L_s =
 			dPdu_s - dot(dPdu_s, omegaL) * omegaL + domegaL * domegaLdu_s;
-		const Float D = cross(L_p, L_s).length();
+		const float D = cross(L_p, L_s).length();
 
 		// For debug/explanation only: result without the ray-differentials
 		// D = (domegaV + m_eta * domegaL) * (std::abs(cosThetaL/cosThetaV)*domegaV
@@ -767,21 +767,21 @@ public:
 		// stepMax = 0.8 -->
 		int maxNumTests = 10; //  low value = fast computations; 20 = 4.6 mn, 90
 							  //  = 6.7 mn. Try 10?
-		Float limit_df = 1e-3; // precision for searching interval limits
+		float limit_df = 1e-3; // precision for searching interval limits
 		if (axis == 0)
 			limit_df = 1e-6; // We need more accuracy for actual points
 
-		const Float stepMaxMax =
+		const float stepMaxMax =
 			1.5f; // Given that the triangle is [0,1]^2, 1.5 is *huge*
-		Float stepMax =
+		float stepMax =
 			0.8f; // Variable. Anything in the range 0.5 - 0.9 is faster.
 		int numTests = 0;
 		Vector oldParams = params;
-		Float old_df = 2.0;
+		float old_df = 2.0;
 		bool foundP = false;
 		do {
 			const Vector f = fAndJacobian(params, JP, JN, PV0, PL0, N0, J);
-			const Float df = f.length();
+			const float df = f.length();
 			foundP = df < limit_df;
 			if (df > old_df) {
 				// We did not improve. Go back
@@ -790,8 +790,8 @@ public:
 			} else if (!foundP) {
 				// Jacobian is the 3x2 matrix (dfdx, dfdv)
 				// We compute its pseudo-inverse (J^tJ)^{-1} J^t
-				Float a = 0, b = 0, c = 0;
-				Float Jm0 = 0, Jm1 = 0, Jm2 = 0;
+				float a = 0, b = 0, c = 0;
+				float Jm0 = 0, Jm1 = 0, Jm2 = 0;
 				switch (axis) {
 					case 0:
 						a = J.m[0][1] * J.m[0][1] + J.m[1][1] * J.m[1][1] +
@@ -861,13 +861,13 @@ public:
 				Matrix2x2 JtJinv(0.0);
 				JtJ.invert(JtJinv);
 				Vector2 step = JtJinv * Jtf;
-				const Float dStep = step.length();
+				const float dStep = step.length();
 				if (axis > 0) {
 					// Sometimes the function behaves erratically near the limit
 					// (because it's 2 branches of a hyperbola)
 					// Must make sure we don't cross the limit, even if it slows
 					// us down.
-					Float dist = -1;
+					float dist = -1;
 					if (params[0] - step[0] > limits.y) {
 						dist = 0.75f * (limits.y - params[0]); // /(-step[0]);
 						if (dist < stepMax)
@@ -939,11 +939,11 @@ public:
 			Vector w2(J.m[1][0], J.m[1][1], J.m[1][2]);
 			Vector w3(J.m[2][0], J.m[2][1], J.m[2][2]);
 			Vector w13 = cross(w1, w3);
-			const Float dw13 = w13.length();
+			const float dw13 = w13.length();
 			Vector w23 = cross(w2, w3);
-			const Float dw23 = w23.length();
+			const float dw23 = w23.length();
 			Vector w12 = cross(w1, w2);
-			const Float dw12 = w12.length();
+			const float dw12 = w12.length();
 			if ((dw13 > dw23) && (dw13 > dw12))
 				gradient = w13 / dw13;
 			else if ((dw12 > dw23) && (dw12 > dw13))
@@ -983,7 +983,7 @@ public:
 		}
 		// Now use the gradient to find new starting points
 		if (axis != 1) {
-			const Float lam = -params.y / gradient.y;
+			const float lam = -params.y / gradient.y;
 			const Vector sp = params + lam * gradient;
 			if ((sp[2] >= -0.5f) && (sp[2] <= 1.5f)) {
 				toTest[0] = true;
@@ -1003,7 +1003,7 @@ public:
 			}
 		}
 		if (axis != 2) {
-			const Float lam = -params.z / gradient.z;
+			const float lam = -params.z / gradient.z;
 			const Vector sp = params + lam * gradient;
 			if ((sp[1] >= -0.5f) && (sp[1] <= 1.5f)) {
 				toTest[1] = true;
@@ -1023,7 +1023,7 @@ public:
 			}
 		}
 		if (axis != 3) {
-			const Float lam =
+			const float lam =
 				(1 - params.y - params.z) / (gradient.y + gradient.z);
 			const Vector sp = params + lam * gradient;
 			if ((sp[2] >= -0.5f) && (sp[2] <= 1.5f)) {
@@ -1048,10 +1048,10 @@ public:
 	//------------------------------------------------------------------------
 	Spectrum testThisTriangle(const Triangle &tri, const Point &L,
 							  const Point &V0, const Vector &dInternal,
-							  Float xmin, Float xmax, const Point *positions,
+							  float xmin, float xmax, const Point *positions,
 							  const Vector *normals,
 							  const Spectrum &inputSpectrum, const Scene *scene,
-							  Float time = 0.) const {
+							  float time = 0.) const {
 
 		const Point tP[3] = { positions[tri.idx[0]], positions[tri.idx[1]],
 							  positions[tri.idx[2]] };
@@ -1059,7 +1059,7 @@ public:
 		const Vector dPdv = tP[2] - tP[0];
 		const Matrix3x3 JP(dInternal, -dPdu, -dPdv);
 		Vector Ng = cross(dPdu, dPdv);
-		const Float lNg = Ng.length();
+		const float lNg = Ng.length();
 		if (lNg < 1e-7f)
 			return Spectrum(0.0f);
 		Ng /= lNg;
@@ -1073,7 +1073,7 @@ public:
 
 		// Triangle has passed all the obvious tests.
 		// End points inside the triangle?
-		const Float dI = dot(dInternal, Ng);
+		const float dI = dot(dInternal, Ng);
 		const Vector tN[3] = { normals[tri.idx[0]], normals[tri.idx[1]],
 							   normals[tri.idx[2]] };
 		const Vector dNsdv = (tN[2] - tN[0]);
@@ -1107,14 +1107,14 @@ public:
 			// for our starting points on each interval.
 			const Vector omegaL = normalize(L - V0);
 			const Vector omegaN = normalize(tN[0] + JN * paramP);
-			const Float bp = 2 * dot(omegaN, omegaL) * m_invEta;
-			const Float delta = bp * bp + 1 - (m_invEta * m_invEta);
-			const Float Hnorm = -bp + std::sqrt(delta);
+			const float bp = 2 * dot(omegaN, omegaL) * m_invEta;
+			const float delta = bp * bp + 1 - (m_invEta * m_invEta);
+			const float Hnorm = -bp + std::sqrt(delta);
 			const Vector omegaV = -omegaL * m_invEta - Hnorm * omegaN;
 			const Vector entryGradient = normalize(JPinv * omegaV);
 			// Ray touches triangle plane at paramP, direction entryGradient in
 			// homog coord.
-			Float lambda = -paramP.y / entryGradient.y;
+			float lambda = -paramP.y / entryGradient.y;
 			toTest[0] = (lambda > 0);
 			if (toTest[0]) {
 				startingPoint[0] = paramP + lambda * entryGradient;
@@ -1180,15 +1180,15 @@ public:
 			else
 				pmin = paramP;
 		}
-		Float a11 = dot(dPdu, dPdu);
-		Float a12 = dot(dPdu, dPdv);
-		Float a22 = dot(dPdv, dPdv);
-		const Float det = a11 * a22 - a12 * a12;
+		float a11 = dot(dPdu, dPdu);
+		float a12 = dot(dPdu, dPdv);
+		float a22 = dot(dPdv, dPdv);
+		const float det = a11 * a22 - a12 * a12;
 		if (det == 0)
 			return Spectrum(0.0f);
 
 		{
-			const Float invDet = 1.0f / det;
+			const float invDet = 1.0f / det;
 			a11 *= invDet;
 			a12 *= invDet;
 			a22 *= invDet;
@@ -1271,7 +1271,7 @@ public:
 			// The ray enters (or leaves) through the triangle, we didn't see
 			// the exit, we march along the ray
 			// Expensive, but better than nothing
-			Float startX = 0, endX = 0, deltaX = 0;
+			float startX = 0, endX = 0, deltaX = 0;
 			if (limits.x == 0.0f) {
 				deltaX = 0.1f * m_radius;
 				startX = limits.x;
@@ -1283,7 +1283,7 @@ public:
 			}
 			Vector testP = paramP; // entry point
 			testP.x = startX + 0.5f * deltaX;
-			for (Float x = startX + 0.5f * deltaX;
+			for (float x = startX + 0.5f * deltaX;
 				 (x - endX) * (x - startX) < 0; x += deltaX) {
 				if (findZero(testP, JP, JN, PV0, PL0, tN[0], J, 0, limits)) {
 					if ((testP.y >= 0) && (testP.y <= 1) && (testP.z >= 0) &&
@@ -1300,7 +1300,7 @@ public:
 				testP.x = x + deltaX; // advance along ray by x
 			}
 		} else {
-			Vector deltaP = (pmax - pmin) / Float(numSamples);
+			Vector deltaP = (pmax - pmin) / float(numSamples);
 			for (int i = 0; i < numSamples; i++) {
 				Vector paramP = pmin + deltaP * (i + 0.5f);
 				if (findZero(paramP, JP, JN, PV0, PL0, tN[0], J, 0, limits)) {
@@ -1321,7 +1321,7 @@ public:
 	//------------------------------------------------------------------------
 	Spectrum LoSingle(const Scene *scene, Sampler *sampler,
 					  const Intersection &its, const Vector &dInternal,
-					  int depth, Float z0) const {
+					  int depth, float z0) const {
 
 		Spectrum result(0.0f);
 		if (depth >= m_singleScatterDepth) {
@@ -1336,7 +1336,7 @@ public:
 		}
 
 		// How large is the object?
-		const Float thickness = its2.t;
+		const float thickness = its2.t;
 
 		// 2014-04-22 jDG: Beware of intersecting mesh: we do have a (possible)
 		//                 exit transmittance ONLY when hitting the SAME object
@@ -1417,19 +1417,19 @@ public:
 			// Classical SS approximation. Shoot one ray back to the light
 			// source.
 			// We allow more than one sample along the ray, though.
-			const Float sMax = 1 - exp(-(thickness / m_radius));
-			const Float dSamples =
+			const float sMax = 1 - exp(-(thickness / m_radius));
+			const float dSamples =
 				m_fastSingleScatterSamples
-					? sMax / Float(m_fastSingleScatterSamples)
+					? sMax / float(m_fastSingleScatterSamples)
 					: sMax;
 
 			const Spectrum weight0 =
 				(dSamples * m_radius * (dRec.dist * dRec.dist)) * m_sigmaS;
 
 			for (int s = 0; s < m_fastSingleScatterSamples; ++s) {
-				Float sample = sampler->next1D() * sMax;
+				float sample = sampler->next1D() * sMax;
 				sampler->advance();
-				const Float dist = -math::fastlog(1 - sample) * m_radius;
+				const float dist = -math::fastlog(1 - sample) * m_radius;
 				const Point V = its.p + dist * dInternal;
 				if (EXPECT_NOT_TAKEN(dist > thickness))
 					continue;
@@ -1440,7 +1440,7 @@ public:
 
 				/* First, connect to the light source */
 				Vector VL = L - V;
-				Float dVL = VL.length();
+				float dVL = VL.length();
 				VL /= dVL;
 				Ray toTheLight(V, VL, Epsilon, dVL * (1 - ShadowEpsilon), its.time);
 				if (!scene->rayIntersect(toTheLight, its2))
@@ -1450,7 +1450,7 @@ public:
 				/* Make sure that the light source is not occluded from this
 				 * position */
 				Vector omegaL = L - PWorld;
-				Float dL = omegaL.length();
+				float dL = omegaL.length();
 				omegaL /= dL;
 
 				/* shadow ray */
@@ -1461,25 +1461,25 @@ public:
 				}
 
 				Vector omegaV = V - PWorld;
-				Float dV = omegaV.length();
+				float dV = omegaV.length();
 				omegaV /= dV;
 
 				/* Account for importance sampling wrt. transmittance */
-				const Float cosThetaL = dot(omegaL, its2.shFrame.n);
-				const Float cosThetaV = dot(omegaV, its2.shFrame.n);
+				const float cosThetaL = dot(omegaL, its2.shFrame.n);
+				const float cosThetaV = dot(omegaV, its2.shFrame.n);
 				if (cosThetaL == 0 || cosThetaV == 0)
 					continue;
 
 				/* Fresnel transmittance at the new position */
-				const Float F = fresnelDielectricExt(cosThetaL, m_eta);
+				const float F = fresnelDielectricExt(cosThetaL, m_eta);
 
 				/* Evaluate the Henyey-Greenstein model */
-				Float cosThetaInternal = dot(omegaV, dInternal);
+				float cosThetaInternal = dot(omegaV, dInternal);
 				Spectrum phase;
 				phase = hg(cosThetaInternal, m_g) *
 						attenuation(m_sigmaT, -(dist + dV));
 
-				const Float D = (dV + m_eta * dL) *
+				const float D = (dV + m_eta * dL) *
 								(std::abs(cosThetaL / cosThetaV) * dV +
 								 std::abs(cosThetaV / cosThetaL) * m_eta * dL);
 				result += ((1 - F) / D) * phase * value * weight;
@@ -1525,7 +1525,7 @@ public:
 								if (EXPECT_TAKEN(scene->getKDTree()->m_triangleFlag[shapeIdx])) {
 									if (!doneThisTriangleBefore[primIdx]) {
 										doneThisTriangleBefore[primIdx] = true;
-										Float alphaMin, alphaMax;
+										float alphaMin, alphaMax;
 										if (triangleSegmentTest(triMesh->getTriangles()[primIdx],
 												L, its.p, its2.p, positions,
 												normals, alphaMin, alphaMax)) {
@@ -1552,7 +1552,7 @@ public:
 					} else {
 						// b2) if it's not a leaf.
 						// add the two children to the stack, and iterate
-						Float splitValue = currNode->getSplit();
+						float splitValue = currNode->getSplit();
 						int axis = currNode->getAxis();
 						stack[stackPos].node = currNode->getLeft();
 						stack[stackPos].aabb = currNodeAABB;
@@ -1654,7 +1654,7 @@ public:
 
 		/* Find the smallest mean-free path over all wavelengths */
 		Spectrum mfp = Spectrum(1.0f) / m_sigmaT;
-		m_radius = std::numeric_limits<Float>::max();
+		m_radius = std::numeric_limits<float>::max();
 		for (int lambda = 0; lambda < SPECTRUM_SAMPLES; lambda++)
 			m_radius = std::min(m_radius, mfp[lambda]);
 		m_invRadius = 1.0f / m_radius;
@@ -1679,8 +1679,8 @@ public:
 private:
 	ref<const MonteCarloIntegrator> m_integrator;
 
-	Float m_radius, m_invRadius;
-	Float m_eta, m_invEta;
+	float m_radius, m_invRadius;
+	float m_eta, m_invEta;
 	Spectrum m_sigmaS, m_sigmaA, m_sigmaT, m_g;
 	ref<const BSDF> m_BSDF;
 

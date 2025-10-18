@@ -63,9 +63,9 @@ public:
 	//! @{ \name Implementation of the Mutator interface
 
 	EMutationType getType() const;
-	Float suitability(const Path &path) const;
+	float suitability(const Path &path) const;
 	bool sampleMutation(Path &source, Path &proposal, MutationRecord &muRec, const MutationRecord& sourceMuRec);
-	Float Q(const Path &source, const Path &proposal,
+	float Q(const Path &source, const Path &proposal,
 			const MutationRecord &muRec) const;
 	void accept(const MutationRecord &muRec);
 
@@ -78,7 +78,7 @@ protected:
 	 * \brief Compute the probability mass associated with one
 	 * of the internally implemented mutation strategies
 	 */
-	Float pmfMutation(const Path &source, const MutationRecord &muRec) const;
+	float pmfMutation(const Path &source, const MutationRecord &muRec) const;
 
 	/// Virtual destructor
 	virtual ~BidirectionalMutator();

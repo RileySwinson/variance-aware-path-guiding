@@ -111,8 +111,8 @@ void ShapeKDTree::build() {
 
 bool ShapeKDTree::rayIntersect(const Ray &ray, Intersection &its) const {
 	uint8_t temp[MTS_KD_INTERSECTION_TEMP];
-	its.t = std::numeric_limits<Float>::infinity();
-	Float mint, maxt;
+	its.t = std::numeric_limits<float>::infinity();
+	float mint, maxt;
 
 	#if defined(MTS_FP_DEBUG_STRICT)
 		Assert(
@@ -123,7 +123,7 @@ bool ShapeKDTree::rayIntersect(const Ray &ray, Intersection &its) const {
 	++raysTraced;
 	if (m_aabb.rayIntersect(ray, mint, maxt)) {
 		/* Use an adaptive ray epsilon */
-		Float rayMinT = ray.mint;
+		float rayMinT = ray.mint;
 		if (rayMinT == Epsilon)
 			rayMinT *= std::max(std::max(std::max(std::abs(ray.o.x),
 				std::abs(ray.o.y)), std::abs(ray.o.z)), Epsilon);
@@ -141,17 +141,17 @@ bool ShapeKDTree::rayIntersect(const Ray &ray, Intersection &its) const {
 	return false;
 }
 
-bool ShapeKDTree::rayIntersect(const Ray &ray, Float &t, ConstShapePtr &shape,
+bool ShapeKDTree::rayIntersect(const Ray &ray, float &t, ConstShapePtr &shape,
 		Normal &n, Point2 &uv) const {
 	uint8_t temp[MTS_KD_INTERSECTION_TEMP];
-	Float mint, maxt;
+	float mint, maxt;
 
-	t = std::numeric_limits<Float>::infinity();
+	t = std::numeric_limits<float>::infinity();
 
 	++shadowRaysTraced;
 	if (m_aabb.rayIntersect(ray, mint, maxt)) {
 		/* Use an adaptive ray epsilon */
-		Float rayMinT = ray.mint;
+		float rayMinT = ray.mint;
 		if (rayMinT == Epsilon)
 			rayMinT *= std::max(std::max(std::abs(ray.o.x),
 				std::abs(ray.o.y)), std::abs(ray.o.z));
@@ -205,12 +205,12 @@ bool ShapeKDTree::rayIntersect(const Ray &ray, Float &t, ConstShapePtr &shape,
 
 
 bool ShapeKDTree::rayIntersect(const Ray &ray) const {
-	Float mint, maxt, t = std::numeric_limits<Float>::infinity();
+	float mint, maxt, t = std::numeric_limits<float>::infinity();
 
 	++shadowRaysTraced;
 	if (m_aabb.rayIntersect(ray, mint, maxt)) {
 		/* Use an adaptive ray epsilon */
-		Float rayMinT = ray.mint;
+		float rayMinT = ray.mint;
 		if (rayMinT == Epsilon)
 			rayMinT *= std::max(std::max(std::abs(ray.o.x),
 				std::abs(ray.o.y)), std::abs(ray.o.z));
@@ -326,7 +326,7 @@ void ShapeKDTree::rayIntersectPacket(const RayPacket4 &packet,
 							ray.d[axis] = packet.d[axis].f[i];
 							ray.dRcp[axis] = packet.dRcp[axis].f[i];
 						}
-						Float t;
+						float t;
 
 						if (shape->rayIntersect(ray, searchStart.f[i], searchEnd.f[i], t,
 								reinterpret_cast<uint8_t *>(temp)
@@ -361,7 +361,7 @@ void ShapeKDTree::rayIntersectPacketIncoherent(const RayPacket4 &packet,
 	++incoherentPackets;
 	for (int i=0; i<4; i++) {
 		Ray ray;
-		Float t;
+		float t;
 		for (int axis=0; axis<3; axis++) {
 			ray.o[axis] = packet.o[axis].f[i];
 			ray.d[axis] = packet.d[axis].f[i];

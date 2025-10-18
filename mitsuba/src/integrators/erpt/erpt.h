@@ -42,14 +42,14 @@ struct ERPTConfiguration {
 	bool lensPerturbation;
 	bool multiChainPerturbation;
 	bool manifoldPerturbation;
-	Float probFactor;
+	float probFactor;
 	size_t chainLength;
-	Float numChains;
+	float numChains;
 	int blockSize;
-	Float luminance;
+	float luminance;
 	size_t luminanceSamples;
-	Float avgAngleChangeSurface;
-	Float avgAngleChangeMedium;
+	float avgAngleChangeSurface;
+	float avgAngleChangeMedium;
 	int maxChains;
 
 	inline ERPTConfiguration() { }
@@ -91,14 +91,14 @@ struct ERPTConfiguration {
 		lensPerturbation = stream->readBool();
 		multiChainPerturbation = stream->readBool();
 		manifoldPerturbation = stream->readBool();
-		probFactor = stream->readFloat();
+		probFactor = stream->readfloat();
 		chainLength = stream->readSize();
-		numChains = stream->readFloat();
+		numChains = stream->readfloat();
 		blockSize = stream->readInt();
-		luminance = stream->readFloat();
+		luminance = stream->readfloat();
 		luminanceSamples = stream->readSize();
-		avgAngleChangeSurface = stream->readFloat();
-		avgAngleChangeMedium = stream->readFloat();
+		avgAngleChangeSurface = stream->readfloat();
+		avgAngleChangeMedium = stream->readfloat();
 		maxChains = stream->readInt();
 	}
 
@@ -111,14 +111,14 @@ struct ERPTConfiguration {
 		stream->writeBool(lensPerturbation);
 		stream->writeBool(multiChainPerturbation);
 		stream->writeBool(manifoldPerturbation);
-		stream->writeFloat(probFactor);
+		stream->writefloat(probFactor);
 		stream->writeSize(chainLength);
-		stream->writeFloat(numChains);
+		stream->writefloat(numChains);
 		stream->writeInt(blockSize);
-		stream->writeFloat(luminance);
+		stream->writefloat(luminance);
 		stream->writeSize(luminanceSamples);
-		stream->writeFloat(avgAngleChangeSurface);
-		stream->writeFloat(avgAngleChangeMedium);
+		stream->writefloat(avgAngleChangeSurface);
+		stream->writefloat(avgAngleChangeMedium);
 		stream->writeInt(maxChains);
 	}
 };

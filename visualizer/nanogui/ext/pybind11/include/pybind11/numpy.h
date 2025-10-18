@@ -121,8 +121,8 @@ struct npy_api {
         NPY_INT_, NPY_UINT_,
         NPY_LONG_, NPY_ULONG_,
         NPY_LONGLONG_, NPY_ULONGLONG_,
-        NPY_FLOAT_, NPY_DOUBLE_, NPY_LONGDOUBLE_,
-        NPY_CFLOAT_, NPY_CDOUBLE_, NPY_CLONGDOUBLE_,
+        NPY_float_, NPY_DOUBLE_, NPY_LONGDOUBLE_,
+        NPY_Cfloat_, NPY_CDOUBLE_, NPY_CLONGDOUBLE_,
         NPY_OBJECT_ = 17,
         NPY_STRING_, NPY_UNICODE_, NPY_VOID_
     };
@@ -731,10 +731,10 @@ template <typename T> constexpr const int npy_format_descriptor<
         pybind11_fail("Unsupported buffer format!"); \
     } \
     static PYBIND11_DESCR name() { return _(Name); } }
-DECL_FMT(float, NPY_FLOAT_, "float32");
+DECL_FMT(float, NPY_float_, "float32");
 DECL_FMT(double, NPY_DOUBLE_, "float64");
 DECL_FMT(bool, NPY_BOOL_, "bool");
-DECL_FMT(std::complex<float>, NPY_CFLOAT_, "complex64");
+DECL_FMT(std::complex<float>, NPY_Cfloat_, "complex64");
 DECL_FMT(std::complex<double>, NPY_CDOUBLE_, "complex128");
 #undef DECL_FMT
 

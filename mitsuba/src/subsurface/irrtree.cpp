@@ -24,7 +24,7 @@ MTS_NAMESPACE_BEGIN
 static StatsCounter statsNumSamples("SSS Irradiance Octree", "Created samples");
 static StatsCounter statsNumNodes("SSS Irradiance Octree", "Created nodes");
 
-IrradianceOctree::IrradianceOctree(const AABB &bounds, Float solidAngleThreshold, std::vector<IrradianceSample> &records)
+IrradianceOctree::IrradianceOctree(const AABB &bounds, float solidAngleThreshold, std::vector<IrradianceSample> &records)
 	: StaticOctree<IrradianceSample, IrradianceSample>(bounds), m_solidAngleThreshold(solidAngleThreshold) {
 
 	m_items.swap(records);
@@ -37,7 +37,7 @@ IrradianceOctree::IrradianceOctree(Stream *stream, InstanceManager *manager) {
 	m_aabb = AABB(stream);
 	m_maxDepth = stream->readUInt();
 	m_maxItems = stream->readUInt();
-	m_solidAngleThreshold = stream->readFloat();
+	m_solidAngleThreshold = stream->readfloat();
 
 	size_t items = stream->readSize();
 	m_items.resize(items);
@@ -53,7 +53,7 @@ void IrradianceOctree::serialize(Stream *stream, InstanceManager *manager) const
 	m_aabb.serialize(stream);
 	stream->writeUInt(m_maxDepth);
 	stream->writeUInt(m_maxItems);
-	stream->writeFloat(m_solidAngleThreshold);
+	stream->writefloat(m_solidAngleThreshold);
 
 	stream->writeSize(m_items.size());
 	for (size_t i=0; i<m_items.size(); ++i)
@@ -67,7 +67,7 @@ void IrradianceOctree::propagate(OctreeNode *node) {
 	repr.E = Spectrum(0.0f);
 	repr.area = 0.0f;
 	repr.p = Point(0.0f, 0.0f, 0.0f);
-	Float weightSum = 0.0f;
+	float weightSum = 0.0f;
 
 	if (node->leaf) {
 		/* Inner node */
@@ -75,7 +75,7 @@ void IrradianceOctree::propagate(OctreeNode *node) {
 			const IrradianceSample &sample = m_items[i+node->offset];
 			repr.E += sample.E * sample.area;
 			repr.area += sample.area;
-			Float weight = sample.E.getLuminance() * sample.area;
+			float weight = sample.E.getLuminance() * sample.area;
 			repr.p += sample.p * weight;
 			weightSum += weight;
 		}
@@ -89,7 +89,7 @@ void IrradianceOctree::propagate(OctreeNode *node) {
 			propagate(child);
 			repr.E += child->data.E * child->data.area;
 			repr.area += child->data.area;
-			Float weight = child->data.E.getLuminance() * child->data.area;
+			float weight = child->data.E.getLuminance() * child->data.area;
 			repr.p += child->data.p * weight;
 			weightSum += weight;
 		}

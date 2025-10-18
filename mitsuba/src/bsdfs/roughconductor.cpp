@@ -48,7 +48,7 @@ MTS_NAMESPACE_BEGIN
  *              \vspace{-4mm}
  *       \end{enumerate}
  *     }
- *     \parameter{alpha, alphaU, alphaV}{\Float\Or\Texture}{
+ *     \parameter{alpha, alphaU, alphaV}{\float\Or\Texture}{
  *         Specifies the roughness of the unresolved surface micro-geometry
  *         along the tangent and bitangent directions. When the Beckmann
  *         distribution is used, this parameter is equal to the
@@ -60,7 +60,7 @@ MTS_NAMESPACE_BEGIN
  *           \tblref{conductor-iors}.\!\default{\texttt{Cu} / copper}}
  *     \parameter{eta, k}{\Spectrum}{Real and imaginary components of the material's index of
  *             refraction \default{based on the value of \texttt{material}}}
- *     \parameter{extEta}{\Float\Or\String}{
+ *     \parameter{extEta}{\float\Or\String}{
  *           Real-valued index of refraction of the surrounding dielectric,
  *           or a material name of a dielectric \default{\code{air}}
  *     }
@@ -184,7 +184,7 @@ public:
 				fResolver->resolve("data/ior/" + materialName + ".k.spd")));
 		}
 
-		Float extEta = lookupIOR(props, "extEta", "air");
+		float extEta = lookupIOR(props, "extEta", "air");
 
 		m_eta = props.getSpectrum("eta", intEta) / extEta;
 		m_k   = props.getSpectrum("k", intK) / extEta;
@@ -193,11 +193,11 @@ public:
 		m_type = distr.getType();
 		m_sampleVisible = distr.getSampleVisible();
 
-		m_alphaU = new ConstantFloatTexture(distr.getAlphaU());
+		m_alphaU = new ConstantfloatTexture(distr.getAlphaU());
 		if (distr.getAlphaU() == distr.getAlphaV())
 			m_alphaV = m_alphaU;
 		else
-			m_alphaV = new ConstantFloatTexture(distr.getAlphaV());
+			m_alphaV = new ConstantfloatTexture(distr.getAlphaV());
 	}
 
 	RoughConductor(Stream *stream, InstanceManager *manager)
@@ -276,7 +276,7 @@ public:
 		);
 
 		/* Evaluate the microfacet normal distribution */
-		const Float D = distr.eval(H);
+		const float D = distr.eval(H);
 		if (D == 0)
 			return Spectrum(0.0f);
 
@@ -285,15 +285,15 @@ public:
 			m_specularReflectance->eval(bRec.its);
 
 		/* Smith's shadow-masking function */
-		const Float G = distr.G(bRec.wi, bRec.wo, H);
+		const float G = distr.G(bRec.wi, bRec.wo, H);
 
 		/* Calculate the total amount of reflection */
-		Float model = D * G / (4.0f * Frame::cosTheta(bRec.wi));
+		float model = D * G / (4.0f * Frame::cosTheta(bRec.wi));
 
 		return F * model;
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		if (measure != ESolidAngle ||
 			Frame::cosTheta(bRec.wi) <= 0 ||
 			Frame::cosTheta(bRec.wo) <= 0 ||
@@ -336,7 +336,7 @@ public:
 		);
 
 		/* Sample M, the microfacet normal */
-		Float pdf;
+		float pdf;
 		Normal m = distr.sample(bRec.wi, sample, pdf);
 
 		if (pdf == 0)
@@ -355,7 +355,7 @@ public:
 		Spectrum F = fresnelConductorExact(dot(bRec.wi, m),
 			m_eta, m_k) * m_specularReflectance->eval(bRec.its);
 
-		Float weight;
+		float weight;
 		if (m_sampleVisible) {
 			weight = distr.smithG1(bRec.wo, m);
 		} else {
@@ -366,7 +366,7 @@ public:
 		return F * weight;
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		if (Frame::cosTheta(bRec.wi) < 0 ||
 			((bRec.component != -1 && bRec.component != 0) ||
 			!(bRec.typeMask & EGlossyReflection)))
@@ -400,7 +400,7 @@ public:
 		Spectrum F = fresnelConductorExact(dot(bRec.wi, m),
 			m_eta, m_k) * m_specularReflectance->eval(bRec.its);
 
-		Float weight;
+		float weight;
 		if (m_sampleVisible) {
 			weight = distr.smithG1(bRec.wo, m);
 		} else {
@@ -431,7 +431,7 @@ public:
 		}
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return 0.5f * (m_alphaU->eval(its).average()
 			+ m_alphaV->eval(its).average());
 	}

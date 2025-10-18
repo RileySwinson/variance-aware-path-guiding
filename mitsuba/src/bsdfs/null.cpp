@@ -46,7 +46,7 @@ public:
 		return Spectrum(((bRec.typeMask & ENull) && measure == EDiscrete) ? 1.0f : 0.0f);
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		return ((bRec.typeMask & ENull) && measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -62,7 +62,7 @@ public:
 		}
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &_sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &_sample) const {
 		if (bRec.typeMask & ENull) {
 			bRec.wo = -bRec.wi;
 			bRec.sampledComponent = 0;
@@ -75,7 +75,7 @@ public:
 		}
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return 0.0f;
 	}
 

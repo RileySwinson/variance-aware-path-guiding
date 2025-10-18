@@ -55,16 +55,16 @@ public:
 	/**
 	 * \brief Compute the generalized geometric term between 'a' and 'b'
 	 */
-	Float G(const Path &path, int a, int b);
+	float G(const Path &path, int a, int b);
 
 	/**
 	 * \brief Compute a product of standard and generalized geometric
 	 * terms between 'a' and 'b' depending on whether vertices are
 	 * specular or non-specular.
 	 */
-	Float multiG(const Path &path, int a, int b);
+	float multiG(const Path &path, int a, int b);
 
-	Float det(const Path &path, int a, int b, int c);
+	float det(const Path &path, int a, int b, int c);
 
 	/// Return the number of iterations used by \ref move()
 	inline int getIterationCount() const { return m_iterations; }
@@ -107,7 +107,7 @@ private:
 		Normal m;
 
 		/* Further information about the vertex */
-		Float eta;
+		float eta;
 		const Object *object;
 
 		/* Scratch space for matrix assembly */
@@ -123,7 +123,7 @@ private:
 			m(0.0f), eta(1.0f), object(NULL) { }
 
 		/// Map a tangent space displacement into world space
-		inline Vector map(Float u, Float v) const {
+		inline Vector map(float u, float v) const {
 			Vector2 T = Tp * Vector2(u, v);
 			return T.x * dpdu + T.y * dpdv;
 		}
@@ -143,7 +143,7 @@ private:
 	void check(SimpleVertex *v);
 protected:
 	const Scene *m_scene;
-	Float m_time;
+	float m_time;
 	int m_iterations, m_maxIterations;
 
 	std::vector<SimpleVertex> m_vertices, m_proposal;

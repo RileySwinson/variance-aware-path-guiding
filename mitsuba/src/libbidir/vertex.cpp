@@ -24,7 +24,7 @@ MTS_NAMESPACE_BEGIN
 static StatsCounter mediumInconsistencies("Bidirectional layer",
 		"Medium inconsistencies in sampleNext()");
 
-void PathVertex::makeEndpoint(const Scene *scene, Float time, ETransportMode mode) {
+void PathVertex::makeEndpoint(const Scene *scene, float time, ETransportMode mode) {
 	memset(this, 0, sizeof(PathVertex));
 	type = (mode == EImportance) ? EEmitterSupernode : ESensorSupernode;
 	getEndpointRecord() = EndpointRecord(time);
@@ -165,7 +165,7 @@ bool PathVertex::sampleNext(const Scene *scene, Sampler *sampler,
 				wo = its.toWorld(bRec.wo);
 
 				/* Prevent light leaks due to the use of shading normals */
-				Float wiDotGeoN = dot(its.geoFrame.n, wi),
+				float wiDotGeoN = dot(its.geoFrame.n, wi),
 				      woDotGeoN = dot(its.geoFrame.n, wo);
 				if (wiDotGeoN * Frame::cosTheta(bRec.wi) <= 0 ||
 					woDotGeoN * Frame::cosTheta(bRec.wo) <= 0)
@@ -268,7 +268,7 @@ bool PathVertex::sampleNext(const Scene *scene, Sampler *sampler,
 		(*throughput) *= weight[mode];
 
 		if (russianRoulette) {
-			Float q = std::min(throughput->max(), (Float) 0.95f);
+			float q = std::min(throughput->max(), (float) 0.95f);
 
 			if (sampler->next1D() > q) {
 				measure = EInvalidMeasure;
@@ -382,7 +382,7 @@ int PathVertex::sampleSensor(const Scene *scene, Sampler *sampler,
 	return 2;
 }
 
-bool PathVertex::perturbPosition(const Scene *scene, Sampler *sampler, Float stddev) {
+bool PathVertex::perturbPosition(const Scene *scene, Sampler *sampler, float stddev) {
 	Point2 step = warp::squareToStdNormal(sampler->next2D()) * stddev;
 	EVertexType type = (EVertexType) this->type;
 	Ray ray;
@@ -393,7 +393,7 @@ bool PathVertex::perturbPosition(const Scene *scene, Sampler *sampler, Float std
 
 				ray = Ray(its.p + its.geoFrame.s * step.x + its.geoFrame.t * step.y
 						+ its.geoFrame.n * Epsilon, -its.geoFrame.n, 0,
-						std::numeric_limits<Float>::infinity(), its.time);
+						std::numeric_limits<float>::infinity(), its.time);
 			}
 			break;
 		case ESensorSample:
@@ -404,7 +404,7 @@ bool PathVertex::perturbPosition(const Scene *scene, Sampler *sampler, Float std
 				Frame frame(pRec.n);
 				ray = Ray(pRec.p + frame.s * step.x + frame.t * step.y
 						+ frame.n * Epsilon, -frame.n, 0,
-						std::numeric_limits<Float>::infinity(), pRec.time);
+						std::numeric_limits<float>::infinity(), pRec.time);
 			}
 			break;
 		default:
@@ -453,7 +453,7 @@ bool PathVertex::perturbPosition(const Scene *scene, Sampler *sampler, Float std
 	return cast(scene, type);
 }
 
-Float PathVertex::perturbPositionPdf(const PathVertex *target, Float stddev) const {
+float PathVertex::perturbPositionPdf(const PathVertex *target, float stddev) const {
 	BDAssert(type == target->type);
 	switch (type) {
 		case ESurfaceInteraction: {
@@ -486,7 +486,7 @@ Float PathVertex::perturbPositionPdf(const PathVertex *target, Float stddev) con
 
 bool PathVertex::perturbDirection(const Scene *scene, const PathVertex *pred,
 	const PathEdge *predEdge, PathEdge *succEdge, PathVertex *succ,
-	const Vector &d, Float dist, EVertexType desiredType, ETransportMode mode) {
+	const Vector &d, float dist, EVertexType desiredType, ETransportMode mode) {
 	Ray ray(getPosition(), d, pred->getTime());
 
 	memset(succEdge, 0, sizeof(PathEdge));
@@ -506,7 +506,7 @@ bool PathVertex::perturbDirection(const Scene *scene, const PathVertex *pred,
 				DirectionSamplingRecord dRec(d);
 
 				Spectrum value = emitter->evalDirection(dRec, pRec);
-				Float prob = emitter->pdfDirection(dRec, pRec);
+				float prob = emitter->pdfDirection(dRec, pRec);
 
 				if (value.isZero() || prob <= RCPOVERFLOW)
 					return false;
@@ -529,7 +529,7 @@ bool PathVertex::perturbDirection(const Scene *scene, const PathVertex *pred,
 				DirectionSamplingRecord dRec(d);
 
 				Spectrum value = sensor->evalDirection(dRec, pRec);
-				Float prob = sensor->pdfDirection(dRec, pRec);
+				float prob = sensor->pdfDirection(dRec, pRec);
 
 				if (value.isZero() || prob <= RCPOVERFLOW)
 					return false;
@@ -554,7 +554,7 @@ bool PathVertex::perturbDirection(const Scene *scene, const PathVertex *pred,
 				BSDFSamplingRecord bRec(its, its.toLocal(wi), its.toLocal(wo), mode);
 
 				Spectrum value = bsdf->eval(bRec);
-				Float prob = bsdf->pdf(bRec);
+				float prob = bsdf->pdf(bRec);
 
 				if (value.isZero() || prob <= RCPOVERFLOW)
 					return false;
@@ -563,7 +563,7 @@ bool PathVertex::perturbDirection(const Scene *scene, const PathVertex *pred,
 				pdf[mode] = prob;
 
 				/* Prevent light leaks due to the use of shading normals */
-				Float wiDotGeoN = dot(its.geoFrame.n, wi),
+				float wiDotGeoN = dot(its.geoFrame.n, wi),
 				      woDotGeoN = dot(its.geoFrame.n, wo);
 				if (wiDotGeoN * Frame::cosTheta(bRec.wi) <= 0 ||
 					woDotGeoN * Frame::cosTheta(bRec.wo) <= 0)
@@ -625,8 +625,8 @@ bool PathVertex::perturbDirection(const Scene *scene, const PathVertex *pred,
 				Vector wi = normalize(pred->getPosition() - mRec.p);
 				PhaseFunctionSamplingRecord pRec(mRec, wi, d, mode);
 
-				Float value = phase->eval(pRec);
-				Float prob = phase->pdf(pRec);
+				float value = phase->eval(pRec);
+				float prob = phase->pdf(pRec);
 
 				if (value == 0 || prob <= RCPOVERFLOW)
 					return false;
@@ -679,7 +679,7 @@ bool PathVertex::perturbDirection(const Scene *scene, const PathVertex *pred,
 
 bool PathVertex::propagatePerturbation(const Scene *scene, const PathVertex *pred,
 		const PathEdge *predEdge, PathEdge *succEdge, PathVertex *succ,
-		unsigned int componentType_, Float dist, EVertexType desiredType, ETransportMode mode) {
+		unsigned int componentType_, float dist, EVertexType desiredType, ETransportMode mode) {
 	BDAssert(isSurfaceInteraction());
 
 	const Intersection &its = getIntersection();
@@ -702,14 +702,14 @@ bool PathVertex::propagatePerturbation(const Scene *scene, const PathVertex *pre
 	Vector wo = its.toWorld(bRec.wo);
 
 	/* Prevent light leaks due to the use of shading normals */
-	Float wiDotGeoN = dot(its.geoFrame.n, wi),
+	float wiDotGeoN = dot(its.geoFrame.n, wi),
 	      woDotGeoN = dot(its.geoFrame.n, wo);
 	if (wiDotGeoN * Frame::cosTheta(bRec.wi) <= 0 ||
 		woDotGeoN * Frame::cosTheta(bRec.wo) <= 0)
 		return false;
 
 	bRec.typeMask = BSDF::EAll;
-	Float prob = bsdf->pdf(bRec, EDiscrete);
+	float prob = bsdf->pdf(bRec, EDiscrete);
 	if (prob <= RCPOVERFLOW) {
 		SLog(EWarn, "Unable to recreate specular vertex in perturbation (bsdf=%s)",
 			bsdf->toString().c_str());
@@ -817,7 +817,7 @@ Spectrum PathVertex::eval(const Scene *scene, const PathVertex *pred,
 				wo = normalize(target - pRec.p);
 				DirectionSamplingRecord dRec(wo, measure == EArea ? ESolidAngle : measure);
 				result = emitter->evalDirection(dRec, pRec);
-				Float dp = absDot(pRec.n, wo);
+				float dp = absDot(pRec.n, wo);
 				if (measure != EDiscrete && dp != 0)
 					result /= dp;
 			}
@@ -837,7 +837,7 @@ Spectrum PathVertex::eval(const Scene *scene, const PathVertex *pred,
 				wo = normalize(target - pRec.p);
 				DirectionSamplingRecord dRec(wo, measure == EArea ? ESolidAngle : measure);
 				result = sensor->evalDirection(dRec, pRec);
-				Float dp = absDot(pRec.n, wo);
+				float dp = absDot(pRec.n, wo);
 				if (measure != EDiscrete && dp != 0)
 					result /= dp;
 
@@ -864,7 +864,7 @@ Spectrum PathVertex::eval(const Scene *scene, const PathVertex *pred,
 				result = bsdf->eval(bRec, measure);
 
 				/* Prevent light leaks due to the use of shading normals */
-				Float wiDotGeoN = dot(its.geoFrame.n, wi),
+				float wiDotGeoN = dot(its.geoFrame.n, wi),
 				      woDotGeoN = dot(its.geoFrame.n, wo);
 
 				if (wiDotGeoN * Frame::cosTheta(bRec.wi) <= 0 ||
@@ -911,10 +911,10 @@ Spectrum PathVertex::eval(const Scene *scene, const PathVertex *pred,
 	return result;
 }
 
-Float PathVertex::evalPdf(const Scene *scene, const PathVertex *pred,
+float PathVertex::evalPdf(const Scene *scene, const PathVertex *pred,
 		const PathVertex *succ, ETransportMode mode, EMeasure measure) const {
 	Vector wo(0.0f);
-	Float dist = 0.0f, result = 0.0f;
+	float dist = 0.0f, result = 0.0f;
 
 	switch (type) {
 		case EEmitterSupernode: {
@@ -978,7 +978,7 @@ Float PathVertex::evalPdf(const Scene *scene, const PathVertex *pred,
 				result = bsdf->pdf(bRec, measure == EArea ? ESolidAngle : measure);
 
 				/* Prevent light leaks due to the use of shading normals */
-				Float wiDotGeoN = dot(its.geoFrame.n, wi),
+				float wiDotGeoN = dot(its.geoFrame.n, wi),
 				      woDotGeoN = dot(its.geoFrame.n, wo);
 
 				if (wiDotGeoN * Frame::cosTheta(bRec.wi) <= 0 ||
@@ -1082,7 +1082,7 @@ Spectrum PathVertex::sampleDirect(const Scene *scene, Sampler *sampler,
 	return value;
 }
 
-Float PathVertex::evalPdfDirect(const Scene *scene,
+float PathVertex::evalPdfDirect(const Scene *scene,
 		const PathVertex *sample, ETransportMode mode, EMeasure measure) const {
 	BDAssert((mode == EImportance && sample->type == EEmitterSample) ||
 		(mode == ERadiance && sample->type == ESensorSample));
@@ -1172,7 +1172,7 @@ bool PathVertex::update(const Scene *scene, const PathVertex *pred,
 	if (weight[mode].isZero() || pdf[mode] <= RCPOVERFLOW)
 		return false;
 
-	Float weightFwd = pdf[mode]   <= RCPOVERFLOW ? 0 : 1 / pdf[mode],
+	float weightFwd = pdf[mode]   <= RCPOVERFLOW ? 0 : 1 / pdf[mode],
 		  weightBkw = pdf[1-mode] <= RCPOVERFLOW ? 0 : 1 / pdf[1-mode];
 
 	this->measure = measure;
@@ -1180,7 +1180,7 @@ bool PathVertex::update(const Scene *scene, const PathVertex *pred,
 	if (!isSupernode() && measure == EArea) {
 		if (!pred->isSupernode()) {
 			Vector d = pred->getPosition() - getPosition();
-			Float invDistSqr = 1.0f / d.lengthSquared();
+			float invDistSqr = 1.0f / d.lengthSquared();
 			weightBkw *= invDistSqr;
 			d *= std::sqrt(invDistSqr);
 			if (isOnSurface() && isConnectable())
@@ -1191,7 +1191,7 @@ bool PathVertex::update(const Scene *scene, const PathVertex *pred,
 
 		if (!succ->isSupernode()) {
 			Vector d = succ->getPosition() - getPosition();
-			Float invDistSqr = 1.0f / d.lengthSquared();
+			float invDistSqr = 1.0f / d.lengthSquared();
 			weightFwd *= invDistSqr;
 			d *= std::sqrt(invDistSqr);
 			if (isOnSurface() && isConnectable())
@@ -1253,7 +1253,7 @@ Normal PathVertex::getGeometricNormal() const {
 	}
 }
 
-Float PathVertex::getTime() const {
+float PathVertex::getTime() const {
 	switch (type) {
 		case ESurfaceInteraction:
 			return getIntersection().time;

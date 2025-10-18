@@ -221,7 +221,7 @@ class MTS_EXPORT_CORE half
 
     unsigned short	_h;
 
-    static uif		_toFloat[1 << 16];
+    static uif		_tofloat[1 << 16];
     static unsigned short _eLut[1 << 9];
 };
 
@@ -495,7 +495,7 @@ half::half (float f)
 inline
 half::operator float () const
 {
-    return _toFloat[_h].f;
+    return _tofloat[_h].f;
 }
 
 

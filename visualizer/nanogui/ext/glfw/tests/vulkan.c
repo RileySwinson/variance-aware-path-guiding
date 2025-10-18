@@ -1097,7 +1097,7 @@ static void demo_prepare_textures(struct demo *demo) {
             .compareOp = VK_COMPARE_OP_NEVER,
             .minLod = 0.0f,
             .maxLod = 0.0f,
-            .borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE,
+            .borderColor = VK_BORDER_COLOR_float_OPAQUE_WHITE,
             .unnormalizedCoordinates = VK_FALSE,
         };
         VkImageViewCreateInfo view = {
@@ -1198,12 +1198,12 @@ static void demo_prepare_vertices(struct demo *demo) {
 
     demo->vertices.vi_attrs[0].binding = VERTEX_BUFFER_BIND_ID;
     demo->vertices.vi_attrs[0].location = 0;
-    demo->vertices.vi_attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    demo->vertices.vi_attrs[0].format = VK_FORMAT_R32G32B32_Sfloat;
     demo->vertices.vi_attrs[0].offset = 0;
 
     demo->vertices.vi_attrs[1].binding = VERTEX_BUFFER_BIND_ID;
     demo->vertices.vi_attrs[1].location = 1;
-    demo->vertices.vi_attrs[1].format = VK_FORMAT_R32G32_SFLOAT;
+    demo->vertices.vi_attrs[1].format = VK_FORMAT_R32G32_Sfloat;
     demo->vertices.vi_attrs[1].offset = sizeof(float) * 3;
 }
 

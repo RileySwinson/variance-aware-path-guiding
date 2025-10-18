@@ -33,8 +33,8 @@ public:
 	void test01_spectrum() {
 		#if SPECTRUM_SAMPLES > 3
 		Spectrum spec(0.0f);
-		Float binStart = Spectrum::getBinCoverage(2).first;
-		Float binEnd = Spectrum::getBinCoverage(2).second;
+		float binStart = Spectrum::getBinCoverage(2).first;
+		float binEnd = Spectrum::getBinCoverage(2).second;
 
 		spec[2] = 1.0f;
 		assertEquals(spec.eval(binStart+Epsilon), 1.0f);
@@ -48,7 +48,7 @@ public:
 		#if SPECTRUM_SAMPLES == 30
 		/* Verify against the implementation in PBRT */
 		Spectrum test;
-		Float r, g, b;
+		float r, g, b;
 		test.fromLinearRGB(0.1f, 0.2f, 0.3f, Spectrum::EReflectance);
 		test.toLinearRGB(r, g, b);
 		assertEqualsEpsilon(r, 0.124274f, 1e-5f);
@@ -61,7 +61,7 @@ public:
 		assertEqualsEpsilon(b, 0.273519f, 1e-5f);
 		#elif SPECTRUM_SAMPLES == 3
 		Spectrum test;
-		Float x, y, z;
+		float x, y, z;
 		test.fromXYZ(0.1f, 0.2f, 0.3f);
 		test.toXYZ(x, y, z);
 		assertEqualsEpsilon(x, 0.1, 1e-5f);
@@ -103,7 +103,7 @@ public:
 		#if SPECTRUM_SAMPLES > 3
 		assertEqualsEpsilon(spec3, Spectrum(1.0f), 1e-5f);
 		#endif
-		Float x, y, z;
+		float x, y, z;
 		spec3.toXYZ(x, y, z);
 		assertEqualsEpsilon(x, 1.0f, 1e-3f);
 		assertEqualsEpsilon(y, 1.0f, 1e-3f);

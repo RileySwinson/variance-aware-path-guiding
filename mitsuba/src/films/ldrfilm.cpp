@@ -54,22 +54,22 @@ MTS_NAMESPACE_BEGIN
  *       \vspace{-4mm}
  *       \end{enumerate}
  *     }
- *     \parameter{gamma}{\Float}{
+ *     \parameter{gamma}{\float}{
  *       The gamma curve applied to correct the output image,
  *       where the special value -1 indicates sRGB. \default{-1}
  *     }
- *     \parameter{exposure}{\Float}{
+ *     \parameter{exposure}{\float}{
  *       When \code{gamma} tonemapping is active, this parameter specifies
  *       an exposure factor in f-stops that is applied to the image before
  *       gamma correction (scaling the radiance values by $2^{\,\text{exposure}}$).
  *       \default{0, i.e. do not change the exposure}
  *     }
- *     \parameter{key}{\Float}{
+ *     \parameter{key}{\float}{
  *       When \code{reinhard} tonemapping is active, this parameter in $(0,1]$ specifies
  *       whether a low-key or high-key image is desired.
  *       \default{0.18, corresponding to a middle-grey}
  *     }
- *     \parameter{burn}{\Float}{
+ *     \parameter{burn}{\float}{
  *       When \code{reinhard} tonemapping is active, this parameter in $[0,1]$ specifies how much
  *       highlights can burn out. \default{0, i.e. map all luminance values into the displayable range}
  *     }
@@ -177,10 +177,10 @@ public:
 			m_pixelFormat = Bitmap::ERGB;
 		}
 
-		m_gamma = props.getFloat("gamma", -1);
-		m_exposure = props.getFloat("exposure", 0.0f);
-		m_reinhardKey = props.getFloat("key", 0.18f);
-		m_reinhardBurn = props.getFloat("burn", 0.0);
+		m_gamma = props.getfloat("gamma", -1);
+		m_exposure = props.getfloat("exposure", 0.0f);
+		m_reinhardKey = props.getfloat("key", 0.18f);
+		m_reinhardBurn = props.getfloat("burn", 0.0);
 
 		std::vector<std::string> keys = props.getPropertyNames();
 		for (size_t i=0; i<keys.size(); ++i) {
@@ -200,11 +200,11 @@ public:
 		m_hasBanner = stream->readBool();
 		m_pixelFormat = (Bitmap::EPixelFormat) stream->readUInt();
 		m_fileFormat = (Bitmap::EFileFormat) stream->readUInt();
-		m_gamma = stream->readFloat();
+		m_gamma = stream->readfloat();
 		m_tonemapMethod = (ETonemapMethod) stream->readUInt();
-		m_exposure = stream->readFloat();
-		m_reinhardKey = stream->readFloat();
-		m_reinhardBurn = stream->readFloat();
+		m_exposure = stream->readfloat();
+		m_reinhardKey = stream->readfloat();
+		m_reinhardBurn = stream->readfloat();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
@@ -212,11 +212,11 @@ public:
 		stream->writeBool(m_hasBanner);
 		stream->writeUInt(m_pixelFormat);
 		stream->writeUInt(m_fileFormat);
-		stream->writeFloat(m_gamma);
+		stream->writefloat(m_gamma);
 		stream->writeUInt(m_tonemapMethod);
-		stream->writeFloat(m_exposure);
-		stream->writeFloat(m_reinhardKey);
-		stream->writeFloat(m_reinhardBurn);
+		stream->writefloat(m_exposure);
+		stream->writefloat(m_reinhardKey);
+		stream->writefloat(m_reinhardBurn);
 	}
 
 	void clear() {
@@ -227,28 +227,28 @@ public:
 		m_storage->put(block);
 	}
 
-	void setBitmap(const Bitmap *bitmap, Float multiplier) {
+	void setBitmap(const Bitmap *bitmap, float multiplier) {
 		bitmap->convert(m_storage->getBitmap(), multiplier);
 	}
 
-	void addBitmap(const Bitmap *bitmap, Float multiplier) {
+	void addBitmap(const Bitmap *bitmap, float multiplier) {
 		/* Currently, only accumulating spectrum-valued floating point images
 		   is supported. This function basically just exists to support the
 		   somewhat peculiar film updates done by BDPT */
 
 		Vector2i size = bitmap->getSize();
 		if (bitmap->getPixelFormat() != Bitmap::ESpectrum ||
-			bitmap->getComponentFormat() != Bitmap::EFloat ||
+			bitmap->getComponentFormat() != Bitmap::Efloat ||
 			bitmap->getGamma() != 1.0f ||
 			size != m_storage->getSize()) {
 			Log(EError, "addBitmap(): Unsupported bitmap format!");
 		}
 
 		size_t nPixels = (size_t) size.x * (size_t) size.y;
-		const Float *source = bitmap->getFloatData();
-		Float *target = m_storage->getBitmap()->getFloatData();
+		const float *source = bitmap->getfloatData();
+		float *target = m_storage->getBitmap()->getfloatData();
 		for (size_t i=0; i<nPixels; ++i) {
-			Float weight = target[SPECTRUM_SAMPLES + 1];
+			float weight = target[SPECTRUM_SAMPLES + 1];
 			if (weight == 0)
 				weight = target[SPECTRUM_SAMPLES + 1] = 1;
 			weight *= multiplier;
@@ -262,7 +262,7 @@ public:
 			const Point2i &targetOffset, Bitmap *target) const {
 		const Bitmap *source = m_storage->getBitmap();
 		const FormatConverter *cvt = FormatConverter::getInstance(
-			std::make_pair(Bitmap::EFloat, target->getComponentFormat())
+			std::make_pair(Bitmap::Efloat, target->getComponentFormat())
 		);
 
 		size_t sourceBpp = source->getBytesPerPixel();
@@ -297,25 +297,25 @@ public:
 		m_destFile = destFile;
 	}
 
-	void develop(const Scene *scene, Float renderTime) {
+	void develop(const Scene *scene, float renderTime) {
 		if (m_destFile.empty())
 			return;
 
 		Log(EDebug, "Developing film ..");
 
 		ref<Bitmap> bitmap = m_storage->getBitmap();
-		Float multiplier = 1.0f;
+		float multiplier = 1.0f;
 
 		if (m_tonemapMethod == EReinhard) {
-			bitmap = bitmap->convert(m_pixelFormat, Bitmap::EFloat);
+			bitmap = bitmap->convert(m_pixelFormat, Bitmap::Efloat);
 
-			Float logAvgLuminance = 0, maxLuminance = 0; /* Unused */
+			float logAvgLuminance = 0, maxLuminance = 0; /* Unused */
 			bitmap->tonemapReinhard(logAvgLuminance, maxLuminance,
 				m_reinhardKey, m_reinhardBurn);
 			Log(EInfo, "Tonemapping finished (log-avg luminance=%f, max luminance=%f)",
 				logAvgLuminance, maxLuminance);
 		} else {
-			multiplier = std::pow((Float) 2, (Float) m_exposure);
+			multiplier = std::pow((float) 2, (float) m_exposure);
 		}
 
 		bitmap = bitmap->convert(m_pixelFormat, Bitmap::EUInt8, m_gamma, multiplier);
@@ -398,10 +398,10 @@ protected:
 	Bitmap::EPixelFormat m_pixelFormat;
 	bool m_hasBanner;
 	fs::path m_destFile;
-	Float m_gamma;
+	float m_gamma;
 	ref<ImageBlock> m_storage;
 	ETonemapMethod m_tonemapMethod;
-	Float m_exposure, m_reinhardKey, m_reinhardBurn;
+	float m_exposure, m_reinhardKey, m_reinhardBurn;
 };
 
 MTS_IMPLEMENT_CLASS_S(LDRFilm, false, Film)

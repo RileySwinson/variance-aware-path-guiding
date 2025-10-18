@@ -63,10 +63,10 @@ public:
 	//! @{ \name Implementation of the \ref Shape interface
 	// =============================================================
 
-	bool rayIntersect(const Ray &ray, Float mint,
-			Float maxt, Float &t, void *temp) const;
+	bool rayIntersect(const Ray &ray, float mint,
+			float maxt, float &t, void *temp) const;
 
-	bool rayIntersect(const Ray &ray, Float mint, Float maxt) const;
+	bool rayIntersect(const Ray &ray, float mint, float maxt) const;
 
 	void fillIntersectionRecord(const Ray &ray,
 		const void *temp, Intersection &its) const;
@@ -77,7 +77,7 @@ public:
 
 	AABB getAABB() const;
 
-	Float getSurfaceArea() const;
+	float getSurfaceArea() const;
 
 	size_t getPrimitiveCount() const;
 

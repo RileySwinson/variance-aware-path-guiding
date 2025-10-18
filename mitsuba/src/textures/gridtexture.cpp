@@ -34,13 +34,13 @@ MTS_NAMESPACE_BEGIN
  *       Color value of the lines
  *       \default{0.4}
  *     }
- *     \parameter{lineWidth}{\Float}{Width of the grid lines in UV space
+ *     \parameter{lineWidth}{\float}{Width of the grid lines in UV space
  *        \default{0.01}
  *     }
- *     \parameter{uscale, vscale}{\Float}{
+ *     \parameter{uscale, vscale}{\float}{
  *       Multiplicative factors that should be applied to UV values before a lookup
  *     }
- *     \parameter{uoffset, voffset}{\Float}{
+ *     \parameter{uoffset, voffset}{\float}{
  *       Numerical offset that should be applied to UV values before a lookup
  *     }
  * }
@@ -55,26 +55,26 @@ public:
 	GridTexture(const Properties &props) : Texture2D(props) {
 		m_color0 = props.getSpectrum("color0", Spectrum(.2f));
 		m_color1 = props.getSpectrum("color1", Spectrum(.4f));
-		m_lineWidth = props.getFloat("lineWidth", .01f);
+		m_lineWidth = props.getfloat("lineWidth", .01f);
 	}
 
 	GridTexture(Stream *stream, InstanceManager *manager)
 	 : Texture2D(stream, manager) {
 		m_color0 = Spectrum(stream);
 		m_color1 = Spectrum(stream);
-		m_lineWidth = stream->readFloat();
+		m_lineWidth = stream->readfloat();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Texture2D::serialize(stream, manager);
 		m_color0.serialize(stream);
 		m_color1.serialize(stream);
-		stream->writeFloat(m_lineWidth);
+		stream->writefloat(m_lineWidth);
 	}
 
 	inline Spectrum eval(const Point2 &uv) const {
-		Float x = uv.x - math::floorToInt(uv.x);
-		Float y = uv.y - math::floorToInt(uv.y);
+		float x = uv.x - math::floorToInt(uv.x);
+		float y = uv.y - math::floorToInt(uv.y);
 
 		if (x > .5)
 			x -= 1;
@@ -112,7 +112,7 @@ public:
 	}
 
 	Spectrum getAverage() const {
-		Float interiorWidth = std::max((Float) 0.0f, 1-2*m_lineWidth),
+		float interiorWidth = std::max((float) 0.0f, 1-2*m_lineWidth),
 			  interiorArea = interiorWidth * interiorWidth,
 			  lineArea = 1 - interiorArea;
 		return m_color1 * lineArea + m_color0 * interiorArea;
@@ -137,7 +137,7 @@ public:
 protected:
 	Spectrum m_color0;
 	Spectrum m_color1;
-	Float m_lineWidth;
+	float m_lineWidth;
 };
 
 // ================ Hardware shader implementation ================
@@ -145,7 +145,7 @@ protected:
 class GridTextureShader : public Shader {
 public:
 	GridTextureShader(Renderer *renderer, const Spectrum &color0,
-		const Spectrum &color1, Float lineWidth, const Point2 &uvOffset,
+		const Spectrum &color1, float lineWidth, const Point2 &uvOffset,
 		const Vector2 &uvScale) : Shader(renderer, ETextureShader),
 		m_color0(color0), m_color1(color1),
 		m_lineWidth(lineWidth), m_uvOffset(uvOffset), m_uvScale(uvScale) {
@@ -196,7 +196,7 @@ public:
 private:
 	Spectrum m_color0;
 	Spectrum m_color1;
-	Float m_lineWidth;
+	float m_lineWidth;
 	Point2 m_uvOffset;
 	Vector2 m_uvScale;
 };

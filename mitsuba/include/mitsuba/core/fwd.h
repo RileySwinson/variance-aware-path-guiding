@@ -101,53 +101,53 @@ template <typename T> struct  TPoint3;
 template <typename T> struct  TPoint4;
 template <typename T> struct  TQuaternion;
 template <typename T> struct  TAABB;
-typedef TVector1<Float>       Vector1;
+typedef TVector1<float>       Vector1;
 /// \ingroup libpython
-typedef TVector2<Float>       Vector2;
+typedef TVector2<float>       Vector2;
 /// \ingroup libpython
 typedef TVector2<int>         Vector2i;
 typedef TVector2<unsigned int>Vector2u;
 typedef TVector2<float>       Vector2f;
 typedef TVector2<double>      Vector2d;
 /// \ingroup libpython
-typedef TVector3<Float>       Vector;
+typedef TVector3<float>       Vector;
 /// \ingroup libpython
-typedef TVector3<Float>       Vector3;
+typedef TVector3<float>       Vector3;
 /// \ingroup libpython
 typedef TVector3<int>         Vector3i;
 typedef TVector3<unsigned int>Vector3u;
 typedef TVector3<float>       Vector3f;
 typedef TVector3<double>      Vector3d;
 /// \ingroup libpython
-typedef TVector4<Float>       Vector4;
+typedef TVector4<float>       Vector4;
 typedef TVector4<int>         Vector4i;
 typedef TVector4<unsigned int>Vector4u;
 typedef TVector4<float>       Vector4f;
 typedef TVector4<double>      Vector4d;
-typedef TPoint1<Float>        Point1;
+typedef TPoint1<float>        Point1;
 /// \ingroup libpython
-typedef TPoint2<Float>        Point2;
+typedef TPoint2<float>        Point2;
 /// \ingroup libpython
 typedef TPoint2<int>          Point2i;
 typedef TPoint2<unsigned int> Point2u;
 typedef TPoint2<float>        Point2f;
 typedef TPoint2<double>       Point2d;
 /// \ingroup libpython
-typedef TPoint3<Float>        Point;
+typedef TPoint3<float>        Point;
 /// \ingroup libpython
-typedef TPoint3<Float>        Point3;
+typedef TPoint3<float>        Point3;
 /// \ingroup libpython
 typedef TPoint3<int>          Point3i;
 typedef TPoint3<unsigned int> Point3u;
 typedef TPoint3<float>        Point3f;
 typedef TPoint3<double>       Point3d;
-typedef TPoint4<Float>        Point4;
+typedef TPoint4<float>        Point4;
 typedef TPoint4<int>          Point4i;
 typedef TPoint4<unsigned int> Point4u;
 typedef TPoint4<float>        Point4f;
 typedef TPoint4<double>       Point4d;
 /// \ingroup libpython
-typedef TQuaternion<Float>    Quaternion;
+typedef TQuaternion<float>    Quaternion;
 typedef TVector2<size_t>      Size2;
 typedef TVector3<size_t>      Size3;
 typedef TVector4<size_t>      Size4;
@@ -170,7 +170,7 @@ class WorkResult;
 class WorkUnit;
 class ZStream;
 
-typedef AnimationTrack<Float> FloatTrack;
+typedef AnimationTrack<float> floatTrack;
 typedef AnimationTrack<Quaternion> QuatTrack;
 typedef AnimationTrack<Vector> VectorTrack;
 typedef AnimationTrack<Point> PointTrack;

@@ -48,7 +48,7 @@ extern MTS_EXPORT_RENDER void pushSceneCleanupHandler(void (*cleanup)());
  *       discarded and \emph{face normals} will instead be used during rendering.
  *       This gives the rendered object a faceted appearance.\default{\code{false}}
  *	   }
- *     \parameter{maxSmoothAngle}{\Float}{
+ *     \parameter{maxSmoothAngle}{\float}{
  *       When specified, Mitsuba will discard all vertex normals in the input mesh and rebuild
  *       them in a way that is sensitive to the presence of creases and corners. For more
  *       details on this parameter, see page~\pageref{sec:maxSmoothAngle}. Disabled by default.
@@ -205,7 +205,7 @@ public:
 			if (m_faceNormals)
 				Log(EError, "The properties 'maxSmoothAngle' and 'faceNormals' "
 				"can't be specified at the same time!");
-			rebuildTopology(props.getFloat("maxSmoothAngle"));
+			rebuildTopology(props.getfloat("maxSmoothAngle"));
 		}
 	}
 

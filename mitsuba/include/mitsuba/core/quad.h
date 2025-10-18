@@ -69,7 +69,7 @@ extern MTS_EXPORT_CORE std::pair<double, double> legendrePD(int l, double x);
  * \param nodes
  *     Length-\c n array used to store the weights of the quadrature rule
  */
-extern MTS_EXPORT_CORE void gaussLegendre(int n, Float *nodes, Float *weights);
+extern MTS_EXPORT_CORE void gaussLegendre(int n, float *nodes, float *weights);
 
 
 /**
@@ -95,7 +95,7 @@ extern MTS_EXPORT_CORE void gaussLegendre(int n, Float *nodes, Float *weights);
  * \param nodes
  *     Length-\c n array used to store the weights of the quadrature rule
  */
-extern MTS_EXPORT_CORE void gaussLobatto(int n, Float *nodes, Float *weights);
+extern MTS_EXPORT_CORE void gaussLobatto(int n, float *nodes, float *weights);
 
 //! @}
 // -----------------------------------------------------------------------
@@ -131,7 +131,7 @@ extern MTS_EXPORT_CORE void gaussLobatto(int n, Float *nodes, Float *weights);
  */
 class MTS_EXPORT_CORE GaussLobattoIntegrator {
 public:
-	typedef boost::function<Float (Float)> Integrand;
+	typedef boost::function<float (float)> Integrand;
 
 	/**
 	 * Initialize a Gauss-Lobatto integration scheme
@@ -153,8 +153,8 @@ public:
 	 *     function evaluations is exceeded?
 	 */
 	GaussLobattoIntegrator(size_t maxEvals,
-						 Float absError = 0,
-						 Float relError = 0,
+						 float absError = 0,
+						 float relError = 0,
 						 bool useConvergenceEstimate = true,
 						 bool warn = true);
 
@@ -163,7 +163,7 @@ public:
 	 *
 	 * Also returns the total number of evaluations if requested
 	 */
-	Float integrate(const Integrand &f, Float a, Float b,
+	float integrate(const Integrand &f, float a, float b,
 		size_t *evals = NULL) const;
 protected:
 	/**
@@ -178,25 +178,25 @@ protected:
 	 * \param fb Function evaluated at the upper limit
 	 * \param is Absolute tolerance in epsilons
 	 */
-	Float adaptiveGaussLobattoStep(const boost::function<Float (Float)>& f,
-		Float a, Float b, Float fa, Float fb, Float is, size_t &evals) const;
+	float adaptiveGaussLobattoStep(const boost::function<float (float)>& f,
+		float a, float b, float fa, float fb, float is, size_t &evals) const;
 
 	/**
 	 * Compute the absolute error tolerance using a 13-point
 	 * Gauss-Lobatto rule.
 	 */
-	Float calculateAbsTolerance(const boost::function<Float (Float)>& f,
-		Float a, Float b, size_t &evals) const;
+	float calculateAbsTolerance(const boost::function<float (float)>& f,
+		float a, float b, size_t &evals) const;
 protected:
-	Float m_absError, m_relError;
+	float m_absError, m_relError;
 	size_t m_maxEvals;
 	bool m_useConvergenceEstimate;
 	bool m_warn;
-	static const Float m_alpha;
-	static const Float m_beta;
-	static const Float m_x1;
-	static const Float m_x2;
-	static const Float m_x3;
+	static const float m_alpha;
+	static const float m_beta;
+	static const float m_x1;
+	static const float m_x2;
+	static const float m_x3;
 };
 
 /**
@@ -222,8 +222,8 @@ protected:
  */
 class MTS_EXPORT_CORE NDIntegrator {
 public:
-	typedef boost::function<void (const Float *, Float *)>         Integrand;
-	typedef boost::function<void (size_t, const Float *, Float *)> VectorizedIntegrand;
+	typedef boost::function<void (const float *, float *)>         Integrand;
+	typedef boost::function<void (size_t, const float *, float *)> VectorizedIntegrand;
 
 	enum EResult {
 		ESuccess = 0,
@@ -244,7 +244,7 @@ public:
 	 * \param relError Relative error requirement (0 to disable)
 	 */
 	NDIntegrator(size_t fDim, size_t dim,
-			size_t maxEvals, Float absError = 0, Float relError = 0);
+			size_t maxEvals, float absError = 0, float relError = 0);
 
 	/**
 	 * \brief Integrate the function \c f over the rectangular domain
@@ -253,15 +253,15 @@ public:
 	 * The supplied function should have the interface
 	 *
 	 * <code>
-	 * void integrand(const Float *in, Float *out);
+	 * void integrand(const float *in, float *out);
 	 * </code>
 	 *
 	 * The input array \c in consists of one set of input parameters
 	 * having \c dim entries. The function is expected to store the
 	 * results of the evaluation into the \c out array using \c fDim entries.
 	 */
-	EResult integrate(const Integrand &f, const Float *min, const Float *max,
-			Float *result, Float *error, size_t *evals = NULL) const;
+	EResult integrate(const Integrand &f, const float *min, const float *max,
+			float *result, float *error, size_t *evals = NULL) const;
 
 	/**
 	 * \brief Integrate the function \c f over the rectangular domain
@@ -273,7 +273,7 @@ public:
 	 * have the interface
 	 *
 	 * <code>
-	 * void integrand(int numPoints, const Float *in, Float *out);
+	 * void integrand(int numPoints, const float *in, float *out);
 	 * </code>
 	 *
 	 * Note that \c in in is not a single point, but an array of \c numPoints points
@@ -290,11 +290,11 @@ public:
 	 * up requiring several thousand points in total, \c numPoints may grow to
 	 * several hundred.
 	 */
-	EResult integrateVectorized(const VectorizedIntegrand &f, const Float *min,
-		const Float *max, Float *result, Float *error, size_t *evals = NULL) const;
+	EResult integrateVectorized(const VectorizedIntegrand &f, const float *min,
+		const float *max, float *result, float *error, size_t *evals = NULL) const;
 protected:
 	size_t m_fdim, m_dim, m_maxEvals;
-	Float m_absError, m_relError;
+	float m_absError, m_relError;
 };
 
 //! @}

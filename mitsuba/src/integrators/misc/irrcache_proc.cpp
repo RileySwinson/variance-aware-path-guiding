@@ -26,7 +26,7 @@ MTS_NAMESPACE_BEGIN
 class OvertureWorker : public WorkProcessor {
 public:
 	OvertureWorker(int resolution, bool gradients, bool clampNeighbor,
-		bool clampScreen, Float quality) : m_resolution(resolution), m_gradients(gradients),
+		bool clampScreen, float quality) : m_resolution(resolution), m_gradients(gradients),
 		m_clampNeighbor(clampNeighbor), m_clampScreen(clampScreen),
 		m_quality(quality) {
 	}
@@ -36,7 +36,7 @@ public:
 		m_gradients = stream->readBool();
 		m_clampNeighbor = stream->readBool();
 		m_clampScreen = stream->readBool();
-		m_quality = stream->readFloat();
+		m_quality = stream->readfloat();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
@@ -44,7 +44,7 @@ public:
 		stream->writeBool(m_gradients);
 		stream->writeBool(m_clampNeighbor);
 		stream->writeBool(m_clampScreen);
-		stream->writeFloat(m_quality);
+		stream->writefloat(m_quality);
 	}
 
 	ref<WorkUnit> createWorkUnit() const {
@@ -114,7 +114,7 @@ public:
 					for (unsigned int j=0; j<m_hs->getM(); j++) {
 						for (unsigned int k=0; k<m_hs->getN(); k++) {
 							HemisphereSampler::SampleEntry &entry = (*m_hs)(j, k);
-							entry.dist = std::numeric_limits<Float>::infinity();
+							entry.dist = std::numeric_limits<float>::infinity();
 							rRec.newQuery(RadianceQueryRecord::ERadianceNoEmission
 								| RadianceQueryRecord::EDistance, m_sensor->getMedium());
 							rRec.extra = RadianceQueryRecord::ECacheQuery;
@@ -149,7 +149,7 @@ private:
 	ref<IrradianceCache> m_irrCache;
 	int m_resolution;
 	bool m_gradients, m_clampNeighbor, m_clampScreen;
-	Float m_quality;
+	float m_quality;
 };
 
 void IrradianceRecordVector::load(Stream *stream) {
@@ -178,7 +178,7 @@ std::string IrradianceRecordVector::toString() const {
 }
 
 OvertureProcess::OvertureProcess(const RenderJob *job, int resolution, bool gradients,
-	bool clampNeighbor, bool clampScreen, Float quality) : m_job(job), m_resolution(resolution),
+	bool clampNeighbor, bool clampScreen, float quality) : m_job(job), m_resolution(resolution),
 	m_gradients(gradients), m_clampNeighbor(clampNeighbor),
 	m_clampScreen(clampScreen), m_quality(quality), m_progress(NULL) {
 	m_resultCount = 0;

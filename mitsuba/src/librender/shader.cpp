@@ -36,7 +36,7 @@ void Shader::resolve(const GPUProgram *program, const std::string &evalName,
 void Shader::unbind() const { }
 void Shader::cleanup(Renderer *renderer) { }
 bool Shader::isComplete() const { return true; }
-Float Shader::getAlpha() const { return 1.0f; }
+float Shader::getAlpha() const { return 1.0f; }
 
 Shader *HWResource::createShader(Renderer *renderer) const {
 	return NULL;

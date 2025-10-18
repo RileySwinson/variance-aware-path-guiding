@@ -119,7 +119,7 @@ public:
 		}
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		BSDFSamplingRecord b(bRec);
 
 		if (b.wi.z > 0) {
@@ -158,7 +158,7 @@ public:
 		return result;
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		bool flipped = false;
 		if (Frame::cosTheta(bRec.wi) < 0) {
 			bRec.wi.z *= -1;
@@ -202,7 +202,7 @@ public:
 			return m_nestedBRDF[1]->getDiffuseReflectance(its);
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		if (component < m_nestedBRDF[0]->getComponentCount()) {
 			return m_nestedBRDF[0]->getRoughness(its, component);
 		} else {
@@ -211,7 +211,7 @@ public:
 		}
 	}
 
-	Float getEta() const {
+	float getEta() const {
 		return 1.0f;
 	}
 

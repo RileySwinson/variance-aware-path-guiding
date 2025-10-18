@@ -32,9 +32,9 @@ MTS_NAMESPACE_BEGIN
  *	       and so on. \default{\code{-1}}
  *	   }
  *     \parameter{photonCount}{\Integer}{Number of photons to be shot per iteration\default{250000}}
- *     \parameter{initialRadius}{\Float}{Initial radius of gather points in world space units.
+ *     \parameter{initialRadius}{\float}{Initial radius of gather points in world space units.
  *         \default{0, i.e. decide automatically}}
- *     \parameter{alpha}{\Float}{Radius reduction parameter \code{alpha} from the paper\default{0.7}}
+ *     \parameter{alpha}{\float}{Radius reduction parameter \code{alpha} from the paper\default{0.7}}
  *     \parameter{granularity}{\Integer}{
 		Granularity of photon tracing work units for the purpose
 		of parallelization (in \# of shot particles) \default{0, i.e. decide automatically}
@@ -77,10 +77,10 @@ public:
 	/// Represents one individual PPM gather point including relevant statistics
 	struct GatherPoint {
 		Intersection its;
-		Float radius;
+		float radius;
 		Spectrum weight, flux, emission;
 		Point2 sample;
-		Float N;
+		float N;
 		int depth;
 
 		inline GatherPoint() : weight(0.0f), flux(0.0f), emission(0.0f), N(0.0f) {
@@ -95,9 +95,9 @@ public:
 
 	PPMIntegrator(const Properties &props) : Integrator(props) {
 		/* Initial photon query radius (0 = infer based on scene size and sensor resolution) */
-		m_initialRadius = props.getFloat("initialRadius", 0);
+		m_initialRadius = props.getfloat("initialRadius", 0);
 		/* Alpha parameter from the paper (influences the speed, at which the photon radius is reduced) */
-		m_alpha = props.getFloat("alpha", .7);
+		m_alpha = props.getfloat("alpha", .7);
 		/* Number of photons to shoot in each iteration */
 		m_photonCount = props.getInteger("photonCount", 250000);
 		/* Granularity of the work units used in parallelizing the
@@ -143,7 +143,7 @@ public:
 		if (m_initialRadius == 0) {
 			/* Guess an initial radius if not provided
 			  (scene width / horizontal or vertical pixel count) * 5 */
-			Float rad = scene->getBSphere().radius;
+			float rad = scene->getBSphere().radius;
 			Vector2i filmSize = scene->getSensor()->getFilm()->getSize();
 
 			m_initialRadius = std::min(rad / filmSize.x, rad / filmSize.y) * 5;
@@ -178,7 +178,7 @@ public:
 		Log(EInfo, "Creating approximately %i gather points ..", cropSize.x*cropSize.y*sampleCount);
 		Point2 apertureSample, sample;
 		RayDifferential sensorRay;
-		Float timeSample = 0;
+		float timeSample = 0;
 
 		ref<Sampler> indepSampler = static_cast<Sampler *> (PluginManager::getInstance()->
 			createObject(MTS_CLASS(Sampler), Properties("independent")));
@@ -238,7 +238,7 @@ public:
 							size_t offset = wu->gatherPoints.size();
 							int count = createGatherPoints(scene, sensorRay, sample,
 								sensorSampler, Spectrum(1.0f), wu->gatherPoints, 1);
-							const Float fcount = static_cast<Float>(count);
+							const float fcount = static_cast<float>(count);
 							for (int i = 0; i<count; ++i)
 								wu->gatherPoints[offset+i].weight *= fcount;
 
@@ -300,7 +300,7 @@ public:
 						continue;
 					bsdfVal = bsdf->eval(bRec, EDiscrete);
 
-					const Float rrProb = depth < 4 ? 1 : 0.8f;
+					const float rrProb = depth < 4 ? 1 : 0.8f;
 					if (sampler->next1D() < rrProb) {
 						RayDifferential recursiveRay(p.its.p, p.its.toWorld(bRec.wo), ray.time);
 						count += createGatherPoints(scene, recursiveRay, sample, sampler,
@@ -366,19 +366,19 @@ public:
 					continue;
 				}
 
-				Float M = (Float) photonMap->estimateRadianceRaw(
+				float M = (float) photonMap->estimateRadianceRaw(
 					g.its, g.radius, flux, m_maxDepth == -1 ? INT_MAX : (m_maxDepth-g.depth));
-				Float N = g.N;
+				float N = g.N;
 
 				if (N+M == 0) {
 					g.flux = contrib = Spectrum(0.0f);
 				} else {
-					Float ratio = (N + m_alpha * M) / (N + M);
+					float ratio = (N + m_alpha * M) / (N + M);
 					g.flux = (g.flux + flux) * ratio;
 					g.radius = g.radius * std::sqrt(ratio);
 					g.N = N + m_alpha * M;
 				}
-				contrib = g.flux / ((Float) m_totalEmissions * g.radius*g.radius * M_PI)
+				contrib = g.flux / ((float) m_totalEmissions * g.radius*g.radius * M_PI)
 					+ g.emission;
 				wu->block->put(g.sample, contrib * g.weight, 1);
 			}
@@ -405,7 +405,7 @@ public:
 	MTS_DECLARE_CLASS()
 private:
 	std::vector<PPMWorkUnit *> m_workUnits;
-	Float m_initialRadius, m_alpha;
+	float m_initialRadius, m_alpha;
 	int m_photonCount, m_granularity;
 	int m_maxDepth, m_rrDepth;
 	size_t m_totalEmissions, m_totalPhotons;

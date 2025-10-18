@@ -614,7 +614,7 @@ size_t Random::nextSize(size_t n) {
 }
 
 #if defined(DOUBLE_PRECISION)
-Float Random::nextFloat() {
+float Random::nextfloat() {
 	/* Trick from MTGP: generate an uniformly distributed
        single precision number in [1,2) and subtract 1. */
     union {
@@ -627,7 +627,7 @@ Float Random::nextFloat() {
 
 #else
 
-Float Random::nextFloat() {
+float Random::nextfloat() {
 	/* Trick from MTGP: generate an uniformly distributed
        single precision number in [1,2) and subtract 1. */
     union {
@@ -639,13 +639,13 @@ Float Random::nextFloat() {
 }
 #endif
 
-Float Random::nextStandardNormal() {
+float Random::nextStandardNormal() {
 	/* Marsaglia polar method for generating two standard
 	   normal variates. One is subsequently thrown away */
-	Float x, y, r;
+	float x, y, r;
 	do {
-		x = 2.0f * nextFloat() - 1.0f;
-		y = 2.0f * nextFloat() - 1.0f;
+		x = 2.0f * nextfloat() - 1.0f;
+		y = 2.0f * nextfloat() - 1.0f;
 		r = x*x + y*y;
 	} while (r >= 1 || r == 0);
 

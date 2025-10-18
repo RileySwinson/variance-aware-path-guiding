@@ -147,7 +147,7 @@ ServerWidget::ServerWidget(QWidget *parent,
 	toolBar->setAllowedAreas(Qt::TopToolBarArea);
 	toolBar->setIconSize(QSize(32, 32));
 	toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
-	toolBar->setFloatable(false);
+	toolBar->setfloatable(false);
 
 	QAction *actionClear = new QAction(this);
 	QIcon clearIcon;

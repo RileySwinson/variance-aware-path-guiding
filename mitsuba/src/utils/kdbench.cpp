@@ -68,7 +68,7 @@ public:
 		ref<FileResolver> fileResolver = Thread::getThread()->getFileResolver();
 		int optchar;
 		char *end_ptr = NULL;
-		Float intersectionCost = -1, traversalCost = -1, emptySpaceBonus = -1;
+		float intersectionCost = -1, traversalCost = -1, emptySpaceBonus = -1;
 		int stopPrims = -1, maxDepth = -1, exactPrims = -1, minMaxBins = -1;
 		bool clip = true, parallel = true, retract = true, fitParameters = false;
 		optind = 1;
@@ -85,17 +85,17 @@ public:
 					fitParameters = true;
 					break;
 				case 'i':
-					intersectionCost = (Float) strtod(optarg, &end_ptr);
+					intersectionCost = (float) strtod(optarg, &end_ptr);
 					if (*end_ptr != '\0')
 						SLog(EError, "Could not parse the intersection cost!");
 					break;
 				case 't':
-					traversalCost = (Float) strtod(optarg, &end_ptr);
+					traversalCost = (float) strtod(optarg, &end_ptr);
 					if (*end_ptr != '\0')
 						SLog(EError, "Could not parse the traversal cost!");
 					break;
 				case 'e':
-					emptySpaceBonus = (Float) strtod(optarg, &end_ptr);
+					emptySpaceBonus = (float) strtod(optarg, &end_ptr);
 					if (*end_ptr != '\0')
 						SLog(EError, "Could not parse the empty space bonus!");
 					break;
@@ -212,7 +212,7 @@ public:
 
 		if (!fitParameters) {
 			Log(EInfo, "Bounding sphere: %s", bsphere.toString().c_str());
-			Float best = 0;
+			float best = 0;
 			for (int j=0; j<3; ++j) {
 				ref<Random> random = new Random();
 				ref<Timer> timer = new Timer();
@@ -221,8 +221,8 @@ public:
 				Log(EInfo, "Shooting " SIZE_T_FMT " rays (1 thread, incoherent) ..", nRays);
 
 				for (size_t i=0; i<nRays; ++i) {
-					Point2 sample1(random->nextFloat(), random->nextFloat()),
-						sample2(random->nextFloat(), random->nextFloat());
+					Point2 sample1(random->nextfloat(), random->nextfloat()),
+						sample2(random->nextfloat(), random->nextfloat());
 					Point p1 = bsphere.center + warp::squareToUniformSphere(sample1) * bsphere.radius;
 					Point p2 = bsphere.center + warp::squareToUniformSphere(sample2) * bsphere.radius;
 					Ray r(p1, normalize(p2-p1), 0.0f);
@@ -234,14 +234,14 @@ public:
 
 				Log(EInfo, "Found " SIZE_T_FMT " intersections in %i ms",
 					nIntersections, timer->getMilliseconds());
-				Float mrays = nRays / (timer->getMilliseconds() * (Float) 1000);
+				float mrays = nRays / (timer->getMilliseconds() * (float) 1000);
 				Log(EInfo, "-> %.3f MRays/s", mrays);
 				Log(EInfo, "");
 				best = std::max(best, mrays);
 			}
 			Log(EInfo, "Best of three: %.3f MRays/s", best);
 		} else {
-			Float intersectionCost, traversalCost;
+			float intersectionCost, traversalCost;
 			kdtree->findCosts(intersectionCost, traversalCost);
 		}
 

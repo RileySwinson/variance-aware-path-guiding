@@ -622,47 +622,47 @@ static const char *__doc_nanogui_Cursor_IBeam = R"doc()doc";
 
 static const char *__doc_nanogui_Cursor_VResize = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox =
+static const char *__doc_nanogui_floatBox =
 R"doc(A specialization of TextBox representing floating point values.
 
 Template parameters should be float types, e.g. ``float``, ``double``,
 ``float64_t``, etc.)doc";
 
-static const char *__doc_nanogui_FloatBox_FloatBox = R"doc()doc";
+static const char *__doc_nanogui_floatBox_floatBox = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_mMaxValue = R"doc()doc";
+static const char *__doc_nanogui_floatBox_mMaxValue = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_mMinValue = R"doc()doc";
+static const char *__doc_nanogui_floatBox_mMinValue = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_mMouseDownValue = R"doc()doc";
+static const char *__doc_nanogui_floatBox_mMouseDownValue = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_mNumberFormat = R"doc()doc";
+static const char *__doc_nanogui_floatBox_mNumberFormat = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_mValueIncrement = R"doc()doc";
+static const char *__doc_nanogui_floatBox_mValueIncrement = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_mouseButtonEvent = R"doc()doc";
+static const char *__doc_nanogui_floatBox_mouseButtonEvent = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_mouseDragEvent = R"doc()doc";
+static const char *__doc_nanogui_floatBox_mouseDragEvent = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_numberFormat = R"doc()doc";
+static const char *__doc_nanogui_floatBox_numberFormat = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_numberFormat_2 = R"doc()doc";
+static const char *__doc_nanogui_floatBox_numberFormat_2 = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_scrollEvent = R"doc()doc";
+static const char *__doc_nanogui_floatBox_scrollEvent = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_setCallback = R"doc()doc";
+static const char *__doc_nanogui_floatBox_setCallback = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_setMaxValue = R"doc()doc";
+static const char *__doc_nanogui_floatBox_setMaxValue = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_setMinMaxValues = R"doc()doc";
+static const char *__doc_nanogui_floatBox_setMinMaxValues = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_setMinValue = R"doc()doc";
+static const char *__doc_nanogui_floatBox_setMinValue = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_setValue = R"doc()doc";
+static const char *__doc_nanogui_floatBox_setValue = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_setValueIncrement = R"doc()doc";
+static const char *__doc_nanogui_floatBox_setValueIncrement = R"doc()doc";
 
-static const char *__doc_nanogui_FloatBox_value = R"doc()doc";
+static const char *__doc_nanogui_floatBox_value = R"doc()doc";
 
 static const char *__doc_nanogui_FormHelper =
 R"doc(Convenience class to create simple AntTweakBar-style layouts that
@@ -681,8 +681,8 @@ h->addGroup("Group 1");
 h->addVariable("integer variable", aInt);
 // Expose a float variable via setter/getter functions
 h->addVariable(
-[&](float value) { aFloat = value; },
-[&]() { return *aFloat; },
+[&](float value) { afloat = value; },
+[&]() { return *afloat; },
 "float variable");
 // add a new button
 h->addButton("Button", [&]() { std::cout << "Button pressed" << std::endl; });

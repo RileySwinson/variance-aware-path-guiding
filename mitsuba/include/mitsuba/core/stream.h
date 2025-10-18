@@ -268,7 +268,7 @@ public:
 	}
 
 	/// Write a floating point number (configured precision) to the stream
-	inline void writeFloat(Float value) {
+	inline void writefloat(float value) {
 #ifdef SINGLE_PRECISION
 		writeSingle(value);
 #else
@@ -277,7 +277,7 @@ public:
 	}
 
 	/// Write an array of floating point values (configured precision) to the stream
-	inline void writeFloatArray(const Float *data, size_t size) {
+	inline void writefloatArray(const float *data, size_t size) {
 #ifdef SINGLE_PRECISION
 		writeSingleArray(data, size);
 #else
@@ -287,8 +287,8 @@ public:
 
 	/// Write a known size array of floating point values (configured precision) to the stream
 	template <size_t N>
-	inline void writeFloatArray(const Float (&values)[N]) {
-		writeFloatArray(&values[0], N);
+	inline void writefloatArray(const float (&values)[N]) {
+		writefloatArray(&values[0], N);
 	}
 
 	/// Return whether we are at the end of the stream
@@ -421,7 +421,7 @@ public:
 	}
 
 	/// Write a floating point number (configured precision) to the stream
-	inline Float readFloat() {
+	inline float readfloat() {
 #ifdef SINGLE_PRECISION
 		return readSingle();
 #else
@@ -430,7 +430,7 @@ public:
 	}
 
 	/// Write an array of floating point values (configured precision) to the stream
-	inline void readFloatArray(Float *data, size_t size) {
+	inline void readfloatArray(float *data, size_t size) {
 #ifdef SINGLE_PRECISION
 		readSingleArray(data, size);
 #else
@@ -440,8 +440,8 @@ public:
 
 	/// Read a known-size array of floating point values (configured precision) to the stream
 	template <size_t N>
-	inline void readFloatArray(Float (&values)[N]) {
-		readFloatArray(&values[0], N);
+	inline void readfloatArray(float (&values)[N]) {
+		readfloatArray(&values[0], N);
 	}
 
 	/**

@@ -49,7 +49,7 @@ struct Vector3iKeyOrder : public std::binary_function<Vector3i, Vector3i, bool> 
  *         Size of the individual cache blocks
  *         \default{8, i.e. $8\times8\times 8$}
  *     }
- *     \parameter{voxelWidth}{\Float}{
+ *     \parameter{voxelWidth}{\float}{
  *         Width of a voxel (in a cache block) expressed in
  *         world-space units. \default{set to the ray marching
  *         step size of the nested medium}
@@ -91,12 +91,12 @@ public:
 
 		/* Width of an individual voxel. Will use the step size of the
 		   nested medium by default */
-		m_voxelWidth = props.getFloat("voxelWidth", -1);
+		m_voxelWidth = props.getfloat("voxelWidth", -1);
 
 		/* Permissible memory usage in MiB. Default: 1GiB */
 		m_memoryLimit = (size_t) props.getLong("memoryLimit", 1024) * 1024 * 1024;
 
-		m_stepSizeMultiplier = (Float) props.getFloat("stepSizeMultiplier", 1.0f);
+		m_stepSizeMultiplier = (float) props.getfloat("stepSizeMultiplier", 1.0f);
 
 		m_volumeToWorld = props.getTransform("toWorld", Transform());
 	}
@@ -132,7 +132,7 @@ public:
 		for (int i=0; i<3; ++i)
 			m_cellCount[i] = (int) std::ceil(totalCells[i]);
 
-		if (m_nested->supportsFloatLookups())
+		if (m_nested->supportsfloatLookups())
 			m_channels = 1;
 		else if (m_nested->supportsVectorLookups())
 			m_channels = 1;
@@ -142,7 +142,7 @@ public:
 			Log(EError, "Nested volume offers no access methods!");
 
 		m_blockRes = m_blockSize+1;
-		int blockMemoryUsage = (int) std::pow((Float) m_blockRes, 3) * m_channels * sizeof(float);
+		int blockMemoryUsage = (int) std::pow((float) m_blockRes, 3) * m_channels * sizeof(float);
 		m_blocksPerCore = memoryLimitPerCore / blockMemoryUsage;
 
 		m_worldToVolume = m_volumeToWorld.inverse();
@@ -164,7 +164,7 @@ public:
 			(totalCells[0]*totalCells[1]*totalCells[2]*sizeof(float)*m_channels)).c_str());
 	}
 
-	Float lookupFloat(const Point &_p) const {
+	float lookupfloat(const Point &_p) const {
 		const Point p = m_worldToGrid.transformAffine(_p);
 		int x = (int) p.x, y = (int) p.y, z = (int) p.z;
 
@@ -255,8 +255,8 @@ public:
 		return Vector(0.0f);
 	}
 
-	bool supportsFloatLookups() const {
-		return m_nested->supportsFloatLookups();
+	bool supportsfloatLookups() const {
+		return m_nested->supportsfloatLookups();
 	}
 
 	bool supportsSpectrumLookups() const {
@@ -267,7 +267,7 @@ public:
 		return m_nested->supportsVectorLookups();
 	}
 
-	Float getStepSize() const {
+	float getStepSize() const {
 		return m_voxelWidth * m_stepSizeMultiplier;
 	}
 
@@ -292,8 +292,8 @@ public:
 		for (int z = 0; z<m_blockRes; ++z) {
 			for (int y = 0; y<m_blockRes; ++y) {
 				for (int x = 0; x<m_blockRes; ++x) {
-					Point p = offset + Vector((Float) x, (Float) y, (Float) z) * m_voxelWidth;
-					float value = (float) m_nested->lookupFloat(p);
+					Point p = offset + Vector((float) x, (float) y, (float) z) * m_voxelWidth;
+					float value = (float) m_nested->lookupfloat(p);
 					result[idx++] = value;
 					nonempty |= (value != 0);
 				}
@@ -317,8 +317,8 @@ public:
 		delete[] ptr;
 	}
 
-	Float getMaximumFloatValue() const {
-		return m_nested->getMaximumFloatValue();
+	float getMaximumfloatValue() const {
+		return m_nested->getMaximumfloatValue();
 	}
 
 	MTS_DECLARE_CLASS()
@@ -327,8 +327,8 @@ protected:
 	Transform m_volumeToWorld;
 	Transform m_worldToVolume;
 	Transform m_worldToGrid;
-	Float m_voxelWidth;
-	Float m_stepSizeMultiplier;
+	float m_voxelWidth;
+	float m_stepSizeMultiplier;
 	size_t m_memoryLimit;
 	size_t m_blocksPerCore;
 	int m_channels;

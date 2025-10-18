@@ -53,7 +53,7 @@ public:
 	}
 
 	/// Append an entry with the specified discrete probability
-	inline void append(Float pdfValue) {
+	inline void append(float pdfValue) {
 		m_cdf.push_back(m_cdf[m_cdf.size()-1] + pdfValue);
 	}
 
@@ -63,7 +63,7 @@ public:
 	}
 
 	/// Access an entry by its index
-	inline Float operator[](size_t entry) const {
+	inline float operator[](size_t entry) const {
 		return m_cdf[entry+1] - m_cdf[entry];
 	}
 
@@ -77,7 +77,7 @@ public:
 	 *
 	 * This assumes that \ref normalize() has previously been called
 	 */
-	inline Float getSum() const {
+	inline float getSum() const {
 		return m_sum;
 	}
 
@@ -86,7 +86,7 @@ public:
 	 *
 	 * This assumes that \ref normalize() has previously been called
 	 */
-	inline Float getNormalization() const {
+	inline float getNormalization() const {
 		return m_normalization;
 	}
 
@@ -98,7 +98,7 @@ public:
 	 *
 	 * \return Sum of the (previously unnormalized) entries
 	 */
-	inline Float normalize() {
+	inline float normalize() {
 		SAssert(m_cdf.size() > 1);
 		m_sum = m_cdf[m_cdf.size()-1];
 		if (m_sum > 0) {
@@ -121,8 +121,8 @@ public:
 	 * \return
 	 *     The discrete index associated with the sample
 	 */
-	inline size_t sample(Float sampleValue) const {
-		std::vector<Float>::const_iterator entry =
+	inline size_t sample(float sampleValue) const {
+		std::vector<float>::const_iterator entry =
 				std::lower_bound(m_cdf.begin(), m_cdf.end(), sampleValue);
 		size_t index = std::min(m_cdf.size()-2,
 			(size_t) std::max((ptrdiff_t) 0, entry - m_cdf.begin() - 1));
@@ -145,7 +145,7 @@ public:
 	 * \return
 	 *     The discrete index associated with the sample
 	 */
-	inline size_t sample(Float sampleValue, Float &pdf) const {
+	inline size_t sample(float sampleValue, float &pdf) const {
 		size_t index = sample(sampleValue);
 		pdf = operator[](index);
 		return index;
@@ -161,7 +161,7 @@ public:
 	 * \return
 	 *     The discrete index associated with the sample
 	 */
-	inline size_t sampleReuse(Float &sampleValue) const {
+	inline size_t sampleReuse(float &sampleValue) const {
 		size_t index = sample(sampleValue);
 		sampleValue = (sampleValue - m_cdf[index])
 			/ (m_cdf[index + 1] - m_cdf[index]);
@@ -180,7 +180,7 @@ public:
 	 * \return
 	 *     The discrete index associated with the sample
 	 */
-	inline size_t sampleReuse(Float &sampleValue, Float &pdf) const {
+	inline size_t sampleReuse(float &sampleValue, float &pdf) const {
 		size_t index = sample(sampleValue, pdf);
 		sampleValue = (sampleValue - m_cdf[index])
 			/ (m_cdf[index + 1] - m_cdf[index]);
@@ -204,8 +204,8 @@ public:
 		return oss.str();
 	}
 private:
-	std::vector<Float> m_cdf;
-	Float m_sum, m_normalization;
+	std::vector<float> m_cdf;
+	float m_sum, m_normalization;
 	bool m_normalized;
 };
 

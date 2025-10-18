@@ -76,7 +76,7 @@ void Shape::configure() {
 			"emitter/sensor/subsurface attachment. This is not allowed!", getName().c_str());
 }
 
-void Shape::adjustTime(Intersection &its, Float time) const {
+void Shape::adjustTime(Intersection &its, float time) const {
 	its.time = time;
 	/* Do nothing else by default */
 }
@@ -106,16 +106,16 @@ void Shape::sampleDirect(DirectSamplingRecord &dRec,
 
 	dRec.d = dRec.p - dRec.ref;
 
-	Float distSquared = dRec.d.lengthSquared();
+	float distSquared = dRec.d.lengthSquared();
 	dRec.dist = std::sqrt(distSquared);
 	dRec.d /= dRec.dist;
-	Float dp = absDot(dRec.d, dRec.n);
+	float dp = absDot(dRec.d, dRec.n);
 	dRec.pdf *= dp != 0 ? (distSquared / dp) : 0.0f;
 	dRec.measure = ESolidAngle;
 }
 
-Float Shape::pdfDirect(const DirectSamplingRecord &dRec) const {
-	Float pdfPos = pdfPosition(dRec);
+float Shape::pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfPos = pdfPosition(dRec);
 
 	if (dRec.measure == ESolidAngle)
 		return pdfPos * (dRec.dist * dRec.dist) / absDot(dRec.d, dRec.n);
@@ -195,23 +195,23 @@ void Shape::serialize(Stream *stream, InstanceManager *manager) const {
 	manager->serialize(stream, m_exteriorMedium.get());
 }
 
-Float Shape::getSurfaceArea() const { NotImplementedError("getSurfaceArea"); }
-bool Shape::rayIntersect(const Ray &ray, Float mint,
-		Float maxt, Float &t, void *temp) const { NotImplementedError("rayIntersect"); }
-bool Shape::rayIntersect(const Ray &ray, Float mint,
-		Float maxt) const { NotImplementedError("rayIntersect"); }
+float Shape::getSurfaceArea() const { NotImplementedError("getSurfaceArea"); }
+bool Shape::rayIntersect(const Ray &ray, float mint,
+		float maxt, float &t, void *temp) const { NotImplementedError("rayIntersect"); }
+bool Shape::rayIntersect(const Ray &ray, float mint,
+		float maxt) const { NotImplementedError("rayIntersect"); }
 
 void Shape::fillIntersectionRecord(const Ray &ray,
 		const void *temp, Intersection &its) const {
 	NotImplementedError("fillIntersectionRecord"); }
 
-void Shape::getCurvature(const Intersection &its, Float &H, Float &K,
+void Shape::getCurvature(const Intersection &its, float &H, float &K,
 		bool shadingFrame) const {
 	Vector dndu, dndv;
 	getNormalDerivative(its, dndu, dndv, shadingFrame);
 
 	/* Compute the coefficients of the first and second fundamental form */
-	Float
+	float
 		E =  dot(its.dpdu, its.dpdu),
 		F =  dot(its.dpdu, its.dpdv),
 		G =  dot(its.dpdv, its.dpdv),
@@ -233,7 +233,7 @@ void Shape::samplePosition(PositionSamplingRecord &pRec, const Point2 &sample) c
 	NotImplementedError("samplePosition");
 }
 
-Float Shape::pdfPosition(const PositionSamplingRecord &pRec) const {
+float Shape::pdfPosition(const PositionSamplingRecord &pRec) const {
 	NotImplementedError("pdfPosition");
 }
 

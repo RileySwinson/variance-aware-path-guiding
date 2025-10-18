@@ -688,16 +688,16 @@ public:
 
 class float_ : public object {
 public:
-    PYBIND11_OBJECT_CVT(float_, object, PyFloat_Check, PyNumber_Float)
+    PYBIND11_OBJECT_CVT(float_, object, Pyfloat_Check, PyNumber_float)
     // Allow implicit conversion from float/double:
-    float_(float value) : object(PyFloat_FromDouble((double) value), stolen) {
+    float_(float value) : object(Pyfloat_FromDouble((double) value), stolen) {
         if (!m_ptr) pybind11_fail("Could not allocate float object!");
     }
-    float_(double value = .0) : object(PyFloat_FromDouble((double) value), stolen) {
+    float_(double value = .0) : object(Pyfloat_FromDouble((double) value), stolen) {
         if (!m_ptr) pybind11_fail("Could not allocate float object!");
     }
-    operator float() const { return (float) PyFloat_AsDouble(m_ptr); }
-    operator double() const { return (double) PyFloat_AsDouble(m_ptr); }
+    operator float() const { return (float) Pyfloat_AsDouble(m_ptr); }
+    operator double() const { return (double) Pyfloat_AsDouble(m_ptr); }
 };
 
 class weakref : public object {

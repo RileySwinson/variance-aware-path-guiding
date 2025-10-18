@@ -49,20 +49,20 @@ public:
 	 */
 	ManifoldPerturbation(const Scene *scene, Sampler *sampler,
 		MemoryPool &pool,
-		Float probFactor,
+		float probFactor,
 		bool enableOffsetManifolds,
 		bool enableSpecularMedia,
-		Float avgAngleChangeSurface = 0,
-		Float avgAngleChangeMedium = 0);
+		float avgAngleChangeSurface = 0,
+		float avgAngleChangeMedium = 0);
 
 	// =============================================================
 	//! @{ \name Implementation of the Mutator interface
 
 	EMutationType getType() const;
-	Float suitability(const Path &path) const;
+	float suitability(const Path &path) const;
 	bool sampleMutation(Path &source, Path &proposal,
 			MutationRecord &muRec, const MutationRecord& sourceMuRec);
-	Float Q(const Path &source, const Path &proposal,
+	float Q(const Path &source, const Path &proposal,
 			const MutationRecord &muRec) const;
 	void accept(const MutationRecord &muRec);
 
@@ -78,11 +78,11 @@ protected:
 	bool sampleMutationRecord(const Path &source,
 		int &a, int &b, int &c, int &step);
 
-	Float nonspecularProbSurface(Float alpha) const;
-	Float nonspecularProbMedium(Float g) const;
+	float nonspecularProbSurface(float alpha) const;
+	float nonspecularProbMedium(float g) const;
 
-	Float nonspecularProb(const PathVertex *vertex) const;
-	inline Float specularProb(const PathVertex *vertex) const {
+	float nonspecularProb(const PathVertex *vertex) const;
+	inline float specularProb(const PathVertex *vertex) const {
 		return 1 - nonspecularProb(vertex);
 	}
 
@@ -92,11 +92,11 @@ protected:
 	ref<Sampler> m_sampler;
 	mutable ref<SpecularManifold> m_manifold;
 	MemoryPool &m_pool;
-	Float m_probFactor, m_probFactor2;
+	float m_probFactor, m_probFactor2;
 	bool m_enableOffsetManifolds;
 	bool m_enableSpecularMedia;
-	static Float m_thetaDiffSurface;
-	static Float m_thetaDiffMedium;
+	static float m_thetaDiffSurface;
+	static float m_thetaDiffMedium;
 	static int m_thetaDiffSurfaceSamples;
 	static int m_thetaDiffMediumSamples;
 	static Mutex *m_thetaDiffMutex;

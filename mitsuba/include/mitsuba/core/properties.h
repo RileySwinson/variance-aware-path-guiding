@@ -51,8 +51,8 @@ public:
 		EBoolean = 0,
 		/// 64-bit signed integer
 		EInteger,
-		/// Floating point value
-		EFloat,
+		/// floating point value
+		Efloat,
 		/// 3D point
 		EPoint,
 		/// 3D vector
@@ -134,11 +134,11 @@ public:
 	size_t getSize(const std::string &name, const size_t &defVal) const;
 
 	/// Set a single precision floating point value
-	void setFloat(const std::string &name, const Float &value, bool warnDuplicates = true);
+	void setfloat(const std::string &name, const float &value, bool warnDuplicates = true);
 	/// Get a single precision floating point value
-	Float getFloat(const std::string &name) const;
+	float getfloat(const std::string &name) const;
 	/// Get a single precision floating point value (with default)
-	Float getFloat(const std::string &name, const Float &defVal) const;
+	float getfloat(const std::string &name, const float &defVal) const;
 
 	/// Set an arbitrary data value
 	void setData(const std::string &name, const Data &value, bool warnDuplicates = true);

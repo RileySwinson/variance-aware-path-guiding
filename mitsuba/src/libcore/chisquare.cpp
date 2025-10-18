@@ -50,8 +50,8 @@ ChiSquare::ChiSquare(int thetaBins, int phiBins, int numTests,
 		m_phiBins = 2*m_thetaBins;
 	if (m_sampleCount == 0)
 		m_sampleCount = m_thetaBins * m_phiBins * 1000;
-	m_table = new Float[m_thetaBins*m_phiBins];
-	m_refTable = new Float[m_thetaBins*m_phiBins];
+	m_table = new float[m_thetaBins*m_phiBins];
+	m_refTable = new float[m_thetaBins*m_phiBins];
 	m_tolerance = m_sampleCount * 1e-4f;
 }
 
@@ -88,10 +88,10 @@ void ChiSquare::dumpTables(const fs::path &filename) {
 }
 
 void ChiSquare::fill(
-	const boost::function<boost::tuple<Vector, Float, EMeasure>()> &sampleFn,
-	const boost::function<Float (const Vector &, EMeasure measure)> &pdfFn) {
-	memset(m_table, 0, m_thetaBins*m_phiBins*sizeof(Float));
-	memset(m_refTable, 0, m_thetaBins*m_phiBins*sizeof(Float));
+	const boost::function<boost::tuple<Vector, float, EMeasure>()> &sampleFn,
+	const boost::function<float (const Vector &, EMeasure measure)> &pdfFn) {
+	memset(m_table, 0, m_thetaBins*m_phiBins*sizeof(float));
+	memset(m_refTable, 0, m_thetaBins*m_phiBins*sizeof(float));
 
 	Log(m_logLevel, "Accumulating " SIZE_T_FMT " samples into a %ix%i"
 			" contingency table", m_sampleCount, m_thetaBins, m_phiBins);
@@ -101,7 +101,7 @@ void ChiSquare::fill(
 
 	ref<Timer> timer = new Timer();
 	for (size_t i=0; i<m_sampleCount; ++i) {
-		boost::tuple<Vector, Float, EMeasure> sample = sampleFn();
+		boost::tuple<Vector, float, EMeasure> sample = sampleFn();
 		Point2 sphCoords = toSphericalCoordinates(boost::get<0>(sample));
 
 		int thetaBin = std::min(std::max(0,
@@ -120,7 +120,7 @@ void ChiSquare::fill(
 			it != discreteDirections.end(); ++it) {
 			const Vector &direction = *it;
 			Point2 sphCoords = toSphericalCoordinates(direction);
-			Float pdf = pdfFn(direction, EDiscrete);
+			float pdf = pdfFn(direction, EDiscrete);
 
 			int thetaBin = std::min(std::max(0,
 				math::floorToInt(sphCoords.x * factor.x)), m_thetaBins-1);
@@ -136,18 +136,18 @@ void ChiSquare::fill(
 	Log(m_logLevel, "Done, took %i ms. Integrating reference "
 		"contingency table ..", timer->getMilliseconds());
 	timer->reset();
-	Float min[2], max[2];
+	float min[2], max[2];
 	size_t idx = 0;
 
 	NDIntegrator integrator(1, 2, 100000, 0, 1e-6f);
-	Float maxError = 0, integral = 0;
+	float maxError = 0, integral = 0;
 	for (int i=0; i<m_thetaBins; ++i) {
 		min[0] = i * factor.x;
 		max[0] = (i+1) * factor.x;
 		for (int j=0; j<m_phiBins; ++j) {
 			min[1] = j * factor.y;
 			max[1] = (j+1) * factor.y;
-			Float result, error;
+			float result, error;
 
 			integrator.integrateVectorized(
 				boost::bind(&ChiSquare::integrand, pdfFn, _1, _2, _3),
@@ -165,7 +165,7 @@ void ChiSquare::fill(
 }
 
 struct SortedCell {
-	Float expCount;
+	float expCount;
 	int idx;
 };
 
@@ -175,9 +175,9 @@ struct SortedCellFunctor {
 	}
 };
 
-ChiSquare::ETestResult ChiSquare::runTest(Float pvalThresh) {
+ChiSquare::ETestResult ChiSquare::runTest(float pvalThresh) {
 	/* Compute the chi-square statistic */
-	Float pooledCounts = 0, pooledRef = 0, chsq = 0.0f;
+	float pooledCounts = 0, pooledRef = 0, chsq = 0.0f;
 	int pooledCells = 0, df = 0;
 
 	/* Process cells in order sorted by their expected counts */
@@ -214,7 +214,7 @@ ChiSquare::ETestResult ChiSquare::runTest(Float pvalThresh) {
 			pooledRef += m_refTable[idx];
 			++pooledCells;
 		} else {
-			Float diff = m_table[idx]-m_refTable[idx];
+			float diff = m_table[idx]-m_refTable[idx];
 			chsq += (diff*diff) / m_refTable[idx];
 			++df;
 		}
@@ -225,8 +225,8 @@ ChiSquare::ETestResult ChiSquare::runTest(Float pvalThresh) {
 	if (pooledCells > 0) {
 		Log(m_logLevel, "Pooled %i cells to ensure sufficiently "
 			"high expected frequencies (> %f).", pooledCells,
-			(Float) CHISQR_MIN_EXP_FREQUENCY);
-		Float diff = pooledCounts - pooledRef;
+			(float) CHISQR_MIN_EXP_FREQUENCY);
+		float diff = pooledCounts - pooledRef;
 		chsq += (diff*diff) / pooledRef;
 		++df;
 	}
@@ -246,10 +246,10 @@ ChiSquare::ETestResult ChiSquare::runTest(Float pvalThresh) {
 	   as extreme as the one observed under the assumption
 	   that the distributions match */
 	boost::math::chi_squared chSqDist(df);
-	Float pval = 1 - (Float) boost::math::cdf(chSqDist, chsq);
+	float pval = 1 - (float) boost::math::cdf(chSqDist, chsq);
 
 	/* Apply the Sidak correction for multiple independent hypothesis tests */
-	Float alpha = 1 - std::pow(1 - pvalThresh, 1 / (Float) m_numTests);
+	float alpha = 1 - std::pow(1 - pvalThresh, 1 / (float) m_numTests);
 
 	if (pval < alpha) {
 		Log(EWarn, "Rejected the null hypothesis (P-value = %e, "

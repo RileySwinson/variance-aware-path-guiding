@@ -40,10 +40,10 @@ public:
 	}
 
 	/// Are float-valued lookups permitted?
-	virtual bool supportsFloatLookups() const;
+	virtual bool supportsfloatLookups() const;
 
 	/// Look up a floating point value by position
-	virtual Float lookupFloat(const Point &p) const;
+	virtual float lookupfloat(const Point &p) const;
 
 	/// Are spectrum-valued lookups permitted?
 	virtual bool supportsSpectrumLookups() const;
@@ -61,15 +61,15 @@ public:
 	 * \brief Return the recommended step size for numerical
 	 * integration or inifinity if this is not known/applicable
 	 */
-	virtual Float getStepSize() const = 0;
+	virtual float getStepSize() const = 0;
 
 	/**
 	 * \brief Return the maximum floating point value that
-	 * could be returned by \ref lookupFloat.
+	 * could be returned by \ref lookupfloat.
 	 *
 	 * This is useful when implementing Woodcock-Tracking.
 	 */
-	virtual Float getMaximumFloatValue() const = 0;
+	virtual float getMaximumfloatValue() const = 0;
 
 	MTS_DECLARE_CLASS()
 protected:

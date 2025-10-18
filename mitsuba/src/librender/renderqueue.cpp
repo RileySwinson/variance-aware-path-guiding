@@ -60,7 +60,7 @@ void RenderQueue::unregisterListener(RenderListener *listener) {
 	listener->decRef();
 }
 
-Float RenderQueue::getRenderTime(const RenderJob *job) const {
+float RenderQueue::getRenderTime(const RenderJob *job) const {
 	LockGuard lock(m_mutex);
 	std::map<RenderJob *, JobRecord>::const_iterator it = m_jobs.find(const_cast<RenderJob*>(job));
 	if (it == m_jobs.end())

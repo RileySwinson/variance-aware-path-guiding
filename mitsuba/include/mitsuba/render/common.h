@@ -85,13 +85,13 @@ public:
 	Point p;
 
 	/// Associated time value
-	Float time;
+	float time;
 
 	/// Sampled surface normal (if applicable)
 	Normal n;
 
 	/// Probability density at the sample
-	Float pdf;
+	float pdf;
 
 	/**
 	 * \brief Denotes the measure associated with the sample.
@@ -133,7 +133,7 @@ public:
 	 *    Specifies the time that should be associated with the
 	 *    position sample. This only matters when things are in motion
 	 */
-	inline PositionSamplingRecord(Float time) : time(time),
+	inline PositionSamplingRecord(float time) : time(time),
 		uv(0.0f), object(NULL) { }
 
 	/**
@@ -171,7 +171,7 @@ public:
 	Vector d;
 
 	/// Probability density at the sample
-	Float pdf;
+	float pdf;
 
 	/// Measure associated with the density function
 	EMeasure measure;
@@ -252,7 +252,7 @@ public:
 	Vector d;
 
 	/// Distance from the reference point to the target direction
-	Float dist;
+	float dist;
 
 public:
 	/// Create an invalid direct sampling record
@@ -267,7 +267,7 @@ public:
 	 * \param time
 	 *     An associated time value
 	 */
-	inline DirectSamplingRecord(const Point &ref, Float time)
+	inline DirectSamplingRecord(const Point &ref, float time)
 		: PositionSamplingRecord(time), ref(ref), refN(0.0f) { }
 
 	/**

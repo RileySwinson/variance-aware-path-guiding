@@ -55,10 +55,10 @@ public:
 	inline EType getType() const { return m_type; }
 
 	/// Set the time value of a certain keyframe
-	inline void setTime(size_t idx, Float time) { m_times[idx] = time; }
+	inline void setTime(size_t idx, float time) { m_times[idx] = time; }
 
 	/// Return the time value of a certain keyframe
-	inline Float getTime(size_t idx) const { return m_times[idx]; }
+	inline float getTime(size_t idx) const { return m_times[idx]; }
 
 	/// Return the number of keyframes
 	inline size_t getSize() const { return m_times.size(); }
@@ -77,7 +77,7 @@ protected:
 	virtual ~AbstractAnimationTrack() { }
 protected:
 	EType m_type;
-	std::vector<Float> m_times;
+	std::vector<float> m_times;
 };
 
 /**
@@ -94,7 +94,7 @@ public:
 	AnimationTrack(EType type, Stream *stream)
 		: AbstractAnimationTrack(type, stream->readSize()) {
 		m_values.resize(m_times.size());
-		stream->readFloatArray(&m_times[0], m_times.size());
+		stream->readfloatArray(&m_times[0], m_times.size());
 		for (size_t i=0; i<m_values.size(); ++i)
 			unserialize(stream, m_values[i]);
 	}
@@ -116,7 +116,7 @@ public:
 	inline void reserve(size_t count) { m_times.reserve(count); m_values.reserve(count); }
 
 	/// Append a value
-	inline void append(Float time, const ValueType &value) {
+	inline void append(float time, const ValueType &value) {
 		m_times.push_back(time);
 		m_values.push_back(value);
 	}
@@ -142,21 +142,21 @@ public:
 	inline void serialize(Stream *stream) const {
 		stream->writeUInt(m_type);
 		stream->writeSize(m_times.size());
-		stream->writeFloatArray(&m_times[0], m_times.size());
+		stream->writefloatArray(&m_times[0], m_times.size());
 		for (size_t i=0; i<m_values.size(); ++i)
 			serialize(stream, m_values[i]);
 	}
 
 	/// Evaluate the animation track at an arbitrary time value
-	inline ValueType eval(Float time) const {
+	inline ValueType eval(float time) const {
 		SAssert(m_times.size() > 0);
-		std::vector<Float>::const_iterator entry =
+		std::vector<float>::const_iterator entry =
 				std::lower_bound(m_times.begin(), m_times.end(), time);
 		size_t idx0 = (size_t) std::max(
 				(ptrdiff_t) (entry - m_times.begin()) - 1,
 				(ptrdiff_t) 0);
 		size_t idx1 = std::min(idx0+1, m_times.size()-1);
-		Float t = 0.5f;
+		float t = 0.5f;
 		if (m_times[idx0] != m_times[idx1]) {
 			time = std::max(m_times[idx0], std::min(m_times[idx1], time));
 			t = (time-m_times[idx0]) / (m_times[idx1]-m_times[idx0]);
@@ -166,15 +166,15 @@ public:
 
 private:
 	struct SortPredicate {
-		inline bool operator()(const std::pair<Float, ValueType> &p1,
-		                       const std::pair<Float, ValueType> &p2) const {
+		inline bool operator()(const std::pair<float, ValueType> &p1,
+		                       const std::pair<float, ValueType> &p2) const {
 			return p1.first < p2.first;
 		}
 	};
 
 	struct UniqueTimePredicate {
-		inline bool operator()(const std::pair<Float, ValueType> &p1,
-		                       const std::pair<Float, ValueType> &p2) const {
+		inline bool operator()(const std::pair<float, ValueType> &p1,
+		                       const std::pair<float, ValueType> &p2) const {
 			return p1.first == p2.first;
 		}
 	};
@@ -192,7 +192,7 @@ public:
 		if (m_values.size() == 0)
 			return false;
 
-		std::vector< std::pair<Float, ValueType> > temp(m_values.size());
+		std::vector< std::pair<float, ValueType> > temp(m_values.size());
 		for (size_t i=0; i<m_values.size(); ++i)
 			temp[i] = std::make_pair(m_times[i], m_values[i]);
 		std::sort(temp.begin(), temp.end(), SortPredicate());
@@ -202,7 +202,7 @@ public:
 		m_values.push_back(temp[0].second);
 
 		for (size_t i=1; i<temp.size(); ++i) {
-			Float time = temp[i].first;
+			float time = temp[i].first;
 			const ValueType &value = temp[i].second;
 
 			if (m_times.back() == time)
@@ -223,7 +223,7 @@ public:
 	}
 protected:
 	/// Evaluate the animation track using linear interpolation
-	inline ValueType lerp(size_t idx0, size_t idx1, Float t) const;
+	inline ValueType lerp(size_t idx0, size_t idx1, float t) const;
 
 	/// Is this a "no-op" transformation?
 	inline bool isNoOp(const ValueType &value) const;
@@ -243,12 +243,12 @@ private:
 	std::vector<ValueType> m_values;
 };
 
-template<typename T> inline T AnimationTrack<T>::lerp(size_t idx0, size_t idx1, Float t) const {
+template<typename T> inline T AnimationTrack<T>::lerp(size_t idx0, size_t idx1, float t) const {
 	return m_values[idx0] * (1-t) + m_values[idx1] * t;
 }
 
 /// Partial specialization for quaternions (uses \ref slerp())
-template<> inline Quaternion AnimationTrack<Quaternion>::lerp(size_t idx0, size_t idx1, Float t) const {
+template<> inline Quaternion AnimationTrack<Quaternion>::lerp(size_t idx0, size_t idx1, float t) const {
 	return slerp(m_values[idx0], m_values[idx1], t);
 }
 
@@ -270,8 +270,8 @@ template<> inline Point AnimationTrack<Point>::concatenateTransformations(
 	return value1 + value2;
 }
 
-template<> inline Float AnimationTrack<Float>::concatenateTransformations(
-		const Float &value1, const Float &value2) const {
+template<> inline float AnimationTrack<float>::concatenateTransformations(
+		const float &value1, const float &value2) const {
 	if (m_type == ETranslationX || m_type == ETranslationY || m_type == ETranslationZ)
 		return value1 + value2;
 	else
@@ -282,7 +282,7 @@ template<typename T> inline bool AnimationTrack<T>::isNoOp(const ValueType &valu
 	return false;
 }
 
-template<> inline bool AnimationTrack<Float>::isNoOp(const Float &value) const {
+template<> inline bool AnimationTrack<float>::isNoOp(const float &value) const {
 	if ((m_type == ETranslationX || m_type == ETranslationY || m_type == ETranslationZ) && value == 0)
 		return true;
 	else if ((m_type == ERotationX || m_type == ERotationY || m_type == ERotationZ) && value == 0)
@@ -340,7 +340,7 @@ private:
 		inline TransformFunctor(const std::vector<AbstractAnimationTrack *> &tracks)
 			: m_tracks(tracks) {}
 
-		void operator()(const Float &time, Transform &trafo) const;
+		void operator()(const float &time, Transform &trafo) const;
 	private:
 		const std::vector<AbstractAnimationTrack *> &m_tracks;
 	};
@@ -377,7 +377,7 @@ public:
 	inline const AbstractAnimationTrack *getTrack(size_t idx) const { return m_tracks[idx]; }
 
 	/// Return the used keyframes as a set
-	void collectKeyframes(std::set<Float> &result) const;
+	void collectKeyframes(std::set<float> &result) const;
 
 	/// Append an animation track
 	void addTrack(AbstractAnimationTrack *track);
@@ -390,7 +390,7 @@ public:
 	 *
 	 * \remark Remember to run \ref sortAndSimplify() after adding all transformations.
 	 */
-	void appendTransform(Float time, const Transform &trafo);
+	void appendTransform(float time, const Transform &trafo);
 
 	/**
 	 * \brief Compute the transformation for the specified time value
@@ -399,7 +399,7 @@ public:
 	 * This means that it will become invalidated at the next call
 	 * to this function.
 	 */
-	inline const Transform &eval(Float t) const {
+	inline const Transform &eval(float t) const {
 		if (EXPECT_TAKEN(m_tracks.size() == 0))
 			return m_transform;
 		else
@@ -416,62 +416,62 @@ public:
 	void sortAndSimplify();
 
 	/// Transform a point by an affine / non-projective matrix
-	inline Point transformAffine(Float t, const Point &p) const {
+	inline Point transformAffine(float t, const Point &p) const {
 		return eval(t).transformAffine(p);
 	}
 
 	/// Transform a point by an affine / non-projective matrix (no temporaries)
-	inline void transformAffine(Float t, const Point &p, Point &dest) const {
+	inline void transformAffine(float t, const Point &p, Point &dest) const {
 		eval(t).transformAffine(p, dest);
 	}
 
 	/// Transform a ray by an affine / non-projective matrix
-	inline Ray transformAffine(Float t, const Ray &r) const {
+	inline Ray transformAffine(float t, const Ray &r) const {
 		return eval(t).transformAffine(r);
 	}
 
 	/// Transform a ray by an affine / non-projective matrix (no temporaries)
-	inline void transformAffine(Float t, const Ray &r, Ray &dest) const {
+	inline void transformAffine(float t, const Ray &r, Ray &dest) const {
 		eval(t).transformAffine(r, dest);
 	}
 
 	/// Matrix-vector multiplication for points in 3d space
-	inline Point operator()(Float t, const Point &p) const {
+	inline Point operator()(float t, const Point &p) const {
 		return eval(t).transformAffine(p);
 	}
 
 	/// Matrix-vector multiplication for points in 3d space (no temporaries)
-	inline void operator()(Float t, const Point &p, Point &dest) const {
+	inline void operator()(float t, const Point &p, Point &dest) const {
 		eval(t).operator()(p, dest);
 	}
 
 	/// Matrix-vector multiplication for vectors in 3d space
-	inline Vector operator()(Float t, const Vector &v) const {
+	inline Vector operator()(float t, const Vector &v) const {
 		return eval(t).operator()(v);
 	}
 
 	/// Matrix-vector multiplication for vectors in 3d space (no temporaries)
-	inline void operator()(Float t, const Vector &v, Vector &dest) const {
+	inline void operator()(float t, const Vector &v, Vector &dest) const {
 		eval(t).operator()(v, dest);
 	}
 
 	/// Matrix-vector multiplication for normals in 3d space
-	inline Normal operator()(Float t, const Normal &n) const {
+	inline Normal operator()(float t, const Normal &n) const {
 		return eval(t).operator()(n);
 	}
 
 	/// Matrix-vector multiplication for normals in 3d space (no temporaries)
-	inline void operator()(Float t, const Normal &n, Normal &dest) const {
+	inline void operator()(float t, const Normal &n, Normal &dest) const {
 		eval(t).operator()(n, dest);
 	}
 
 	/// \brief Transform a ray
-	inline Ray operator()(Float t, const Ray &r) const {
+	inline Ray operator()(float t, const Ray &r) const {
 		return eval(t).operator()(r);
 	}
 
 	/// Transform a ray (no temporaries)
-	inline void operator()(Float t, const Ray &r, Ray &dest) const {
+	inline void operator()(float t, const Ray &r, Ray &dest) const {
 		eval(t).operator()(r, dest);
 	}
 
@@ -499,7 +499,7 @@ protected:
 	virtual ~AnimatedTransform();
 private:
 	std::vector<AbstractAnimationTrack *> m_tracks;
-	mutable SimpleCache<Float, Transform> m_cache;
+	mutable SimpleCache<float, Transform> m_cache;
 	Transform m_transform;
 };
 

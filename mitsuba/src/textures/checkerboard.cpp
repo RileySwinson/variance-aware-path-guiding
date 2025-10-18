@@ -30,10 +30,10 @@ MTS_NAMESPACE_BEGIN
  *       Color values for the two differently-colored patches
  *       \default{0.4 and 0.2}
  *     }
- *     \parameter{uoffset, voffset}{\Float}{
+ *     \parameter{uoffset, voffset}{\float}{
  *       Numerical offset that should be applied to UV values before a lookup
  *     }
- *     \parameter{uscale, vscale}{\Float}{
+ *     \parameter{uscale, vscale}{\float}{
  *       Multiplicative factors that should be applied to UV values before a lookup
  *     }
  * }

@@ -36,17 +36,17 @@ MTS_NAMESPACE_BEGIN
  *     \parameter{filename}{\String}{
  *	     Filename of the hair data file that should be loaded
  *	   }
- *     \parameter{radius}{\Float}{
+ *     \parameter{radius}{\float}{
  *       Radius of the hair segments in world-space units
  *       \default{0.025, which assumes that the scene
  *       is modeled in millimeters.}.
  *	   }
- *     \parameter{angleThreshold}{\Float}{
+ *     \parameter{angleThreshold}{\float}{
  *	     For performance reasons, the plugin will merge adjacent hair
  *	     segments when the angle of their tangent directions is below
  *	     than this value (in degrees). \default{1}.
  *	   }
- *     \parameter{reduction}{\Float}{
+ *     \parameter{reduction}{\float}{
  *       When the reduction ratio is set to a value between zero and one, the hair
  *       plugin stochastically culls this portion of the input data (where
  *       1 corresponds to removing all hairs). To approximately preserve the
@@ -106,7 +106,7 @@ public:
 	using SAHKDTree3D<HairKDTree>::SizeType;
 
 	HairKDTree(std::vector<Point> &vertices,
-			std::vector<bool> &vertexStartsFiber, Float radius)
+			std::vector<bool> &vertexStartsFiber, float radius)
 			: m_radius(radius) {
 		/* Take the supplied vertex & start fiber arrays (without copying) */
 		m_vertices.swap(vertices);
@@ -177,7 +177,7 @@ public:
 	}
 
 	/// Return the radius of the hairs stored in the kd-tree
-	inline Float getRadius() const {
+	inline float getRadius() const {
 		return m_radius;
 	}
 
@@ -197,10 +197,10 @@ public:
 	}
 
 	/// Intersect a ray with all segments stored in the kd-tree
-	inline bool rayIntersect(const Ray &ray, Float _mint, Float _maxt,
-			Float &t, void *temp) const {
-		Float tempT = std::numeric_limits<Float>::infinity();
-		Float mint, maxt;
+	inline bool rayIntersect(const Ray &ray, float _mint, float _maxt,
+			float &t, void *temp) const {
+		float tempT = std::numeric_limits<float>::infinity();
+		float mint, maxt;
 
 		if (m_aabb.rayIntersect(ray, mint, maxt)) {
 			if (_mint > mint) mint = _mint;
@@ -220,9 +220,9 @@ public:
 	 * \brief Intersect a ray with all segments stored in the kd-tree
 	 * (Visiblity query version)
 	 */
-	inline bool rayIntersect(const Ray &ray, Float _mint, Float _maxt) const {
-		Float tempT = std::numeric_limits<Float>::infinity();
-		Float mint, maxt;
+	inline bool rayIntersect(const Ray &ray, float _mint, float _maxt) const {
+		float tempT = std::numeric_limits<float>::infinity();
+		float mint, maxt;
 
 		if (m_aabb.rayIntersect(ray, mint, maxt)) {
 			if (_mint > mint) mint = _mint;
@@ -244,15 +244,15 @@ public:
 	 * www.geometrictools.com/Documentation/IntersectionCylinderPlane.pdf
 	 */
 	bool intersectCylPlane(Point planePt, Normal planeNrml,
-			Point cylPt, Vector cylD, Float radius, Point &center,
-			Vector *axes, Float *lengths) const {
+			Point cylPt, Vector cylD, float radius, Point &center,
+			Vector *axes, float *lengths) const {
 		if (absDot(planeNrml, cylD) < Epsilon)
 			return false;
 
 		Assert(std::abs(planeNrml.length()-1) <Epsilon);
 		Vector B, A = cylD - dot(cylD, planeNrml)*planeNrml;
 
-		Float length = A.length();
+		float length = A.length();
 		if (length > Epsilon && planeNrml != cylD) {
 			A /= length;
 			B = cross(planeNrml, A);
@@ -263,17 +263,17 @@ public:
 		Vector delta = planePt - cylPt,
 			   deltaProj = delta - cylD*dot(delta, cylD);
 
-		Float aDotD = dot(A, cylD);
-		Float bDotD = dot(B, cylD);
-		Float c0 = 1-aDotD*aDotD;
-		Float c1 = 1-bDotD*bDotD;
-		Float c2 = 2*dot(A, deltaProj);
-		Float c3 = 2*dot(B, deltaProj);
-		Float c4 = dot(delta, deltaProj) - radius*radius;
+		float aDotD = dot(A, cylD);
+		float bDotD = dot(B, cylD);
+		float c0 = 1-aDotD*aDotD;
+		float c1 = 1-bDotD*bDotD;
+		float c2 = 2*dot(A, deltaProj);
+		float c3 = 2*dot(B, deltaProj);
+		float c4 = dot(delta, deltaProj) - radius*radius;
 
-		Float lambda = (c2*c2/(4*c0) + c3*c3/(4*c1) - c4)/(c0*c1);
+		float lambda = (c2*c2/(4*c0) + c3*c3/(4*c1) - c4)/(c0*c1);
 
-		Float alpha0 = -c2/(2*c0),
+		float alpha0 = -c2/(2*c0),
 			  beta0 = -c3/(2*c1);
 
 		lengths[0] = std::sqrt(c1*lambda),
@@ -300,7 +300,7 @@ public:
 
 		Point ellipseCenter;
 		Vector ellipseAxes[2];
-		Float ellipseLengths[2];
+		float ellipseLengths[2];
 
 		AABB aabb;
 		if (!intersectCylPlane(min, planeNrml, cylPt, cylD, m_radius * (1 + Epsilon),
@@ -328,11 +328,11 @@ public:
 				dot(p2 - ellipseCenter, ellipseAxes[1]) / ellipseLengths[1]);
 
 			Vector2 rel = p2l-p1l;
-			Float A = dot(rel, rel);
-			Float B = 2*dot(Vector2(p1l), rel);
-			Float C = dot(Vector2(p1l), Vector2(p1l))-1;
+			float A = dot(rel, rel);
+			float B = 2*dot(Vector2(p1l), rel);
+			float C = dot(Vector2(p1l), Vector2(p1l))-1;
 
-			Float x0, x1;
+			float x0, x1;
 			if (solveQuadratic(A, B, C, x0, x1)) {
 				if (x0 >= 0 && x0 <= 1)
 					aabb.expandBy(p1+(p2-p1)*x0);
@@ -348,10 +348,10 @@ public:
 		/* Find the componentwise maxima of the ellipse */
 		for (int i=0; i<2; ++i) {
 			int j = (i==0) ? axis1 : axis2;
-			Float alpha = ellipseAxes[0][j];
-			Float beta = ellipseAxes[1][j];
-			Float tmp = 1 / std::sqrt(alpha*alpha + beta*beta);
-			Float cosTheta = alpha * tmp, sinTheta = beta*tmp;
+			float alpha = ellipseAxes[0][j];
+			float beta = ellipseAxes[1][j];
+			float tmp = 1 / std::sqrt(alpha*alpha + beta*beta);
+			float cosTheta = alpha * tmp, sinTheta = beta*tmp;
 
 			Point p1 = ellipseCenter + cosTheta*ellipseAxes[0] + sinTheta*ellipseAxes[1];
 			Point p2 = ellipseCenter - cosTheta*ellipseAxes[0] - sinTheta*ellipseAxes[1];
@@ -369,7 +369,7 @@ public:
 		IndexType iv = m_segIndex[index];
 		Point center;
 		Vector axes[2];
-		Float lengths[2];
+		float lengths[2];
 
 		bool success = intersectCylPlane(firstVertex(iv), firstMiterNormal(iv),
 			firstVertex(iv), tangent(iv), m_radius * (1-Epsilon), center, axes, lengths);
@@ -378,7 +378,7 @@ public:
 		AABB result;
 		axes[0] *= lengths[0]; axes[1] *= lengths[1];
 		for (int i=0; i<3; ++i) {
-			Float range = std::sqrt(axes[0][i]*axes[0][i] + axes[1][i]*axes[1][i]);
+			float range = std::sqrt(axes[0][i]*axes[0][i] + axes[1][i]*axes[1][i]);
 			result.min[i] = std::min(result.min[i], center[i]-range);
 			result.max[i] = std::max(result.max[i], center[i]+range);
 		}
@@ -389,7 +389,7 @@ public:
 
 		axes[0] *= lengths[0]; axes[1] *= lengths[1];
 		for (int i=0; i<3; ++i) {
-			Float range = std::sqrt(axes[0][i]*axes[0][i] + axes[1][i]*axes[1][i]);
+			float range = std::sqrt(axes[0][i]*axes[0][i] + axes[1][i]*axes[1][i]);
 			result.min[i] = std::min(result.min[i], center[i]-range);
 			result.max[i] = std::max(result.max[i], center[i]+range);
 		}
@@ -448,9 +448,9 @@ public:
 		IndexType iv = m_segIndex[index];
 
 		// cosine of steepest miter angle
-		const Float cos0 = dot(firstMiterNormal(iv), tangent(iv));
-		const Float cos1 = dot(secondMiterNormal(iv), tangent(iv));
-		const Float maxInvCos = 1.0 / std::min(cos0, cos1);
+		const float cos0 = dot(firstMiterNormal(iv), tangent(iv));
+		const float cos1 = dot(secondMiterNormal(iv), tangent(iv));
+		const float maxInvCos = 1.0 / std::min(cos0, cos1);
 		const Vector expandVec(m_radius * maxInvCos);
 
 		const Point a = firstVertex(iv);
@@ -483,7 +483,7 @@ public:
 	};
 
 	inline bool intersect(const Ray &ray, IndexType iv,
-		Float mint, Float maxt, Float &t, void *tmp) const {
+		float mint, float maxt, float &t, void *tmp) const {
 		/* First compute the intersection with the infinite cylinder */
 		Vector3d axis = tangentDouble(iv);
 
@@ -522,13 +522,13 @@ public:
 			dot(pointNear - v2, n2) <= 0 &&
 			nearT >= mint) {
 			p = Point(rayO + rayD * nearT);
-			t = (Float) nearT;
+			t = (float) nearT;
 		} else if (dot(pointFar - v1, n1) >= 0 &&
 		           dot(pointFar - v2, n2) <= 0) {
 			if (farT > maxt)
 				return false;
 			p = Point(rayO + rayD * farT);
-			t = (Float) farT;
+			t = (float) farT;
 		} else {
 			return false;
 		}
@@ -542,8 +542,8 @@ public:
 	}
 
 	inline bool intersect(const Ray &ray, IndexType iv,
-		Float mint, Float maxt) const {
-		Float tempT;
+		float mint, float maxt) const {
+		float tempT;
 		return intersect(ray, iv, mint, maxt, tempT, NULL);
 	}
 
@@ -603,25 +603,25 @@ protected:
 	std::vector<IndexType> m_segIndex;
 	size_t m_segmentCount;
 	size_t m_hairCount;
-	Float m_radius;
+	float m_radius;
 };
 
 HairShape::HairShape(const Properties &props) : Shape(props) {
 	fs::path path = Thread::getThread()->getFileResolver()->resolve(
 		props.getString("filename"));
-	Float radius = props.getFloat("radius", 0.025f);
+	float radius = props.getfloat("radius", 0.025f);
 	/* Skip segments, whose tangent differs by less than one degree
 	   compared to the previous one */
-	Float angleThreshold = degToRad(props.getFloat("angleThreshold", 1.0f));
-	Float dpThresh = std::cos(angleThreshold);
+	float angleThreshold = degToRad(props.getfloat("angleThreshold", 1.0f));
+	float dpThresh = std::cos(angleThreshold);
 
 	/* When set to a value n>1, the hair shape object will reduce
 	   the input by only loading every n-th hair */
-	Float reduction = props.getFloat("reduction", 0);
+	float reduction = props.getfloat("reduction", 0);
 	if (reduction < 0 || reduction >= 1) {
 		Log(EError, "The 'reduction' parameter must have a value in [0, 1)!");
 	} else if (reduction > 0) {
-		Float correction = 1.0f / (1-reduction);
+		float correction = 1.0f / (1-reduction);
 		Log(EDebug, "Reducing the amount of geometry by %.2f%%, scaling radii by %f.",
 			reduction * 100, correction);
 		radius *= correction;
@@ -663,14 +663,14 @@ HairShape::HairShape(const Properties &props) : Shape(props) {
 		size_t verticesRead = 0;
 
 		while (verticesRead != vertexCount) {
-			Float value = binaryStream->readSingle();
+			float value = binaryStream->readSingle();
 			if (std::isinf(value)) {
 				p.x = binaryStream->readSingle();
 				p.y = binaryStream->readSingle();
 				p.z = binaryStream->readSingle();
 				newFiber = true;
 				if (reduction > 0)
-					ignore = random->nextFloat() < reduction;
+					ignore = random->nextfloat() < reduction;
 			} else {
 				p.x = value;
 				p.y = binaryStream->readSingle();
@@ -767,7 +767,7 @@ HairShape::HairShape(const Properties &props) : Shape(props) {
 			} else {
 				newFiber = true;
 				if (reduction > 0)
-					ignore = random->nextFloat() < reduction;
+					ignore = random->nextfloat() < reduction;
 			}
 		}
 	}
@@ -786,12 +786,12 @@ HairShape::HairShape(const Properties &props) : Shape(props) {
 
 HairShape::HairShape(Stream *stream, InstanceManager *manager)
 	: Shape(stream, manager) {
-	Float radius = stream->readFloat();
+	float radius = stream->readfloat();
 	size_t vertexCount = stream->readSize();
 
 	std::vector<Point> vertices(vertexCount);
 	std::vector<bool> vertexStartsFiber(vertexCount+1);
-	stream->readFloatArray((Float *) &vertices[0], vertexCount * 3);
+	stream->readfloatArray((float *) &vertices[0], vertexCount * 3);
 
 	for (size_t i=0; i<vertexCount; ++i)
 		vertexStartsFiber[i] = stream->readBool();
@@ -806,19 +806,19 @@ void HairShape::serialize(Stream *stream, InstanceManager *manager) const {
 	const std::vector<Point> &vertices = m_kdtree->getVertices();
 	const std::vector<bool> &vertexStartsFiber = m_kdtree->getStartFiber();
 
-	stream->writeFloat(m_kdtree->getRadius());
+	stream->writefloat(m_kdtree->getRadius());
 	stream->writeSize(vertices.size());
-	stream->writeFloatArray((Float *) &vertices[0], vertices.size() * 3);
+	stream->writefloatArray((float *) &vertices[0], vertices.size() * 3);
 	for (size_t i=0; i<vertices.size(); ++i)
 		stream->writeBool(vertexStartsFiber[i]);
 }
 
-bool HairShape::rayIntersect(const Ray &ray, Float mint,
-		Float maxt, Float &t, void *temp) const {
+bool HairShape::rayIntersect(const Ray &ray, float mint,
+		float maxt, float &t, void *temp) const {
 	return m_kdtree->rayIntersect(ray, mint, maxt, t, temp);
 }
 
-bool HairShape::rayIntersect(const Ray &ray, Float mint, Float maxt) const {
+bool HairShape::rayIntersect(const Ray &ray, float mint, float maxt) const {
 	return m_kdtree->rayIntersect(ray, mint, maxt);
 }
 
@@ -855,7 +855,7 @@ ref<TriMesh> HairShape::createTriMesh() {
 	size_t nSegments = m_kdtree->getSegmentCount();
 	/// Use very approximate geometry for large hair meshes
 	const uint32_t phiSteps = (nSegments > 100000) ? 4 : 10;
-	const Float dPhi   = (2*M_PI) / phiSteps;
+	const float dPhi   = (2*M_PI) / phiSteps;
 
 	ref<TriMesh> mesh = new TriMesh("Hair mesh approximation",
 		phiSteps*2*nSegments, phiSteps*2*nSegments, true, false, false);
@@ -867,9 +867,9 @@ ref<TriMesh> HairShape::createTriMesh() {
 
 	const std::vector<Point> &hairVertices = m_kdtree->getVertices();
 	const std::vector<bool> &vertexStartsFiber = m_kdtree->getStartFiber();
-	const Float radius = m_kdtree->getRadius();
-	Float *cosPhi = new Float[phiSteps];
-	Float *sinPhi = new Float[phiSteps];
+	const float radius = m_kdtree->getRadius();
+	float *cosPhi = new float[phiSteps];
+	float *sinPhi = new float[phiSteps];
 	for (size_t i=0; i<phiSteps; ++i) {
 		sinPhi[i] = std::sin(i*dPhi);
 		cosPhi[i] = std::cos(i*dPhi);
@@ -884,8 +884,8 @@ ref<TriMesh> HairShape::createTriMesh() {
 						Vector(cosPhi[phi], sinPhi[phi], 0));
 				Normal miterNormal1 = m_kdtree->firstMiterNormal(iv);
 				Normal miterNormal2 = m_kdtree->secondMiterNormal(iv);
-				Float t1 = dot(miterNormal1, radius*dir) / dot(miterNormal1, tangent);
-				Float t2 = dot(miterNormal2, radius*dir) / dot(miterNormal2, tangent);
+				float t1 = dot(miterNormal1, radius*dir) / dot(miterNormal1, tangent);
+				float t2 = dot(miterNormal2, radius*dir) / dot(miterNormal2, tangent);
 
 				Normal normal(normalize(dir));
 				normals[vertexIdx] = normal;
@@ -943,7 +943,7 @@ size_t HairShape::getEffectivePrimitiveCount() const {
 	return m_kdtree->getHairCount();
 }
 
-Float HairShape::getSurfaceArea() const {
+float HairShape::getSurfaceArea() const {
 	Log(EError, "HairShape::getSurfaceArea(): Not implemented.");
 	return -1;
 }

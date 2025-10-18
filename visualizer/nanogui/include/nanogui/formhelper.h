@@ -47,12 +47,12 @@ NAMESPACE_BEGIN(detail)
  *      template <typename T>
  *      class FormWidget<T, typename std::is_integral<T>::type> : public IntBox<T>
  *
- * - Inheritance from :ref:`class_nanogui__FloatBox` for floating point types:
+ * - Inheritance from :ref:`class_nanogui__floatBox` for floating point types:
  *
  *   .. code-block:: cpp
  *
  *      template <typename T>
- *      class FormWidget<T, typename std::is_floating_point<T>::type> : public FloatBox<T>
+ *      class FormWidget<T, typename std::is_floating_point<T>::type> : public floatBox<T>
  *
  * The full template specializations are:
  *
@@ -110,8 +110,8 @@ NAMESPACE_END(detail)
  *
  *    // Expose a float variable via setter/getter functions
  *    h->addVariable(
- *      [&](float value) { aFloat = value; },
- *      [&]() { return *aFloat; },
+ *      [&](float value) { afloat = value; },
+ *      [&]() { return *afloat; },
  *      "float variable");
  *
  *    // add a new button
@@ -296,9 +296,9 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-template <typename T> class FormWidget<T, typename std::is_floating_point<T>::type> : public FloatBox<T> {
+template <typename T> class FormWidget<T, typename std::is_floating_point<T>::type> : public floatBox<T> {
 public:
-    FormWidget(Widget *p) : FloatBox<T>(p) { this->setAlignment(TextBox::Alignment::Right); }
+    FormWidget(Widget *p) : floatBox<T>(p) { this->setAlignment(TextBox::Alignment::Right); }
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

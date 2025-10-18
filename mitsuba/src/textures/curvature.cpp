@@ -30,7 +30,7 @@ MTS_NAMESPACE_BEGIN
  *       Specifies what should be shown -- must be equal to
  *       \code{mean} or \code{gaussian}.
  *     }
- *     \parameter{scale}{\Float}{
+ *     \parameter{scale}{\float}{
  *        A scale factor to bring curvature values into the
  *        displayable range [-1, 1]. Everything outside of this range
  *        will be clamped.
@@ -49,7 +49,7 @@ MTS_NAMESPACE_BEGIN
 class Curvature : public Texture {
 public:
 	Curvature(const Properties &props) : Texture(props) {
-		m_scale = props.getFloat("scale");
+		m_scale = props.getfloat("scale");
 		std::string curvature = props.getString("curvature", "gaussian");
 		if (curvature == "gaussian")
 			m_showK = true;
@@ -61,27 +61,27 @@ public:
 
 	Curvature(Stream *stream, InstanceManager *manager)
 	 : Texture(stream, manager) {
-		 m_scale = stream->readFloat();
+		 m_scale = stream->readfloat();
 		 m_showK = stream->readBool();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Texture::serialize(stream, manager);
-		stream->writeFloat(m_scale);
+		stream->writefloat(m_scale);
 		stream->writeBool(m_showK);
 	}
 
-	Spectrum lookupGradient(Float value) const {
+	Spectrum lookupGradient(float value) const {
 		Spectrum result(0.0f);
 		if (value < 0)
-			result.fromLinearRGB(0, 0, std::min(-value*m_scale, (Float) 1.0f));
+			result.fromLinearRGB(0, 0, std::min(-value*m_scale, (float) 1.0f));
 		if (value > 0)
-			result.fromLinearRGB(std::min(value*m_scale, (Float) 1.0f), 0.0f, 0.0f);
+			result.fromLinearRGB(std::min(value*m_scale, (float) 1.0f), 0.0f, 0.0f);
 		return result;
 	}
 
 	Spectrum eval(const Intersection &its, bool /* unused */) const {
-		Float H, K;
+		float H, K;
 		its.shape->getCurvature(its, H, K);
 		return lookupGradient(m_showK ? K : H);
 	}
@@ -126,7 +126,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	Float m_scale;
+	float m_scale;
 	bool m_showK;
 };
 

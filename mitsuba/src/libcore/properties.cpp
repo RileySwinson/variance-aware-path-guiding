@@ -27,7 +27,7 @@
 MTS_NAMESPACE_BEGIN
 
 typedef boost::variant<
-	bool, int64_t, Float, Point, Vector, Transform, AnimatedTransform *,
+	bool, int64_t, float, Point, Vector, Transform, AnimatedTransform *,
 	Spectrum, std::string, Properties::Data> ElementData;
 
 struct PropertyElement {
@@ -71,7 +71,7 @@ DEFINE_PROPERTY_ACCESSOR(bool, bool, Boolean, boolean)
 DEFINE_PROPERTY_ACCESSOR(int64_t, int64_t, Long, integer)
 DEFINE_PROPERTY_ACCESSOR(int, int64_t, Integer, integer)
 DEFINE_PROPERTY_ACCESSOR(size_t, int64_t, Size, integer)
-DEFINE_PROPERTY_ACCESSOR(Float, Float, Float, float)
+DEFINE_PROPERTY_ACCESSOR(float, float, float, float)
 DEFINE_PROPERTY_ACCESSOR(Point, Point, Point, point)
 DEFINE_PROPERTY_ACCESSOR(Vector, Vector, Vector, vector)
 DEFINE_PROPERTY_ACCESSOR(Transform, Transform, Transform, transform)
@@ -153,7 +153,7 @@ namespace {
 	public:
 		Properties::EPropertyType operator()(const bool &) const              { return Properties::EBoolean; }
 		Properties::EPropertyType operator()(const int64_t &) const           { return Properties::EInteger; }
-		Properties::EPropertyType operator()(const Float &) const             { return Properties::EFloat; }
+		Properties::EPropertyType operator()(const float &) const             { return Properties::Efloat; }
 		Properties::EPropertyType operator()(const Point &) const             { return Properties::EPoint; }
 		Properties::EPropertyType operator()(const Vector &) const            { return Properties::EVector; }
 		Properties::EPropertyType operator()(const Transform &) const         { return Properties::ETransform; }
@@ -169,7 +169,7 @@ namespace {
 
 		bool operator()(const bool &v) const              { const bool *v2 = boost::get<bool>(ref); return v2 ? (v == *v2) : false; }
 		bool operator()(const int64_t &v) const           { const int64_t *v2 = boost::get<int64_t>(ref); return v2 ? (v == *v2) : false; }
-		bool operator()(const Float &v) const             { const Float *v2 = boost::get<Float>(ref); return v2 ? (v == *v2) : false; }
+		bool operator()(const float &v) const             { const float *v2 = boost::get<float>(ref); return v2 ? (v == *v2) : false; }
 		bool operator()(const Point &v) const             { const Point *v2 = boost::get<Point>(ref); return v2 ? (v == *v2) : false; }
 		bool operator()(const Vector &v) const            { const Vector *v2 = boost::get<Vector>(ref); return v2 ? (v == *v2) : false; }
 		bool operator()(const Transform &v) const         { const Transform *v2 = boost::get<Transform>(ref); return v2 ? (v == *v2) : false; }
@@ -187,7 +187,7 @@ namespace {
 
 		void operator()(const bool &v) const              { oss << (v ? "true" : "false"); }
 		void operator()(const int64_t &v) const           { oss << v; }
-		void operator()(const Float &v) const             { oss << v; }
+		void operator()(const float &v) const             { oss << v; }
 		void operator()(const Point &v) const             { oss << v.toString(); }
 		void operator()(const Vector &v) const            { oss << v.toString(); }
 		void operator()(const Transform &v) const         { oss << v.toString(); }

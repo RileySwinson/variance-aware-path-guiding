@@ -48,7 +48,7 @@ MTS_NAMESPACE_BEGIN
  *              \vspace{-4mm}
  *       \end{enumerate}
  *     }
- *     \parameter{alpha, alphaU, alphaV}{\Float\Or\Texture}{
+ *     \parameter{alpha, alphaU, alphaV}{\float\Or\Texture}{
  *         Specifies the roughness of the unresolved surface micro-geometry
  *         along the tangent and bitangent directions. When the Beckmann
  *         distribution is used, this parameter is equal to the
@@ -56,9 +56,9 @@ MTS_NAMESPACE_BEGIN
  *         \code{alpha} is a convenience parameter to initialize both
  *         \code{alphaU} and \code{alphaV} to the same value. \default{0.1}.
  *     }
- *     \parameter{intIOR}{\Float\Or\String}{Interior index of refraction specified
+ *     \parameter{intIOR}{\float\Or\String}{Interior index of refraction specified
  *         numerically or using a known material name. \default{\texttt{bk7} / 1.5046}}
- *     \parameter{extIOR}{\Float\Or\String}{Exterior index of refraction specified
+ *     \parameter{extIOR}{\float\Or\String}{Exterior index of refraction specified
  *         numerically or using a known material name. \default{\texttt{air} / 1.000277}}
  *     \parameter{sampleVisible}{\Boolean}{
  *         Enables a sampling technique proposed by Heitz and D'Eon~\cite{Heitz1014Importance},
@@ -187,10 +187,10 @@ public:
 			props.getSpectrum("specularTransmittance", Spectrum(1.0f)));
 
 		/* Specifies the internal index of refraction at the interface */
-		Float intIOR = lookupIOR(props, "intIOR", "bk7");
+		float intIOR = lookupIOR(props, "intIOR", "bk7");
 
 		/* Specifies the external index of refraction at the interface */
-		Float extIOR = lookupIOR(props, "extIOR", "air");
+		float extIOR = lookupIOR(props, "extIOR", "air");
 
 		if (intIOR < 0 || extIOR < 0 || intIOR == extIOR)
 			Log(EError, "The interior and exterior indices of "
@@ -203,11 +203,11 @@ public:
 		m_type = distr.getType();
 		m_sampleVisible = distr.getSampleVisible();
 
-		m_alphaU = new ConstantFloatTexture(distr.getAlphaU());
+		m_alphaU = new ConstantfloatTexture(distr.getAlphaU());
 		if (distr.getAlphaU() == distr.getAlphaV())
 			m_alphaV = m_alphaU;
 		else
-			m_alphaV = new ConstantFloatTexture(distr.getAlphaV());
+			m_alphaV = new ConstantfloatTexture(distr.getAlphaV());
 	}
 
 	RoughDielectric(Stream *stream, InstanceManager *manager)
@@ -218,7 +218,7 @@ public:
 		m_alphaV = static_cast<Texture *>(manager->getInstance(stream));
 		m_specularReflectance = static_cast<Texture *>(manager->getInstance(stream));
 		m_specularTransmittance = static_cast<Texture *>(manager->getInstance(stream));
-		m_eta = stream->readFloat();
+		m_eta = stream->readfloat();
 		m_invEta = 1 / m_eta;
 
 		configure();
@@ -233,7 +233,7 @@ public:
 		manager->serialize(stream, m_alphaV.get());
 		manager->serialize(stream, m_specularReflectance.get());
 		manager->serialize(stream, m_specularTransmittance.get());
-		stream->writeFloat(m_eta);
+		stream->writefloat(m_eta);
 	}
 
 	void configure() {
@@ -291,7 +291,7 @@ public:
 				return Spectrum(0.0f);
 
 			/* Calculate the transmission half-vector */
-			Float eta = Frame::cosTheta(bRec.wi) > 0
+			float eta = Frame::cosTheta(bRec.wi) > 0
 				? m_eta : m_invEta;
 
 			H = normalize(bRec.wi + bRec.wo*eta);
@@ -311,35 +311,35 @@ public:
 		);
 
 		/* Evaluate the microfacet normal distribution */
-		const Float D = distr.eval(H);
+		const float D = distr.eval(H);
 		if (D == 0)
 			return Spectrum(0.0f);
 
 		/* Fresnel factor */
-		const Float F = fresnelDielectricExt(dot(bRec.wi, H), m_eta);
+		const float F = fresnelDielectricExt(dot(bRec.wi, H), m_eta);
 
 		/* Smith's shadow-masking function */
-		const Float G = distr.G(bRec.wi, bRec.wo, H);
+		const float G = distr.G(bRec.wi, bRec.wo, H);
 
 		if (reflect) {
 			/* Calculate the total amount of reflection */
-			Float value = F * D * G /
+			float value = F * D * G /
 				(4.0f * std::abs(Frame::cosTheta(bRec.wi)));
 
 			return m_specularReflectance->eval(bRec.its) * value;
 		} else {
-			Float eta = Frame::cosTheta(bRec.wi) > 0.0f ? m_eta : m_invEta;
+			float eta = Frame::cosTheta(bRec.wi) > 0.0f ? m_eta : m_invEta;
 
 			/* Calculate the total amount of transmission */
-			Float sqrtDenom = dot(bRec.wi, H) + eta * dot(bRec.wo, H);
-			Float value = ((1 - F) * D * G * eta * eta
+			float sqrtDenom = dot(bRec.wi, H) + eta * dot(bRec.wo, H);
+			float value = ((1 - F) * D * G * eta * eta
 				* dot(bRec.wi, H) * dot(bRec.wo, H)) /
 				(Frame::cosTheta(bRec.wi) * sqrtDenom * sqrtDenom);
 
 			/* Missing term in the original paper: account for the solid angle
 			   compression when tracing radiance -- this is necessary for
 			   bidirectional methods */
-			Float factor = (bRec.mode == ERadiance)
+			float factor = (bRec.mode == ERadiance)
 				? (Frame::cosTheta(bRec.wi) > 0 ? m_invEta : m_eta) : 1.0f;
 
 			return m_specularTransmittance->eval(bRec.its)
@@ -347,7 +347,7 @@ public:
 		}
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		if (measure != ESolidAngle)
 			return 0.0f;
 
@@ -360,7 +360,7 @@ public:
 				             * Frame::cosTheta(bRec.wo) > 0;
 
 		Vector H;
-		Float dwh_dwo;
+		float dwh_dwo;
 
 		if (reflect) {
 			/* Zero probability if this component was not requested */
@@ -380,13 +380,13 @@ public:
 				return 0.0f;
 
 			/* Calculate the transmission half-vector */
-			Float eta = Frame::cosTheta(bRec.wi) > 0
+			float eta = Frame::cosTheta(bRec.wi) > 0
 				? m_eta : m_invEta;
 
 			H = normalize(bRec.wi + bRec.wo*eta);
 
 			/* Jacobian of the half-direction mapping */
-			Float sqrtDenom = dot(bRec.wi, H) + eta * dot(bRec.wo, H);
+			float sqrtDenom = dot(bRec.wi, H) + eta * dot(bRec.wo, H);
 			dwh_dwo = (eta*eta * dot(bRec.wo, H)) / (sqrtDenom*sqrtDenom);
 		}
 
@@ -411,10 +411,10 @@ public:
 				std::abs(Frame::cosTheta(bRec.wi))));
 
 		/* Evaluate the microfacet model sampling density function */
-		Float prob = sampleDistr.pdf(math::signum(Frame::cosTheta(bRec.wi)) * bRec.wi, H);
+		float prob = sampleDistr.pdf(math::signum(Frame::cosTheta(bRec.wi)) * bRec.wi, H);
 
 		if (hasTransmission && hasReflection) {
-			Float F = fresnelDielectricExt(dot(bRec.wi, H), m_eta);
+			float F = fresnelDielectricExt(dot(bRec.wi, H), m_eta);
 			prob *= reflect ? F : (1-F);
 		}
 
@@ -451,13 +451,13 @@ public:
 				std::abs(Frame::cosTheta(bRec.wi))));
 
 		/* Sample M, the microfacet normal */
-		Float microfacetPDF;
+		float microfacetPDF;
 		const Normal m = sampleDistr.sample(math::signum(Frame::cosTheta(bRec.wi)) * bRec.wi, sample, microfacetPDF);
 		if (microfacetPDF == 0)
 			return Spectrum(0.0f);
 
-		Float cosThetaT;
-		Float F = fresnelDielectricExt(dot(bRec.wi, m), cosThetaT, m_eta);
+		float cosThetaT;
+		float F = fresnelDielectricExt(dot(bRec.wi, m), cosThetaT, m_eta);
 		Spectrum weight(1.0f);
 
 		if (hasReflection && hasTransmission) {
@@ -495,7 +495,7 @@ public:
 
 			/* Radiance must be scaled to account for the solid angle compression
 			   that occurs when crossing the interface. */
-			Float factor = (bRec.mode == ERadiance)
+			float factor = (bRec.mode == ERadiance)
 				? (cosThetaT < 0 ? m_invEta : m_eta) : 1.0f;
 
 			weight *= m_specularTransmittance->eval(bRec.its) * (factor * factor);
@@ -510,7 +510,7 @@ public:
 		return weight;
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &_sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &_sample) const {
 		Point2 sample(_sample);
 
 		bool hasReflection = ((bRec.component == -1 || bRec.component == 0)
@@ -540,14 +540,14 @@ public:
 				std::abs(Frame::cosTheta(bRec.wi))));
 
 		/* Sample M, the microfacet normal */
-		Float microfacetPDF;
+		float microfacetPDF;
 		const Normal m = sampleDistr.sample(math::signum(Frame::cosTheta(bRec.wi)) * bRec.wi, sample, microfacetPDF);
 		if (microfacetPDF == 0)
 			return Spectrum(0.0f);
 		pdf = microfacetPDF;
 
-		Float cosThetaT;
-		Float F = fresnelDielectricExt(dot(bRec.wi, m), cosThetaT, m_eta);
+		float cosThetaT;
+		float F = fresnelDielectricExt(dot(bRec.wi, m), cosThetaT, m_eta);
 		Spectrum weight(1.0f);
 
 		if (hasReflection && hasTransmission) {
@@ -561,7 +561,7 @@ public:
 			weight *= hasReflection ? F : (1-F);
 		}
 
-		Float dwh_dwo;
+		float dwh_dwo;
 		if (sampleReflection) {
 			/* Perfect specular reflection based on the microfacet normal */
 			bRec.wo = reflect(bRec.wi, m);
@@ -593,13 +593,13 @@ public:
 
 			/* Radiance must be scaled to account for the solid angle compression
 			   that occurs when crossing the interface. */
-			Float factor = (bRec.mode == ERadiance)
+			float factor = (bRec.mode == ERadiance)
 				? (cosThetaT < 0 ? m_invEta : m_eta) : 1.0f;
 
 			weight *= m_specularTransmittance->eval(bRec.its) * (factor * factor);
 
 			/* Jacobian of the half-direction mapping */
-			Float sqrtDenom = dot(bRec.wi, m) + bRec.eta * dot(bRec.wo, m);
+			float sqrtDenom = dot(bRec.wi, m) + bRec.eta * dot(bRec.wo, m);
 			dwh_dwo = (bRec.eta*bRec.eta * dot(bRec.wo, m)) / (sqrtDenom*sqrtDenom);
 		}
 
@@ -633,11 +633,11 @@ public:
 		}
 	}
 
-	Float getEta() const {
+	float getEta() const {
 		return m_eta;
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return 0.5f * (m_alphaU->eval(its).average()
 			+ m_alphaV->eval(its).average());
 	}
@@ -665,7 +665,7 @@ private:
 	ref<Texture> m_specularTransmittance;
 	ref<Texture> m_specularReflectance;
 	ref<Texture> m_alphaU, m_alphaV;
-	Float m_eta, m_invEta;
+	float m_eta, m_invEta;
 	bool m_sampleVisible;
 };
 
@@ -674,12 +674,12 @@ private:
    something that suggests the presence of a transparent boundary */
 class RoughDielectricShader : public Shader {
 public:
-	RoughDielectricShader(Renderer *renderer, Float eta) :
+	RoughDielectricShader(Renderer *renderer, float eta) :
 		Shader(renderer, EBSDFShader) {
 		m_flags = ETransparent;
 	}
 
-	Float getAlpha() const {
+	float getAlpha() const {
 		return 0.3f;
 	}
 

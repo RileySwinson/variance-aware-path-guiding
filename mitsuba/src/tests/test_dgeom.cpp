@@ -178,8 +178,8 @@ public:
 
 	void test04_sphere() {
 		Properties props("sphere");
-		Float radius = 2.0f;
-		props.setFloat("radius", radius);
+		float radius = 2.0f;
+		props.setfloat("radius", radius);
 		props.setPoint("center", Point(0.0f));
 		ref<Shape> sphere = static_cast<Shape *>(PluginManager::getInstance()->createObject(props));
 		sphere->configure();
@@ -215,7 +215,7 @@ public:
 		assertEqualsEpsilon(dndu, Vector(-3.6276f, 3.6276f, 0.0f), 1e-4f);
 		assertEqualsEpsilon(dndv, Vector(1.28255f, 1.28255f, -2.5651f), 1e-4f);
 
-		Float H, K;
+		float H, K;
 		its.shape->getCurvature(its, H, K);
 
 		assertEquals(K, 1.0f / (radius*radius));
@@ -224,8 +224,8 @@ public:
 
 	void test05_cylinder() {
 		Properties props("cylinder");
-		Float radius = 2.0f;
-		props.setFloat("radius", radius);
+		float radius = 2.0f;
+		props.setfloat("radius", radius);
 		props.setPoint("p0", Point(0.0f, 0.0f, -3.0f));
 		props.setPoint("p1", Point(0.0f, 0.0f,  3.0f));
 		ref<Shape> sphere = static_cast<Shape *>(
@@ -240,7 +240,7 @@ public:
 		Intersection its;
 
 		assertTrue(kdtree->rayIntersect(ray, its));
-		Float t = 3*std::sqrt(3.0f)-std::sqrt(6.0f);
+		float t = 3*std::sqrt(3.0f)-std::sqrt(6.0f);
 		assertEquals(its.time, 123.0f);
 
 		assertEqualsEpsilon(its.p, ray(t), 1e-4f);
@@ -260,7 +260,7 @@ public:
 		assertEqualsEpsilon(dndu, Vector(-4.44288f, 4.44288f, 0.0f), 1e-4f);
 		assertEqualsEpsilon(dndv, Vector(0.0f), 1e-4f);
 
-		Float H, K;
+		float H, K;
 		its.shape->getCurvature(its, H, K);
 		assertEqualsEpsilon(K, 0.0f, Epsilon);
 		assertEqualsEpsilon(H, -1.0f / (2*radius), Epsilon);

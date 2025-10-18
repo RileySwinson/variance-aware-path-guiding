@@ -106,31 +106,31 @@ TriMesh::TriMesh(Stream *stream, InstanceManager *manager)
 	m_triangleCount = stream->readSize();
 
 	m_positions = new Point[m_vertexCount];
-	stream->readFloatArray(reinterpret_cast<Float *>(m_positions),
-		m_vertexCount * sizeof(Point)/sizeof(Float));
+	stream->readfloatArray(reinterpret_cast<float *>(m_positions),
+		m_vertexCount * sizeof(Point)/sizeof(float));
 
 	m_faceNormals = flags & EFaceNormals;
 
 	if (flags & EHasNormals) {
 		m_normals = new Normal[m_vertexCount];
-		stream->readFloatArray(reinterpret_cast<Float *>(m_normals),
-			m_vertexCount * sizeof(Normal)/sizeof(Float));
+		stream->readfloatArray(reinterpret_cast<float *>(m_normals),
+			m_vertexCount * sizeof(Normal)/sizeof(float));
 	} else {
 		m_normals = NULL;
 	}
 
 	if (flags & EHasTexcoords) {
 		m_texcoords = new Point2[m_vertexCount];
-		stream->readFloatArray(reinterpret_cast<Float *>(m_texcoords),
-			m_vertexCount * sizeof(Point2)/sizeof(Float));
+		stream->readfloatArray(reinterpret_cast<float *>(m_texcoords),
+			m_vertexCount * sizeof(Point2)/sizeof(float));
 	} else {
 		m_texcoords = NULL;
 	}
 
 	if (flags & EHasColors) {
 		m_colors = new Color3[m_vertexCount];
-		stream->readFloatArray(reinterpret_cast<Float *>(m_colors),
-			m_vertexCount * sizeof(Color3)/sizeof(Float));
+		stream->readfloatArray(reinterpret_cast<float *>(m_colors),
+			m_vertexCount * sizeof(Color3)/sizeof(float));
 	} else {
 		m_colors = NULL;
 	}
@@ -145,7 +145,7 @@ TriMesh::TriMesh(Stream *stream, InstanceManager *manager)
 }
 
 static void readHelper(Stream *stream, bool fileDoublePrecision,
-		Float *target, size_t count, size_t nelems) {
+		float *target, size_t count, size_t nelems) {
 #if defined(SINGLE_PRECISION)
 	bool hostDoublePrecision = false;
 #else
@@ -154,20 +154,20 @@ static void readHelper(Stream *stream, bool fileDoublePrecision,
 	size_t size = count * nelems;
 	if (fileDoublePrecision == hostDoublePrecision) {
 		/* Precision matches - load directly into memory */
-		stream->readFloatArray(target, size);
+		stream->readfloatArray(target, size);
 	} else if (fileDoublePrecision) {
 		/* Double -> Single conversion */
 		double *temp = new double[size];
 		stream->readDoubleArray(temp, size);
 		for (size_t i=0; i<size; ++i)
-			target[i] = (Float) temp[i];
+			target[i] = (float) temp[i];
 		delete[] temp;
 	} else {
 		/* Single -> Double conversion */
 		float *temp = new float[size];
 		stream->readSingleArray(temp, size);
 		for (size_t i=0; i<size; ++i)
-			target[i] = (Float) temp[i];
+			target[i] = (float) temp[i];
 		delete[] temp;
 	}
 }
@@ -204,8 +204,8 @@ void TriMesh::loadCompressed(Stream *_stream, int index) {
 
 	m_positions = new Point[m_vertexCount];
 	readHelper(stream, fileDoublePrecision,
-			reinterpret_cast<Float *>(m_positions),
-			m_vertexCount, sizeof(Point)/sizeof(Float));
+			reinterpret_cast<float *>(m_positions),
+			m_vertexCount, sizeof(Point)/sizeof(float));
 
 	if (m_normals)
 		delete[] m_normals;
@@ -213,8 +213,8 @@ void TriMesh::loadCompressed(Stream *_stream, int index) {
 	if (flags & EHasNormals) {
 		m_normals = new Normal[m_vertexCount];
 		readHelper(stream, fileDoublePrecision,
-				reinterpret_cast<Float *>(m_normals),
-				m_vertexCount, sizeof(Normal)/sizeof(Float));
+				reinterpret_cast<float *>(m_normals),
+				m_vertexCount, sizeof(Normal)/sizeof(float));
 	} else {
 		m_normals = NULL;
 	}
@@ -225,8 +225,8 @@ void TriMesh::loadCompressed(Stream *_stream, int index) {
 	if (flags & EHasTexcoords) {
 		m_texcoords = new Point2[m_vertexCount];
 		readHelper(stream, fileDoublePrecision,
-				reinterpret_cast<Float *>(m_texcoords),
-				m_vertexCount, sizeof(Point2)/sizeof(Float));
+				reinterpret_cast<float *>(m_texcoords),
+				m_vertexCount, sizeof(Point2)/sizeof(float));
 	} else {
 		m_texcoords = NULL;
 	}
@@ -237,8 +237,8 @@ void TriMesh::loadCompressed(Stream *_stream, int index) {
 	if (flags & EHasColors) {
 		m_colors = new Color3[m_vertexCount];
 		readHelper(stream, fileDoublePrecision,
-				reinterpret_cast<Float *>(m_colors),
-				m_vertexCount, sizeof(Color3)/sizeof(Float));
+				reinterpret_cast<float *>(m_colors),
+				m_vertexCount, sizeof(Color3)/sizeof(float));
 	} else {
 		m_colors = NULL;
 	}
@@ -355,7 +355,7 @@ AABB TriMesh::getAABB() const {
 	return m_aabb;
 }
 
-Float TriMesh::pdfPosition(const PositionSamplingRecord &pRec) const {
+float TriMesh::pdfPosition(const PositionSamplingRecord &pRec) const {
 	return m_invSurfaceArea;
 }
 
@@ -402,7 +402,7 @@ void TriMesh::prepareSamplingTable() {
 	}
 }
 
-Float TriMesh::getSurfaceArea() const {
+float TriMesh::getSurfaceArea() const {
 	if (EXPECT_NOT_TAKEN(m_surfaceArea < 0))
 		const_cast<TriMesh *>(this)->prepareSamplingTable();
 
@@ -465,10 +465,10 @@ struct TopoData {
 };
 
 
-void TriMesh::rebuildTopology(Float maxAngle) {
+void TriMesh::rebuildTopology(float maxAngle) {
 	typedef std::multimap<Vertex, TopoData, vertex_key_order> MMap;
 	typedef std::pair<Vertex, TopoData> MPair;
-	const Float dpThresh = std::cos(degToRad(maxAngle));
+	const float dpThresh = std::cos(degToRad(maxAngle));
 	size_t degenerateTriangles = 0;
 
 	if (m_normals) {
@@ -516,7 +516,7 @@ void TriMesh::rebuildTopology(Float maxAngle) {
 		Point v2 = m_positions[tri.idx[2]];
 
 		Normal n = cross(v1 - v0, v2 - v0);
-		Float l = n.length();
+		float l = n.length();
 		if (l > RCPOVERFLOW_FLT) {
 			n /= l;
 		} else {
@@ -647,19 +647,19 @@ void TriMesh::computeNormals(bool force) {
 					Vector sideA(v1-v0), sideB(v2-v0);
 					if (i==0) {
 						n = cross(sideA, sideB);
-						Float length = n.length();
+						float length = n.length();
 						if (length == 0)
 							break;
 						n /= length;
 					}
-					Float angle = unitAngle(normalize(sideA), normalize(sideB));
+					float angle = unitAngle(normalize(sideA), normalize(sideB));
 					m_normals[tri.idx[i]] += n * angle;
 				}
 			}
 
 			for (size_t i=0; i<m_vertexCount; i++) {
 				Normal &n = m_normals[i];
-				Float length = n.length();
+				float length = n.length();
 				if (m_flipNormals)
 					length *= -1;
 				if (length != 0) {
@@ -716,19 +716,19 @@ void TriMesh::computeUVTangents() {
 		Vector dP1 = v1 - v0, dP2 = v2 - v0;
 		Vector2 dUV1 = uv1 - uv0, dUV2 = uv2 - uv0;
 		Normal n = Normal(cross(dP1, dP2));
-		Float length = n.length();
+		float length = n.length();
 		if (length == 0) {
 			// ++degenerate;
 			continue;
 		}
 
-		Float determinant = dUV1.x * dUV2.y - dUV1.y * dUV2.x;
+		float determinant = dUV1.x * dUV2.y - dUV1.y * dUV2.x;
 		if (determinant == 0) {
 			/* The user-specified parameterization is degenerate. Pick
 			   arbitrary tangents that are perpendicular to the geometric normal */
 			coordinateSystem(n/length, m_tangents[i].dpdu, m_tangents[i].dpdv);
 		} else {
-			Float invDet = 1.0f / determinant;
+			float invDet = 1.0f / determinant;
 			m_tangents[i].dpdu = ( dUV2.y * dP1 - dUV1.y * dP2) * invDet;
 			m_tangents[i].dpdv = (-dUV2.x * dP1 + dUV1.x * dP2) * invDet;
 		}
@@ -764,7 +764,7 @@ void TriMesh::getNormalDerivative(const Intersection &its,
 		   overwritten with coordinates of the texture "parameterization". */
 		Vector rel = its.p - p0, du = p1 - p0, dv = p2 - p0;
 
-		Float b1  = dot(du, rel), b2 = dot(dv, rel), /* Normal equations */
+		float b1  = dot(du, rel), b2 = dot(dv, rel), /* Normal equations */
 			  a11 = dot(du, du), a12 = dot(du, dv),
 			  a22 = dot(dv, dv),
 			  det = a11 * a22 - a12 * a12;
@@ -774,7 +774,7 @@ void TriMesh::getNormalDerivative(const Intersection &its,
 			return;
 		}
 
-		Float invDet = 1.0f / det,
+		float invDet = 1.0f / det,
 		      u = ( a22 * b1 - a12 * b2) * invDet,
 		      v = (-a12 * b1 + a11 * b2) * invDet,
 		      w = 1 - u - v;
@@ -792,7 +792,7 @@ void TriMesh::getNormalDerivative(const Intersection &its,
 		*/
 
 		Normal N(u * n1 + v * n2 + w * n0);
-		Float il = 1.0f / N.length(); N *= il;
+		float il = 1.0f / N.length(); N *= il;
 
 		dndu = (n1 - n0) * il; dndu -= N * dot(N, dndu);
 		dndv = (n2 - n0) * il; dndv -= N * dot(N, dndv);
@@ -843,17 +843,17 @@ void TriMesh::serialize(Stream *stream, InstanceManager *manager) const {
 	stream->writeSize(m_vertexCount);
 	stream->writeSize(m_triangleCount);
 
-	stream->writeFloatArray(reinterpret_cast<Float *>(m_positions),
-		m_vertexCount * sizeof(Point)/sizeof(Float));
+	stream->writefloatArray(reinterpret_cast<float *>(m_positions),
+		m_vertexCount * sizeof(Point)/sizeof(float));
 	if (m_normals)
-		stream->writeFloatArray(reinterpret_cast<Float *>(m_normals),
-			m_vertexCount * sizeof(Normal)/sizeof(Float));
+		stream->writefloatArray(reinterpret_cast<float *>(m_normals),
+			m_vertexCount * sizeof(Normal)/sizeof(float));
 	if (m_texcoords)
-		stream->writeFloatArray(reinterpret_cast<Float *>(m_texcoords),
-			m_vertexCount * sizeof(Point2)/sizeof(Float));
+		stream->writefloatArray(reinterpret_cast<float *>(m_texcoords),
+			m_vertexCount * sizeof(Point2)/sizeof(float));
 	if (m_colors)
-		stream->writeFloatArray(reinterpret_cast<Float *>(m_colors),
-			m_vertexCount * sizeof(Color3)/sizeof(Float));
+		stream->writefloatArray(reinterpret_cast<float *>(m_colors),
+			m_vertexCount * sizeof(Color3)/sizeof(float));
 	stream->writeUIntArray(reinterpret_cast<uint32_t *>(m_triangles),
 		m_triangleCount * sizeof(Triangle)/sizeof(uint32_t));
 }
@@ -949,7 +949,7 @@ ref<TriMesh> TriMesh::fromBlender(const std::string &name,
 				Point p2(vertexPtr[face.v[2]].co[0], vertexPtr[face.v[2]].co[1], vertexPtr[face.v[2]].co[2]);
 				Vector side1(p1-p0), side2(p2-p0);
 				Normal faceNormal(cross(side1, side2));
-				Float length = faceNormal.length();
+				float length = faceNormal.length();
 				if (!faceNormal.isZero())
 					faceNormal /= length;
 
@@ -1159,17 +1159,17 @@ void TriMesh::serialize(Stream *_stream) const {
 	stream->writeSize(m_vertexCount);
 	stream->writeSize(m_triangleCount);
 
-	stream->writeFloatArray(reinterpret_cast<Float *>(m_positions),
-		m_vertexCount * sizeof(Point)/sizeof(Float));
+	stream->writefloatArray(reinterpret_cast<float *>(m_positions),
+		m_vertexCount * sizeof(Point)/sizeof(float));
 	if (m_normals)
-		stream->writeFloatArray(reinterpret_cast<Float *>(m_normals),
-			m_vertexCount * sizeof(Normal)/sizeof(Float));
+		stream->writefloatArray(reinterpret_cast<float *>(m_normals),
+			m_vertexCount * sizeof(Normal)/sizeof(float));
 	if (m_texcoords)
-		stream->writeFloatArray(reinterpret_cast<Float *>(m_texcoords),
-			m_vertexCount * sizeof(Point2)/sizeof(Float));
+		stream->writefloatArray(reinterpret_cast<float *>(m_texcoords),
+			m_vertexCount * sizeof(Point2)/sizeof(float));
 	if (m_colors)
-		stream->writeFloatArray(reinterpret_cast<Float *>(m_colors),
-			m_vertexCount * sizeof(Color3)/sizeof(Float));
+		stream->writefloatArray(reinterpret_cast<float *>(m_colors),
+			m_vertexCount * sizeof(Color3)/sizeof(float));
 	stream->writeUIntArray(reinterpret_cast<uint32_t *>(m_triangles),
 		m_triangleCount * sizeof(Triangle)/sizeof(uint32_t));
 }

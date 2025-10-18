@@ -67,7 +67,7 @@ MTS_NAMESPACE_BEGIN
  *     }
  *     \parameter{twoStage}{\Boolean}{Use two-stage MLT?
  *       See below for details. \default{{\footnotesize\code{false}}}}
- *	   \parameter{pLarge}{\Float}{
+ *	   \parameter{pLarge}{\float}{
  *	     Rate at which the implementation tries to replace the current path
  *	     with a completely new one. Usually, there is little need to change
  *	     this. \default{0.3}
@@ -199,7 +199,7 @@ public:
 
 		/* Probability of creating large mutations in the [Kelemen et. al]
 		   MLT variant. The default is 0.3. */
-		m_config.pLarge = props.getFloat("pLarge", 0.3f);
+		m_config.pLarge = props.getfloat("pLarge", 0.3f);
 
 		/* This parameter can be used to specify the samples per pixel used to
 		   render the direct component. Should be a power of two (otherwise, it will
@@ -226,8 +226,8 @@ public:
 				"directSampling", true);
 
 		/* Recommended mutation sizes in primary sample space */
-		m_config.mutationSizeLow  = props.getFloat("mutationSizeLow",  1.0f/1024.0f);
-		m_config.mutationSizeHigh = props.getFloat("mutationSizeHigh", 1.0f/64.0f);
+		m_config.mutationSizeLow  = props.getfloat("mutationSizeLow",  1.0f/1024.0f);
+		m_config.mutationSizeHigh = props.getfloat("mutationSizeHigh", 1.0f/64.0f);
 		Assert(m_config.mutationSizeLow > 0 && m_config.mutationSizeHigh > 0 &&
 		       m_config.mutationSizeLow < 1 && m_config.mutationSizeHigh < 1 &&
 			   m_config.mutationSizeLow < m_config.mutationSizeHigh);

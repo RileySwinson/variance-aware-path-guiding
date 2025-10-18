@@ -42,7 +42,7 @@ MTS_NAMESPACE_BEGIN
  *         power per unit steradian.
  *         \default{1}
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -93,7 +93,7 @@ public:
 		return (pRec.measure == EDiscrete) ? (m_intensity * 4*M_PI) : Spectrum(0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -107,7 +107,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		return (dRec.measure == ESolidAngle) ? INV_FOURPI : 0.0f;
 	}
@@ -120,7 +120,7 @@ public:
 	Spectrum sampleRay(Ray &ray,
 			const Point2 &spatialSample,
 			const Point2 &directionalSample,
-			Float time) const {
+			float time) const {
 		const Transform &trafo = m_worldTransform->eval(time);
 		ray.setTime(time);
 		ray.setOrigin(trafo(Point(0.0f)));
@@ -137,7 +137,7 @@ public:
 		dRec.uv = Point2(0.5f);
 		dRec.d = dRec.p - dRec.ref;
 		dRec.dist = dRec.d.length();
-		Float invDist = 1.0f / dRec.dist;
+		float invDist = 1.0f / dRec.dist;
 		dRec.d *= invDist;
 		dRec.n = Normal(0.0f);
 		dRec.pdf = 1;
@@ -146,7 +146,7 @@ public:
 		return m_intensity * (invDist * invDist);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return dRec.measure == EDiscrete ? 1.0f : 0.0f;
 	}
 

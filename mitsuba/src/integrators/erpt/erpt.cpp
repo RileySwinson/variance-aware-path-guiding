@@ -33,11 +33,11 @@ MTS_NAMESPACE_BEGIN
  *	       \code{2} will lead to single-bounce (direct-only) illumination,
  *	       and so on. \default{\code{-1}}
  *	   }
- *	   \parameter{numChains}{\Float}{
+ *	   \parameter{numChains}{\float}{
  *	       On average, how many Markov Chains should be started per
  *	       pixel? \default{\code{1}}
  *	   }
- *	   \parameter{maxChains}{\Float}{
+ *	   \parameter{maxChains}{\float}{
  *	       How many Markov Chains should be started \emph{at most} (per
  *	       pixel) \default{\code{0}, i.e. this feature is not used}
  *	   }
@@ -60,7 +60,7 @@ MTS_NAMESPACE_BEGIN
  *	     by Veach and Guibas is enabled (i.e. everything except the manifold
  *	     perturbation).
  *	   }
- *	   \parameter{lambda}{\Float}{
+ *	   \parameter{lambda}{\float}{
  *	       Jump size of the manifold perturbation \default{\code{50}}}
  * }
  * \renderings{
@@ -131,7 +131,7 @@ public:
 
 		/* Specifies the number of Markov Chains that, on average, are
 		   started per pixel */
-		m_config.numChains = props.getFloat("numChains", 1.0f);
+		m_config.numChains = props.getfloat("numChains", 1.0f);
 		m_config.maxChains = props.getInteger("maxChains", 0);
 
 		/* Specifies the number of mutations to be performed in each
@@ -163,9 +163,9 @@ public:
 
 		/* Selectively enable/disable the manifold perturbation */
 		m_config.manifoldPerturbation = props.getBoolean("manifoldPerturbation", false);
-		m_config.probFactor = props.getFloat("probFactor", props.getFloat("lambda", 50));
-		m_config.avgAngleChangeSurface = props.getFloat("avgAngleChangeSurface", 0);
-		m_config.avgAngleChangeMedium = props.getFloat("avgAngleChangeMedium", 0);
+		m_config.probFactor = props.getfloat("probFactor", props.getfloat("lambda", 50));
+		m_config.avgAngleChangeSurface = props.getfloat("avgAngleChangeSurface", 0);
+		m_config.avgAngleChangeMedium = props.getfloat("avgAngleChangeMedium", 0);
 
 		if (m_config.maxDepth <= 0 && m_config.maxDepth != -1)
 			Log(EError, "'maxDepth' must be set to -1 (infinite) or a value greater than zero!");

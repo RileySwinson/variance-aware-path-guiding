@@ -58,7 +58,7 @@ public:
 	inline bool isLargeStep() const { return m_largeStep; }
 
 	/// Retrieve the next component value from the current sample
-	virtual Float next1D();
+	virtual float next1D();
 
 	/// Retrieve the next two component values from the current sample
 	virtual Point2 next2D();
@@ -67,9 +67,9 @@ public:
 	virtual std::string toString() const;
 
 	/// 1D mutation routine
-	inline Float mutate(Float value) {
+	inline float mutate(float value) {
 		#if KELEMEN_STYLE_MUTATIONS == 1
-			Float sample = m_random->nextFloat();
+			float sample = m_random->nextfloat();
 			bool add;
 
 			if (sample < 0.5f) {
@@ -80,7 +80,7 @@ public:
 				sample = 2.0f * (sample - 0.5f);
 			}
 
-			Float dv = m_s2 * math::fastexp(sample * m_logRatio);
+			float dv = m_s2 * math::fastexp(sample * m_logRatio);
 			if (add) {
 				value += dv;
 				if (value > 1)
@@ -91,8 +91,8 @@ public:
 					value += 1;
 			}
 		#else
-			Float tmp1 = std::sqrt(-2 * std::log(1-m_random->nextFloat()));
-			Float dv = tmp1 * std::cos(2*M_PI*m_random->nextFloat());
+			float tmp1 = std::sqrt(-2 * std::log(1-m_random->nextfloat()));
+			float dv = tmp1 * std::cos(2*M_PI*m_random->nextfloat());
 			value = modulo(value + 1e-2f * dv, 1.0f);
 		#endif
 
@@ -100,7 +100,7 @@ public:
 	}
 
 	/// Return a primary sample
-	Float primarySample(size_t i);
+	float primarySample(size_t i);
 
 	/// Reset (& start with a large mutation)
 	void reset();
@@ -133,19 +133,19 @@ protected:
 	virtual ~PSSMLTSampler();
 protected:
 	struct SampleStruct {
-		Float value;
+		float value;
 		size_t modify;
 
-		inline SampleStruct(Float value) : value(value), modify(0) { }
+		inline SampleStruct(float value) : value(value), modify(0) { }
 	};
 
 	ref<Random> m_random;
-	Float m_s1, m_s2, m_logRatio;
+	float m_s1, m_s2, m_logRatio;
 	bool m_largeStep;
 	std::vector<std::pair<size_t, SampleStruct> > m_backup;
 	std::vector<SampleStruct> m_u;
 	size_t m_time, m_largeStepTime;
-	Float m_probLargeStep;
+	float m_probLargeStep;
 };
 
 MTS_NAMESPACE_END

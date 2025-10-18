@@ -64,11 +64,11 @@ public:
 	 * \param alpha
 	 *     The surface roughness
 	 */
-	inline MicrofacetDistribution(EType type, Float alpha, bool sampleVisible = true)
+	inline MicrofacetDistribution(EType type, float alpha, bool sampleVisible = true)
 		: m_type(type), m_alphaU(alpha), m_alphaV(alpha), m_sampleVisible(sampleVisible),
 	      m_exponentU(0.0f), m_exponentV(0.0f) {
-		m_alphaU = std::max(m_alphaU, (Float) 1e-4f);
-		m_alphaV = std::max(m_alphaV, (Float) 1e-4f);
+		m_alphaU = std::max(m_alphaU, (float) 1e-4f);
+		m_alphaV = std::max(m_alphaV, (float) 1e-4f);
 		if (m_type == EPhong)
 			computePhongExponent();
 	}
@@ -83,11 +83,11 @@ public:
 	 * \param alphaV
 	 *     The surface roughness in the bitangent direction
 	 */
-	inline MicrofacetDistribution(EType type, Float alphaU, Float alphaV, bool sampleVisible = true)
+	inline MicrofacetDistribution(EType type, float alphaU, float alphaV, bool sampleVisible = true)
 		: m_type(type), m_alphaU(alphaU), m_alphaV(alphaV), m_sampleVisible(sampleVisible),
 	      m_exponentU(0.0f), m_exponentV(0.0f) {
-		m_alphaU = std::max(m_alphaU, (Float) 1e-4f);
-		m_alphaV = std::max(m_alphaV, (Float) 1e-4f);
+		m_alphaU = std::max(m_alphaU, (float) 1e-4f);
+		m_alphaV = std::max(m_alphaV, (float) 1e-4f);
 		if (m_type == EPhong)
 			computePhongExponent();
 	}
@@ -97,7 +97,7 @@ public:
 	 * structure
 	 */
 	MicrofacetDistribution(const Properties &props, EType type = EBeckmann,
-		Float alphaU = 0.1f, Float alphaV = 0.1f, bool sampleVisible = true)
+		float alphaU = 0.1f, float alphaV = 0.1f, bool sampleVisible = true)
 		: m_type(type), m_alphaU(alphaU), m_alphaV(alphaV), m_exponentU(0.0f),
 		  m_exponentV(0.0f) {
 
@@ -115,7 +115,7 @@ public:
 		}
 
 		if (props.hasProperty("alpha")) {
-			m_alphaU = m_alphaV = props.getFloat("alpha");
+			m_alphaU = m_alphaV = props.getfloat("alpha");
 			if (props.hasProperty("alphaU") || props.hasProperty("alphaV"))
 				SLog(EError, "Microfacet model: please specify either 'alpha' or 'alphaU'/'alphaV'.");
 		} else if (props.hasProperty("alphaU") || props.hasProperty("alphaV")) {
@@ -123,8 +123,8 @@ public:
 				SLog(EError, "Microfacet model: both 'alphaU' and 'alphaV' must be specified.");
 			if (props.hasProperty("alpha"))
 				SLog(EError, "Microfacet model: please specify either 'alpha' or 'alphaU'/'alphaV'.");
-			m_alphaU = props.getFloat("alphaU");
-			m_alphaV = props.getFloat("alphaV");
+			m_alphaU = props.getfloat("alphaU");
+			m_alphaV = props.getfloat("alphaV");
 		}
 
 		if (m_alphaU == 0 || m_alphaV == 0) {
@@ -132,8 +132,8 @@ public:
 					"Please use the corresponding smooth reflectance model to get zero roughness.");
 		}
 
-		m_alphaU = std::max(m_alphaU, (Float) 1e-4f);
-		m_alphaV = std::max(m_alphaV, (Float) 1e-4f);
+		m_alphaU = std::max(m_alphaU, (float) 1e-4f);
+		m_alphaV = std::max(m_alphaV, (float) 1e-4f);
 
 		m_sampleVisible = props.getBoolean("sampleVisible", sampleVisible);
 
@@ -148,22 +148,22 @@ public:
 	inline EType getType() const { return m_type; }
 
 	/// Return the roughness (isotropic case)
-	inline Float getAlpha() const { return m_alphaU; }
+	inline float getAlpha() const { return m_alphaU; }
 
 	/// Return the roughness along the tangent direction
-	inline Float getAlphaU() const { return m_alphaU; }
+	inline float getAlphaU() const { return m_alphaU; }
 
 	/// Return the roughness along the bitangent direction
-	inline Float getAlphaV() const { return m_alphaV; }
+	inline float getAlphaV() const { return m_alphaV; }
 
 	/// Return the Phong exponent (isotropic case)
-	inline Float getExponent() const { return m_exponentU; }
+	inline float getExponent() const { return m_exponentU; }
 
 	/// Return the Phong exponent along the tangent direction
-	inline Float getExponentU() const { return m_exponentU; }
+	inline float getExponentU() const { return m_exponentU; }
 
 	/// Return the Phong exponent along the bitangent direction
-	inline Float getExponentV() const { return m_exponentV; }
+	inline float getExponentV() const { return m_exponentV; }
 
 	/// Return whether or not only visible normals are sampled?
 	inline bool getSampleVisible() const { return m_sampleVisible; }
@@ -175,7 +175,7 @@ public:
 	inline bool isIsotropic() const { return m_alphaU == m_alphaV; }
 
 	/// Scale the roughness values by some constant
-	inline void scaleAlpha(Float value) {
+	inline void scaleAlpha(float value) {
 		m_alphaU *= value;
 		m_alphaV *= value;
 		if (m_type == EPhong)
@@ -188,15 +188,15 @@ public:
 	 * \param m
 	 *     The microfacet normal
 	 */
-	inline Float eval(const Vector &m) const {
+	inline float eval(const Vector &m) const {
 		if (Frame::cosTheta(m) <= 0)
 			return 0.0f;
 
-		Float cosTheta2 = Frame::cosTheta2(m);
-		Float beckmannExponent = ((m.x*m.x) / (m_alphaU * m_alphaU)
+		float cosTheta2 = Frame::cosTheta2(m);
+		float beckmannExponent = ((m.x*m.x) / (m_alphaU * m_alphaU)
 				+ (m.y*m.y) / (m_alphaV * m_alphaV)) / cosTheta2;
 
-		Float result;
+		float result;
 		switch (m_type) {
 			case EBeckmann: {
 					/* Beckmann distribution function for Gaussian random surfaces - [Walter 2005] evaluation */
@@ -207,14 +207,14 @@ public:
 
 			case EGGX: {
 					/* GGX / Trowbridge-Reitz distribution function for rough surfaces */
-					Float root = ((Float) 1 + beckmannExponent) * cosTheta2;
-					result = (Float) 1 / (M_PI * m_alphaU * m_alphaV * root * root);
+					float root = ((float) 1 + beckmannExponent) * cosTheta2;
+					result = (float) 1 / (M_PI * m_alphaU * m_alphaV * root * root);
 				}
 				break;
 
 			case EPhong: {
 					/* Isotropic case: Phong distribution. Anisotropic case: Ashikhmin-Shirley distribution */
-					Float exponent = interpolatePhongExponent(m);
+					float exponent = interpolatePhongExponent(m);
 					result = std::sqrt((m_exponentU + 2) * (m_exponentV + 2))
 						* INV_TWOPI * std::pow(Frame::cosTheta(m), exponent);
 				}
@@ -237,7 +237,7 @@ public:
 	 * \brief Wrapper function which calls \ref sampleAll() or \ref sampleVisible()
 	 * depending on the parameters of this class
 	 */
-	inline Normal sample(const Vector &wi, const Point2 &sample, Float &pdf) const {
+	inline Normal sample(const Vector &wi, const Point2 &sample, float &pdf) const {
 		Normal m;
 		if (m_sampleVisible) {
 			m = sampleVisible(wi, sample);
@@ -257,7 +257,7 @@ public:
 		if (m_sampleVisible) {
 			m = sampleVisible(wi, sample);
 		} else {
-			Float pdf;
+			float pdf;
 			m = sampleAll(sample, pdf);
 		}
 		return m;
@@ -267,7 +267,7 @@ public:
 	 * \brief Wrapper function which calls \ref pdfAll() or \ref pdfVisible()
 	 * depending on the parameters of this class
 	 */
-	inline Float pdf(const Vector &wi, const Vector &m) const {
+	inline float pdf(const Vector &wi, const Vector &m) const {
 		if (m_sampleVisible)
 			return pdfVisible(wi, m);
 		else
@@ -284,12 +284,12 @@ public:
 	 * \param pdf
 	 *    The probability density wrt. solid angles
 	 */
-	inline Normal sampleAll(const Point2 &sample, Float &pdf) const {
+	inline Normal sampleAll(const Point2 &sample, float &pdf) const {
 		/* The azimuthal component is always selected
 		   uniformly regardless of the distribution */
-		Float cosThetaM = 0.0f;
-		Float sinPhiM, cosPhiM;
-		Float alphaSqr;
+		float cosThetaM = 0.0f;
+		float sinPhiM, cosPhiM;
+		float alphaSqr;
 
 		switch (m_type) {
 			case EBeckmann: {
@@ -301,16 +301,16 @@ public:
 						alphaSqr = m_alphaU * m_alphaU;
 					} else {
 						/* Sample phi component (anisotropic case) */
-						Float phiM = std::atan(m_alphaV / m_alphaU *
+						float phiM = std::atan(m_alphaV / m_alphaU *
 							std::tan(M_PI + 2*M_PI*sample.y)) + M_PI * std::floor(2*sample.y + 0.5f);
 						math::sincos(phiM, &sinPhiM, &cosPhiM);
 
-						Float cosSc = cosPhiM / m_alphaU, sinSc = sinPhiM / m_alphaV;
+						float cosSc = cosPhiM / m_alphaU, sinSc = sinPhiM / m_alphaV;
 						alphaSqr = 1.0f / (cosSc*cosSc + sinSc*sinSc);
 					}
 
 					/* Sample theta component */
-					Float tanThetaMSqr = alphaSqr * -math::fastlog(1.0f - sample.x);
+					float tanThetaMSqr = alphaSqr * -math::fastlog(1.0f - sample.x);
 					cosThetaM = 1.0f / std::sqrt(1.0f + tanThetaMSqr);
 
 					/* Compute probability density of the sampled position */
@@ -328,27 +328,27 @@ public:
 						alphaSqr = m_alphaU*m_alphaU;
 					} else {
 						/* Sample phi component (anisotropic case) */
-						Float phiM = std::atan(m_alphaV / m_alphaU *
+						float phiM = std::atan(m_alphaV / m_alphaU *
 							std::tan(M_PI + 2*M_PI*sample.y)) + M_PI * std::floor(2*sample.y + 0.5f);
 						math::sincos(phiM, &sinPhiM, &cosPhiM);
 
-						Float cosSc = cosPhiM / m_alphaU, sinSc = sinPhiM / m_alphaV;
+						float cosSc = cosPhiM / m_alphaU, sinSc = sinPhiM / m_alphaV;
 						alphaSqr = 1.0f / (cosSc*cosSc + sinSc*sinSc);
 					}
 
 					/* Sample theta component */
-					Float tanThetaMSqr = alphaSqr * sample.x / (1.0f - sample.x);
+					float tanThetaMSqr = alphaSqr * sample.x / (1.0f - sample.x);
 					cosThetaM = 1.0f / std::sqrt(1.0f + tanThetaMSqr);
 
 					/* Compute probability density of the sampled position */
-					Float temp = 1+tanThetaMSqr/alphaSqr;
+					float temp = 1+tanThetaMSqr/alphaSqr;
 					pdf = INV_PI / (m_alphaU*m_alphaV*cosThetaM*cosThetaM*cosThetaM*temp*temp);
 				}
 				break;
 
 			case EPhong: {
-					Float phiM;
-					Float exponent;
+					float phiM;
+					float exponent;
 					if (isIsotropic()) {
 						phiM = (2.0f * M_PI) * sample.y;
 						exponent = m_exponentU;
@@ -384,8 +384,8 @@ public:
 		if (pdf < 1e-20f)
 			pdf = 0;
 
-		Float sinThetaM = std::sqrt(
-			std::max((Float) 0, 1 - cosThetaM*cosThetaM));
+		float sinThetaM = std::sqrt(
+			std::max((float) 0, 1 - cosThetaM*cosThetaM));
 
 		return Vector(
 			sinThetaM * cosPhiM,
@@ -401,7 +401,7 @@ public:
 	 * \param m
 	 *     The microfacet normal
 	 */
-	inline Float pdfAll(const Vector &m) const {
+	inline float pdfAll(const Vector &m) const {
 		/* PDF is just D(m) * cos(theta_M) */
 		return eval(m) * Frame::cosTheta(m);
 	}
@@ -427,12 +427,12 @@ public:
 		));
 
 		/* Get polar coordinates */
-		Float theta = 0, phi = 0;
-		if (wi.z < (Float) 0.99999) {
+		float theta = 0, phi = 0;
+		if (wi.z < (float) 0.99999) {
 			theta = std::acos(wi.z);
 			phi = std::atan2(wi.y, wi.x);
 		}
-		Float sinPhi, cosPhi;
+		float sinPhi, cosPhi;
 		math::sincos(phi, &sinPhi, &cosPhi);
 
 		/* Step 2: simulate P22_{wi}(slope.x, slope.y, 1, 1) */
@@ -448,8 +448,8 @@ public:
 		slope.y *= m_alphaV;
 
 		/* Step 5: compute normal */
-		Float normalization = (Float) 1 / std::sqrt(slope.x*slope.x
-				+ slope.y*slope.y + (Float) 1.0);
+		float normalization = (float) 1 / std::sqrt(slope.x*slope.x
+				+ slope.y*slope.y + (float) 1.0);
 
 		return Normal(
 			-slope.x * normalization,
@@ -459,7 +459,7 @@ public:
 	}
 
 	/// Implements the probability density of the function \ref sampleVisible()
-	Float pdfVisible(const Vector &wi, const Vector &m) const {
+	float pdfVisible(const Vector &wi, const Vector &m) const {
 		if(Frame::cosTheta(wi) == 0)
 			return 0.0f;
 		return smithG1(wi, m) * absDot(wi, m) * eval(m) / std::abs(Frame::cosTheta(wi));
@@ -474,36 +474,36 @@ public:
 	 * \param m
 	 *     The microfacet normal
 	 */
-	Float smithG1(const Vector &v, const Vector &m) const {
+	float smithG1(const Vector &v, const Vector &m) const {
 		/* Ensure consistent orientation (can't see the back
 		   of the microfacet from the front and vice versa) */
 		if (dot(v, m) * Frame::cosTheta(v) <= 0)
 			return 0.0f;
 
 		/* Perpendicular incidence -- no shadowing/masking */
-		Float tanTheta = std::abs(Frame::tanTheta(v));
+		float tanTheta = std::abs(Frame::tanTheta(v));
 		if (tanTheta == 0.0f)
 			return 1.0f;
 
-		Float alpha = projectRoughness(v);
+		float alpha = projectRoughness(v);
 		switch (m_type) {
 			case EPhong:
 			case EBeckmann: {
-					Float a = 1.0f / (alpha * tanTheta);
+					float a = 1.0f / (alpha * tanTheta);
 					if (a >= 1.6f)
 						return 1.0f;
 
 					/* Use a fast and accurate (<0.35% rel. error) rational
 					   approximation to the shadowing-masking function */
-					Float aSqr = a*a;
+					float aSqr = a*a;
 					return (3.535f * a + 2.181f * aSqr)
 						 / (1.0f + 2.276f * a + 2.577f * aSqr);
 				}
 				break;
 
 			case EGGX: {
-					Float root = alpha * tanTheta;
-					return 2.0f / (1.0f + math::hypot2((Float) 1.0f, root));
+					float root = alpha * tanTheta;
+					return 2.0f / (1.0f + math::hypot2((float) 1.0f, root));
 				}
 				break;
 
@@ -517,7 +517,7 @@ public:
 	 * \brief Separable shadow-masking function based on Smith's
 	 * one-dimensional masking model
 	 */
-	inline Float G(const Vector &wi, const Vector &wo, const Vector &m) const {
+	inline float G(const Vector &wi, const Vector &wo, const Vector &m) const {
 		return smithG1(wi, m) * smithG1(wo, m);
 	}
 
@@ -538,28 +538,28 @@ public:
 	}
 protected:
 	/// Compute the effective roughness projected on direction \c v
-	inline Float projectRoughness(const Vector &v) const {
-		Float invSinTheta2 = 1 / Frame::sinTheta2(v);
+	inline float projectRoughness(const Vector &v) const {
+		float invSinTheta2 = 1 / Frame::sinTheta2(v);
 
 		if (isIsotropic() || invSinTheta2 <= 0)
 			return m_alphaU;
 
-		Float cosPhi2 = v.x * v.x * invSinTheta2;
-		Float sinPhi2 = v.y * v.y * invSinTheta2;
+		float cosPhi2 = v.x * v.x * invSinTheta2;
+		float sinPhi2 = v.y * v.y * invSinTheta2;
 
 		return std::sqrt(cosPhi2 * m_alphaU * m_alphaU + sinPhi2 * m_alphaV * m_alphaV);
 	}
 
 	/// Compute the interpolated roughness for the Phong model
-	inline Float interpolatePhongExponent(const Vector &v) const {
-		const Float sinTheta2 = Frame::sinTheta2(v);
+	inline float interpolatePhongExponent(const Vector &v) const {
+		const float sinTheta2 = Frame::sinTheta2(v);
 
 		if (isIsotropic() || sinTheta2 <= RCPOVERFLOW)
 			return m_exponentU;
 
-		Float invSinTheta2 = 1 / sinTheta2;
-		Float cosPhi2 = v.x * v.x * invSinTheta2;
-		Float sinPhi2 = v.y * v.y * invSinTheta2;
+		float invSinTheta2 = 1 / sinTheta2;
+		float cosPhi2 = v.x * v.x * invSinTheta2;
+		float sinPhi2 = v.y * v.y * invSinTheta2;
 
 		return m_exponentU * cosPhi2 + m_exponentV * sinPhi2;
 	}
@@ -570,16 +570,16 @@ protected:
 	 * Source: supplemental material of "Importance Sampling
 	 * Microfacet-Based BSDFs using the Distribution of Visible Normals"
 	 */
-	Vector2 sampleVisible11(Float thetaI, Point2 sample) const {
-		const Float SQRT_PI_INV = 1 / std::sqrt(M_PI);
+	Vector2 sampleVisible11(float thetaI, Point2 sample) const {
+		const float SQRT_PI_INV = 1 / std::sqrt(M_PI);
 		Vector2 slope;
 
 		switch (m_type) {
 			case EBeckmann: {
 					/* Special case (normal incidence) */
 					if (thetaI < 1e-4f) {
-						Float sinPhi, cosPhi;
-						Float r = std::sqrt(-math::fastlog(1.0f-sample.x));
+						float sinPhi, cosPhi;
+						float r = std::sqrt(-math::fastlog(1.0f-sample.x));
 						math::sincos(2 * M_PI * sample.y, &sinPhi, &cosPhi);
 						return Vector2(r * cosPhi, r * sinPhi);
 					}
@@ -588,23 +588,23 @@ protected:
 					   discontinuities, which causes issues for QMC integration
 					   and techniques like Kelemen-style MLT. The following code
 					   performs a numerical inversion with better behavior */
-					Float tanThetaI = std::tan(thetaI);
-					Float cotThetaI = 1 / tanThetaI;
+					float tanThetaI = std::tan(thetaI);
+					float cotThetaI = 1 / tanThetaI;
 
 					/* Search interval -- everything is parameterized
 					   in the erf() domain */
-					Float a = -1, c = math::erf(cotThetaI);
-					Float sample_x = std::max(sample.x, (Float) 1e-6f);
+					float a = -1, c = math::erf(cotThetaI);
+					float sample_x = std::max(sample.x, (float) 1e-6f);
 
 					/* Start with a good initial guess */
-					//Float b = (1-sample_x) * a + sample_x * c;
+					//float b = (1-sample_x) * a + sample_x * c;
 
 					/* We can do better (inverse of an approximation computed in Mathematica) */
-					Float fit = 1 + thetaI*(-0.876f + thetaI * (0.4265f - 0.0594f*thetaI));
-					Float b = c - (1+c) * std::pow(1-sample_x, fit);
+					float fit = 1 + thetaI*(-0.876f + thetaI * (0.4265f - 0.0594f*thetaI));
+					float b = c - (1+c) * std::pow(1-sample_x, fit);
 
 					/* Normalization factor for the CDF */
-					Float normalization = 1 / (1 + c + SQRT_PI_INV*
+					float normalization = 1 / (1 + c + SQRT_PI_INV*
 						tanThetaI*std::exp(-cotThetaI*cotThetaI));
 
 					int it = 0;
@@ -617,10 +617,10 @@ protected:
 
 						/* Evaluate the CDF and its derivative
 						   (i.e. the density function) */
-						Float invErf = math::erfinv(b);
-						Float value = normalization*(1 + b + SQRT_PI_INV*
+						float invErf = math::erfinv(b);
+						float value = normalization*(1 + b + SQRT_PI_INV*
 							tanThetaI*std::exp(-invErf*invErf)) - sample_x;
-						Float derivative = normalization * (1
+						float derivative = normalization * (1
 							- invErf*tanThetaI);
 
 						if (std::abs(value) < 1e-5f)
@@ -639,37 +639,37 @@ protected:
 					slope.x = math::erfinv(b);
 
 					/* Simulate Y component */
-					slope.y = math::erfinv(2.0f*std::max(sample.y, (Float) 1e-6f) - 1.0f);
+					slope.y = math::erfinv(2.0f*std::max(sample.y, (float) 1e-6f) - 1.0f);
 				};
 				break;
 
 			case EGGX: {
 					/* Special case (normal incidence) */
 					if (thetaI < 1e-4f) {
-						Float sinPhi, cosPhi;
-						Float r = math::safe_sqrt(sample.x / (1 - sample.x));
+						float sinPhi, cosPhi;
+						float r = math::safe_sqrt(sample.x / (1 - sample.x));
 						math::sincos(2 * M_PI * sample.y, &sinPhi, &cosPhi);
 						return Vector2(r * cosPhi, r * sinPhi);
 					}
 
 					/* Precomputations */
-					Float tanThetaI = std::tan(thetaI);
-					Float a = 1 / tanThetaI;
-					Float G1 = 2.0f / (1.0f + math::safe_sqrt(1.0f + 1.0f / (a*a)));
+					float tanThetaI = std::tan(thetaI);
+					float a = 1 / tanThetaI;
+					float G1 = 2.0f / (1.0f + math::safe_sqrt(1.0f + 1.0f / (a*a)));
 
 					/* Simulate X component */
-					Float A = 2.0f * sample.x / G1 - 1.0f;
+					float A = 2.0f * sample.x / G1 - 1.0f;
 					if (std::abs(A) == 1)
 						A -= math::signum(A)*Epsilon;
-					Float tmp = 1.0f / (A*A - 1.0f);
-					Float B = tanThetaI;
-					Float D = math::safe_sqrt(B*B*tmp*tmp - (A*A - B*B) * tmp);
-					Float slope_x_1 = B * tmp - D;
-					Float slope_x_2 = B * tmp + D;
+					float tmp = 1.0f / (A*A - 1.0f);
+					float B = tanThetaI;
+					float D = math::safe_sqrt(B*B*tmp*tmp - (A*A - B*B) * tmp);
+					float slope_x_1 = B * tmp - D;
+					float slope_x_2 = B * tmp + D;
 					slope.x = (A < 0.0f || slope_x_2 > 1.0f / tanThetaI) ? slope_x_1 : slope_x_2;
 
 					/* Simulate Y component */
-					Float S;
+					float S;
 					if (sample.y > 0.5f) {
 						S = 1.0f;
 						sample.y = 2.0f * (sample.y - 0.5f);
@@ -679,11 +679,11 @@ protected:
 					}
 
 					/* Improved fit */
-					Float z =
-						(sample.y * (sample.y * (sample.y * (-(Float) 0.365728915865723) + (Float) 0.790235037209296) -
-							(Float) 0.424965825137544) + (Float) 0.000152998850436920) /
-						(sample.y * (sample.y * (sample.y * (sample.y * (Float) 0.169507819808272 - (Float) 0.397203533833404) -
-							(Float) 0.232500544458471) + (Float) 1) - (Float) 0.539825872510702);
+					float z =
+						(sample.y * (sample.y * (sample.y * (-(float) 0.365728915865723) + (float) 0.790235037209296) -
+							(float) 0.424965825137544) + (float) 0.000152998850436920) /
+						(sample.y * (sample.y * (sample.y * (sample.y * (float) 0.169507819808272 - (float) 0.397203533833404) -
+							(float) 0.232500544458471) + (float) 1) - (float) 0.539825872510702);
 
 					slope.y = S * z * std::sqrt(1.0f + slope.x*slope.x);
 				};
@@ -699,13 +699,13 @@ protected:
 
 	/// Helper routine: convert from Beckmann-style roughness values to Phong exponents (Walter et al.)
 	void computePhongExponent() {
-		m_exponentU = std::max(2.0f / (m_alphaU * m_alphaU) - 2.0f, (Float) 0.0f);
-		m_exponentV = std::max(2.0f / (m_alphaV * m_alphaV) - 2.0f, (Float) 0.0f);
+		m_exponentU = std::max(2.0f / (m_alphaU * m_alphaU) - 2.0f, (float) 0.0f);
+		m_exponentV = std::max(2.0f / (m_alphaV * m_alphaV) - 2.0f, (float) 0.0f);
 	}
 
 	/// Helper routine: sample the azimuthal part of the first quadrant of the A&S distribution
-	void sampleFirstQuadrant(Float u1, Float &phi, Float &exponent) const {
-		Float cosPhi, sinPhi;
+	void sampleFirstQuadrant(float u1, float &phi, float &exponent) const {
+		float cosPhi, sinPhi;
 		phi = std::atan(
 				std::sqrt((m_exponentU + 2.0f) / (m_exponentV + 2.0f)) *
 				std::tan(M_PI * u1 * 0.5f));
@@ -715,9 +715,9 @@ protected:
 	}
 protected:
 	EType m_type;
-	Float m_alphaU, m_alphaV;
+	float m_alphaU, m_alphaV;
 	bool m_sampleVisible;
-	Float m_exponentU, m_exponentV;
+	float m_exponentU, m_exponentV;
 };
 
 MTS_NAMESPACE_END

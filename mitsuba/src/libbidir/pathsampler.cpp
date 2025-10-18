@@ -66,7 +66,7 @@ void PathSampler::sampleSplats(const Point2i &offset, SplatList &list) {
 	switch (m_technique) {
 		case EBidirectional: {
 				/* Uniformly sample a scene time */
-				Float time = sensor->getShutterOpen();
+				float time = sensor->getShutterOpen();
 				if (sensor->needsTimeSample())
 					time = sensor->sampleTime(m_sensorSampler->next1D());
 
@@ -274,7 +274,7 @@ void PathSampler::sampleSplats(const Point2i &offset, SplatList &list) {
 
 		case EUnidirectional: {
 				Point2 apertureSample(0.5f);
-				Float timeSample = 0.5f;
+				float timeSample = 0.5f;
 
 				if (sensor->needsApertureSample())
 					apertureSample = m_sensorSampler->next2D();
@@ -316,7 +316,7 @@ void PathSampler::samplePaths(const Point2i &offset, PathCallback &callback) {
 
 	const Sensor *sensor = m_scene->getSensor();
 	/* Uniformly sample a scene time */
-	Float time = sensor->getShutterOpen();
+	float time = sensor->getShutterOpen();
 	if (sensor->needsTimeSample())
 		time = sensor->sampleTime(m_sensorSampler->next1D());
 
@@ -547,27 +547,27 @@ struct PathSeedSortPredicate {
 	}
 };
 
-Float PathSampler::computeAverageLuminance(size_t sampleCount) {
+float PathSampler::computeAverageLuminance(size_t sampleCount) {
 	Log(EInfo, "Integrating luminance values over the image plane ("
 			SIZE_T_FMT " samples)..", sampleCount);
 
 	ref<Timer> timer = new Timer();
 
 	SplatList splatList;
-	Float mean = 0.0f, variance = 0.0f;
+	float mean = 0.0f, variance = 0.0f;
 	for (size_t i=0; i<sampleCount; ++i) {
 		/* Run the path sampling strategy */
 		m_sensorSampler->generate(Point2i(0));
 		sampleSplats(Point2i(-1), splatList);
 
-		Float lum = splatList.luminance,
+		float lum = splatList.luminance,
 		      delta = lum - mean;
-		mean += delta / (Float) (i+1);
+		mean += delta / (float) (i+1);
 		variance += delta * (lum - mean);
 	}
 
 	BDAssert(m_pool.unused());
-	Float stddev = std::sqrt(variance / (sampleCount-1));
+	float stddev = std::sqrt(variance / (sampleCount-1));
 
 	Log(EInfo, "Done -- average luminance value = %f, stddev = %f (took %i ms)",
 			mean, stddev, timer->getMilliseconds());
@@ -580,11 +580,11 @@ Float PathSampler::computeAverageLuminance(size_t sampleCount) {
 }
 
 static void seedCallback(std::vector<PathSeed> &output, const Bitmap *importanceMap,
-		Float &accum, int s, int t, Float weight, Path &path) {
+		float &accum, int s, int t, float weight, Path &path) {
 	accum += weight;
 
 	if (importanceMap) {
-		const Float *luminanceValues = importanceMap->getFloatData();
+		const float *luminanceValues = importanceMap->getfloatData();
 		Vector2i size = importanceMap->getSize();
 
 		const Point2 &pos = path.getSamplePosition();
@@ -597,7 +597,7 @@ static void seedCallback(std::vector<PathSeed> &output, const Bitmap *importance
 	output.push_back(PathSeed(0, weight, s, t));
 }
 
-Float PathSampler::generateSeeds(size_t sampleCount, size_t seedCount,
+float PathSampler::generateSeeds(size_t sampleCount, size_t seedCount,
 		bool fineGrained, const Bitmap *importanceMap, std::vector<PathSeed> &seeds) {
 	Log(EInfo, "Integrating luminance values over the image plane ("
 			SIZE_T_FMT " samples)..", sampleCount);
@@ -610,12 +610,12 @@ Float PathSampler::generateSeeds(size_t sampleCount, size_t seedCount,
 	tempSeeds.reserve(sampleCount);
 
 	SplatList splatList;
-	Float luminance;
+	float luminance;
 	PathCallback callback = boost::bind(&seedCallback,
 		boost::ref(tempSeeds), importanceMap, boost::ref(luminance),
 		_1, _2, _3, _4);
 
-	Float mean = 0.0f, variance = 0.0f;
+	float mean = 0.0f, variance = 0.0f;
 	for (size_t i=0; i<sampleCount; ++i) {
 		size_t seedIndex = tempSeeds.size();
 		size_t sampleIndex = m_sensorSampler->getSampleIndex();
@@ -641,12 +641,12 @@ Float PathSampler::generateSeeds(size_t sampleCount, size_t seedCount,
 
 		/* Numerically robust online variance estimation using an
 		   algorithm proposed by Donald Knuth (TAOCP vol.2, 3rd ed., p.232) */
-		Float delta = luminance - mean;
-		mean += delta / (Float) (i+1);
+		float delta = luminance - mean;
+		mean += delta / (float) (i+1);
 		variance += delta * (luminance - mean);
 	}
 	BDAssert(m_pool.unused());
-	Float stddev = std::sqrt(variance / (sampleCount-1));
+	float stddev = std::sqrt(variance / (sampleCount-1));
 
 	Log(EInfo, "Done -- average luminance value = %f, stddev = %f (took %i ms)",
 			mean, stddev, timer->getMilliseconds());
@@ -675,10 +675,10 @@ Float PathSampler::generateSeeds(size_t sampleCount, size_t seedCount,
 }
 
 static void reconstructCallback(const PathSeed &seed, const Bitmap *importanceMap,
-		Path &result, MemoryPool &pool, int s, int t, Float weight, Path &path) {
+		Path &result, MemoryPool &pool, int s, int t, float weight, Path &path) {
 	if (s == seed.s && t == seed.t) {
 		if (importanceMap) {
-			const Float *luminanceValues = importanceMap->getFloatData();
+			const float *luminanceValues = importanceMap->getfloatData();
 			Vector2i size = importanceMap->getSize();
 
 			const Point2 &pos = path.getSamplePosition();
@@ -718,7 +718,7 @@ void SplatList::normalize(const Bitmap *importanceMap) {
 		luminance = 0.0f;
 
 		/* Two-stage MLT -- weight contributions using a luminance image */
-		const Float *luminanceValues = importanceMap->getFloatData();
+		const float *luminanceValues = importanceMap->getfloatData();
 		Vector2i size = importanceMap->getSize();
 		for (size_t i=0; i<splats.size(); ++i) {
 			if (splats[i].second.isZero())
@@ -728,7 +728,7 @@ void SplatList::normalize(const Bitmap *importanceMap) {
 			Point2i intPos(
 				std::min(std::max(0, (int) pos.x), size.x-1),
 				std::min(std::max(0, (int) pos.y), size.y-1));
-			Float lumValue = luminanceValues[intPos.x + intPos.y * size.x];
+			float lumValue = luminanceValues[intPos.x + intPos.y * size.x];
 			splats[i].second /= lumValue;
 			luminance += splats[i].second.getLuminance();
 		}
@@ -736,7 +736,7 @@ void SplatList::normalize(const Bitmap *importanceMap) {
 
 	if (luminance > 0) {
 		/* Normalize the contributions */
-		Float invLuminance = 1.0f / luminance;
+		float invLuminance = 1.0f / luminance;
 		for (size_t i=0; i<splats.size(); ++i)
 			splats[i].second *= invLuminance;
 	}

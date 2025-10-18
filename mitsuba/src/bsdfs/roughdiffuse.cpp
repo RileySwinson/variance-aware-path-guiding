@@ -94,7 +94,7 @@ public:
 				: "diffuseReflectance", Spectrum(0.5f)));
 
 		m_useFastApprox = props.getBoolean("useFastApprox", false);
-		m_alpha = new ConstantFloatTexture(props.getFloat("alpha", 0.2f));
+		m_alpha = new ConstantfloatTexture(props.getfloat("alpha", 0.2f));
 	}
 
 	RoughDiffuse(Stream *stream, InstanceManager *manager)
@@ -136,20 +136,20 @@ public:
 		   of 1/sqrt(2) was found to be a perfect fit up
 		   to extreme roughness values (>.5), after which
 		   the match is not as good anymore */
-		const Float conversionFactor = 1 / std::sqrt((Float) 2);
+		const float conversionFactor = 1 / std::sqrt((float) 2);
 
-		Float sigma = m_alpha->eval(bRec.its).average()
+		float sigma = m_alpha->eval(bRec.its).average()
 			* conversionFactor;
 
-		const Float sigma2 = sigma*sigma;
+		const float sigma2 = sigma*sigma;
 
-		Float sinThetaI = Frame::sinTheta(bRec.wi),
+		float sinThetaI = Frame::sinTheta(bRec.wi),
 			  sinThetaO = Frame::sinTheta(bRec.wo);
 
-		Float cosPhiDiff = 0;
+		float cosPhiDiff = 0;
 		if (sinThetaI > Epsilon && sinThetaO > Epsilon) {
 			/* Compute cos(phiO-phiI) using the half-angle formulae */
-			Float sinPhiI = Frame::sinPhi(bRec.wi),
+			float sinPhiI = Frame::sinPhi(bRec.wi),
 				  cosPhiI = Frame::cosPhi(bRec.wi),
 				  sinPhiO = Frame::sinPhi(bRec.wo),
 				  cosPhiO = Frame::cosPhi(bRec.wo);
@@ -157,7 +157,7 @@ public:
 		}
 
 		if (m_useFastApprox) {
-			Float A = 1.0f - 0.5f * sigma2 / (sigma2 + 0.33f),
+			float A = 1.0f - 0.5f * sigma2 / (sigma2 + 0.33f),
 				  B = 0.45f * sigma2 / (sigma2 + 0.09f),
 				  sinAlpha, tanBeta;
 
@@ -171,16 +171,16 @@ public:
 
 			return m_reflectance->eval(bRec.its)
 				* (INV_PI * Frame::cosTheta(bRec.wo) * (A + B
-				* std::max(cosPhiDiff, (Float) 0.0f) * sinAlpha * tanBeta));
+				* std::max(cosPhiDiff, (float) 0.0f) * sinAlpha * tanBeta));
 		} else {
-			Float sinThetaI = Frame::sinTheta(bRec.wi),
+			float sinThetaI = Frame::sinTheta(bRec.wi),
 				  sinThetaO = Frame::sinTheta(bRec.wo),
 				  thetaI = math::safe_acos(Frame::cosTheta(bRec.wi)),
 				  thetaO = math::safe_acos(Frame::cosTheta(bRec.wo)),
 				  alpha = std::max(thetaI, thetaO),
 				  beta = std::min(thetaI, thetaO);
 
-			Float sinAlpha, sinBeta, tanBeta;
+			float sinAlpha, sinBeta, tanBeta;
 			if (Frame::cosTheta(bRec.wi) > Frame::cosTheta(bRec.wo)) {
 				sinAlpha = sinThetaO; sinBeta = sinThetaI;
 				tanBeta = sinThetaI / Frame::cosTheta(bRec.wi);
@@ -189,11 +189,11 @@ public:
 				tanBeta = sinThetaO / Frame::cosTheta(bRec.wo);
 			}
 
-			Float tmp = sigma2 / (sigma2 + 0.09f),
+			float tmp = sigma2 / (sigma2 + 0.09f),
 				  tmp2 = (4*INV_PI*INV_PI) * alpha * beta,
 				  tmp3 = 2*beta*INV_PI;
 
-			Float C1 = 1.0f - 0.5f * sigma2 / (sigma2 + 0.33f),
+			float C1 = 1.0f - 0.5f * sigma2 / (sigma2 + 0.33f),
 				  C2 = 0.45f * tmp,
 				  C3 = 0.125f * tmp * tmp2 * tmp2,
 				  C4 = 0.17f * sigma2 / (sigma2 + 0.13f);
@@ -204,7 +204,7 @@ public:
 				C2 *= sinAlpha - tmp3*tmp3*tmp3;
 
 			/* Compute tan(0.5 * (alpha+beta)) using the half-angle formulae */
-			Float tanHalf = (sinAlpha + sinBeta) / (
+			float tanHalf = (sinAlpha + sinBeta) / (
 					math::safe_sqrt(1.0f - sinAlpha * sinAlpha) +
 					math::safe_sqrt(1.0f - sinBeta  * sinBeta));
 
@@ -217,7 +217,7 @@ public:
 		}
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		if (!(bRec.typeMask & EGlossyReflection) || measure != ESolidAngle
 			|| Frame::cosTheta(bRec.wi) <= 0
 			|| Frame::cosTheta(bRec.wo) <= 0)
@@ -238,7 +238,7 @@ public:
 			warp::squareToCosineHemispherePdf(bRec.wo);
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		if (!(bRec.typeMask & EGlossyReflection) || Frame::cosTheta(bRec.wi) <= 0)
 			return Spectrum(0.0f);
 
@@ -271,8 +271,8 @@ public:
 		stream->writeBool(m_useFastApprox);
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
-		return std::numeric_limits<Float>::infinity();
+	float getRoughness(const Intersection &its, int component) const {
+		return std::numeric_limits<float>::infinity();
 	}
 
 	std::string toString() const {

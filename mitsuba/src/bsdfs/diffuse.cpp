@@ -117,7 +117,7 @@ public:
 			* (INV_PI * Frame::cosTheta(bRec.wo));
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		if (!(bRec.typeMask & EDiffuseReflection) || measure != ESolidAngle
 			|| Frame::cosTheta(bRec.wi) <= 0
 			|| Frame::cosTheta(bRec.wo) <= 0)
@@ -137,7 +137,7 @@ public:
 		return m_reflectance->eval(bRec.its);
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		if (!(bRec.typeMask & EDiffuseReflection) || Frame::cosTheta(bRec.wi) <= 0)
 			return Spectrum(0.0f);
 
@@ -164,8 +164,8 @@ public:
 		manager->serialize(stream, m_reflectance.get());
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
-		return std::numeric_limits<Float>::infinity();
+	float getRoughness(const Intersection &its, int component) const {
+		return std::numeric_limits<float>::infinity();
 	}
 
 	std::string toString() const {

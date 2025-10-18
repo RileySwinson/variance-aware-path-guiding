@@ -67,7 +67,7 @@ public:
 		const RectangularWorkUnit *rect = static_cast<const RectangularWorkUnit *>(workUnit);
 		BDPTWorkResult *result = static_cast<BDPTWorkResult *>(workResult);
 		bool needsTimeSample = m_sensor->needsTimeSample();
-		Float time = m_sensor->getShutterOpen();
+		float time = m_sensor->getShutterOpen();
 
 		result->setOffset(rect->getOffset());
 		result->setSize(rect->getSize());
@@ -279,7 +279,7 @@ public:
 				}
 
 				/* Compute the multiple importance sampling weight */
-				Float miWeight = Path::miWeight(scene, emitterSubpath, &connectionEdge,
+				float miWeight = Path::miWeight(scene, emitterSubpath, &connectionEdge,
 					sensorSubpath, s, t, m_config.sampleDirect, m_config.lightImage);
 
 				if (sampleDirect) {
@@ -370,7 +370,7 @@ void BDPTProcess::processResult(const WorkResult *wr, bool cancelled) {
 			   not 100% correct but doesn't matter, as the shown image will be properly re-developed
 			   every 2 seconds and once more when the rendering process finishes */
 
-			Float invSampleCount = 1.0f / m_config.sampleCount;
+			float invSampleCount = 1.0f / m_config.sampleCount;
 			const Bitmap *sourceBitmap = lightImage->getBitmap();
 			Bitmap *destBitmap = block->getBitmap();
 			int borderSize = block->getBorderSize();
@@ -378,13 +378,13 @@ void BDPTProcess::processResult(const WorkResult *wr, bool cancelled) {
 			Vector2i size = block->getSize();
 
 			for (int y=0; y<size.y; ++y) {
-				const Float *source = sourceBitmap->getFloatData()
+				const float *source = sourceBitmap->getfloatData()
 					+ (offset.x + (y+offset.y) * sourceBitmap->getWidth()) * SPECTRUM_SAMPLES;
-				Float *dest = destBitmap->getFloatData()
+				float *dest = destBitmap->getfloatData()
 					+ (borderSize + (y + borderSize) * destBitmap->getWidth()) * (SPECTRUM_SAMPLES + 2);
 
 				for (int x=0; x<size.x; ++x) {
-					Float weight = dest[SPECTRUM_SAMPLES + 1] * invSampleCount;
+					float weight = dest[SPECTRUM_SAMPLES + 1] * invSampleCount;
 					for (int k=0; k<SPECTRUM_SAMPLES; ++k)
 						*dest++ += *source++ * weight;
 					dest += 2;

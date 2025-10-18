@@ -23,10 +23,10 @@
 
 MTS_NAMESPACE_BEGIN
 
-inline Float cuberoot(Float x) {
+inline float cuberoot(float x) {
 	return (x < 0.0f) ?
-			-pow(-x, (Float) (1.0f/3.0f)) :
-			pow(x, (Float) (1.0f/3.0f));
+			-pow(-x, (float) (1.0f/3.0f)) :
+			pow(x, (float) (1.0f/3.0f));
 }
 
 /*!\plugin{rayleigh}{Rayleigh phase function}
@@ -54,11 +54,11 @@ public:
 		PhaseFunction::serialize(stream, manager);
 	}
 
-	inline Float sample(PhaseFunctionSamplingRecord &pRec,
+	inline float sample(PhaseFunctionSamplingRecord &pRec,
 			Sampler *sampler) const {
 		Point2 sample(sampler->next2D());
 
-		Float z = 2 * (2*sample.x - 1),
+		float z = 2 * (2*sample.x - 1),
 			  tmp = std::sqrt(z*z+1),
 			  A = cuberoot(z+tmp),
 			  B = cuberoot(z-tmp),
@@ -77,16 +77,16 @@ public:
 		return 1.0f;
 	}
 
-	Float sample(PhaseFunctionSamplingRecord &pRec,
-			Float &pdf, Sampler *sampler) const {
+	float sample(PhaseFunctionSamplingRecord &pRec,
+			float &pdf, Sampler *sampler) const {
 		RayleighPhaseFunction::sample(pRec, sampler);
 		pdf = RayleighPhaseFunction::eval(pRec);
 		return 1.0f;
 	}
 
 
-	Float eval(const PhaseFunctionSamplingRecord &pRec) const {
-		Float mu = dot(pRec.wi, pRec.wo);
+	float eval(const PhaseFunctionSamplingRecord &pRec) const {
+		float mu = dot(pRec.wi, pRec.wo);
 		return (3.0f/(16.0f*M_PI)) * (1+mu*mu);
 	}
 

@@ -354,19 +354,19 @@ static void make_mesh(GLuint program)
     glBindBuffer(GL_ARRAY_BUFFER, mesh_vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * MAP_NUM_TOTAL_VERTICES, &map_vertices[0][0], GL_STATIC_DRAW);
     glEnableVertexAttribArray(attrloc);
-    glVertexAttribPointer(attrloc, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(attrloc, 1, GL_float, GL_FALSE, 0, 0);
 
     attrloc = glGetAttribLocation(program, "z");
     glBindBuffer(GL_ARRAY_BUFFER, mesh_vbo[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * MAP_NUM_TOTAL_VERTICES, &map_vertices[2][0], GL_STATIC_DRAW);
     glEnableVertexAttribArray(attrloc);
-    glVertexAttribPointer(attrloc, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(attrloc, 1, GL_float, GL_FALSE, 0, 0);
 
     attrloc = glGetAttribLocation(program, "y");
     glBindBuffer(GL_ARRAY_BUFFER, mesh_vbo[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * MAP_NUM_TOTAL_VERTICES, &map_vertices[1][0], GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(attrloc);
-    glVertexAttribPointer(attrloc, 1, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(attrloc, 1, GL_float, GL_FALSE, 0, 0);
 }
 
 /* Update VBO vertices from source data

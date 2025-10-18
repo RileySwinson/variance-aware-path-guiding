@@ -56,22 +56,22 @@ struct Yarn {
 	/// Type of yarn (warp or weft)
 	EYarnType type;
 	/// Fiber twist angle
-	Float psi;
+	float psi;
 	// Maximum inclination angle
-	Float umax;
+	float umax;
 	/// Spine curvature
-	Float kappa;
+	float kappa;
 	/// Width of segment rectangle
-	Float width;
+	float width;
 	/// Length of segment rectangle
-	Float length;
+	float length;
 	/*! u coordinate of the yarn segment center, 
 	 * assumes that the tile covers 0 <= u, v <= 1.
 	 * (0, 0) is lower left corner of the weave pattern
 	 */
-	Float centerU;
+	float centerU;
 	/// v coordinate of the yarn segment center
-	Float centerV;
+	float centerV;
 	/// Diffuse color
 	Spectrum kd;
 	/// Specular color
@@ -83,26 +83,26 @@ struct Yarn {
 
 	Yarn(Stream *stream) {
 		type = (EYarnType) stream->readInt();
-		psi = stream->readFloat();
-		umax = stream->readFloat();
-		kappa = stream->readFloat();
-		width = stream->readFloat();
-		length = stream->readFloat();
-		centerU = stream->readFloat();
-		centerV = stream->readFloat();
+		psi = stream->readfloat();
+		umax = stream->readfloat();
+		kappa = stream->readfloat();
+		width = stream->readfloat();
+		length = stream->readfloat();
+		centerU = stream->readfloat();
+		centerV = stream->readfloat();
 		kd = Spectrum(stream);
 		ks = Spectrum(stream);
 	}
 
 	void serialize(Stream *stream) const {
 		stream->writeInt(type);
-		stream->writeFloat(psi);
-		stream->writeFloat(umax);
-		stream->writeFloat(kappa);
-		stream->writeFloat(width);
-		stream->writeFloat(length);
-		stream->writeFloat(centerU);
-		stream->writeFloat(centerV);
+		stream->writefloat(psi);
+		stream->writefloat(umax);
+		stream->writefloat(kappa);
+		stream->writefloat(width);
+		stream->writefloat(length);
+		stream->writefloat(centerU);
+		stream->writefloat(centerV);
 		kd.serialize(stream);
 		ks.serialize(stream);
 	}
@@ -126,7 +126,7 @@ struct Yarn {
 			<< "  centerU = " << centerU << "," << endl
 			<< "  centerV = " << centerV << "," << endl
 			<< "  /* Diffuse and specular color */" << endl;
-		Float r, g, b;
+		float r, g, b;
 		kd.toLinearRGB(r, g, b);
 		oss << "  kd = {" << r << ", " << g << ", " << b << "}," << endl;
 		ks.toLinearRGB(r, g, b);
@@ -140,25 +140,25 @@ struct WeavePattern {
 	/// Name of the weave pattern
 	std::string name;
 	/// Uniform scattering parameter
-	Float alpha;
+	float alpha;
 	/// Forward scattering parameter
-	Float beta;
+	float beta;
 	/// Filament smoothing
-	Float ss;
+	float ss;
 	/// Highlight width
-	Float hWidth;
+	float hWidth;
 	/// Combined area taken up by the warp & weft
-	Float warpArea, weftArea;
+	float warpArea, weftArea;
 
 	/// Size of the weave pattern
 	uint32_t tileWidth, tileHeight;
 
 	/* Noise-related parameters */
-	Float dWarpUmaxOverDWarp;
-	Float dWarpUmaxOverDWeft;
-	Float dWeftUmaxOverDWarp;
-	Float dWeftUmaxOverDWeft;
-	Float fineness, period;
+	float dWarpUmaxOverDWarp;
+	float dWarpUmaxOverDWeft;
+	float dWeftUmaxOverDWarp;
+	float dWeftUmaxOverDWeft;
+	float fineness, period;
 
 	/// Detailed weave pattern
 	std::vector<uint32_t> pattern;
@@ -175,20 +175,20 @@ struct WeavePattern {
 
 	WeavePattern(Stream *stream) {
 		name = stream->readString();
-		alpha = stream->readFloat();
-		beta = stream->readFloat();
-		ss = stream->readFloat();
-		hWidth = stream->readFloat();
-		warpArea = stream->readFloat();
-		weftArea = stream->readFloat();
+		alpha = stream->readfloat();
+		beta = stream->readfloat();
+		ss = stream->readfloat();
+		hWidth = stream->readfloat();
+		warpArea = stream->readfloat();
+		weftArea = stream->readfloat();
 		tileWidth = stream->readUInt();
 		tileHeight = stream->readUInt();
-		dWarpUmaxOverDWarp = stream->readFloat();
-		dWarpUmaxOverDWeft = stream->readFloat();
-		dWeftUmaxOverDWarp = stream->readFloat();
-		dWeftUmaxOverDWeft = stream->readFloat();
-		fineness = stream->readFloat();
-		period = stream->readFloat();
+		dWarpUmaxOverDWarp = stream->readfloat();
+		dWarpUmaxOverDWeft = stream->readfloat();
+		dWeftUmaxOverDWarp = stream->readfloat();
+		dWeftUmaxOverDWeft = stream->readfloat();
+		fineness = stream->readfloat();
+		period = stream->readfloat();
 		pattern.resize(tileWidth * tileHeight);
 		stream->readUIntArray(&pattern[0], pattern.size());
 		size_t yarnCount = stream->readSize();
@@ -199,20 +199,20 @@ struct WeavePattern {
 
 	void serialize(Stream *stream) const {
 		stream->writeString(name);
-		stream->writeFloat(alpha);
-		stream->writeFloat(beta);
-		stream->writeFloat(ss);
-		stream->writeFloat(hWidth);
-		stream->writeFloat(warpArea);
-		stream->writeFloat(weftArea);
+		stream->writefloat(alpha);
+		stream->writefloat(beta);
+		stream->writefloat(ss);
+		stream->writefloat(hWidth);
+		stream->writefloat(warpArea);
+		stream->writefloat(weftArea);
 		stream->writeUInt(tileWidth);
 		stream->writeUInt(tileHeight);
-		stream->writeFloat(dWarpUmaxOverDWarp);
-		stream->writeFloat(dWarpUmaxOverDWeft);
-		stream->writeFloat(dWeftUmaxOverDWarp);
-		stream->writeFloat(dWeftUmaxOverDWeft);
-		stream->writeFloat(fineness);
-		stream->writeFloat(period);
+		stream->writefloat(dWarpUmaxOverDWarp);
+		stream->writefloat(dWarpUmaxOverDWeft);
+		stream->writefloat(dWeftUmaxOverDWarp);
+		stream->writefloat(dWeftUmaxOverDWeft);
+		stream->writefloat(fineness);
+		stream->writefloat(period);
 		stream->writeUIntArray(&pattern[0], pattern.size());
 		stream->writeSize(yarns.size());
 		for (size_t i=0; i<yarns.size(); ++i)
@@ -285,9 +285,9 @@ template <typename Iterator> struct SkipGrammar : qi::grammar<Iterator> {
 };
 
 #if defined(SINGLE_PRECISION)
-	#define Float_ qi::float_
+	#define float_ qi::float_
 #else
-	#define Float_ qi::double_
+	#define float_ qi::double_
 #endif
 
 template <typename Iterator> struct YarnGrammar : qi::grammar<Iterator, Yarn(), SkipGrammar<Iterator> > {
@@ -309,12 +309,12 @@ template <typename Iterator> struct YarnGrammar : qi::grammar<Iterator, Yarn(), 
 		identifier = qi::lexeme[ lit('$') >> (qi::alpha | char_('_')) 
 			>> *(qi::alnum | char_('_')) ];
 
-		spec = ((lit("{") >> Float_ >> lit(",") >> Float_ >> lit(",") >> Float_ >> lit("}")) 
+		spec = ((lit("{") >> float_ >> lit(",") >> float_ >> lit(",") >> float_ >> lit("}")) 
 					[ ph::bind(&Spectrum::fromLinearRGB, _val, _1, _2, _3, Spectrum::EReflectance) ])
 		     | (identifier [ _val = ph::bind(&Properties::getSpectrum, ph::ref(props), _1)]);
 
-		flt = (Float_ [ _val = _1 ])
-		    | (identifier [ _val = ph::bind(&Properties::getFloat, ph::ref(props), _1)]);
+		flt = (float_ [ _val = _1 ])
+		    | (identifier [ _val = ph::bind(&Properties::getfloat, ph::ref(props), _1)]);
 
 		start = lit("yarn")
 			>> lit("{")
@@ -336,7 +336,7 @@ template <typename Iterator> struct YarnGrammar : qi::grammar<Iterator, Yarn(), 
 	qi::rule<Iterator, Yarn::EYarnType(), SkipGrammar<Iterator> > type;
 	qi::rule<Iterator, Yarn(), SkipGrammar<Iterator> > start;
 	qi::rule<Iterator, Spectrum(), SkipGrammar<Iterator> > spec;
-	qi::rule<Iterator, Float(), SkipGrammar<Iterator> > flt;
+	qi::rule<Iterator, float(), SkipGrammar<Iterator> > flt;
 	qi::rule<Iterator, std::string()> identifier;
 	const Properties &props;
 };
@@ -363,8 +363,8 @@ template <typename Iterator> struct WeavePatternGrammar : qi::grammar<Iterator, 
 		identifier = qi::lexeme[ lit('$') >> (qi::alpha | char_('_')) 
 			>> *(qi::alnum | char_('_')) ];
 
-		flt = (Float_ [ _val = _1 ])
-		      | (identifier [ _val = ph::bind(&Properties::getFloat, ph::ref(props), _1)]);
+		flt = (float_ [ _val = _1 ])
+		      | (identifier [ _val = ph::bind(&Properties::getfloat, ph::ref(props), _1)]);
 
 		start = lit("weave") >> lit("{") >> (
 			  lit("name")               >> lit("=") >> name   [ ph::bind(&WeavePattern::name,               _val) = _1  ]
@@ -391,7 +391,7 @@ template <typename Iterator> struct WeavePatternGrammar : qi::grammar<Iterator, 
 	qi::rule<Iterator, WeavePattern(), SkipGrammar<Iterator> > start;
 	qi::rule<Iterator, std::vector<uint32_t>(), SkipGrammar<Iterator> > pattern;
 	qi::rule<Iterator, std::string(), SkipGrammar<Iterator> > name;
-	qi::rule<Iterator, Float(), SkipGrammar<Iterator> > flt;
+	qi::rule<Iterator, float(), SkipGrammar<Iterator> > flt;
 	qi::rule<Iterator, std::string()> identifier;
 	YarnGrammar<Iterator> yarn;
 	const Properties &props;

@@ -37,9 +37,9 @@ MTS_NAMESPACE_BEGIN
  *	       and so on. \default{\code{-1}}
  *	   }
  *     \parameter{photonCount}{\Integer}{Number of photons to be shot per iteration\default{250000}}
- *     \parameter{initialRadius}{\Float}{Initial radius of gather points in world space units.
+ *     \parameter{initialRadius}{\float}{Initial radius of gather points in world space units.
  *         \default{0, i.e. decide automatically}}
- *     \parameter{alpha}{\Float}{Radius reduction parameter \code{alpha} from the paper\default{0.7}}
+ *     \parameter{alpha}{\float}{Radius reduction parameter \code{alpha} from the paper\default{0.7}}
  *     \parameter{granularity}{\Integer}{
 		Granularity of photon tracing work units for the purpose
 		of parallelization (in \# of shot particles) \default{0, i.e. decide automatically}
@@ -74,11 +74,11 @@ public:
 	/// Represents one individual PPM gather point including relevant statistics
 	struct GatherPoint {
 		Intersection its;
-		Float radius;
+		float radius;
 		Spectrum weight;
 		Spectrum flux;
 		Spectrum emission;
-		Float N;
+		float N;
 		int depth;
 		Point2i pos;
 
@@ -87,9 +87,9 @@ public:
 
 	SPPMIntegrator(const Properties &props) : Integrator(props) {
 		/* Initial photon query radius (0 = infer based on scene size and sensor resolution) */
-		m_initialRadius = props.getFloat("initialRadius", 0);
+		m_initialRadius = props.getfloat("initialRadius", 0);
 		/* Alpha parameter from the paper (influences the speed, at which the photon radius is reduced) */
-		m_alpha = props.getFloat("alpha", .7);
+		m_alpha = props.getfloat("alpha", .7);
 		/* Number of photons to shoot in each iteration */
 		m_photonCount = props.getInteger("photonCount", 250000);
 		/* Granularity of the work units used in parallelizing the
@@ -132,7 +132,7 @@ public:
 		if (m_initialRadius == 0) {
 			/* Guess an initial radius if not provided
 			  (use scene width / horizontal or vertical pixel count) * 5 */
-			Float rad = scene->getBSphere().radius;
+			float rad = scene->getBSphere().radius;
 			Vector2i filmSize = scene->getSensor()->getFilm()->getSize();
 
 			m_initialRadius = std::min(rad / filmSize.x, rad / filmSize.y) * 5;
@@ -164,7 +164,7 @@ public:
 		int blockSize = scene->getBlockSize();
 
 		/* Allocate memory */
-		m_bitmap = new Bitmap(Bitmap::ESpectrum, Bitmap::EFloat, film->getSize());
+		m_bitmap = new Bitmap(Bitmap::ESpectrum, Bitmap::Efloat, film->getSize());
 		m_bitmap->clear();
 		for (int yofs=0; yofs<cropSize.y; yofs += blockSize) {
 			for (int xofs=0; xofs<cropSize.x; xofs += blockSize) {
@@ -246,7 +246,7 @@ public:
 					if (xofsInt + xofs - cropOffset.x >= cropSize.x)
 						continue;
 					Point2 apertureSample, sample;
-					Float timeSample = 0.0f;
+					float timeSample = 0.0f;
 					GatherPoint &gatherPoint = gatherPoints[index++];
 					gatherPoint.pos = Point2i(xofs + xofsInt, yofs + yofsInt);
 					sampler->generate(gatherPoint.pos);
@@ -255,7 +255,7 @@ public:
 					if (needsTimeSample)
 						timeSample = sampler->next1D();
 					sample = sampler->next2D();
-					sample += Vector2((Float) gatherPoint.pos.x, (Float) gatherPoint.pos.y);
+					sample += Vector2((float) gatherPoint.pos.x, (float) gatherPoint.pos.y);
 					RayDifferential ray;
 					sensor->sampleRayDifferential(ray, sample, apertureSample, timeSample);
 					Spectrum weight(1.0f);
@@ -346,11 +346,11 @@ public:
 			Spectrum *target = (Spectrum *) m_bitmap->getUInt8Data();
 			for (size_t i=0; i<gatherPoints.size(); ++i) {
 				GatherPoint &gp = gatherPoints[i];
-				Float M, N = gp.N;
+				float M, N = gp.N;
 				Spectrum flux, contrib;
 
 				if (gp.depth != -1) {
-					M = (Float) photonMap->estimateRadianceRaw(
+					M = (float) photonMap->estimateRadianceRaw(
 						gp.its, gp.radius, flux, m_maxDepth == -1 ? INT_MAX : m_maxDepth-gp.depth);
 				} else {
 					M = 0;
@@ -363,14 +363,14 @@ public:
 				if (N+M == 0) {
 					gp.flux = contrib = Spectrum(0.0f);
 				} else {
-					Float ratio = (N + m_alpha * M) / (N + M);
+					float ratio = (N + m_alpha * M) / (N + M);
 					gp.radius = gp.radius * std::sqrt(ratio);
 
 					gp.flux = (gp.flux +
 							gp.weight * flux +
-							gp.emission * (Float) proc->getShotParticles() * M_PI * gp.radius*gp.radius) * ratio;
+							gp.emission * (float) proc->getShotParticles() * M_PI * gp.radius*gp.radius) * ratio;
 					gp.N = N + m_alpha * M;
-					contrib = gp.flux / ((Float) m_totalEmitted * gp.radius*gp.radius * M_PI);
+					contrib = gp.flux / ((float) m_totalEmitted * gp.radius*gp.radius * M_PI);
 				}
 
 				target[gp.pos.y * m_bitmap->getWidth() + gp.pos.x] = contrib;
@@ -400,7 +400,7 @@ private:
 	std::vector<Point2i> m_offset;
 	ref<Mutex> m_mutex;
 	ref<Bitmap> m_bitmap;
-	Float m_initialRadius, m_alpha;
+	float m_initialRadius, m_alpha;
 	int m_photonCount, m_granularity;
 	int m_maxDepth, m_rrDepth;
 	size_t m_totalEmitted, m_totalPhotons;

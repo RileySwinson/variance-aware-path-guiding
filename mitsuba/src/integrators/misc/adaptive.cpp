@@ -25,9 +25,9 @@ MTS_NAMESPACE_BEGIN
 /*!\plugin{adaptive}{Adaptive integrator}
  * \order{13}
  * \parameters{
- *     \parameter{maxError}{\Float}{Maximum relative error
+ *     \parameter{maxError}{\float}{Maximum relative error
  *         threshold\default{0.05}}
- *     \parameter{pValue}{\Float}{
+ *     \parameter{pValue}{\float}{
  *         Required p-value to accept a sample \default{0.05}
  *     }
  *     \parameter{maxSampleFactor}{\Integer}{
@@ -69,14 +69,14 @@ class AdaptiveIntegrator : public SamplingIntegrator {
 public:
 	AdaptiveIntegrator(const Properties &props) : SamplingIntegrator(props) {
 		/* Maximum relative error threshold */
-		m_maxError = props.getFloat("maxError", 0.05f);
+		m_maxError = props.getfloat("maxError", 0.05f);
 		/* Maximum number of samples to take (relative to the number of pixel samples
 		   that were configured in the sampler). The sample collection
 		   will stop after this many samples even if the variance is still
 		   too high. A negative value will be interpreted as infinity. */
 		m_maxSampleFactor = props.getInteger("maxSampleFactor", 32);
 		/* Required P-value to accept a sample. */
-		m_pValue = props.getFloat("pValue", 0.05f);
+		m_pValue = props.getfloat("pValue", 0.05f);
 		m_verbose = props.getBoolean("verbose", false);
 	}
 
@@ -84,10 +84,10 @@ public:
 	 : SamplingIntegrator(stream, manager) {
 		m_subIntegrator = static_cast<SamplingIntegrator *>(manager->getInstance(stream));
 		m_maxSampleFactor = stream->readInt();
-		m_maxError = stream->readFloat();
-		m_quantile = stream->readFloat();
-		m_averageLuminance = stream->readFloat();
-		m_pValue = stream->readFloat();
+		m_maxError = stream->readfloat();
+		m_quantile = stream->readfloat();
+		m_averageLuminance = stream->readfloat();
+		m_pValue = stream->readfloat();
 		m_verbose = false;
 	}
 
@@ -126,10 +126,10 @@ public:
 		bool needsApertureSample = sensor->needsApertureSample();
 		bool needsTimeSample = sensor->needsTimeSample();
 		const int nSamples = 10000;
-		Float luminance = 0;
+		float luminance = 0;
 
 		Point2 apertureSample(0.5f);
-		Float timeSample = 0.5f;
+		float timeSample = 0.5f;
 		RadianceQueryRecord rRec(scene, sampler);
 
 		/* Estimate the overall luminance on the image plane */
@@ -159,7 +159,7 @@ public:
 		m_averageLuminance = luminance / nSamples;
 
 		boost::math::normal dist(0, 1);
-		m_quantile = (Float) boost::math::quantile(dist, 1-m_pValue/2);
+		m_quantile = (float) boost::math::quantile(dist, 1-m_pValue/2);
 		Log(EInfo, "Configuring for a %.1f%% confidence interval, quantile=%f, avg. luminance=%f",
 			(1-m_pValue)*100, m_quantile, m_averageLuminance);
 		return true;
@@ -168,7 +168,7 @@ public:
 	void renderBlock(const Scene *scene, const Sensor *sensor,
 			Sampler *sampler, ImageBlock *block, const bool &stop,
 			const std::vector< TPoint2<uint8_t> > &points) const {
-		typedef TSpectrum<Float, SPECTRUM_SAMPLES + 2> SpectrumAlphaWeight;
+		typedef TSpectrum<float, SPECTRUM_SAMPLES + 2> SpectrumAlphaWeight;
 
 		bool needsApertureSample = sensor->needsApertureSample();
 		bool needsTimeSample = sensor->needsTimeSample();
@@ -180,11 +180,11 @@ public:
 		RayDifferential eyeRay;
 		RadianceQueryRecord rRec(scene, sampler);
 
-		Float diffScaleFactor = 1.0f /
-			std::sqrt((Float) sampler->getSampleCount());
+		float diffScaleFactor = 1.0f /
+			std::sqrt((float) sampler->getSampleCount());
 
 		Point2 apertureSample(0.5f);
-		Float timeSample = 0.5f;
+		float timeSample = 0.5f;
 		int borderSize = sensor->getFilm()->getReconstructionFilter()->getBorderSize();
 
 		size_t sampleCount;
@@ -209,7 +209,7 @@ public:
 				memcpy(dst, src, sizeof(SpectrumAlphaWeight) * (2*borderSize+1));
 			}
 
-			Float mean = 0, meanSqr = 0.0f;
+			float mean = 0, meanSqr = 0.0f;
 			sampleCount = 0;
 
 			while (true) {
@@ -231,7 +231,7 @@ public:
 
 				sampleValue *= m_subIntegrator->Li(eyeRay, rRec);
 
-				Float sampleLuminance;
+				float sampleLuminance;
 				if (block->put(samplePos, sampleValue, rRec.alpha)) {
 					/* Check for problems with the sample */
 					sampleLuminance = sampleValue.getLuminance();
@@ -243,7 +243,7 @@ public:
 
 				/* Numerically robust online variance estimation using an
 				   algorithm proposed by Donald Knuth (TAOCP vol.2, 3rd ed., p.232) */
-				const Float delta = sampleLuminance - mean;
+				const float delta = sampleLuminance - mean;
 				mean += delta / sampleCount;
 				meanSqr += delta * (sampleLuminance - mean);
 
@@ -251,15 +251,15 @@ public:
 					break;
 				} else if (sampleCount >= sampler->getSampleCount()) {
 					/* Variance of the primary estimator */
-					const Float variance = meanSqr / (sampleCount-1);
+					const float variance = meanSqr / (sampleCount-1);
 
-					Float stdError = std::sqrt(variance/sampleCount);
+					float stdError = std::sqrt(variance/sampleCount);
 
 					/* Half width of the confidence interval */
-					Float ciWidth = stdError * m_quantile;
+					float ciWidth = stdError * m_quantile;
 
 					/* Relative error heuristic */
-					Float base = std::max(mean, m_averageLuminance * 0.01f);
+					float base = std::max(mean, m_averageLuminance * 0.01f);
 
 					if (m_verbose && (sampleCount % 100) == 0)
 						Log(EDebug, "%i samples, mean=%f, stddev=%f, std error=%f, ci width=%f, max allowed=%f", sampleCount, mean,
@@ -272,7 +272,7 @@ public:
 
 			/* Ensure that a large amounts of samples in one pixel do not
 			   bias neighboring pixels (due to the reconstruction filter) */
-			Float factor = 1.0f / sampleCount;
+			float factor = 1.0f / sampleCount;
 			for (int y=0; y<2*borderSize+1; ++y) {
 				SpectrumAlphaWeight *dst = target + ((y+points[i].y)
 					* block->getBitmap()->getWidth() + points[i].x);
@@ -299,10 +299,10 @@ public:
 		manager->serialize(stream, m_subIntegrator.get());
 
 		stream->writeInt(m_maxSampleFactor);
-		stream->writeFloat(m_maxError);
-		stream->writeFloat(m_quantile);
-		stream->writeFloat(m_averageLuminance);
-		stream->writeFloat(m_pValue);
+		stream->writefloat(m_maxError);
+		stream->writefloat(m_quantile);
+		stream->writefloat(m_averageLuminance);
+		stream->writefloat(m_pValue);
 	}
 
 	void bindUsedResources(ParallelProcess *proc) const {
@@ -340,7 +340,7 @@ public:
 	MTS_DECLARE_CLASS()
 private:
 	ref<SamplingIntegrator> m_subIntegrator;
-	Float m_maxError, m_quantile, m_pValue, m_averageLuminance;
+	float m_maxError, m_quantile, m_pValue, m_averageLuminance;
 	int m_maxSampleFactor;
 	bool m_verbose;
 };

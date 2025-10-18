@@ -40,10 +40,10 @@ void HemisphereSampler::generateDirections(const Intersection &its) {
 	for (uint32_t j=0; j<m_M; j++) {
 		for (uint32_t k=0; k<m_N; k++) {
 			SampleEntry &entry = m_entries[j*m_N + k];
-			Point2 sample(m_random->nextFloat(), m_random->nextFloat());
+			Point2 sample(m_random->nextfloat(), m_random->nextfloat());
 
 			/* Sample uniformly wrt. projected solid angles */
-			Float sinTheta2 = (j+sample.x)/m_M,
+			float sinTheta2 = (j+sample.x)/m_M,
 			      cosTheta = math::safe_sqrt(1 - sinTheta2),
 			      sinTheta = std::sqrt(sinTheta2),
 			      sinPhi, cosPhi;
@@ -60,7 +60,7 @@ void HemisphereSampler::generateDirections(const Intersection &its) {
 	/* Precompute planar vectors - see "Practical Global Illumination" by Jaroslav Krivanek
 	   and Pascal Gautron for more details on this notation */
 	for (uint32_t k=0; k<m_N; k++) {
-		Float phi     =  2*M_PI*(k+.5f)/m_N,
+		float phi     =  2*M_PI*(k+.5f)/m_N,
 			  vk      =  phi - M_PI/2,
 			  vkMinus = (2*M_PI*k)/m_N + M_PI/2;
 
@@ -82,16 +82,16 @@ void HemisphereSampler::process(const Intersection &its) {
 	}
 	m_E = Spectrum(0.0f);
 	m_hMean = 0;
-	m_hMin = std::numeric_limits<Float>::infinity();
-	m_hMinRestricted = std::numeric_limits<Float>::infinity();
+	m_hMin = std::numeric_limits<float>::infinity();
+	m_hMinRestricted = std::numeric_limits<float>::infinity();
 
-	Float invDists = 0;
+	float invDists = 0;
 	for (uint32_t j=0; j<m_M; j++) {
-		const Float cosThetaMinus = std::sqrt(1-j/(Float)m_M),
-					sinThetaMinus = std::sqrt(j/(Float)m_M),
+		const float cosThetaMinus = std::sqrt(1-j/(float)m_M),
+					sinThetaMinus = std::sqrt(j/(float)m_M),
 					cosTheta      = std::sqrt(1-(j+.5f)/m_M),
 					sinTheta      = std::sqrt((j+.5f)/m_M),
-					cosThetaPlus  = std::sqrt(1-(j+1)/(Float)m_M),
+					cosThetaPlus  = std::sqrt(1-(j+1)/(float)m_M),
 					cosThetaDiff  = cosThetaMinus - cosThetaPlus,
 					tanTheta      = sinTheta / cosTheta;
 		for (uint32_t k=0; k<m_N; k++) {
@@ -104,9 +104,9 @@ void HemisphereSampler::process(const Intersection &its) {
 			if (j>1) {
 				/* Gradient in the u_k-direction */
 				const SampleEntry &other = m_entries[(j-1)*m_N + k];
-				const Float minDist = std::min(entry.dist, other.dist);
+				const float minDist = std::min(entry.dist, other.dist);
 				if (minDist > 0) {
-					const Float factor = (2*M_PI*cosThetaMinus*cosThetaMinus*sinThetaMinus)/(m_N*minDist);
+					const float factor = (2*M_PI*cosThetaMinus*cosThetaMinus*sinThetaMinus)/(m_N*minDist);
 					const Spectrum spec = (entry.L - other.L) * factor;
 					for (int i=0; i<3; ++i)
 						m_tGrad[i] += spec * m_uk[k][i];
@@ -119,7 +119,7 @@ void HemisphereSampler::process(const Intersection &its) {
 
 			/* Gradient in the v_k-direction */
 			const SampleEntry &other = m_entries[j*m_N + kPrev];
-			const Float minDist = std::min(entry.dist, other.dist);
+			const float minDist = std::min(entry.dist, other.dist);
 			if (minDist > 0) {
 				const Spectrum spec = (entry.L - other.L) * (cosTheta * cosThetaDiff
 						/ (minDist * sinTheta));
@@ -146,26 +146,26 @@ void HemisphereSampler::process(const Intersection &its) {
 
 /* First pass of neighbor clamping */
 struct clamp_self_functor {
-	clamp_self_functor(const Point &p, Float &R0) : p(p), R0(R0) {
+	clamp_self_functor(const Point &p, float &R0) : p(p), R0(R0) {
 	}
 
 	void operator()(IrradianceCache::Record *sample) {
-		Float distance = (p - sample->p).length();
+		float distance = (p - sample->p).length();
 		R0 = std::min(R0, sample->originalR0 + distance);
 	}
 
 	Point p;
-	Float &R0;
+	float &R0;
 };
 
 /* Second pass of neighbor clamping */
 struct clamp_neighbors_functor {
-	clamp_neighbors_functor(const Point &p, Float R0) : p(p), R0(R0) {
+	clamp_neighbors_functor(const Point &p, float R0) : p(p), R0(R0) {
 	}
 
 	void operator()(IrradianceCache::Record *sample) {
-		Float distance = (p - sample->p).length();
-		Float distanceLimit = R0 + distance;
+		float distance = (p - sample->p).length();
+		float distanceLimit = R0 + distance;
 
 		if (sample->originalR0 > distanceLimit) {
 			/* Update valid range and clamp back into the
@@ -177,17 +177,17 @@ struct clamp_neighbors_functor {
 	}
 
 	Point p;
-	Float R0;
+	float R0;
 };
 
 /* Irradiance interpolation functor */
 struct irr_interp_functor {
-	irr_interp_functor(const Intersection &its, Float kappa, bool gradients) : its(its),
+	irr_interp_functor(const Intersection &its, float kappa, bool gradients) : its(its),
 		kappa(kappa), weightSum(0), gradients(gradients), E(0.0f) {
 	}
 
 	void operator()(const IrradianceCache::Record *sample) {
-		Float weight = sample->getWeight(its.p, its.shFrame.n, kappa);
+		float weight = sample->getWeight(its.p, its.shFrame.n, kappa);
 
 		if (weight == 0)
 			return;
@@ -203,7 +203,7 @@ struct irr_interp_functor {
 						crossN[j] * sample->rGrad[j][i]
 						+ diff[j] * sample->tGrad[j][i];
 				}
-				extrapolated[i] = std::max(extrapolated[i], (Float) 0);
+				extrapolated[i] = std::max(extrapolated[i], (float) 0);
 			}
 		}
 		E += weight * extrapolated;
@@ -212,7 +212,7 @@ struct irr_interp_functor {
 	}
 
 	const Intersection &its;
-	Float kappa, weightSum;
+	float kappa, weightSum;
 	bool gradients;
 	Spectrum E;
 };
@@ -233,8 +233,8 @@ IrradianceCache::IrradianceCache(const AABB &aabb)
 IrradianceCache::IrradianceCache(Stream *stream, InstanceManager *manager) :
 	m_octree(AABB(stream)) {
 	m_mutex = new Mutex();
-	m_kappa = stream->readFloat();
-	m_sceneSize = stream->readFloat();
+	m_kappa = stream->readfloat();
+	m_sceneSize = stream->readfloat();
 	m_clampScreen = stream->readBool();
 	m_clampNeighbor = stream->readBool();
 	m_useGradients = stream->readBool();
@@ -242,7 +242,7 @@ IrradianceCache::IrradianceCache(Stream *stream, InstanceManager *manager) :
 	m_records.reserve(recordCount);
 	for (size_t i=0; i<recordCount; ++i) {
 		Record *sample = new Record(stream);
-		Float validRadius = sample->R0 / (2*m_kappa);
+		float validRadius = sample->R0 / (2*m_kappa);
 		m_octree.insert(sample, AABB(
 			sample->p-Vector(1,1,1)*validRadius,
 			sample->p+Vector(1,1,1)*validRadius
@@ -258,8 +258,8 @@ IrradianceCache::~IrradianceCache() {
 
 void IrradianceCache::serialize(Stream *stream, InstanceManager *manager) const {
 	m_octree.getAABB().serialize(stream);
-	stream->writeFloat(m_kappa);
-	stream->writeFloat(m_sceneSize);
+	stream->writefloat(m_kappa);
+	stream->writefloat(m_sceneSize);
 	stream->writeBool(m_clampScreen);
 	stream->writeBool(m_clampNeighbor);
 	stream->writeBool(m_useGradients);
@@ -274,28 +274,28 @@ IrradianceCache::Record *IrradianceCache::put(const RayDifferential &ray, const 
 	TranslationalGradient tGrad;
 	for (int i=0; i<3; ++i)
 		tGrad[i] = hs.getTranslationalGradient()[i];
-	Float R0 = hs.getMinimumDistanceRestricted();
+	float R0 = hs.getMinimumDistanceRestricted();
 	if (!E.isValid()) {
 		Log(EWarn, "Invalid irradiance cache sample: %s", E.toString().c_str());
 		return NULL;
 	}
-	Float R0_min = 0, R0_max = std::numeric_limits<Float>::infinity();
+	float R0_min = 0, R0_max = std::numeric_limits<float>::infinity();
 
 	/* Clamping recommended by Tabellion and Lamourlette ("An Approximate Global
 	   Illumination System for Computer Generated Films") */
 	if (m_clampScreen && ray.hasDifferentials) {
-		const Float d = -dot(its.geoFrame.n, Vector(its.p));
-		const Float txRecip = dot(its.geoFrame.n, ray.rxDirection),
+		const float d = -dot(its.geoFrame.n, Vector(its.p));
+		const float txRecip = dot(its.geoFrame.n, ray.rxDirection),
 		            tyRecip = dot(its.geoFrame.n, ray.ryDirection);
 		if (txRecip != 0 && tyRecip != 0) {
 			// Ray distances traveled
-			const Float tx = -(dot(its.geoFrame.n, Vector(ray.rxOrigin)) + d) /
+			const float tx = -(dot(its.geoFrame.n, Vector(ray.rxOrigin)) + d) /
 				txRecip;
-			const Float ty = -(dot(its.geoFrame.n, Vector(ray.ryOrigin)) + d) /
+			const float ty = -(dot(its.geoFrame.n, Vector(ray.ryOrigin)) + d) /
 				tyRecip;
 			Point px = ray.rxOrigin + ray.rxDirection * tx,
 				  py = ray.ryOrigin + ray.ryDirection * ty;
-			Float sqrtArea = std::sqrt(cross(px-its.p, py-its.p).length())*2;
+			float sqrtArea = std::sqrt(cross(px-its.p, py-its.p).length())*2;
 
 			R0_min = 3.0f*sqrtArea;
 			R0_max = 20.0f*sqrtArea;
@@ -306,7 +306,7 @@ IrradianceCache::Record *IrradianceCache::put(const RayDifferential &ray, const 
 		/* Limit R0 by the gradient magnitude [Krivanek et al.] */
 		for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
 			Vector grad(tGrad[0][i], tGrad[1][i], tGrad[2][i]);
-			Float length = grad.length();
+			float length = grad.length();
 			if (length > Epsilon)
 				R0 = std::min(R0, E[i]/grad.length());
 		}
@@ -314,7 +314,7 @@ IrradianceCache::Record *IrradianceCache::put(const RayDifferential &ray, const 
 		/* Limit the translational gradient magnitude [Krivanek et al.] */
 		for (int i=0; i<3; ++i)
 			tGrad[i] = tGrad[i] *
-				std::min((Float) 1, hs.getMinimumDistance() / R0_min);
+				std::min((float) 1, hs.getMinimumDistance() / R0_min);
 	}
 
 	if (m_clampNeighbor) {
@@ -343,7 +343,7 @@ IrradianceCache::Record *IrradianceCache::put(const RayDifferential &ray, const 
 }
 
 void IrradianceCache::insert(Record *record) {
-	Float validRadius = record->R0 / (2*m_kappa);
+	float validRadius = record->R0 / (2*m_kappa);
 	m_octree.insert(record, AABB(
 		record->p-Vector(1,1,1)*validRadius,
 		record->p+Vector(1,1,1)*validRadius

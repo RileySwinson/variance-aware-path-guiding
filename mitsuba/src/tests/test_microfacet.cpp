@@ -51,12 +51,12 @@ public:
 	public:
 		MicrofacetAdapter(Sampler *sampler, const MicrofacetDistribution &distr, const Vector &wi = Vector(0.0f)) : m_sampler(sampler), m_distr(distr), m_wi(wi) { }
 
-		boost::tuple<Vector, Float, EMeasure> generateSample() {
-			Float pdf;
+		boost::tuple<Vector, float, EMeasure> generateSample() {
+			float pdf;
 
 			if (m_wi.lengthSquared() == 0) {
 				Normal m = m_distr.sampleAll(m_sampler->next2D(), pdf);
-				Float pdf_ref = m_distr.pdfAll(m);
+				float pdf_ref = m_distr.pdfAll(m);
 
 				SAssert(std::isfinite(pdf) && pdf > 0);
 				SAssert(std::isfinite(pdf_ref) && pdf_ref > 0);
@@ -72,11 +72,11 @@ public:
 			}
 		}
 
-		Float pdf(const Vector &d, EMeasure measure) const {
+		float pdf(const Vector &d, EMeasure measure) const {
 			if (measure != ESolidAngle)
 				return 0.0f;
 
-			Float pdf = m_wi.lengthSquared() == 0 ? m_distr.pdfAll(d)
+			float pdf = m_wi.lengthSquared() == 0 ? m_distr.pdfAll(d)
 				: m_distr.pdfVisible(m_wi, d);
 			SAssert(std::isfinite(pdf) && pdf >= 0);
 

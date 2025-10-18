@@ -91,7 +91,7 @@ template<typename MatrixType> void cwiseops(const MatrixType& m)
   VERIFY_IS_APPROX(m3, m1.cwise() * m2);
   
   VERIFY_IS_APPROX(mones,    m2.cwise()/m2);
-  if(NumTraits<Scalar>::HasFloatingPoint)
+  if(NumTraits<Scalar>::HasfloatingPoint)
   {
     VERIFY_IS_APPROX(m1.cwise() / m2,    m1.cwise() * (m2.cwise().inverse()));
     m3 = m1.cwise().abs().cwise().sqrt();

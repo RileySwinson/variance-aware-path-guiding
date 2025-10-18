@@ -47,7 +47,7 @@ MTS_NAMESPACE_BEGIN
  *              \vspace{-4mm}
  *       \end{enumerate}
  *     }
- *     \parameter{alpha}{\Float\Or\Texture}{
+ *     \parameter{alpha}{\float\Or\Texture}{
  *         Specifies the roughness of the unresolved surface micro-geometry.
  *         When the Beckmann distribution is used, this parameter is equal to the
  *         \emph{root mean square} (RMS) slope of the microfacets.
@@ -58,11 +58,11 @@ MTS_NAMESPACE_BEGIN
  *	       pages \pageref{plg:roughconductor} and \pageref{sec:visiblenormal-sampling}
  *	       for details. \default{\code{true}}
  *     }
- *     \parameter{intIOR}{\Float\Or\String}{Interior index of refraction specified
+ *     \parameter{intIOR}{\float\Or\String}{Interior index of refraction specified
  *      numerically or using a known material name. \default{\texttt{bk7} / 1.5046}}
- *     \parameter{extIOR}{\Float\Or\String}{Exterior index of refraction specified
+ *     \parameter{extIOR}{\float\Or\String}{Exterior index of refraction specified
  *      numerically or using a known material name. \default{\texttt{air} / 1.000277}}
- *     \parameter{thickness}{\Float}{Denotes the thickness of the layer (to
+ *     \parameter{thickness}{\float}{Denotes the thickness of the layer (to
  *      model absorption --- should be specified in inverse units of \code{sigmaA})\default{1}}
  *     \parameter{sigmaA}{\Spectrum\Or\Texture}{The absorption coefficient of the
  *      coating layer. \default{0, i.e. there is no absorption}}
@@ -113,10 +113,10 @@ public:
 
 	RoughCoating(const Properties &props) : BSDF(props) {
 		/* Specifies the internal index of refraction at the interface */
-		Float intIOR = lookupIOR(props, "intIOR", "bk7");
+		float intIOR = lookupIOR(props, "intIOR", "bk7");
 
 		/* Specifies the external index of refraction at the interface */
-		Float extIOR = lookupIOR(props, "extIOR", "air");
+		float extIOR = lookupIOR(props, "extIOR", "air");
 
 		if (intIOR < 0 || extIOR < 0 || intIOR == extIOR)
 			Log(EError, "The interior and exterior indices of "
@@ -130,7 +130,7 @@ public:
 			props.getSpectrum("sigmaA", Spectrum(0.0f)));
 
 		/* Specifies the layer's thickness using the inverse units of sigmaA */
-		m_thickness = props.getFloat("thickness", 1);
+		m_thickness = props.getfloat("thickness", 1);
 
 		/* Specifies a multiplier for the specular reflectance component */
 		m_specularReflectance = new ConstantSpectrumTexture(
@@ -144,7 +144,7 @@ public:
 			Log(EError, "The 'roughplastic' plugin currently does not support "
 				"anisotropic microfacet distributions!");
 
-		m_alpha = new ConstantFloatTexture(distr.getAlpha());
+		m_alpha = new ConstantfloatTexture(distr.getAlpha());
 
 		m_specularSamplingWeight = 0.0f;
 	}
@@ -157,8 +157,8 @@ public:
 		m_sigmaA = static_cast<Texture *>(manager->getInstance(stream));
 		m_specularReflectance = static_cast<Texture *>(manager->getInstance(stream));
 		m_alpha = static_cast<Texture *>(manager->getInstance(stream));
-		m_eta = stream->readFloat();
-		m_thickness = stream->readFloat();
+		m_eta = stream->readfloat();
+		m_thickness = stream->readfloat();
 		m_invEta = 1 / m_eta;
 
 		configure();
@@ -173,8 +173,8 @@ public:
 		manager->serialize(stream, m_sigmaA.get());
 		manager->serialize(stream, m_specularReflectance.get());
 		manager->serialize(stream, m_alpha.get());
-		stream->writeFloat(m_eta);
-		stream->writeFloat(m_thickness);
+		stream->writefloat(m_eta);
+		stream->writefloat(m_thickness);
 	}
 
 	void configure() {
@@ -196,7 +196,7 @@ public:
 
 		/* Compute weights that further steer samples towards
 		   the specular or nested components */
-		Float avgAbsorption = (m_sigmaA->getAverage()
+		float avgAbsorption = (m_sigmaA->getAverage()
 			 *(-2*m_thickness)).exp().average();
 
 		m_specularSamplingWeight = 1.0f / (avgAbsorption + 1.0f);
@@ -233,20 +233,20 @@ public:
 
 	/// Refraction in local coordinates
 	Vector refractTo(EDestination dest, const Vector &wi) const {
-		Float cosThetaI = Frame::cosTheta(wi);
-		Float invEta = (dest == EInterior) ? m_invEta : m_eta;
+		float cosThetaI = Frame::cosTheta(wi);
+		float invEta = (dest == EInterior) ? m_invEta : m_eta;
 
 		bool entering = cosThetaI > 0.0f;
 
 		/* Using Snell's law, calculate the squared sine of the
 		   angle between the normal and the transmitted ray */
-		Float sinThetaTSqr = invEta*invEta * Frame::sinTheta2(wi);
+		float sinThetaTSqr = invEta*invEta * Frame::sinTheta2(wi);
 
 		if (sinThetaTSqr >= 1.0f) {
 			/* Total internal reflection */
 			return Vector(0.0f);
 		} else {
-			Float cosThetaT = std::sqrt(1.0f - sinThetaTSqr);
+			float cosThetaT = std::sqrt(1.0f - sinThetaTSqr);
 
 			/* Retain the directionality of the vector */
 			return Vector(invEta*wi.x, invEta*wi.y,
@@ -276,16 +276,16 @@ public:
 				* math::signum(Frame::cosTheta(bRec.wo));
 
 			/* Evaluate the microfacet normal distribution */
-			const Float D = distr.eval(H);
+			const float D = distr.eval(H);
 
 			/* Fresnel term */
-			const Float F = fresnelDielectricExt(absDot(bRec.wi, H), m_eta);
+			const float F = fresnelDielectricExt(absDot(bRec.wi, H), m_eta);
 
 			/* Smith's shadow-masking function */
-			const Float G = distr.G(bRec.wi, bRec.wo, H);
+			const float G = distr.G(bRec.wi, bRec.wo, H);
 
 			/* Calculate the specular reflection component */
-			Float value = F * D * G /
+			float value = F * D * G /
 				(4.0f * std::abs(Frame::cosTheta(bRec.wi)));
 
 			result += m_specularReflectance->eval(bRec.its) * value;
@@ -317,7 +317,7 @@ public:
 		return result;
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		bool hasNested = (bRec.typeMask & m_nested->getType() & BSDF::EAll)
 			&& (bRec.component == -1 || bRec.component < (int) m_components.size()-1);
 		bool hasSpecular = (bRec.typeMask & EGlossyReflection)
@@ -336,7 +336,7 @@ public:
 			m_sampleVisible
 		);
 
-		Float probNested, probSpecular;
+		float probNested, probSpecular;
 		if (hasSpecular && hasNested) {
 			/* Find the probability of sampling the specular component */
 			probSpecular = 1-m_roughTransmittance->eval(
@@ -352,13 +352,13 @@ public:
 			probNested = probSpecular = 1.0f;
 		}
 
-		Float result = 0.0f;
+		float result = 0.0f;
 		if (hasSpecular && Frame::cosTheta(bRec.wo) * Frame::cosTheta(bRec.wi) > 0) {
 			/* Jacobian of the half-direction mapping */
-			const Float dwh_dwo = 1.0f / (4.0f * absDot(bRec.wo, H));
+			const float dwh_dwo = 1.0f / (4.0f * absDot(bRec.wo, H));
 
 			/* Evaluate the microfacet model sampling density function */
-			const Float prob = distr.pdf(bRec.wi, H);
+			const float prob = distr.pdf(bRec.wi, H);
 
 			result = prob * dwh_dwo * probSpecular;
 		}
@@ -368,7 +368,7 @@ public:
 			bRecInt.wi = refractTo(EInterior, bRec.wi);
 			bRecInt.wo = refractTo(EInterior, bRec.wo);
 
-			Float prob = m_nested->pdf(bRecInt, measure);
+			float prob = m_nested->pdf(bRecInt, measure);
 
 			if (measure == ESolidAngle) {
 				prob *= m_invEta * m_invEta * Frame::cosTheta(bRec.wo)
@@ -381,7 +381,7 @@ public:
 		return result;
 	}
 
-	inline Spectrum sample(BSDFSamplingRecord &bRec, Float &_pdf, const Point2 &_sample) const {
+	inline Spectrum sample(BSDFSamplingRecord &bRec, float &_pdf, const Point2 &_sample) const {
 		bool hasNested = (bRec.typeMask & m_nested->getType() & BSDF::EAll)
 			&& (bRec.component == -1 || bRec.component < (int) m_components.size()-1);
 		bool hasSpecular = (bRec.typeMask & EGlossyReflection)
@@ -398,7 +398,7 @@ public:
 			m_sampleVisible
 		);
 
-		Float probSpecular;
+		float probSpecular;
 		if (hasSpecular && hasNested) {
 			/* Find the probability of sampling the diffuse component */
 			probSpecular = 1 - m_roughTransmittance->eval(
@@ -451,11 +451,11 @@ public:
 	}
 
 	Spectrum sample(BSDFSamplingRecord &bRec, const Point2 &sample) const {
-		Float pdf;
+		float pdf;
 		return RoughCoating::sample(bRec, pdf, sample);
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return component < (int) m_components.size() - 1
 			? m_nested->getRoughness(its, component)
 			: m_alpha->eval(its).average();
@@ -505,9 +505,9 @@ private:
 	ref<Texture> m_alpha;
 	ref<Texture> m_specularReflectance;
 	ref<BSDF> m_nested;
-	Float m_eta, m_invEta;
-	Float m_specularSamplingWeight;
-	Float m_thickness;
+	float m_eta, m_invEta;
+	float m_specularSamplingWeight;
+	float m_thickness;
 	bool m_sampleVisible;
 };
 
@@ -524,7 +524,7 @@ class RoughCoatingShader : public Shader {
 public:
 	RoughCoatingShader(Renderer *renderer, const BSDF *nested,
 				const Texture *sigmaA, const Texture *alpha,
-				Float eta) : Shader(renderer, EBSDFShader),
+				float eta) : Shader(renderer, EBSDFShader),
 			m_nested(nested), m_sigmaA(sigmaA), m_alpha(alpha), m_eta(eta) {
 		m_nestedShader = renderer->registerShaderForResource(m_nested.get());
 		m_sigmaAShader = renderer->registerShaderForResource(m_sigmaA.get());
@@ -641,7 +641,7 @@ private:
 	ref<Shader> m_sigmaAShader;
 	ref<const Texture> m_alpha;
 	ref<Shader> m_alphaShader;
-	Float m_R0, m_eta;
+	float m_R0, m_eta;
 };
 
 Shader *RoughCoating::createShader(Renderer *renderer) const {

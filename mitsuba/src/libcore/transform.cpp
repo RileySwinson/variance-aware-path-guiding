@@ -62,8 +62,8 @@ Transform Transform::scale(const Vector &v) {
 	return Transform(trafo, invTrafo);
 }
 
-Transform Transform::rotate(const Vector &axis, Float angle) {
-	Float sinTheta, cosTheta;
+Transform Transform::rotate(const Vector &axis, float angle) {
+	float sinTheta, cosTheta;
 
 	/* Make sure that the axis is normalized */
 	Vector naxis = normalize(axis);
@@ -96,7 +96,7 @@ Transform Transform::rotate(const Vector &axis, Float angle) {
 	return Transform(result, transp);
 }
 
-Transform Transform::perspective(Float fov, Float clipNear, Float clipFar) {
+Transform Transform::perspective(float fov, float clipNear, float clipFar) {
 	/* Project vectors in camera space onto a plane at z=1:
 	 *
 	 *  xProj = x / z
@@ -105,11 +105,11 @@ Transform Transform::perspective(Float fov, Float clipNear, Float clipFar) {
 	 *
 	 *  Camera-space depths are not mapped linearly!
 	 */
-	Float recip = 1.0f / (clipFar - clipNear);
+	float recip = 1.0f / (clipFar - clipNear);
 
 	/* Perform a scale so that the field of view is mapped
 	 * to the interval [-1, 1] */
-	Float cot = 1.0f / std::tan(degToRad(fov / 2.0f));
+	float cot = 1.0f / std::tan(degToRad(fov / 2.0f));
 
 	Matrix4x4 trafo(
 		cot,  0,    0,   0,
@@ -122,9 +122,9 @@ Transform Transform::perspective(Float fov, Float clipNear, Float clipFar) {
 	return Transform(trafo);
 }
 
-Transform Transform::glPerspective(Float fov, Float clipNear, Float clipFar) {
-	Float recip = 1.0f / (clipNear - clipFar);
-	Float cot = 1.0f / std::tan(degToRad(fov / 2.0f));
+Transform Transform::glPerspective(float fov, float clipNear, float clipFar) {
+	float recip = 1.0f / (clipNear - clipFar);
+	float cot = 1.0f / std::tan(degToRad(fov / 2.0f));
 
 	Matrix4x4 trafo(
 		cot,   0,     0,   0,
@@ -136,10 +136,10 @@ Transform Transform::glPerspective(Float fov, Float clipNear, Float clipFar) {
 	return Transform(trafo);
 }
 
-Transform Transform::glFrustum(Float left, Float right, Float bottom, Float top, Float nearVal, Float farVal) {
-	Float invFMN = 1 / (farVal-nearVal);
-	Float invTMB = 1 / (top-bottom);
-	Float invRML = 1 / (right-left);
+Transform Transform::glFrustum(float left, float right, float bottom, float top, float nearVal, float farVal) {
+	float invFMN = 1 / (farVal-nearVal);
+	float invTMB = 1 / (top-bottom);
+	float invRML = 1 / (right-left);
 
 	Matrix4x4 trafo(
 		2*nearVal*invRML, 0, (right+left)*invRML, 0,
@@ -151,13 +151,13 @@ Transform Transform::glFrustum(Float left, Float right, Float bottom, Float top,
 	return Transform(trafo);
 }
 
-Transform Transform::orthographic(Float clipNear, Float clipFar) {
+Transform Transform::orthographic(float clipNear, float clipFar) {
 	return scale(Vector(1.0f, 1.0f, 1.0f / (clipFar - clipNear))) *
 		   translate(Vector(0.0f, 0.0f, -clipNear));
 }
 
-Transform Transform::glOrthographic(Float clipNear, Float clipFar) {
-	Float a = -2.0f / (clipFar - clipNear),
+Transform Transform::glOrthographic(float clipNear, float clipFar) {
+	float a = -2.0f / (clipFar - clipNear),
 	      b = -(clipFar + clipNear) / (clipFar - clipNear);
 
 	Matrix4x4 trafo(
@@ -169,9 +169,9 @@ Transform Transform::glOrthographic(Float clipNear, Float clipFar) {
 	return Transform(trafo);
 }
 
-Transform Transform::glOrthographic(Float clipLeft, Float clipRight,
-		Float clipBottom, Float clipTop, Float clipNear, Float clipFar) {
-	Float fx =  2.0f / (clipRight - clipLeft),
+Transform Transform::glOrthographic(float clipLeft, float clipRight,
+		float clipBottom, float clipTop, float clipNear, float clipFar) {
+	float fx =  2.0f / (clipRight - clipLeft),
 	      fy =  2.0f / (clipTop - clipBottom),
 	      fz = -2.0f / (clipFar - clipNear),
 	      tx = -(clipRight + clipLeft) / (clipRight - clipLeft),
@@ -236,18 +236,18 @@ std::string Transform::toString() const {
  *
  * Based on "Geometric Tools" by David Eberly.
  */
-static inline void tred3(Matrix3x3 &m, Float *diag, Float *subd) {
-	Float m00 = m(0, 0), m01 = m(0, 1), m02 = m(0, 2),
+static inline void tred3(Matrix3x3 &m, float *diag, float *subd) {
+	float m00 = m(0, 0), m01 = m(0, 1), m02 = m(0, 2),
 	      m11 = m(1, 1), m12 = m(1, 2), m22 = m(2, 2);
 
 	diag[0] = m00;
 	subd[2] = 0;
-	if (std::abs(m02) > std::numeric_limits<Float>::epsilon()) {
-		Float length = std::sqrt(m01*m01 + m02*m02),
+	if (std::abs(m02) > std::numeric_limits<float>::epsilon()) {
+		float length = std::sqrt(m01*m01 + m02*m02),
 			  invLength = 1 / length;
 		m01 *= invLength;
 		m02 *= invLength;
-		Float q = 2*m01*m12 + m02*(m22 - m11);
+		float q = 2*m01*m12 + m02*(m22 - m11);
 		diag[1] = m11 + m02*q;
 		diag[2] = m22 - m02*q;
 		subd[0] = length;
@@ -280,7 +280,7 @@ static inline void tred3(Matrix3x3 &m, Float *diag, Float *subd) {
  * the corresponding EISPACK routine.
  */
 
-static inline bool ql3(Matrix3x3 &m, Float *diag, Float *subd) {
+static inline bool ql3(Matrix3x3 &m, float *diag, float *subd) {
 	const int maxIter = 32;
 
 	for (int i = 0; i < 3; ++i) {
@@ -288,21 +288,21 @@ static inline bool ql3(Matrix3x3 &m, Float *diag, Float *subd) {
 		for (k = 0; k < maxIter; ++k) {
 			int j;
 			for (j = i; j < 2; ++j) {
-				Float tmp = std::abs(diag[j]) + std::abs(diag[j+1]);
+				float tmp = std::abs(diag[j]) + std::abs(diag[j+1]);
 				if (std::abs(subd[j]) + tmp == tmp)
 					break;
 			}
 			if (j == i)
 				break;
 
-			Float value0 = (diag[i + 1] - diag[i])/(2*subd[i]);
-			Float value1 = std::sqrt(value0*value0 + 1);
+			float value0 = (diag[i + 1] - diag[i])/(2*subd[i]);
+			float value1 = std::sqrt(value0*value0 + 1);
 			value0 = diag[j] - diag[i] + subd[i] /
 				((value0 < 0) ? (value0 - value1) : (value0 + value1));
 
-			Float sn = 1, cs = 1, value2 = 0;
+			float sn = 1, cs = 1, value2 = 0;
 			for (int l = j - 1; l >= i; --l) {
-				Float value3 = sn*subd[l], value4 = cs*subd[l];
+				float value3 = sn*subd[l], value4 = cs*subd[l];
 				if (std::abs(value3) >= std::abs(value0)) {
 					cs = value0 / value3;
 					value1 = std::sqrt(cs*cs + 1);
@@ -339,8 +339,8 @@ static inline bool ql3(Matrix3x3 &m, Float *diag, Float *subd) {
 }
 
 /// Fast 3x3 eigenvalue decomposition
-bool eig3(Matrix3x3 &m, Float lambda[3]) {
-	Float subd[3];
+bool eig3(Matrix3x3 &m, float lambda[3]) {
+	float subd[3];
 
 	/* Reduce to Hessenberg form */
 	tred3(m, lambda, subd);
@@ -354,7 +354,7 @@ bool eig3(Matrix3x3 &m, Float lambda[3]) {
 	for (int i=0; i<2; ++i) {
 		/* Locate the maximum eigenvalue. */
 		int largest = i;
-		Float maxValue = lambda[largest];
+		float maxValue = lambda[largest];
 		for (int j = i+1; j<3; ++j) {
 			if (lambda[j] > maxValue) {
 				largest = j;
@@ -450,13 +450,13 @@ static void eig3_evals(const Matrix3x3 &A, double root[3]) {
  *
  * Based on "Geometric Tools" by David Eberly.
  */
-static bool eig3_rank(const Matrix3x3 &m, Float& maxEntry, Vector &maxRow) {
+static bool eig3_rank(const Matrix3x3 &m, float& maxEntry, Vector &maxRow) {
     // Locate the maximum-magnitude entry of the matrix.
     maxEntry = -1.0f;
     int maxRowIndex = -1;
     for (int row = 0; row < 3; ++row) {
         for (int col = row; col < 3; ++col) {
-            Float absValue = std::abs(m(row, col));
+            float absValue = std::abs(m(row, col));
             if (absValue > maxEntry) {
                 maxEntry = absValue;
                 maxRowIndex = row;
@@ -468,7 +468,7 @@ static bool eig3_rank(const Matrix3x3 &m, Float& maxEntry, Vector &maxRow) {
     // construction.
     maxRow = m.row(maxRowIndex);
 
-    return maxEntry >= std::numeric_limits<Float>::epsilon();
+    return maxEntry >= std::numeric_limits<float>::epsilon();
 }
 
 /**
@@ -476,7 +476,7 @@ static bool eig3_rank(const Matrix3x3 &m, Float& maxEntry, Vector &maxRow) {
  *
  * Based on "Geometric Tools" by David Eberly.
  */
-static void eig3_evecs(Matrix3x3& A, const Float lambda[3], const Vector& U2, int i0, int i1, int i2) {
+static void eig3_evecs(Matrix3x3& A, const float lambda[3], const Vector& U2, int i0, int i1, int i2) {
 	Vector U0, U1;
 	coordinateSystem(normalize(U2), U0, U1);
 
@@ -486,7 +486,7 @@ static void eig3_evecs(Matrix3x3& A, const Float lambda[3], const Vector& U2, in
 	// e2*c1 = c0*U1.Dot(A*U0) + c1*U1.Dot(A*U1) = d01*c0 + d11*c1
 	Vector tmp = A*U0, evecs[3];
 
-	Float p00 = lambda[i2] - dot(U0, tmp),
+	float p00 = lambda[i2] - dot(U0, tmp),
 		  p01 = dot(U1, tmp),
 		  p11 = lambda[i2] - dot(U1, A*U1),
 		  maxValue = std::abs(p00),
@@ -503,7 +503,7 @@ static void eig3_evecs(Matrix3x3& A, const Float lambda[3], const Vector& U2, in
 		row = 1;
 	}
 
-	if (maxValue >= std::numeric_limits<Float>::epsilon()) {
+	if (maxValue >= std::numeric_limits<float>::epsilon()) {
 		if (row == 0) {
 			invLength = 1/std::sqrt(p00*p00 + p01*p01);
 			p00 *= invLength;
@@ -542,7 +542,7 @@ static void eig3_evecs(Matrix3x3& A, const Float lambda[3], const Vector& U2, in
 		row = 1;
 	}
 
-	if (maxValue >= std::numeric_limits<Float>::epsilon()) {
+	if (maxValue >= std::numeric_limits<float>::epsilon()) {
 		if (row == 0) {
 			invLength = 1/std::sqrt(p00*p00 + p01*p01);
 			p00 *= invLength;
@@ -574,16 +574,16 @@ static void eig3_evecs(Matrix3x3& A, const Float lambda[3], const Vector& U2, in
  *
  * Based on "Geometric Tools" by David Eberly.
  */
-void eig3_noniter(Matrix3x3 &A, Float lambda[3]) {
+void eig3_noniter(Matrix3x3 &A, float lambda[3]) {
 	// Compute the eigenvalues using double-precision arithmetic.
 	double root[3];
 	eig3_evals(A, root);
-	lambda[0] = (Float) root[0];
-	lambda[1] = (Float) root[1];
-	lambda[2] = (Float) root[2];
+	lambda[0] = (float) root[0];
+	lambda[1] = (float) root[1];
+	lambda[2] = (float) root[2];
 	Matrix3x3 eigs;
 
-	Float maxEntry[3];
+	float maxEntry[3];
 	Vector maxRow[3];
 	for (int i = 0; i < 3; ++i) {
 		Matrix3x3 M(A);
@@ -596,7 +596,7 @@ void eig3_noniter(Matrix3x3 &A, Float lambda[3]) {
 		}
 	}
 
-	Float totalMax = maxEntry[0];
+	float totalMax = maxEntry[0];
 	int i = 0;
 	if (maxEntry[1] > totalMax) {
 		totalMax = maxEntry[1];

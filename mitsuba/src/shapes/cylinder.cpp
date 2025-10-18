@@ -36,7 +36,7 @@ MTS_NAMESPACE_BEGIN
  *     \parameter{p1}{\Point}{
  *	     Object-space endpoint of the cylinder's centerline \default{(0, 0, 1)}
  *	   }
- *     \parameter{radius}{\Float}{
+ *     \parameter{radius}{\float}{
  *	     Radius of the cylinder in object-space units \default{1}
  *	   }
  *     \parameter{flipNormals}{\Boolean}{
@@ -76,15 +76,15 @@ class Cylinder : public Shape {
 private:
 	Transform m_objectToWorld;
 	Transform m_worldToObject;
-	Float m_radius, m_length, m_invSurfaceArea;
+	float m_radius, m_length, m_invSurfaceArea;
 	bool m_flipNormals;
 public:
 	Cylinder(const Properties &props) : Shape(props) {
-		Float radius = props.getFloat("radius", 1.0f);
+		float radius = props.getfloat("radius", 1.0f);
 		Point p1 = props.getPoint("p0", Point(0.0f, 0.0f, 0.0f));
 		Point p2 = props.getPoint("p1", Point(0.0f, 0.0f, 1.0f));
 		Vector d = p2 - p1;
-		Float length = d.length();
+		float length = d.length();
 		m_objectToWorld =
 			Transform::translate(Vector(p1)) *
 			Transform::fromFrame(Frame(d / length)) *
@@ -110,8 +110,8 @@ public:
 	Cylinder(Stream *stream, InstanceManager *manager)
 		: Shape(stream, manager) {
 		m_objectToWorld = Transform(stream);
-		m_radius = stream->readFloat();
-		m_length = stream->readFloat();
+		m_radius = stream->readfloat();
+		m_length = stream->readfloat();
 		m_flipNormals = stream->readBool();
 		m_worldToObject = m_objectToWorld.inverse();
 		m_invSurfaceArea = 1/(2*M_PI*m_radius*m_length);
@@ -120,12 +120,12 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Shape::serialize(stream, manager);
 		m_objectToWorld.serialize(stream);
-		stream->writeFloat(m_radius);
-		stream->writeFloat(m_length);
+		stream->writefloat(m_radius);
+		stream->writefloat(m_length);
 		stream->writeBool(m_flipNormals);
 	}
 
-	bool rayIntersect(const Ray &_ray, Float mint, Float maxt, Float &t, void *temp) const {
+	bool rayIntersect(const Ray &_ray, float mint, float maxt, float &t, void *temp) const {
 		Ray ray;
 
 		/* Transform into the local coordinate system and normalize */
@@ -152,11 +152,11 @@ public:
 		const double zPosFar = ray.o.z + ray.d.z * farT;
 
 		if (zPosNear >= 0 && zPosNear <= m_length && nearT >= mint) {
-			t = (Float) nearT;
+			t = (float) nearT;
 		} else if (zPosFar >= 0 && zPosFar <= m_length) {
 			if (farT > maxt)
 				return false;
-			t = (Float) farT;
+			t = (float) farT;
 		} else {
 			return false;
 		}
@@ -164,7 +164,7 @@ public:
 		return true;
 	}
 
-	bool rayIntersect(const Ray &_ray, Float mint, Float maxt) const {
+	bool rayIntersect(const Ray &_ray, float mint, float maxt) const {
 		Ray ray;
 
 		/* Transform into the local coordinate system and normalize */
@@ -203,7 +203,7 @@ public:
 		its.p = ray(its.t);
 		Point local = m_worldToObject(its.p);
 
-		Float phi = std::atan2(local.y, local.x);
+		float phi = std::atan2(local.y, local.x);
 		if (phi < 0)
 			phi += 2*M_PI;
 		its.uv.x = phi / (2*M_PI);
@@ -230,7 +230,7 @@ public:
 	}
 
 	void samplePosition(PositionSamplingRecord &pRec, const Point2 &sample) const {
-		Float sinTheta, cosTheta;
+		float sinTheta, cosTheta;
 		math::sincos(sample.y * (2 * M_PI), &sinTheta, &cosTheta);
 
 		Point p(cosTheta*m_radius, sinTheta*m_radius, sample.x * m_length);
@@ -245,7 +245,7 @@ public:
 		pRec.measure = EArea;
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return m_invSurfaceArea;
 	}
 
@@ -261,7 +261,7 @@ public:
 		   This can be done component-wise as follows */
 
 		for (int i=0; i<3; ++i) {
-			Float range = std::sqrt(x1[i]*x1[i] + x2[i]*x2[i]);
+			float range = std::sqrt(x1[i]*x1[i] + x2[i]*x2[i]);
 
 			result.min[i] = std::min(std::min(result.min[i],
 						p0[i]-range), p1[i]-range);
@@ -279,14 +279,14 @@ public:
 	 * www.geometrictools.com/Documentation/IntersectionCylinderPlane.pdf
 	 */
 	bool intersectCylPlane(Point planePt, Normal planeNrml,
-			Point cylPt, Vector cylD, Float radius, Point &center,
-			Vector *axes, Float *lengths) const {
+			Point cylPt, Vector cylD, float radius, Point &center,
+			Vector *axes, float *lengths) const {
 		if (absDot(planeNrml, cylD) < Epsilon)
 			return false;
 
 		Vector B, A = cylD - dot(cylD, planeNrml)*planeNrml;
 
-		Float length = A.length();
+		float length = A.length();
 		if (length != 0) {
 			A /= length;
 			B = cross(planeNrml, A);
@@ -297,17 +297,17 @@ public:
 		Vector delta = planePt - cylPt,
 			   deltaProj = delta - cylD*dot(delta, cylD);
 
-		Float aDotD = dot(A, cylD);
-		Float bDotD = dot(B, cylD);
-		Float c0 = 1-aDotD*aDotD;
-		Float c1 = 1-bDotD*bDotD;
-		Float c2 = 2*dot(A, deltaProj);
-		Float c3 = 2*dot(B, deltaProj);
-		Float c4 = dot(delta, deltaProj) - radius*radius;
+		float aDotD = dot(A, cylD);
+		float bDotD = dot(B, cylD);
+		float c0 = 1-aDotD*aDotD;
+		float c1 = 1-bDotD*bDotD;
+		float c2 = 2*dot(A, deltaProj);
+		float c3 = 2*dot(B, deltaProj);
+		float c4 = dot(delta, deltaProj) - radius*radius;
 
-		Float lambda = (c2*c2/(4*c0) + c3*c3/(4*c1) - c4)/(c0*c1);
+		float lambda = (c2*c2/(4*c0) + c3*c3/(4*c1) - c4)/(c0*c1);
 
-		Float alpha0 = -c2/(2*c0),
+		float alpha0 = -c2/(2*c0),
 			  beta0 = -c3/(2*c1);
 
 		lengths[0] = std::sqrt(c1*lambda),
@@ -330,7 +330,7 @@ public:
 
 		Point ellipseCenter;
 		Vector ellipseAxes[2];
-		Float ellipseLengths[2];
+		float ellipseLengths[2];
 
 		AABB aabb;
 		if (!intersectCylPlane(min, planeNrml, cylPt, cylD, m_radius,
@@ -358,11 +358,11 @@ public:
 				dot(p2 - ellipseCenter, ellipseAxes[1]) / ellipseLengths[1]);
 
 			Vector2 rel = p2l-p1l;
-			Float A = dot(rel, rel);
-			Float B = 2*dot(Vector2(p1l), rel);
-			Float C = dot(Vector2(p1l), Vector2(p1l))-1;
+			float A = dot(rel, rel);
+			float B = 2*dot(Vector2(p1l), rel);
+			float C = dot(Vector2(p1l), Vector2(p1l))-1;
 
-			Float x0, x1;
+			float x0, x1;
 			if (solveQuadratic(A, B, C, x0, x1)) {
 				if (x0 >= 0 && x0 <= 1)
 					aabb.expandBy(p1+(p2-p1)*x0);
@@ -378,9 +378,9 @@ public:
 		/* Find the componentwise maxima of the ellipse */
 		for (int i=0; i<2; ++i) {
 			int j = (i==0) ? axis1 : axis2;
-			Float alpha = ellipseAxes[0][j], beta = ellipseAxes[1][j];
-			Float tmp = 1 / std::sqrt(alpha*alpha + beta*beta);
-			Float cosTheta = alpha * tmp, sinTheta = beta*tmp;
+			float alpha = ellipseAxes[0][j], beta = ellipseAxes[1][j];
+			float tmp = 1 / std::sqrt(alpha*alpha + beta*beta);
+			float cosTheta = alpha * tmp, sinTheta = beta*tmp;
 
 			Point p1 = ellipseCenter + cosTheta*ellipseAxes[0] + sinTheta*ellipseAxes[1];
 			Point p2 = ellipseCenter - cosTheta*ellipseAxes[0] - sinTheta*ellipseAxes[1];
@@ -442,7 +442,7 @@ public:
 	ref<TriMesh> createTriMesh() {
 		/// Choice of discretization
 		const size_t phiSteps = 20;
-		const Float dPhi   = (2*M_PI) / phiSteps;
+		const float dPhi   = (2*M_PI) / phiSteps;
 
 		ref<TriMesh> mesh = new TriMesh("Cylinder approximation",
 			phiSteps*2, phiSteps*2, true, false, false);
@@ -453,13 +453,13 @@ public:
 		size_t triangleIdx = 0, vertexIdx = 0;
 
 		for (size_t phi=0; phi<phiSteps; ++phi) {
-			Float sinPhi = std::sin(phi * dPhi);
-			Float cosPhi = std::cos(phi * dPhi);
+			float sinPhi = std::sin(phi * dPhi);
+			float cosPhi = std::cos(phi * dPhi);
 			uint32_t idx0 = (uint32_t) vertexIdx, idx1 = idx0+1;
 			uint32_t idx2 = (vertexIdx+2) % (2*phiSteps), idx3 = idx2+1;
-			normals[vertexIdx] = m_objectToWorld(Normal(cosPhi, sinPhi, 0) * (m_flipNormals ? (Float) -1 : (Float) 1));
+			normals[vertexIdx] = m_objectToWorld(Normal(cosPhi, sinPhi, 0) * (m_flipNormals ? (float) -1 : (float) 1));
 			vertices[vertexIdx++] = m_objectToWorld(Point(cosPhi*m_radius, sinPhi*m_radius, 0));
-			normals[vertexIdx] = m_objectToWorld(Normal(cosPhi, sinPhi, 0) * (m_flipNormals ? (Float) -1 : (Float) 1));
+			normals[vertexIdx] = m_objectToWorld(Normal(cosPhi, sinPhi, 0) * (m_flipNormals ? (float) -1 : (float) 1));
 			vertices[vertexIdx++] = m_objectToWorld(Point(cosPhi*m_radius, sinPhi*m_radius, m_length));
 
 			triangles[triangleIdx].idx[0] = idx0;
@@ -483,7 +483,7 @@ public:
 		const Point a = m_objectToWorld(Point(0, 0, 0));
 		const Point b = m_objectToWorld(Point(0, 0, m_length));
 
-		const Float r = m_radius;
+		const float r = m_radius;
 		AABB result;
 		result.expandBy(a - Vector(r, r, r));
 		result.expandBy(a + Vector(r, r, r));
@@ -493,7 +493,7 @@ public:
 	}
 #endif
 
-	Float getSurfaceArea() const {
+	float getSurfaceArea() const {
 		return 2*M_PI*m_radius*m_length;
 	}
 

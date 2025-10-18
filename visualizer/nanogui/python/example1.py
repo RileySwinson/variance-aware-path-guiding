@@ -244,7 +244,7 @@ class TestApp(Screen):
         layout.setSpacing(0, 10)
         window.setLayout(layout)
 
-        Label(window, "Floating point :", "sans-bold")
+        Label(window, "floating point :", "sans-bold")
         floatBox = TextBox(window)
         floatBox.setEditable(True)
         floatBox.setFixedSize((100, 20))

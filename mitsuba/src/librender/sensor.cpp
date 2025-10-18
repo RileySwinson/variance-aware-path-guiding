@@ -26,8 +26,8 @@ MTS_NAMESPACE_BEGIN
 
 Sensor::Sensor(const Properties &props)
  : AbstractEmitter(props) {
-	m_shutterOpen = props.getFloat("shutterOpen", 0.0f);
-	Float shutterClose = props.getFloat("shutterClose", 0.0f);
+	m_shutterOpen = props.getfloat("shutterOpen", 0.0f);
+	float shutterClose = props.getfloat("shutterClose", 0.0f);
 	m_shutterOpenTime = shutterClose - m_shutterOpen;
 
 	if (m_shutterOpenTime < 0)
@@ -42,8 +42,8 @@ Sensor::Sensor(Stream *stream, InstanceManager *manager)
  : AbstractEmitter(stream, manager) {
 	m_film = static_cast<Film *>(manager->getInstance(stream));
 	m_sampler = static_cast<Sampler *>(manager->getInstance(stream));
-	m_shutterOpen = stream->readFloat();
-	m_shutterOpenTime = stream->readFloat();
+	m_shutterOpen = stream->readfloat();
+	m_shutterOpenTime = stream->readfloat();
 }
 
 Sensor::~Sensor() {
@@ -53,11 +53,11 @@ void Sensor::serialize(Stream *stream, InstanceManager *manager) const {
 	AbstractEmitter::serialize(stream, manager);
 	manager->serialize(stream, m_film.get());
 	manager->serialize(stream, m_sampler.get());
-	stream->writeFloat(m_shutterOpen);
-	stream->writeFloat(m_shutterOpenTime);
+	stream->writefloat(m_shutterOpen);
+	stream->writefloat(m_shutterOpenTime);
 }
 
-void Sensor::setShutterOpenTime(Float time) {
+void Sensor::setShutterOpenTime(float time) {
 	m_shutterOpenTime = time;
 	if (m_shutterOpenTime == 0)
 		m_type |= EDeltaTime;
@@ -99,18 +99,18 @@ void Sensor::configure() {
 	}
 
 	m_aspect = m_film->getSize().x /
-	   (Float) m_film->getSize().y;
+	   (float) m_film->getSize().y;
 
 	m_resolution = Vector2(m_film->getCropSize());
 	m_invResolution = Vector2(
-		(Float) 1 / m_resolution.x,
-		(Float) 1 / m_resolution.y);
+		(float) 1 / m_resolution.x,
+		(float) 1 / m_resolution.y);
 }
 
 Spectrum Sensor::sampleRayDifferential(RayDifferential &ray,
 		const Point2 &samplePosition,
 		const Point2 &apertureSample,
-		Float timeSample) const {
+		float timeSample) const {
 	Spectrum result = sampleRay(ray, samplePosition,
 		apertureSample, timeSample);
 
@@ -131,7 +131,7 @@ Spectrum Sensor::sampleRayDifferential(RayDifferential &ray,
 	return result;
 }
 
-Float Sensor::pdfTime(const Ray &ray, EMeasure measure) const {
+float Sensor::pdfTime(const Ray &ray, EMeasure measure) const {
 	if (ray.time < m_shutterOpen || ray.time > m_shutterOpenTime + m_shutterOpenTime)
 		return 0.0f;
 
@@ -155,11 +155,11 @@ void Sensor::addChild(const std::string &name, ConfigurableObject *child) {
 
 ProjectiveCamera::ProjectiveCamera(const Properties &props) : Sensor(props) {
 	/* Distance to the near clipping plane */
-	m_nearClip = props.getFloat("nearClip", 1e-2f);
+	m_nearClip = props.getfloat("nearClip", 1e-2f);
 	/* Distance to the far clipping plane */
-	m_farClip = props.getFloat("farClip", 1e4f);
+	m_farClip = props.getfloat("farClip", 1e4f);
 	/* Distance to the focal plane */
-	m_focusDistance = props.getFloat("focusDistance", m_farClip);
+	m_focusDistance = props.getfloat("focusDistance", m_farClip);
 
 	if (m_nearClip <= 0)
 		Log(EError, "The 'nearClip' parameter must be greater than zero!");
@@ -171,36 +171,36 @@ ProjectiveCamera::ProjectiveCamera(const Properties &props) : Sensor(props) {
 
 ProjectiveCamera::ProjectiveCamera(Stream *stream, InstanceManager *manager)
 	: Sensor(stream, manager) {
-	m_nearClip = stream->readFloat();
-	m_farClip = stream->readFloat();
-	m_focusDistance = stream->readFloat();
+	m_nearClip = stream->readfloat();
+	m_farClip = stream->readfloat();
+	m_focusDistance = stream->readfloat();
 }
 
 void ProjectiveCamera::serialize(Stream *stream, InstanceManager *manager) const {
 	Sensor::serialize(stream, manager);
-	stream->writeFloat(m_nearClip);
-	stream->writeFloat(m_farClip);
-	stream->writeFloat(m_focusDistance);
+	stream->writefloat(m_nearClip);
+	stream->writefloat(m_farClip);
+	stream->writefloat(m_focusDistance);
 }
 
-void ProjectiveCamera::setFocusDistance(Float focusDistance) {
+void ProjectiveCamera::setFocusDistance(float focusDistance) {
 	if (m_focusDistance != focusDistance) {
 		m_focusDistance = focusDistance;
-		m_properties.setFloat("focusDistance", focusDistance, false);
+		m_properties.setfloat("focusDistance", focusDistance, false);
 	}
 }
 
-void ProjectiveCamera::setNearClip(Float nearClip) {
+void ProjectiveCamera::setNearClip(float nearClip) {
 	if (m_nearClip != nearClip) {
 		m_nearClip = nearClip;
-		m_properties.setFloat("nearClip", nearClip, false);
+		m_properties.setfloat("nearClip", nearClip, false);
 	}
 }
 
-void ProjectiveCamera::setFarClip(Float farClip) {
+void ProjectiveCamera::setFarClip(float farClip) {
 	if (m_farClip != farClip) {
 		m_farClip = farClip;
-		m_properties.setFloat("farClip", farClip, false);
+		m_properties.setfloat("farClip", farClip, false);
 	}
 }
 
@@ -230,7 +230,7 @@ PerspectiveCamera::PerspectiveCamera(const Properties &props)
 
 PerspectiveCamera::PerspectiveCamera(Stream *stream, InstanceManager *manager)
 	: ProjectiveCamera(stream, manager), m_xfov(0.0f) {
-	setXFov(stream->readFloat());
+	setXFov(stream->readfloat());
 }
 
 PerspectiveCamera::~PerspectiveCamera() {
@@ -242,7 +242,7 @@ void PerspectiveCamera::configure() {
 		return;
 
 	if (m_properties.hasProperty("fov")) {
-		Float fov = m_properties.getFloat("fov");
+		float fov = m_properties.getfloat("fov");
 
 		std::string fovAxis =
 			boost::to_lower_copy(m_properties.getString("fovAxis", "x"));
@@ -267,52 +267,52 @@ void PerspectiveCamera::configure() {
 			f = f.substr(0, f.length()-2);
 
 		char *end_ptr = NULL;
-		Float value = (Float) strtod(f.c_str(), &end_ptr);
+		float value = (float) strtod(f.c_str(), &end_ptr);
 		if (*end_ptr != '\0')
 			SLog(EError, "Could not parse the focal length (must be of the form "
 				"<x>mm, where <x> is a positive integer)!");
 
 		m_properties.removeProperty("focalLength");
-		setDiagonalFov(2 * 180/M_PI* std::atan(std::sqrt((Float) (36*36+24*24)) / (2*value)));
+		setDiagonalFov(2 * 180/M_PI* std::atan(std::sqrt((float) (36*36+24*24)) / (2*value)));
 	}
 }
 
 void PerspectiveCamera::serialize(Stream *stream, InstanceManager *manager) const {
 	ProjectiveCamera::serialize(stream, manager);
-	stream->writeFloat(m_xfov);
+	stream->writefloat(m_xfov);
 }
 
-void PerspectiveCamera::setXFov(Float xfov) {
+void PerspectiveCamera::setXFov(float xfov) {
 	if (xfov <= 0 || xfov >= 180)
 		Log(EError, "The horizontal field of view must be "
 			"in the interval (0, 180)!");
 	if (xfov != m_xfov) {
 		m_xfov = xfov;
-		m_properties.setFloat("fov", xfov, false);
+		m_properties.setfloat("fov", xfov, false);
 		m_properties.setString("fovAxis", "x", false);
 	}
 }
 
-void PerspectiveCamera::setYFov(Float yfov) {
+void PerspectiveCamera::setYFov(float yfov) {
 	setXFov(radToDeg(2*std::atan(
 		std::tan(0.5f * degToRad(yfov)) * m_aspect)));
 }
 
-void PerspectiveCamera::setDiagonalFov(Float dfov) {
-	Float diagonal = 2 * std::tan(0.5f * degToRad(dfov));
-	Float width = diagonal / std::sqrt(1.0f + 1.0f / (m_aspect*m_aspect));
+void PerspectiveCamera::setDiagonalFov(float dfov) {
+	float diagonal = 2 * std::tan(0.5f * degToRad(dfov));
+	float width = diagonal / std::sqrt(1.0f + 1.0f / (m_aspect*m_aspect));
 	setXFov(radToDeg(2*std::atan(width*0.5f)));
 }
 
 
-Float PerspectiveCamera::getYFov() const {
+float PerspectiveCamera::getYFov() const {
 	return radToDeg(2*std::atan(
 		std::tan(0.5f * degToRad(m_xfov)) / m_aspect));
 }
 
-Float PerspectiveCamera::getDiagonalFov() const {
-	Float width = std::tan(0.5f * degToRad(m_xfov));
-	Float diagonal = width * std::sqrt(1.0f + 1.0f / (m_aspect*m_aspect));
+float PerspectiveCamera::getDiagonalFov() const {
+	float width = std::tan(0.5f * degToRad(m_xfov));
+	float diagonal = width * std::sqrt(1.0f + 1.0f / (m_aspect*m_aspect));
 	return radToDeg(2*std::atan(diagonal));
 }
 

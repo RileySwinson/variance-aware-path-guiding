@@ -60,7 +60,7 @@ public:
 		FakeSampler(Sampler *sampler)
 			: Sampler(Properties()), m_sampler(sampler) { }
 
-		Float next1D() {
+		float next1D() {
 			while (m_sampleIndex >= m_values.size())
 				m_values.push_back(m_sampler->next1D());
 			return m_values[m_sampleIndex++];
@@ -87,7 +87,7 @@ public:
 		std::string toString() const { return "FakeSampler[]"; }
 	private:
 		ref<Sampler> m_sampler;
-		std::vector<Float> m_values;
+		std::vector<float> m_values;
 	};
 
 	/// Adapter to use BSDFs in the chi-square test
@@ -106,7 +106,7 @@ public:
 //			m_isSymmetric = true;
 		}
 
-		boost::tuple<Vector, Float, EMeasure> generateSample() {
+		boost::tuple<Vector, float, EMeasure> generateSample() {
 			Point2 sample(m_sampler->next2D());
 			BSDFSamplingRecord bRec(m_its, m_fakeSampler);
 			bRec.mode = EImportance;
@@ -117,7 +117,7 @@ public:
 				enableFPExceptions();
 			#endif
 
-			Float pdfVal, sampledPDF;
+			float pdfVal, sampledPDF;
 
 			/* Check the various sampling routines for agreement
 			   amongst each other */
@@ -148,9 +148,9 @@ public:
 					fFwd /= std::abs(Frame::cosTheta(bRec.wo));
 					fRev /= std::abs(Frame::cosTheta(bRecRev.wo));
 				}
-				Float max = std::max(fFwd.max(), fRev.max());
+				float max = std::max(fFwd.max(), fRev.max());
 				if (max > 0) {
-					Float err = (fFwd-fRev).max() / max;
+					float err = (fFwd-fRev).max() / max;
 					if (err > Epsilon) {
 						Log(EWarn, "Non-symmetry in %s: %s vs %s, %s", m_bsdf->toString().c_str(),
 							fFwd.toString().c_str(), fRev.toString().c_str(), bRec.toString().c_str());
@@ -171,9 +171,9 @@ public:
 
 			bool mismatch = false;
 			for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-				Float a = sampled[i], b = sampled2[i], c = manual[i];
-				Float min = std::min(std::min(a, b), c);
-				Float err = std::max(std::max(std::abs(a - b), std::abs(a - c)), std::abs(b - c));
+				float a = sampled[i], b = sampled2[i], c = manual[i];
+				float min = std::min(std::min(a, b), c);
+				float err = std::max(std::max(std::abs(a - b), std::abs(a - c)), std::abs(b - c));
 				m_largestWeight = std::max(m_largestWeight, a);
 
 				if (min < ERROR_REQ && err > ERROR_REQ) // absolute error threshold
@@ -190,8 +190,8 @@ public:
 					measure);
 
 			mismatch = false;
-			Float min = std::min(pdfVal, sampledPDF);
-			Float err = std::abs(pdfVal - sampledPDF);
+			float min = std::min(pdfVal, sampledPDF);
+			float err = std::abs(pdfVal - sampledPDF);
 
 			if (min < ERROR_REQ && err > ERROR_REQ) // absolute error threshold
 				mismatch = true;
@@ -209,7 +209,7 @@ public:
 			return boost::make_tuple(bRec.wo, 1.0f, measure);
 		}
 
-		Float pdf(const Vector &wo, EMeasure measure) {
+		float pdf(const Vector &wo, EMeasure measure) {
 			BSDFSamplingRecord bRec(m_its, m_wi, wo);
 			bRec.mode = EImportance;
 			bRec.component = m_component;
@@ -221,7 +221,7 @@ public:
 			if (m_bsdf->eval(bRec, measure).isZero())
 				return 0.0f;
 
-			Float result = m_bsdf->pdf(bRec, measure);
+			float result = m_bsdf->pdf(bRec, measure);
 
 			#if defined(MTS_DEBUG_FP)
 				disableFPExceptions();
@@ -229,7 +229,7 @@ public:
 			return result;
 		}
 
-		inline Float getLargestWeight() const { return m_largestWeight; }
+		inline float getLargestWeight() const { return m_largestWeight; }
 //		inline bool isSymmetric() const { return m_isSymmetric; }
 	private:
 		Intersection m_its;
@@ -238,7 +238,7 @@ public:
 		ref<FakeSampler> m_fakeSampler;
 		Vector m_wi;
 		int m_component;
-		Float m_largestWeight;
+		float m_largestWeight;
 //		bool m_isSymmetric;
 	};
 
@@ -252,22 +252,22 @@ public:
 			m_fakeSampler = new FakeSampler(m_sampler);
 		}
 
-		boost::tuple<Vector, Float, EMeasure> generateSample() {
+		boost::tuple<Vector, float, EMeasure> generateSample() {
 			PhaseFunctionSamplingRecord pRec(m_mRec, m_wi);
 
 			#if defined(MTS_DEBUG_FP)
 				enableFPExceptions();
 			#endif
-			Float sampledPDF, pdfVal;
+			float sampledPDF, pdfVal;
 
 			/* Check the various sampling routines for agreement amongst each other */
 			m_fakeSampler->clear();
-			Float sampled = m_phase->sample(pRec, sampledPDF, m_fakeSampler);
+			float sampled = m_phase->sample(pRec, sampledPDF, m_fakeSampler);
 			m_fakeSampler->rewind();
-			Float sampled2 = m_phase->sample(pRec, m_fakeSampler);
-			Float f = m_phase->eval(pRec);
+			float sampled2 = m_phase->sample(pRec, m_fakeSampler);
+			float f = m_phase->eval(pRec);
 			pdfVal = m_phase->pdf(pRec);
-			Float manual = f/pdfVal;
+			float manual = f/pdfVal;
 
 			if (std::isnan(sampled) || std::isnan(sampled2) || std::isnan(manual) ||
 				sampled < 0 || sampled2 < 0 || manual < 0) {
@@ -278,8 +278,8 @@ public:
 			}
 
 			bool mismatch = false;
-			Float min = std::min(std::min(sampled, sampled2), manual);
-			Float err = std::max(std::max(std::abs(sampled - sampled2),
+			float min = std::min(std::min(sampled, sampled2), manual);
+			float err = std::max(std::max(std::abs(sampled - sampled2),
 					std::abs(sampled - manual)), std::abs(sampled2 - manual));
 			m_largestWeight = std::max(m_largestWeight, sampled);
 
@@ -311,7 +311,7 @@ public:
 				sampled == 0 ? 0.0f : 1.0f, ESolidAngle);
 		}
 
-		Float pdf(const Vector &wo, EMeasure measure) const {
+		float pdf(const Vector &wo, EMeasure measure) const {
 			if (measure != ESolidAngle)
 				return 0.0f;
 
@@ -321,21 +321,21 @@ public:
 			#endif
 			if (m_phase->eval(pRec) == 0)
 				return 0.0f;
-			Float result = m_phase->pdf(pRec);
+			float result = m_phase->pdf(pRec);
 			#if defined(MTS_DEBUG_FP)
 				disableFPExceptions();
 			#endif
 			return result;
 		}
 
-		inline Float getLargestWeight() const { return m_largestWeight; }
+		inline float getLargestWeight() const { return m_largestWeight; }
 	private:
 		const MediumSamplingRecord &m_mRec;
 		ref<FakeSampler> m_fakeSampler;
 		ref<const PhaseFunction> m_phase;
 		ref<Sampler> m_sampler;
 		Vector m_wi;
-		Float m_largestWeight;
+		float m_largestWeight;
 	};
 
 	/// Adapter to use direct illumination sampling in the chi-square test
@@ -346,7 +346,7 @@ public:
 			emitter->samplePosition(m_pRec, m_sampler->next2D());
 		}
 
-		boost::tuple<Vector, Float, EMeasure> generateSample() {
+		boost::tuple<Vector, float, EMeasure> generateSample() {
 			#if defined(MTS_DEBUG_FP)
 				enableFPExceptions();
 			#endif
@@ -361,7 +361,7 @@ public:
 			return boost::make_tuple(dRec.d, 1.0f, dRec.measure);
 		}
 
-		Float pdf(const Vector &d, EMeasure measure) const {
+		float pdf(const Vector &d, EMeasure measure) const {
 			if (measure != ESolidAngle)
 				return 0.0f;
 
@@ -373,7 +373,7 @@ public:
 				enableFPExceptions();
 			#endif
 
-			Float result = m_emitter->pdfDirect(dRec);
+			float result = m_emitter->pdfDirect(dRec);
 
 			#if defined(MTS_DEBUG_FP)
 				disableFPExceptions();
@@ -407,7 +407,7 @@ public:
 				continue;
 
 			const BSDF *bsdf = static_cast<const BSDF *>(objects[i].get());
-			Float largestWeight = 0;
+			float largestWeight = 0;
 
 			Log(EInfo, "Processing BSDF model %s", bsdf->toString().c_str());
 
@@ -525,7 +525,7 @@ public:
 				continue;
 
 			const PhaseFunction *phase = static_cast<const PhaseFunction *>(objects[i].get());
-			Float largestWeight = 0;
+			float largestWeight = 0;
 
 			Log(EInfo, "Processing phase function model %s", phase->toString().c_str());
 			Log(EInfo, "Checking the model for %i incident directions", wiSamples);

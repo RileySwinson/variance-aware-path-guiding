@@ -39,7 +39,7 @@ MTS_NAMESPACE_BEGIN
  *         \end{enumerate}
  *         Default: \texttt{balanced}
  *     }
- *     \parameter{alphaU, alphaV}{\Float\Or\Texture}{
+ *     \parameter{alphaU, alphaV}{\float\Or\Texture}{
  *         Specifies the anisotropic roughness values along the tangent and
  *         bitangent directions.
  *         \default{0.1}.
@@ -113,15 +113,15 @@ public:
 			Log(EError, "Specified an invalid model type \"%s\", must be "
 				"\"ward\", \"ward-duer\", or \"balanced\"!", type.c_str());
 
-		Float alpha = props.getFloat("alpha", 0.1f),
-			  alphaU = props.getFloat("alphaU", alpha),
-			  alphaV = props.getFloat("alphaV", alpha);
+		float alpha = props.getfloat("alpha", 0.1f),
+			  alphaU = props.getfloat("alphaU", alpha),
+			  alphaV = props.getfloat("alphaV", alpha);
 
-		m_alphaU = new ConstantFloatTexture(alphaU);
+		m_alphaU = new ConstantfloatTexture(alphaU);
 		if (alphaU == alphaV)
 			m_alphaV = m_alphaU;
 		else
-			m_alphaV = new ConstantFloatTexture(alphaV);
+			m_alphaV = new ConstantfloatTexture(alphaV);
 		m_specularSamplingWeight = 0.0f;
 	}
 
@@ -157,7 +157,7 @@ public:
 
 		/* Compute weights that steer samples towards
 		   the specular or diffuse components */
-		Float dAvg = m_diffuseReflectance->getAverage().getLuminance(),
+		float dAvg = m_diffuseReflectance->getAverage().getLuminance(),
 			  sAvg = m_specularReflectance->getAverage().getLuminance();
 		m_specularSamplingWeight = sAvg / (dAvg + sAvg);
 
@@ -188,10 +188,10 @@ public:
 		Spectrum result(0.0f);
 		if (hasSpecular) {
 			Vector H = bRec.wi+bRec.wo;
-			Float alphaU = m_alphaU->eval(bRec.its).average();
-			Float alphaV = m_alphaV->eval(bRec.its).average();
+			float alphaU = m_alphaU->eval(bRec.its).average();
+			float alphaV = m_alphaV->eval(bRec.its).average();
 
-			Float factor1 = 0.0f;
+			float factor1 = 0.0f;
 			switch (m_modelVariant) {
 				case EWard:
 					factor1 = 1.0f / (4.0f * M_PI * alphaU * alphaV *
@@ -209,9 +209,9 @@ public:
 					Log(EError, "Unknown model type!");
 			}
 
-			Float factor2 = H.x / alphaU, factor3 = H.y / alphaV;
-			Float exponent = -(factor2*factor2+factor3*factor3)/(H.z*H.z);
-			Float specRef = factor1 * math::fastexp(exponent);
+			float factor2 = H.x / alphaU, factor3 = H.y / alphaV;
+			float exponent = -(factor2*factor2+factor3*factor3)/(H.z*H.z);
+			float specRef = factor1 * math::fastexp(exponent);
 			/* Important to prevent numeric issues when evaluating the
 			   sampling density of the Ward model in places where it takes
 			   on miniscule values (Veach-MLT does this for instance) */
@@ -225,7 +225,7 @@ public:
 		return result * Frame::cosTheta(bRec.wo);
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		if (Frame::cosTheta(bRec.wi) <= 0 ||
 			Frame::cosTheta(bRec.wo) <= 0 || measure != ESolidAngle)
 			return 0.0f;
@@ -235,17 +235,17 @@ public:
 		bool hasDiffuse  = (bRec.typeMask & EDiffuseReflection)
 				&& (bRec.component == -1 || bRec.component == 1);
 
-		Float diffuseProb = 0.0f, specProb = 0.0f;
+		float diffuseProb = 0.0f, specProb = 0.0f;
 
 		if (hasSpecular) {
-			Float alphaU = m_alphaU->eval(bRec.its).average();
-			Float alphaV = m_alphaV->eval(bRec.its).average();
+			float alphaU = m_alphaU->eval(bRec.its).average();
+			float alphaV = m_alphaV->eval(bRec.its).average();
 			Vector H = normalize(bRec.wi+bRec.wo);
-			Float factor1 = 1.0f / (4.0f * M_PI * alphaU * alphaV *
+			float factor1 = 1.0f / (4.0f * M_PI * alphaU * alphaV *
 				dot(H, bRec.wi) * std::pow(Frame::cosTheta(H), 3));
-			Float factor2 = H.x / alphaU, factor3 = H.y / alphaV;
+			float factor2 = H.x / alphaU, factor3 = H.y / alphaV;
 
-			Float exponent = -(factor2*factor2+factor3*factor3)/(H.z*H.z);
+			float exponent = -(factor2*factor2+factor3*factor3)/(H.z*H.z);
 			specProb = factor1 * math::fastexp(exponent);
 		}
 
@@ -263,7 +263,7 @@ public:
 			return 0.0f;
 	}
 
-	inline Spectrum sample(BSDFSamplingRecord &bRec, Float &_pdf, const Point2 &_sample) const {
+	inline Spectrum sample(BSDFSamplingRecord &bRec, float &_pdf, const Point2 &_sample) const {
 		Point2 sample(_sample);
 
 		bool hasSpecular = (bRec.typeMask & EGlossyReflection)
@@ -287,17 +287,17 @@ public:
 		}
 
 		if (choseSpecular) {
-			Float alphaU = m_alphaU->eval(bRec.its).average();
-			Float alphaV = m_alphaV->eval(bRec.its).average();
+			float alphaU = m_alphaU->eval(bRec.its).average();
+			float alphaV = m_alphaV->eval(bRec.its).average();
 
-			Float phiH = std::atan(alphaV/alphaU
+			float phiH = std::atan(alphaV/alphaU
 				* std::tan(2.0f * M_PI * sample.y));
 			if (sample.y > 0.5f)
 				phiH += M_PI;
-			Float cosPhiH = std::cos(phiH);
-			Float sinPhiH = math::safe_sqrt(1.0f-cosPhiH*cosPhiH);
+			float cosPhiH = std::cos(phiH);
+			float sinPhiH = math::safe_sqrt(1.0f-cosPhiH*cosPhiH);
 
-			Float thetaH = std::atan(math::safe_sqrt(
+			float thetaH = std::atan(math::safe_sqrt(
 				-math::fastlog(sample.x) / (
 					(cosPhiH*cosPhiH) / (alphaU*alphaU) +
 					(sinPhiH*sinPhiH) / (alphaV*alphaV)
@@ -326,7 +326,7 @@ public:
 	}
 
 	Spectrum sample(BSDFSamplingRecord &bRec, const Point2 &sample) const {
-		Float pdf;
+		float pdf;
 		return Ward::sample(bRec, pdf, sample);
 	}
 
@@ -357,14 +357,14 @@ public:
 		manager->serialize(stream, m_alphaV.get());
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		Assert(component == 0 || component == 1);
 
 		if (component == 0)
 			return 0.5f * (m_alphaU->eval(its).average()
 				+ m_alphaV->eval(its).average());
 		else
-			return std::numeric_limits<Float>::infinity();
+			return std::numeric_limits<float>::infinity();
 	}
 
 	Shader *createShader(Renderer *renderer) const;
@@ -398,7 +398,7 @@ private:
 	ref<Texture> m_specularReflectance;
 	ref<Texture> m_alphaU;
 	ref<Texture> m_alphaV;
-	Float m_specularSamplingWeight;
+	float m_specularSamplingWeight;
 };
 
 // ================ Hardware shader implementation ================

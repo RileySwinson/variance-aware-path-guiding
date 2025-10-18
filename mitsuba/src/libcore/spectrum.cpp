@@ -27,11 +27,11 @@ MTS_NAMESPACE_BEGIN
  * CIE 1931 XYZ color matching functions.
  */
 static const int   CIE_samples = 471;
-extern const Float CIE_wavelengths[CIE_samples];
-extern const Float CIE_X_entries[CIE_samples];
-extern const Float CIE_Y_entries[CIE_samples];
-extern const Float CIE_Z_entries[CIE_samples];
-extern const Float CIE_D65_entries[CIE_samples];
+extern const float CIE_wavelengths[CIE_samples];
+extern const float CIE_X_entries[CIE_samples];
+extern const float CIE_Y_entries[CIE_samples];
+extern const float CIE_Z_entries[CIE_samples];
+extern const float CIE_D65_entries[CIE_samples];
 /// @}
 
 /**
@@ -39,21 +39,21 @@ extern const Float CIE_D65_entries[CIE_samples];
  * Smits-style Spectrum-to-RGB conversion data, data by Karl vom Berge
  */
 static const int   RGB2Spec_samples = 32;
-extern const Float RGB2Spec_wavelengths[RGB2Spec_samples];
-extern const Float RGBRefl2SpecWhite_entries[RGB2Spec_samples];
-extern const Float RGBRefl2SpecCyan_entries[RGB2Spec_samples];
-extern const Float RGBRefl2SpecMagenta_entries[RGB2Spec_samples];
-extern const Float RGBRefl2SpecYellow_entries[RGB2Spec_samples];
-extern const Float RGBRefl2SpecRed_entries[RGB2Spec_samples];
-extern const Float RGBRefl2SpecGreen_entries[RGB2Spec_samples];
-extern const Float RGBRefl2SpecBlue_entries[RGB2Spec_samples];
-extern const Float RGBIllum2SpecWhite_entries[RGB2Spec_samples];
-extern const Float RGBIllum2SpecCyan_entries[RGB2Spec_samples];
-extern const Float RGBIllum2SpecMagenta_entries[RGB2Spec_samples];
-extern const Float RGBIllum2SpecYellow_entries[RGB2Spec_samples];
-extern const Float RGBIllum2SpecRed_entries[RGB2Spec_samples];
-extern const Float RGBIllum2SpecGreen_entries[RGB2Spec_samples];
-extern const Float RGBIllum2SpecBlue_entries[RGB2Spec_samples];
+extern const float RGB2Spec_wavelengths[RGB2Spec_samples];
+extern const float RGBRefl2SpecWhite_entries[RGB2Spec_samples];
+extern const float RGBRefl2SpecCyan_entries[RGB2Spec_samples];
+extern const float RGBRefl2SpecMagenta_entries[RGB2Spec_samples];
+extern const float RGBRefl2SpecYellow_entries[RGB2Spec_samples];
+extern const float RGBRefl2SpecRed_entries[RGB2Spec_samples];
+extern const float RGBRefl2SpecGreen_entries[RGB2Spec_samples];
+extern const float RGBRefl2SpecBlue_entries[RGB2Spec_samples];
+extern const float RGBIllum2SpecWhite_entries[RGB2Spec_samples];
+extern const float RGBIllum2SpecCyan_entries[RGB2Spec_samples];
+extern const float RGBIllum2SpecMagenta_entries[RGB2Spec_samples];
+extern const float RGBIllum2SpecYellow_entries[RGB2Spec_samples];
+extern const float RGBIllum2SpecRed_entries[RGB2Spec_samples];
+extern const float RGBIllum2SpecGreen_entries[RGB2Spec_samples];
+extern const float RGBIllum2SpecBlue_entries[RGB2Spec_samples];
 /// @}
 
 /// @{ \name Interpolated versions of the XYZ color matching functions
@@ -69,7 +69,7 @@ static InterpolatedSpectrum CIE_D65_interp(CIE_wavelengths, CIE_D65_entries, CIE
 Spectrum Spectrum::CIE_X;
 Spectrum Spectrum::CIE_Y;
 Spectrum Spectrum::CIE_Z;
-Float Spectrum::CIE_normalization;
+float Spectrum::CIE_normalization;
 /// @}
 
 /** @{ \name Pre-integrated Smits-style RGB to Spectrum
@@ -92,7 +92,7 @@ Spectrum Spectrum::rgbIllum2SpecBlue;
 /// @}
 
 /* Covered wavelength range of each spectral bin */
-Float Spectrum::m_wavelengths[SPECTRUM_SAMPLES + 1];
+float Spectrum::m_wavelengths[SPECTRUM_SAMPLES + 1];
 #endif
 
 /// Pre-integrated D65 illuminant
@@ -103,9 +103,9 @@ void Spectrum::staticInitialization() {
 	std::ostringstream oss;
 	oss << std::fixed;
 	oss.precision(2);
-	Float stepSize = SPECTRUM_RANGE / (Float) SPECTRUM_SAMPLES;
+	float stepSize = SPECTRUM_RANGE / (float) SPECTRUM_SAMPLES;
 	for (int i=0; i<SPECTRUM_SAMPLES + 1; i++) {
-		Float value = SPECTRUM_MIN_WAVELENGTH + stepSize * i;
+		float value = SPECTRUM_MIN_WAVELENGTH + stepSize * i;
 		m_wavelengths[i] = value;
 		if (i < SPECTRUM_SAMPLES) {
 			oss << value << "-" << value + stepSize << " nm";
@@ -172,12 +172,12 @@ void Spectrum::staticShutdown() {
 void Spectrum::fromContinuousSpectrum(const ContinuousSpectrum &smooth) {
 #if SPECTRUM_SAMPLES == 3
 	/* Convolve with the XYZ matching functions and convert to RGB */
-	Float start = CIE_wavelengths[0], end = CIE_wavelengths[CIE_samples-1];
+	float start = CIE_wavelengths[0], end = CIE_wavelengths[CIE_samples-1];
 
-	Float X = ProductSpectrum(smooth, CIE_X_interp).average(start, end);
-	Float Y = ProductSpectrum(smooth, CIE_Y_interp).average(start, end);
-	Float Z = ProductSpectrum(smooth, CIE_Z_interp).average(start, end);
-	Float normalization = 1.0f / CIE_Y_interp.average(start, end);
+	float X = ProductSpectrum(smooth, CIE_X_interp).average(start, end);
+	float Y = ProductSpectrum(smooth, CIE_Y_interp).average(start, end);
+	float Z = ProductSpectrum(smooth, CIE_Z_interp).average(start, end);
+	float normalization = 1.0f / CIE_Y_interp.average(start, end);
 
 	X *= normalization; Y *= normalization; Z *= normalization;
 
@@ -190,14 +190,14 @@ void Spectrum::fromContinuousSpectrum(const ContinuousSpectrum &smooth) {
 #endif
 }
 
-Float Spectrum::eval(Float lambda) const {
+float Spectrum::eval(float lambda) const {
 #if SPECTRUM_SAMPLES == 3
 	SLog(EError, "Spectrum::eval() is not supported when Mitsuba "
 		"is configured for RGB-based rendering");
 	return 0.0f;
 #else
 	int index = math::floorToInt((lambda - SPECTRUM_MIN_WAVELENGTH) *
-		((Float) SPECTRUM_SAMPLES / (Float) SPECTRUM_RANGE));
+		((float) SPECTRUM_SAMPLES / (float) SPECTRUM_RANGE));
 
 	if (index < 0 || index >= SPECTRUM_SAMPLES)
 		return 0.0f;
@@ -206,11 +206,11 @@ Float Spectrum::eval(Float lambda) const {
 #endif
 }
 
-std::pair<Float, Float> Spectrum::getBinCoverage(size_t index) {
+std::pair<float, float> Spectrum::getBinCoverage(size_t index) {
 #if SPECTRUM_SAMPLES == 3
 	SLog(EError, "Spectrum::getBinCoverage() is not supported when Mitsuba "
 		"is configured for RGB-based rendering");
-	return std::make_pair((Float) 0, (Float) 0);
+	return std::make_pair((float) 0, (float) 0);
 #else
 	if (index < 0 || index >= SPECTRUM_SAMPLES)
 		SLog(EError, "Spectrum::getBinCoverage(): out of range!");
@@ -219,14 +219,14 @@ std::pair<Float, Float> Spectrum::getBinCoverage(size_t index) {
 }
 
 #if SPECTRUM_SAMPLES == 3
-void Spectrum::fromXYZ(Float x, Float y, Float z, EConversionIntent /* unused */) {
+void Spectrum::fromXYZ(float x, float y, float z, EConversionIntent /* unused */) {
 	/* Convert from XYZ tristimulus values to ITU-R Rec. BT.709 linear RGB */
 	s[0] =  3.240479f * x + -1.537150f * y + -0.498535f * z;
 	s[1] = -0.969256f * x +  1.875991f * y +  0.041556f * z;
 	s[2] =  0.055648f * x + -0.204043f * y +  1.057311f * z;
 }
 
-void Spectrum::toXYZ(Float &x, Float &y, Float &z) const {
+void Spectrum::toXYZ(float &x, float &y, float &z) const {
 	/* Convert ITU-R Rec. BT.709 linear RGB to XYZ tristimulus values */
 	x = s[0] * 0.412453f + s[1] * 0.357580f + s[2] * 0.180423f;
 	y = s[0] * 0.212671f + s[1] * 0.715160f + s[2] * 0.072169f;
@@ -234,7 +234,7 @@ void Spectrum::toXYZ(Float &x, Float &y, Float &z) const {
 }
 
 #else
-void Spectrum::toXYZ(Float &x, Float &y, Float &z) const {
+void Spectrum::toXYZ(float &x, float &y, float &z) const {
 	x = y = z = 0.0f;
 	for (size_t i=0; i<SPECTRUM_SAMPLES; ++i) {
 		x += CIE_X[i] * s[i];
@@ -246,24 +246,24 @@ void Spectrum::toXYZ(Float &x, Float &y, Float &z) const {
 	z *= CIE_normalization;
 }
 
-Float Spectrum::getLuminance() const {
-	Float luminance = 0.0f;
+float Spectrum::getLuminance() const {
+	float luminance = 0.0f;
 	for (size_t i=0; i<SPECTRUM_SAMPLES; ++i)
 		luminance += CIE_Y[i] * s[i];
 	return luminance * CIE_normalization;
 }
 
-void Spectrum::fromXYZ(Float x, Float y, Float z, EConversionIntent intent) {
+void Spectrum::fromXYZ(float x, float y, float z, EConversionIntent intent) {
 	/* Convert from XYZ tristimulus values to ITU-R Rec. BT.709 linear RGB */
-	Float r =  3.240479f*x - 1.537150f*y - 0.498535f*z;
-	Float g = -0.969256f*x + 1.875991f*y + 0.041556f*z;
-	Float b =  0.055648f*x - 0.204043f*y + 1.057311f*z;
+	float r =  3.240479f*x - 1.537150f*y - 0.498535f*z;
+	float g = -0.969256f*x + 1.875991f*y + 0.041556f*z;
+	float b =  0.055648f*x - 0.204043f*y + 1.057311f*z;
 
 	fromLinearRGB(r, g, b, intent);
 }
 
-void Spectrum::toLinearRGB(Float &r, Float &g, Float &b) const {
-	Float x, y, z;
+void Spectrum::toLinearRGB(float &r, float &g, float &b) const {
+	float x, y, z;
 	toXYZ(x, y, z);
 
 	/* Convert from XYZ tristimulus values to ITU-R Rec. BT.709 linear RGB */
@@ -272,7 +272,7 @@ void Spectrum::toLinearRGB(Float &r, Float &g, Float &b) const {
 	b =  0.055648f * x + -0.204043f * y +  1.057311f * z;
 }
 
-void Spectrum::fromLinearRGB(Float r, Float g, Float b, EConversionIntent intent) {
+void Spectrum::fromLinearRGB(float r, float g, float b, EConversionIntent intent) {
 	Spectrum result(0.0f);
 
 	if (intent == EReflectance) {
@@ -352,20 +352,20 @@ void Spectrum::fromLinearRGB(Float r, Float g, Float b, EConversionIntent intent
 
 #endif
 
-void Spectrum::toIPT(Float &I, Float &P, Float &T) const {
+void Spectrum::toIPT(float &I, float &P, float &T) const {
 	/* Based on "High Dynamic Range Imaging" by Reinhard et al. */
-	Float X, Y, Z;
+	float X, Y, Z;
 	toXYZ(X, Y, Z);
 
 	/* Convert to LMS cone excitation space (assumes D65 illum.) */
-	Float L =   0.4002f * X + 0.7075f * Y - 0.0807f * Z;
-	Float M = - 0.2280f * X + 1.1500f * Y + 0.0612f * Z;
-	Float S =   0.0000f * X + 0.0000f * Y + 0.9184f * Z;
+	float L =   0.4002f * X + 0.7075f * Y - 0.0807f * Z;
+	float M = - 0.2280f * X + 1.1500f * Y + 0.0612f * Z;
+	float S =   0.0000f * X + 0.0000f * Y + 0.9184f * Z;
 
 	/* Nonlinear transformation for perceptual uniformity */
-	Float Lp = math::signum(L) * std::pow(std::abs(L), (Float) 0.43);
-	Float Mp = math::signum(M) * std::pow(std::abs(M), (Float) 0.43);
-	Float Sp = math::signum(S) * std::pow(std::abs(S), (Float) 0.43);
+	float Lp = math::signum(L) * std::pow(std::abs(L), (float) 0.43);
+	float Mp = math::signum(M) * std::pow(std::abs(M), (float) 0.43);
+	float Sp = math::signum(S) * std::pow(std::abs(S), (float) 0.43);
 
 	/* Second linear transformation to get to IPT space */
 	I = 0.4000f * Lp + 0.4000f * Mp + 0.2000f * Sp;
@@ -373,45 +373,45 @@ void Spectrum::toIPT(Float &I, Float &P, Float &T) const {
 	T = 0.8056f * Lp + 0.3572f * Mp - 1.1628f * Sp;
 }
 
-void Spectrum::fromIPT(Float I, Float P, Float T, EConversionIntent intent) {
-	Float Lp = 1.0000f * I + 0.0976f * P + 0.2052f * T;
-	Float Mp = 1.0000f * I - 0.1139f * P + 0.1332f * T;
-	Float Sp = 1.0000f * I + 0.0326f * P - 0.6769f * T;
+void Spectrum::fromIPT(float I, float P, float T, EConversionIntent intent) {
+	float Lp = 1.0000f * I + 0.0976f * P + 0.2052f * T;
+	float Mp = 1.0000f * I - 0.1139f * P + 0.1332f * T;
+	float Sp = 1.0000f * I + 0.0326f * P - 0.6769f * T;
 
-	Float L = math::signum(Lp) * std::pow(std::abs(Lp), (Float) (1.0/0.43));
-	Float M = math::signum(Mp) * std::pow(std::abs(Mp), (Float) (1.0/0.43));
-	Float S = math::signum(Sp) * std::pow(std::abs(Sp), (Float) (1.0/0.43));
+	float L = math::signum(Lp) * std::pow(std::abs(Lp), (float) (1.0/0.43));
+	float M = math::signum(Mp) * std::pow(std::abs(Mp), (float) (1.0/0.43));
+	float S = math::signum(Sp) * std::pow(std::abs(Sp), (float) (1.0/0.43));
 
-	Float X = 1.8502f * L - 1.1383f * M + 0.2384f * S;
-	Float Y = 0.3668f * L + 0.6439f * M - 0.0107f * S;
-	Float Z = 0.0000f * L + 0.0000f * M + 1.0889f * S;
+	float X = 1.8502f * L - 1.1383f * M + 0.2384f * S;
+	float Y = 0.3668f * L + 0.6439f * M - 0.0107f * S;
+	float Z = 0.0000f * L + 0.0000f * M + 1.0889f * S;
 
 	fromXYZ(X, Y, Z, intent);
 }
 
-inline Float toSRGBComponent(Float value) {
-	if (value <= (Float) 0.0031308)
-		return (Float) 12.92 * value;
-	return (Float) 1.055
-		* std::pow(value, (Float) (1.0/2.4))
-		 - (Float) 0.055;
+inline float toSRGBComponent(float value) {
+	if (value <= (float) 0.0031308)
+		return (float) 12.92 * value;
+	return (float) 1.055
+		* std::pow(value, (float) (1.0/2.4))
+		 - (float) 0.055;
 }
 
-inline Float fromSRGBComponent(Float value) {
-	if (value <= (Float) 0.04045)
-		return value * (Float) (1.0 / 12.92);
-	return std::pow((value + (Float) 0.055)
-		* (Float) (1.0 / 1.055), (Float) 2.4);
+inline float fromSRGBComponent(float value) {
+	if (value <= (float) 0.04045)
+		return value * (float) (1.0 / 12.92);
+	return std::pow((value + (float) 0.055)
+		* (float) (1.0 / 1.055), (float) 2.4);
 }
 
-void Spectrum::toSRGB(Float &r, Float &g, Float &b) const {
+void Spectrum::toSRGB(float &r, float &g, float &b) const {
 	toLinearRGB(r, g, b);
 	r = toSRGBComponent(r);
 	g = toSRGBComponent(g);
 	b = toSRGBComponent(b);
 }
 
-void Spectrum::fromSRGB(Float r, Float g, Float b) {
+void Spectrum::fromSRGB(float r, float g, float b) {
 	r = fromSRGBComponent(r);
 	g = fromSRGBComponent(g);
 	b = fromSRGBComponent(b);
@@ -421,10 +421,10 @@ void Spectrum::fromSRGB(Float r, Float g, Float b) {
 /* RGBE conversion based on Bruce Walter's and Greg Ward's code
   -> http://www.graphics.cornell.edu/online/formats/rgbe/rgbe.c */
 void Spectrum::toRGBE(uint8_t *rgbe) const {
-	Float r, g, b;
+	float r, g, b;
 	toLinearRGB(r, g, b);
 	/* Find the largest contribution */
-	Float max = std::max(std::max(r, g), b);
+	float max = std::max(std::max(r, g), b);
 	if (max < 1e-32) {
 		rgbe[0] = rgbe[1] = rgbe[2] = rgbe[3] = 0;
 	} else {
@@ -432,7 +432,7 @@ void Spectrum::toRGBE(uint8_t *rgbe) const {
 		/* Extract exponent and convert the fractional part into
 		 the [0..255] range. Afterwards, divide by max so that
 		 any color component multiplied by the result will be in [0,255] */
-		max = std::frexp(max, &e) * (Float) 256 / max;
+		max = std::frexp(max, &e) * (float) 256 / max;
 		rgbe[0] = (uint8_t) (r * max);
 		rgbe[1] = (uint8_t) (g * max);
 		rgbe[2] = (uint8_t) (b * max);
@@ -445,7 +445,7 @@ void Spectrum::toRGBE(uint8_t *rgbe) const {
 void Spectrum::fromRGBE(const uint8_t rgbe[4], EConversionIntent intent) {
 	if (rgbe[3]) {
 		/* Calculate exponent/256 */
-		Float exp = std::ldexp((Float) 1, (int) rgbe[3] - (128+8));
+		float exp = std::ldexp((float) 1, (int) rgbe[3] - (128+8));
 		fromLinearRGB(rgbe[0]*exp, rgbe[1]*exp, rgbe[2]*exp, intent);
 	} else {
 		s[0] = s[1] = s[2] = 0.0f;
@@ -480,7 +480,7 @@ std::string Spectrum::toString() const {
 	return oss.str();
 }
 
-Float BlackBodySpectrum::eval(Float l) const {
+float BlackBodySpectrum::eval(float l) const {
 	/* Convert inputs to meters and kelvins */
 	const double c = 299792458;      /* Speed of light */
 	const double k = 1.3806488e-23;  /* Boltzmann constant */
@@ -491,7 +491,7 @@ Float BlackBodySpectrum::eval(Float l) const {
 	const double I = (2*h*c*c) * std::pow(lambda, -5.0)
 		/ ((math::fastexp((h/k)*c/(lambda*m_temperature)) - 1.0) * 1e9);
 
-	return (Float) I;
+	return (float) I;
 }
 
 std::string BlackBodySpectrum::toString() const {
@@ -500,7 +500,7 @@ std::string BlackBodySpectrum::toString() const {
 	return oss.str();
 }
 
-Float ProductSpectrum::eval(Float lambda) const {
+float ProductSpectrum::eval(float lambda) const {
 	return m_spec1.eval(lambda) * m_spec2.eval(lambda);
 }
 
@@ -513,14 +513,14 @@ std::string ProductSpectrum::toString() const {
 	return oss.str();
 }
 
-RayleighSpectrum::RayleighSpectrum(EMode mode, Float eta, Float height) {
+RayleighSpectrum::RayleighSpectrum(EMode mode, float eta, float height) {
 	/* See ``Display of the Earth Taking into Account Atmospheric Scattering'',
 	 * by Nishita et al., SIGGRAPH 1993 */
-	Float tmp = eta * eta - 1;
-	Float rho = math::fastexp(-height/7794.0f);
-	//Float Ns = <molecular number density of the standard atmosphere>;
-	Float N_s = 1;
-	Float K = 2 * M_PI * M_PI * tmp*tmp / (3 * N_s);
+	float tmp = eta * eta - 1;
+	float rho = math::fastexp(-height/7794.0f);
+	//float Ns = <molecular number density of the standard atmosphere>;
+	float N_s = 1;
+	float K = 2 * M_PI * M_PI * tmp*tmp / (3 * N_s);
 
 	switch (mode) {
 		case ESigmaS:
@@ -538,23 +538,23 @@ std::string RayleighSpectrum::toString() const {
 	return "RayleighSpectrum[]";
 }
 
-Float RayleighSpectrum::eval(Float lambda) const {
-	Float lambdaSqr = lambda*lambda;
+float RayleighSpectrum::eval(float lambda) const {
+	float lambdaSqr = lambda*lambda;
 	return m_precomp / (lambdaSqr*lambdaSqr);
 }
 
-Float ContinuousSpectrum::average(Float lambdaMin, Float lambdaMax) const {
+float ContinuousSpectrum::average(float lambdaMin, float lambdaMax) const {
 	GaussLobattoIntegrator integrator(10000, Epsilon, Epsilon, false, false);
 
 	if (lambdaMax <= lambdaMin)
 		return 0.0f;
 
-	Float integral = 0;
+	float integral = 0;
 
 	/// Integrate over 50nm-sized regions
 	size_t nSteps = std::max((size_t) 1,
 			(size_t) std::ceil((lambdaMax - lambdaMin) / 50));
-	Float stepSize = (lambdaMax - lambdaMin) / nSteps,
+	float stepSize = (lambdaMax - lambdaMin) / nSteps,
 		  pos = lambdaMin;
 
 	for (size_t i=0; i<nSteps; ++i) {
@@ -586,7 +586,7 @@ InterpolatedSpectrum::InterpolatedSpectrum(const fs::path &path) {
 		if (line.length() == 0 || line[0] == '#')
 			continue;
 		std::istringstream iss(line);
-		Float lambda, value;
+		float lambda, value;
 		if (!(iss >> lambda >> value))
 			break;
 		append(lambda, value);
@@ -601,7 +601,7 @@ InterpolatedSpectrum::InterpolatedSpectrum(const fs::path &path) {
 			m_wavelengths[0], m_wavelengths[m_wavelengths.size()-1]);
 }
 
-InterpolatedSpectrum::InterpolatedSpectrum(const Float *wavelengths, const Float *values, size_t nEntries) {
+InterpolatedSpectrum::InterpolatedSpectrum(const float *wavelengths, const float *values, size_t nEntries) {
 	m_wavelengths.resize(nEntries);
 	m_values.resize(nEntries);
 
@@ -614,7 +614,7 @@ InterpolatedSpectrum::InterpolatedSpectrum(const Float *wavelengths, const Float
 	}
 }
 
-void InterpolatedSpectrum::append(Float lambda, Float value) {
+void InterpolatedSpectrum::append(float lambda, float value) {
 	if (m_wavelengths.size() != 0 && m_wavelengths[m_wavelengths.size()-1] >= lambda)
 		SLog(EError, "InterpolatedSpectrum: spectral power distribution values must "
 			"be provided in order of increasing wavelength!");
@@ -632,7 +632,7 @@ void InterpolatedSpectrum::zeroExtend() {
 		SLog(EError, "InterpolatedSpectrum::zeroExtend() -- at least 2 "
 			"entries are needed!");
 
-	Float avgSpacing = 0;
+	float avgSpacing = 0;
 	for (size_t i=0; i<m_wavelengths.size()-1; ++i)
 		avgSpacing += m_wavelengths[i+1] - m_wavelengths[i];
 
@@ -647,12 +647,12 @@ void InterpolatedSpectrum::zeroExtend() {
 	}
 }
 
-Float InterpolatedSpectrum::average(Float lambdaMin, Float lambdaMax) const {
+float InterpolatedSpectrum::average(float lambdaMin, float lambdaMax) const {
 	if (m_wavelengths.size() < 2)
 		return 0.0f;
 
-	Float rangeStart = std::max(lambdaMin, m_wavelengths[0]);
-	Float rangeEnd = std::min(lambdaMax, m_wavelengths[m_wavelengths.size()-1]);
+	float rangeStart = std::max(lambdaMin, m_wavelengths[0]);
+	float rangeEnd = std::min(lambdaMax, m_wavelengths[m_wavelengths.size()-1]);
 
 	if (rangeEnd <= rangeStart)
 		return 0.0f;
@@ -661,11 +661,11 @@ Float InterpolatedSpectrum::average(Float lambdaMin, Float lambdaMax) const {
 	size_t entry = std::max((size_t) (std::lower_bound(m_wavelengths.begin(),
 			m_wavelengths.end(), rangeStart) - m_wavelengths.begin()), (size_t) 1) - 1;
 
-	Float result = 0.0f;
+	float result = 0.0f;
 	for (; entry+1 < m_wavelengths.size() && rangeEnd >= m_wavelengths[entry]; ++entry) {
 		/* Step through the samples and integrate trapezoids */
 
-		Float a  = m_wavelengths[entry],
+		float a  = m_wavelengths[entry],
 			  b  = m_wavelengths[entry+1],
 			  ca = std::max(a, rangeStart),
 			  cb = std::min(b, rangeEnd),
@@ -676,8 +676,8 @@ Float InterpolatedSpectrum::average(Float lambdaMin, Float lambdaMax) const {
 		if (cb <= ca)
 			continue;
 
-		Float interpA = math::lerp((ca - a) * invAB, fa, fb);
-		Float interpB = math::lerp((cb - a) * invAB, fa, fb);
+		float interpA = math::lerp((ca - a) * invAB, fa, fb);
+		float interpB = math::lerp((cb - a) * invAB, fa, fb);
 
 		result += 0.5f * (interpA + interpB) * (cb-ca);
 	}
@@ -685,8 +685,8 @@ Float InterpolatedSpectrum::average(Float lambdaMin, Float lambdaMax) const {
 	return result / (lambdaMax - lambdaMin);
 }
 
-Float InterpolatedSpectrum::eval(Float lambda) const {
-	typedef std::vector<Float>::const_iterator iterator;
+float InterpolatedSpectrum::eval(float lambda) const {
+	typedef std::vector<float>::const_iterator iterator;
 	if (m_wavelengths.size() < 2 ||
 		lambda < m_wavelengths[0] ||
 		lambda > m_wavelengths[m_wavelengths.size()-1])
@@ -699,7 +699,7 @@ Float InterpolatedSpectrum::eval(Float lambda) const {
 	size_t idx1 = result.first - m_wavelengths.begin();
 	size_t idx2 = result.second - m_wavelengths.begin();
 	if (idx1 == idx2) {
-		Float a  = m_wavelengths[idx1-1],
+		float a  = m_wavelengths[idx1-1],
 			  b  = m_wavelengths[idx1],
 			  fa = m_values[idx1-1],
 			  fb = m_values[idx1];
@@ -740,7 +740,7 @@ std::string InterpolatedSpectrum::toString() const {
 # pragma warning( disable : 4305 )
 #endif
 
-const Float CIE_wavelengths[CIE_samples] = {
+const float CIE_wavelengths[CIE_samples] = {
     360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373,
     374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387,
     388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401,
@@ -776,7 +776,7 @@ const Float CIE_wavelengths[CIE_samples] = {
     808, 809, 810, 811, 812, 813, 814, 815, 816, 817, 818, 819, 820, 821,
     822, 823, 824, 825, 826, 827, 828, 829, 830 };
 
-const Float CIE_X_entries[CIE_samples] = {
+const float CIE_X_entries[CIE_samples] = {
 	0.0001299000, 0.0001458470, 0.0001638021, 0.0001840037,
 	0.0002066902, 0.0002321000, 0.0002607280, 0.0002930750,
 	0.0003293880, 0.0003699140, 0.0004149000, 0.0004641587,
@@ -897,7 +897,7 @@ const Float CIE_X_entries[CIE_samples] = {
 	0.000001439440, 0.000001341977, 0.000001251141
 };
 
-const Float CIE_Y_entries[CIE_samples] = {
+const float CIE_Y_entries[CIE_samples] = {
 	0.000003917000, 0.000004393581, 0.000004929604, 0.000005532136,
 	0.000006208245, 0.000006965000, 0.000007813219, 0.000008767336,
 	0.000009839844, 0.00001104323, 0.00001239000, 0.00001388641,
@@ -1018,7 +1018,7 @@ const Float CIE_Y_entries[CIE_samples] = {
 	0.0000005198080, 0.0000004846123, 0.0000004518100
 };
 
-const Float CIE_Z_entries[CIE_samples] = {
+const float CIE_Z_entries[CIE_samples] = {
 	0.0006061000, 0.0006808792, 0.0007651456, 0.0008600124,
 	0.0009665928, 0.001086000, 0.001220586, 0.001372729,
 	0.001543579, 0.001734286, 0.001946000, 0.002177777,
@@ -1139,7 +1139,7 @@ const Float CIE_Z_entries[CIE_samples] = {
 	0.0, 0.0, 0.0
 };
 
-const Float CIE_D65_entries[CIE_samples] = {
+const float CIE_D65_entries[CIE_samples] = {
 	46.6383, 47.1834, 47.7285, 48.2735,
 	48.8186, 49.3637, 49.9088, 50.4539,
 	50.9989, 51.544,  52.0891, 51.8777,
@@ -1264,7 +1264,7 @@ const Float CIE_D65_entries[CIE_samples] = {
 //   Smits-style RGB to Spectrum conversion data generated by Karl vom Berge
 /// ==========================================================================
 
-const Float RGB2Spec_wavelengths[RGB2Spec_samples] = {
+const float RGB2Spec_wavelengths[RGB2Spec_samples] = {
     380.000000, 390.967743, 401.935486, 412.903229, 423.870972, 434.838715,
     445.806458, 456.774200, 467.741943, 478.709686, 489.677429, 500.645172,
     511.612915, 522.580627, 533.548340, 544.516052, 555.483765, 566.451477,
@@ -1273,7 +1273,7 @@ const Float RGB2Spec_wavelengths[RGB2Spec_samples] = {
     709.031738, 720.000000
 };
 
-const Float RGBRefl2SpecWhite_entries[RGB2Spec_samples] = {
+const float RGBRefl2SpecWhite_entries[RGB2Spec_samples] = {
 		1.0618958571272863e+00,   1.0615019980348779e+00,
 		1.0614335379927147e+00,   1.0622711654692485e+00,
 		1.0622036218416742e+00,   1.0625059965187085e+00,
@@ -1291,7 +1291,7 @@ const Float RGBRefl2SpecWhite_entries[RGB2Spec_samples] = {
 		1.0599810758292072e+00,   1.0602547314449409e+00,
 		1.0601263046243634e+00,   1.0606565756823634e+00 };
 
-const Float RGBRefl2SpecCyan_entries[RGB2Spec_samples] = {
+const float RGBRefl2SpecCyan_entries[RGB2Spec_samples] = {
 		1.0414628021426751e+00,   1.0328661533771188e+00,
 		1.0126146228964314e+00,   1.0350460524836209e+00,
 		1.0078661447098567e+00,   1.0422280385081280e+00,
@@ -1309,7 +1309,7 @@ const Float RGBRefl2SpecCyan_entries[RGB2Spec_samples] = {
 		1.7119799082865147e-02,   4.9211089759759801e-03,
 		5.8762925143334985e-03,   2.5259399415550079e-02 };
 
-const Float RGBRefl2SpecMagenta_entries[RGB2Spec_samples] = {
+const float RGBRefl2SpecMagenta_entries[RGB2Spec_samples] = {
 		9.9422138151236850e-01,   9.8986937122975682e-01,
 		9.8293658286116958e-01,   9.9627868399859310e-01,
 		1.0198955019000133e+00,   1.0166395501210359e+00,
@@ -1327,7 +1327,7 @@ const Float RGBRefl2SpecMagenta_entries[RGB2Spec_samples] = {
 		9.9598944191059791e-01,   8.6301351503809076e-01,
 		8.9150987853523145e-01,   8.4866492652845082e-01 };
 
-const Float RGBRefl2SpecYellow_entries[RGB2Spec_samples] = {
+const float RGBRefl2SpecYellow_entries[RGB2Spec_samples] = {
 		5.5740622924920873e-03,  -4.7982831631446787e-03,
 		-5.2536564298613798e-03,  -6.4571480044499710e-03,
 		-5.9693514658007013e-03,  -2.1836716037686721e-03,
@@ -1345,7 +1345,7 @@ const Float RGBRefl2SpecYellow_entries[RGB2Spec_samples] = {
 		1.0477492815668303e+00,   1.0493272144017338e+00,
 		1.0435963333422726e+00,   1.0392280772051465e+00 };
 
-const Float RGBRefl2SpecRed_entries[RGB2Spec_samples] = {
+const float RGBRefl2SpecRed_entries[RGB2Spec_samples] = {
 		1.6575604867086180e-01,   1.1846442802747797e-01,
 		1.2408293329637447e-01,   1.1371272058349924e-01,
 		7.8992434518899132e-02,   3.2205603593106549e-02,
@@ -1363,7 +1363,7 @@ const Float RGBRefl2SpecRed_entries[RGB2Spec_samples] = {
 		9.7451138326568698e-01,   9.8543269570059944e-01,
 		9.3495763980962043e-01,   9.8713907792319400e-01 };
 
-const Float RGBRefl2SpecGreen_entries[RGB2Spec_samples] = {
+const float RGBRefl2SpecGreen_entries[RGB2Spec_samples] = {
 		2.6494153587602255e-03,  -5.0175013429732242e-03,
 		-1.2547236272489583e-02,  -9.4554964308388671e-03,
 		-1.2526086181600525e-02,  -7.9170697760437767e-03,
@@ -1381,7 +1381,7 @@ const Float RGBRefl2SpecGreen_entries[RGB2Spec_samples] = {
 		-7.8685832338754313e-03,  -8.3657578711085132e-06,
 		5.4301225442817177e-03,  -2.7745589759259194e-03 };
 
-const Float RGBRefl2SpecBlue_entries[RGB2Spec_samples] = {
+const float RGBRefl2SpecBlue_entries[RGB2Spec_samples] = {
 		9.9209771469720676e-01,   9.8876426059369127e-01,
 		9.9539040744505636e-01,   9.9529317353008218e-01,
 		9.9181447411633950e-01,   1.0002584039673432e+00,
@@ -1399,7 +1399,7 @@ const Float RGBRefl2SpecBlue_entries[RGB2Spec_samples] = {
 		3.0501024937233868e-02,   2.1243054765241080e-02,
 		6.9596532104356399e-03,   4.1733649330980525e-03 };
 
-const Float RGBIllum2SpecWhite_entries[RGB2Spec_samples] = {
+const float RGBIllum2SpecWhite_entries[RGB2Spec_samples] = {
 		1.1565232050369776e+00,   1.1567225000119139e+00,
 		1.1566203150243823e+00,   1.1555782088080084e+00,
 		1.1562175509215700e+00,   1.1567674012207332e+00,
@@ -1417,7 +1417,7 @@ const Float RGBIllum2SpecWhite_entries[RGB2Spec_samples] = {
 		8.7635244612244578e-01,   8.8000368331709111e-01,
 		8.8065665428441120e-01,   8.8304706460276905e-01 };
 
-const Float RGBIllum2SpecCyan_entries[RGB2Spec_samples] = {
+const float RGBIllum2SpecCyan_entries[RGB2Spec_samples] = {
 		1.1334479663682135e+00,   1.1266762330194116e+00,
 		1.1346827504710164e+00,   1.1357395805744794e+00,
 		1.1356371830149636e+00,   1.1361152989346193e+00,
@@ -1435,7 +1435,7 @@ const Float RGBIllum2SpecCyan_entries[RGB2Spec_samples] = {
 		-9.4722817708236418e-03,  -5.5329541006658815e-03,
 		-4.5428914028274488e-03,  -1.2541015360921132e-02 };
 
-const Float RGBIllum2SpecMagenta_entries[RGB2Spec_samples] = {
+const float RGBIllum2SpecMagenta_entries[RGB2Spec_samples] = {
 		1.0371892935878366e+00,   1.0587542891035364e+00,
 		1.0767271213688903e+00,   1.0762706844110288e+00,
 		1.0795289105258212e+00,   1.0743644742950074e+00,
@@ -1453,7 +1453,7 @@ const Float RGBIllum2SpecMagenta_entries[RGB2Spec_samples] = {
 		9.8333849623218872e-01,   1.0707246342802621e+00,
 		1.0634247770423768e+00,   1.0150875475729566e+00 };
 
-const Float RGBIllum2SpecYellow_entries[RGB2Spec_samples] = {
+const float RGBIllum2SpecYellow_entries[RGB2Spec_samples] = {
 		2.7756958965811972e-03,   3.9673820990646612e-03,
 		-1.4606936788606750e-04,   3.6198394557748065e-04,
 		-2.5819258699309733e-04,  -5.0133191628082274e-05,
@@ -1471,7 +1471,7 @@ const Float RGBIllum2SpecYellow_entries[RGB2Spec_samples] = {
 		5.9419261278443136e-01,   5.6517682326634266e-01,
 		5.6061186014968556e-01,   5.8228610381018719e-01 };
 
-const Float RGBIllum2SpecRed_entries[RGB2Spec_samples] = {
+const float RGBIllum2SpecRed_entries[RGB2Spec_samples] = {
 		5.4711187157291841e-02,   5.5609066498303397e-02,
 		6.0755873790918236e-02,   5.6232948615962369e-02,
 		4.6169940535708678e-02,   3.8012808167818095e-02,
@@ -1489,7 +1489,7 @@ const Float RGBIllum2SpecRed_entries[RGB2Spec_samples] = {
 		9.7433478377305371e-01,   9.9134364616871407e-01,
 		9.8866287772174755e-01,   9.9713856089735531e-01 };
 
-const Float RGBIllum2SpecGreen_entries[RGB2Spec_samples] = {
+const float RGBIllum2SpecGreen_entries[RGB2Spec_samples] = {
 		2.5168388755514630e-02,   3.9427438169423720e-02,
 		6.2059571596425793e-03,   7.1120859807429554e-03,
 		2.1760044649139429e-04,   7.3271839984290210e-12,
@@ -1507,7 +1507,7 @@ const Float RGBIllum2SpecGreen_entries[RGB2Spec_samples] = {
 		-6.4630764968453287e-03,   1.0250854718507939e-02,
 		4.2387394733956134e-02,   2.1252716926861620e-02 };
 
-const Float RGBIllum2SpecBlue_entries[RGB2Spec_samples] = {
+const float RGBIllum2SpecBlue_entries[RGB2Spec_samples] = {
 		1.0570490759328752e+00,   1.0538466912851301e+00,
 		1.0550494258140670e+00,   1.0530407754701832e+00,
 		1.0579930596460185e+00,   1.0578439494812371e+00,

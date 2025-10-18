@@ -48,7 +48,7 @@ public:
 	virtual EMutationType getType() const = 0;
 
 	/// Determine the general "suitability" of this mutator for a given kind of path
-	virtual Float suitability(const Path &path) const = 0;
+	virtual float suitability(const Path &path) const = 0;
 
 	/**
 	 * \brief Given a path, this function produces a new proposal
@@ -90,7 +90,7 @@ public:
 	 *     Data record that describes the mutation strategy, which
 	 *     transformed \c source to \c proposal.
 	 */
-	virtual Float Q(const Path &source, const Path &proposal,
+	virtual float Q(const Path &source, const Path &proposal,
 		const MutationRecord &muRec) const = 0;
 
 	/**
@@ -151,15 +151,15 @@ protected:
 	virtual ~MutatorBase() { }
 
 	/// Perturb a distance within a medium
-	Float perturbMediumDistance(Sampler *sampler,
+	float perturbMediumDistance(Sampler *sampler,
 		const PathVertex *vertex);
 
 	/// Density function of \ref perturbMediumDistance
-	Float pdfMediumPerturbation(const PathVertex *oldVertex,
+	float pdfMediumPerturbation(const PathVertex *oldVertex,
 		const PathEdge *oldEdge, const PathEdge *newEdge) const;
 
 protected:
-	Float m_mediumDensityMultiplier;
+	float m_mediumDensityMultiplier;
 };
 
 MTS_NAMESPACE_END

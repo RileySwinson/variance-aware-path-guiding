@@ -27,7 +27,7 @@ static StatsCounter statsGenerated("Lens perturbation",
 		"Successful generation rate", EPercentage);
 
 LensPerturbation::LensPerturbation(const Scene *scene, Sampler *sampler,
-		MemoryPool &pool, Float minJump, Float coveredArea) :
+		MemoryPool &pool, float minJump, float coveredArea) :
 	m_scene(scene), m_sampler(sampler), m_pool(pool) {
 
 	if (!scene->getSensor()->getClass()->derivesFrom(MTS_CLASS(PerspectiveCamera)))
@@ -42,7 +42,7 @@ LensPerturbation::LensPerturbation(const Scene *scene, Sampler *sampler,
 	   F^{-1}(U) = r2 * exp(-log(r2/r1) * (1-U))
 	*/
 	Vector2i sizeInPixels = scene->getFilm()->getCropSize();
-	m_filmRes = Vector2((Float) sizeInPixels.x, (Float) sizeInPixels.y);
+	m_filmRes = Vector2((float) sizeInPixels.x, (float) sizeInPixels.y);
 	m_imagePlaneArea = m_filmRes.x * m_filmRes.y;
 
 	/* Pixel jump range (in pixels) [Veach, p.354] */
@@ -58,7 +58,7 @@ Mutator::EMutationType LensPerturbation::getType() const {
 	return ELensPerturbation;
 }
 
-Float LensPerturbation::suitability(const Path &path) const {
+float LensPerturbation::suitability(const Path &path) const {
 	int k = path.length(), m = k - 1, l = m-1;
 
 	while (l >= 0 && !path.vertex(l)->isConnectable())
@@ -82,8 +82,8 @@ bool LensPerturbation::sampleMutation(
 	statsGenerated.incrementBase();
 
 	/* Generate a screen-space offset */
-	Float r = m_r2 * math::fastexp(m_logRatio * m_sampler->next1D());
-	Float phi = m_sampler->next1D() * 2 * M_PI;
+	float r = m_r2 * math::fastexp(m_logRatio * m_sampler->next1D());
+	float phi = m_sampler->next1D() * 2 * M_PI;
 	Vector2 offset(r*std::cos(phi), r*std::sin(phi));
 
 	Point2 proposalSamplePosition = source.getSamplePosition() + offset;
@@ -99,14 +99,14 @@ bool LensPerturbation::sampleMutation(
 	if (sensor->sampleRay(ray, proposalSamplePosition, Point2(0.5f), 0.0f).isZero())
 		return false;
 
-	Float focusDistance = sensor->getFocusDistance() /
+	float focusDistance = sensor->getFocusDistance() /
 		absDot(sensor->getWorldTransform(0)(Vector(0,0,1)), ray.d);
 
 	/* Correct direction based on the current aperture sample.
 	   This is necessary to support thin lens cameras */
 	Vector d = normalize(ray(focusDistance) - source.vertex(m)->getPosition());
 
-	Float dist = source.edge(m-1)->length;
+	float dist = source.edge(m-1)->length;
 
 	/* Allocate memory for the proposed path */
 	proposal.clear();
@@ -140,7 +140,7 @@ bool LensPerturbation::sampleMutation(
 	/* If necessary, propagate the perturbation through a sequence of
 	   ideally specular interactions */
 	for (int i=m-1; i>l+1; --i) {
-		Float dist = source.edge(i-1)->length +
+		float dist = source.edge(i-1)->length +
 			perturbMediumDistance(m_sampler, source.vertex(i-1));
 
 		if (!proposal.vertex(i)->propagatePerturbation(m_scene,
@@ -174,7 +174,7 @@ bool LensPerturbation::sampleMutation(
 	return true;
 }
 
-Float LensPerturbation::Q(const Path &source, const Path &proposal,
+float LensPerturbation::Q(const Path &source, const Path &proposal,
 		const MutationRecord &muRec) const {
 	int m = muRec.m, l = muRec.l;
 
@@ -196,7 +196,7 @@ Float LensPerturbation::Q(const Path &source, const Path &proposal,
 					source.edge(i-1), edge);
 	}
 
-	const Float lumWeight = weight.getLuminance();
+	const float lumWeight = weight.getLuminance();
 	if(lumWeight <= RCPOVERFLOW)
 		return 0.f;
 

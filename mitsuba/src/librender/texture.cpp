@@ -55,7 +55,7 @@ ref<Texture> Texture::expand() {
 }
 
 void Texture::evalGradient(const Intersection &_its, Spectrum *gradient) const {
-	const Float eps = Epsilon;
+	const float eps = Epsilon;
 	Intersection its(_its);
 
 	Spectrum value = eval(its, false);
@@ -81,13 +81,13 @@ void Texture::serialize(Stream *stream, InstanceManager *manager) const {
 Texture2D::Texture2D(const Properties &props) : Texture(props) {
 	if (props.getString("coordinates", "uv") == "uv") {
 		m_uvOffset = Point2(
-			props.getFloat("uoffset", 0.0f),
-			props.getFloat("voffset", 0.0f)
+			props.getfloat("uoffset", 0.0f),
+			props.getfloat("voffset", 0.0f)
 		);
-		Float uvscale = props.getFloat("uvscale", 1.0f);
+		float uvscale = props.getfloat("uvscale", 1.0f);
 		m_uvScale = Vector2(
-			props.getFloat("uscale", uvscale),
-			props.getFloat("vscale", uvscale)
+			props.getfloat("uscale", uvscale),
+			props.getfloat("vscale", uvscale)
 		);
 	} else {
 		Log(EError, "Only UV coordinates are supported at the moment!");
@@ -130,7 +130,7 @@ void Texture2D::evalGradient(const Intersection &its, Spectrum *gradient) const 
 }
 
 void Texture2D::evalGradient(const Point2 &uv, Spectrum *gradient) const {
-	const Float eps = Epsilon;
+	const float eps = Epsilon;
 
 	Spectrum value = eval(uv);
 	Spectrum valueU = eval(uv + Vector2(eps, 0));
@@ -145,10 +145,10 @@ ref<Bitmap> Texture2D::getBitmap(const Vector2i &sizeHint) const {
 	if (res.x <= 0 || res.y <= 0)
 		res = Vector2i(32);
 
-	Float invX = 1.0f / res.x, invY = 1.0f / res.y;
+	float invX = 1.0f / res.x, invY = 1.0f / res.y;
 
-	ref<Bitmap> bitmap = new Bitmap(Bitmap::ESpectrum, Bitmap::EFloat, res);
-	Spectrum *target = (Spectrum *) bitmap->getFloatData();
+	ref<Bitmap> bitmap = new Bitmap(Bitmap::ESpectrum, Bitmap::Efloat, res);
+	Spectrum *target = (Spectrum *) bitmap->getfloatData();
 	for (int y=0; y<res.y; ++y)
 		for (int x=0; x<res.x; ++x)
 			*target++ = eval(Point2((x + 0.5f) * invX, (y + 0.5f) * invY));

@@ -295,8 +295,8 @@ void VPLShaderManager::setVPL(const VPL &vpl) {
 	const size_t sampleCount = 250;
 
 	/* Estimate good near and far plane locations by tracing some rays */
-	m_nearClip =  std::numeric_limits<Float>::infinity();
-	m_farClip  = -std::numeric_limits<Float>::infinity();
+	m_nearClip =  std::numeric_limits<float>::infinity();
+	m_farClip  = -std::numeric_limits<float>::infinity();
 
 	/* Update animations */
 	for (size_t i=0; i<m_animatedGeometry.size(); ++i) {
@@ -340,7 +340,7 @@ void VPLShaderManager::setVPL(const VPL &vpl) {
 			}
 
 			ConstShapePtr shape; Normal n; Point2 uv; /* unused */
-			Float t, accum = 0;
+			float t, accum = 0;
 			bool hit = false;
 
 			for (int it=0; it<5; ++it) {
@@ -364,7 +364,7 @@ void VPLShaderManager::setVPL(const VPL &vpl) {
 
 		if (m_nearClip >= m_farClip) {
 			BSphere bsphere(m_scene->getKDTree()->getAABB().getBSphere());
-			Float minDist = 0;
+			float minDist = 0;
 
 			if ((vpl.type == ESurfaceVPL || vpl.type == EPointEmitterVPL) &&
 					!bsphere.contains(vpl.its.p))
@@ -409,7 +409,7 @@ void VPLShaderManager::setVPL(const VPL &vpl) {
 		m_shadowMap = m_shadowMapCube;
 	}
 
-	Float sample = sampleTEAFloat(m_vplIndex++, 0x12345);
+	float sample = sampleTEAfloat(m_vplIndex++, 0x12345);
 	m_shadowGen->render(m_renderer, m_shadowMap, m_shadowMapType,
 			m_shadowMapTransform, m_nearClip, m_farClip,
 			sample > 0.3 ? m_opaqueGeometry : m_geometry);
@@ -588,7 +588,7 @@ void VPLShaderManager::bind(const VPL &vpl, const BSDF *bsdf, const Sensor *sens
 	GPUProgram *prog = m_currentProgram.program;
 	prog->bind();
 
-	Float minDist = m_nearClip + (m_farClip - m_nearClip) * m_clamping;
+	float minDist = m_nearClip + (m_farClip - m_nearClip) * m_clamping;
 	prog->setParameter(m_currentProgram.param_instanceTransform, instanceTransform);
 	prog->setParameter(m_currentProgram.param_vplTransform, m_shadowMapTransform);
 	prog->setParameter(m_currentProgram.param_depthRange, Vector2(m_nearClip, m_farClip));
@@ -668,7 +668,7 @@ void VPLShaderManager::drawAllGeometryForVPL(const VPL &vpl, const Sensor *senso
 			currentObjTrafo = trafo;
 		}
 
-		if (m_alpha != 1.0f && sampleTEAFloat((uint32_t)
+		if (m_alpha != 1.0f && sampleTEAfloat((uint32_t)
 				(it - m_geometry.begin()), m_vplIndex, 8) > m_alpha)
 			continue;
 
@@ -683,7 +683,7 @@ void VPLShaderManager::drawAllGeometryForVPL(const VPL &vpl, const Sensor *senso
 }
 
 void VPLShaderManager::drawBackground(const Sensor *sensor,
-		const Transform &projectionTransform, Float scaleFactor) {
+		const Transform &projectionTransform, float scaleFactor) {
 	if (m_backgroundProgram == NULL)
 		return;
 

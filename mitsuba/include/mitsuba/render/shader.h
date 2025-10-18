@@ -73,7 +73,7 @@ public:
 	 * \brief For transparent objects, this function returns
 	 * the alpha blending weight
 	 */
-	virtual Float getAlpha() const;
+	virtual float getAlpha() const;
 
 	// List other shaders, on which this instance depends
 	virtual void putDependencies(std::vector<Shader *> &deps);

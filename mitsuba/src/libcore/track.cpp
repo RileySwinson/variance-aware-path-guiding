@@ -34,7 +34,7 @@ AnimatedTransform::AnimatedTransform(Stream *stream) {
 				case AbstractAnimationTrack::ERotationX:
 				case AbstractAnimationTrack::ERotationY:
 				case AbstractAnimationTrack::ERotationZ:
-					track = new FloatTrack(type, stream);
+					track = new floatTrack(type, stream);
 					break;
 				case AbstractAnimationTrack::ETranslationXYZ:
 				case AbstractAnimationTrack::EScaleXYZ:
@@ -62,8 +62,8 @@ AABB1 AnimatedTransform::getTimeBounds() const {
 	if (m_tracks.size() == 0)
 		return AABB1(0.0f, 0.0f);
 
-	Float min =  std::numeric_limits<Float>::infinity();
-	Float max = -std::numeric_limits<Float>::infinity();
+	float min =  std::numeric_limits<float>::infinity();
+	float max = -std::numeric_limits<float>::infinity();
 
 	for (size_t i=0; i<m_tracks.size(); ++i) {
 		const AbstractAnimationTrack *track = m_tracks[i];
@@ -91,10 +91,10 @@ AABB AnimatedTransform::getTranslationBounds() const {
 			case AbstractAnimationTrack::ETranslationY:
 			case AbstractAnimationTrack::ETranslationZ: {
 					int idx  = absTrack->getType() - AbstractAnimationTrack::ETranslationX;
-					const FloatTrack *track =
-						static_cast<const FloatTrack *>(absTrack);
+					const floatTrack *track =
+						static_cast<const floatTrack *>(absTrack);
 					for (size_t j=0; j<track->getSize(); ++j) {
-						Float value = track->getValue(j);
+						float value = track->getValue(j);
 						aabb.max[idx] = std::max(aabb.max[idx], value);
 						aabb.min[idx] = std::min(aabb.min[idx], value);
 					}
@@ -130,7 +130,7 @@ AABB AnimatedTransform::getSpatialBounds(const AABB &aabb) const {
 		/* Compute approximate bounds */
 		int nSteps = 100;
 		AABB1 timeBounds = getTimeBounds();
-		Float step = timeBounds.getExtents().x / (nSteps-1);
+		float step = timeBounds.getExtents().x / (nSteps-1);
 
 		for (int i=0; i<nSteps; ++i) {
 			const Transform &trafo = eval(timeBounds.min.x + step * i);
@@ -163,7 +163,7 @@ void AnimatedTransform::sortAndSimplify() {
 			case AbstractAnimationTrack::EScaleX:
 			case AbstractAnimationTrack::EScaleY:
 			case AbstractAnimationTrack::EScaleZ:
-				isNeeded = static_cast<FloatTrack *>(track)->sortAndSimplify();
+				isNeeded = static_cast<floatTrack *>(track)->sortAndSimplify();
 				break;
 			case AbstractAnimationTrack::ETranslationXYZ:
 			case AbstractAnimationTrack::EScaleXYZ:
@@ -214,9 +214,9 @@ AbstractAnimationTrack *AnimatedTransform::findTrack(AbstractAnimationTrack::ETy
 }
 
 void AnimatedTransform::prependScale(const Vector &scale) {
-	FloatTrack *trackX = (FloatTrack *) findTrack(AbstractAnimationTrack::EScaleX);
-	FloatTrack *trackY = (FloatTrack *) findTrack(AbstractAnimationTrack::EScaleY);
-	FloatTrack *trackZ = (FloatTrack *) findTrack(AbstractAnimationTrack::EScaleZ);
+	floatTrack *trackX = (floatTrack *) findTrack(AbstractAnimationTrack::EScaleX);
+	floatTrack *trackY = (floatTrack *) findTrack(AbstractAnimationTrack::EScaleY);
+	floatTrack *trackZ = (floatTrack *) findTrack(AbstractAnimationTrack::EScaleZ);
 	VectorTrack *trackXYZ = (VectorTrack *) findTrack(AbstractAnimationTrack::EScaleXYZ);
 
 	if (m_tracks.empty()) {
@@ -227,21 +227,21 @@ void AnimatedTransform::prependScale(const Vector &scale) {
 		if (trackX) {
 			trackX->prependTransformation(scale.x);
 		} else {
-			trackX = new FloatTrack(AbstractAnimationTrack::EScaleX);
+			trackX = new floatTrack(AbstractAnimationTrack::EScaleX);
 			trackX->append(0.0f, scale.x); addTrack(trackX);
 		}
 
 		if (trackY) {
 			trackY->prependTransformation(scale.y);
 		} else {
-			trackY = new FloatTrack(AbstractAnimationTrack::EScaleY);
+			trackY = new floatTrack(AbstractAnimationTrack::EScaleY);
 			trackY->append(0.0f, scale.y); addTrack(trackY);
 		}
 
 		if (trackZ) {
 			trackZ->prependTransformation(scale.z);
 		} else {
-			trackZ = new FloatTrack(AbstractAnimationTrack::EScaleZ);
+			trackZ = new floatTrack(AbstractAnimationTrack::EScaleZ);
 			trackZ->append(0.0f, scale.z); addTrack(trackZ);
 		}
 	} else {
@@ -251,7 +251,7 @@ void AnimatedTransform::prependScale(const Vector &scale) {
 	}
 }
 
-void AnimatedTransform::collectKeyframes(std::set<Float> &result) const {
+void AnimatedTransform::collectKeyframes(std::set<float> &result) const {
 	for (size_t i=0; i<m_tracks.size(); ++i) {
 		const AbstractAnimationTrack *track = m_tracks[i];
 
@@ -260,7 +260,7 @@ void AnimatedTransform::collectKeyframes(std::set<Float> &result) const {
 	}
 
 	if (result.size() == 0)
-		result.insert((Float) 0);
+		result.insert((float) 0);
 }
 
 void AnimatedTransform::serialize(Stream *stream) const {
@@ -273,7 +273,7 @@ void AnimatedTransform::serialize(Stream *stream) const {
 	}
 }
 
-void AnimatedTransform::TransformFunctor::operator()(const Float &t, Transform &trafo) const {
+void AnimatedTransform::TransformFunctor::operator()(const float &t, Transform &trafo) const {
 	Vector translation(0.0f);
 	Vector scale(1.0f);
 	Quaternion rotation;
@@ -282,25 +282,25 @@ void AnimatedTransform::TransformFunctor::operator()(const Float &t, Transform &
 		AbstractAnimationTrack *track = m_tracks[i];
 		switch (track->getType()) {
 			case AbstractAnimationTrack::ETranslationX:
-				translation.x = static_cast<FloatTrack *>(track)->eval(t);
+				translation.x = static_cast<floatTrack *>(track)->eval(t);
 				break;
 			case AbstractAnimationTrack::ETranslationY:
-				translation.y = static_cast<FloatTrack *>(track)->eval(t);
+				translation.y = static_cast<floatTrack *>(track)->eval(t);
 				break;
 			case AbstractAnimationTrack::ETranslationZ:
-				translation.z = static_cast<FloatTrack *>(track)->eval(t);
+				translation.z = static_cast<floatTrack *>(track)->eval(t);
 				break;
 			case AbstractAnimationTrack::ETranslationXYZ:
 				translation = static_cast<VectorTrack *>(track)->eval(t);
 				break;
 			case AbstractAnimationTrack::EScaleX:
-				scale.x = static_cast<FloatTrack *>(track)->eval(t);
+				scale.x = static_cast<floatTrack *>(track)->eval(t);
 				break;
 			case AbstractAnimationTrack::EScaleY:
-				scale.y = static_cast<FloatTrack *>(track)->eval(t);
+				scale.y = static_cast<floatTrack *>(track)->eval(t);
 				break;
 			case AbstractAnimationTrack::EScaleZ:
-				scale.z = static_cast<FloatTrack *>(track)->eval(t);
+				scale.z = static_cast<floatTrack *>(track)->eval(t);
 				break;
 			case AbstractAnimationTrack::EScaleXYZ:
 				scale = static_cast<VectorTrack *>(track)->eval(t);
@@ -323,10 +323,10 @@ void AnimatedTransform::TransformFunctor::operator()(const Float &t, Transform &
 		trafo = trafo * Transform::scale(scale);
 }
 
-void AnimatedTransform::appendTransform(Float time, const Transform &trafo) {
+void AnimatedTransform::appendTransform(float time, const Transform &trafo) {
 	/* Compute the polar decomposition and insert into the animated transform;
 	   uh oh.. we have to get rid of the two separate matrix libraries at some point :) */
-	typedef Eigen::Matrix<Float, 3, 3> EMatrix;
+	typedef Eigen::Matrix<float, 3, 3> EMatrix;
 
 	if (m_tracks.size() == 0) {
 		ref<VectorTrack> translation = new VectorTrack(VectorTrack::ETranslationXYZ);

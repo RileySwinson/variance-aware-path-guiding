@@ -144,7 +144,7 @@ public:
 	 *    will usually contain a pointer to the associated \c RenderJob.
 	 * \remark The \c ptr argument is missing in the Python bindings
 	 */
-	void logProgress(Float progress, const std::string &name,
+	void logProgress(float progress, const std::string &name,
 		const std::string &formatted, const std::string &eta,
 		const void *ptr);
 

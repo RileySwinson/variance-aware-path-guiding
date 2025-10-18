@@ -108,7 +108,7 @@ public:
 	inline const RenderQueue *getRenderQueue() const { return m_queue.get(); }
 
 	/// Return the amount of time spent rendering the given job (in seconds)
-	inline Float getRenderTime() const { return m_queue->getRenderTime(this); }
+	inline float getRenderTime() const { return m_queue->getRenderTime(this); }
 
 	MTS_DECLARE_CLASS()
 protected:

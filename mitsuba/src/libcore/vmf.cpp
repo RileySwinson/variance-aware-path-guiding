@@ -23,7 +23,7 @@
 
 MTS_NAMESPACE_BEGIN
 
-Float VonMisesFisherDistr::eval(Float cosTheta) const {
+float VonMisesFisherDistr::eval(float cosTheta) const {
 	if (m_kappa == 0.0f)
 		return INV_FOURPI;
 #if 0
@@ -31,7 +31,7 @@ Float VonMisesFisherDistr::eval(Float cosTheta) const {
 		* m_kappa / (4 * M_PI * std::sinh(m_kappa));
 #else
 	/* Numerically stable version */
-	return math::fastexp(m_kappa * std::min((Float)0, cosTheta - 1))
+	return math::fastexp(m_kappa * std::min((float)0, cosTheta - 1))
 		* m_kappa / (2 * M_PI * (1-math::fastexp(-2*m_kappa)));
 #endif
 }
@@ -41,15 +41,15 @@ Vector VonMisesFisherDistr::sample(const Point2 &sample) const {
 		return warp::squareToUniformSphere(sample);
 
 #if 0
-	Float cosTheta = math::fastlog(math::fastexp(-m_kappa) + 2 *
+	float cosTheta = math::fastlog(math::fastexp(-m_kappa) + 2 *
 						sample.x * std::sinh(m_kappa)) / m_kappa;
 #else
 	/* Numerically stable version */
-	Float cosTheta = 1 + (math::fastlog(sample.x +
+	float cosTheta = 1 + (math::fastlog(sample.x +
 		math::fastexp(-2 * m_kappa) * (1 - sample.x))) / m_kappa;
 #endif
 
-	Float sinTheta = math::safe_sqrt(1-cosTheta*cosTheta),
+	float sinTheta = math::safe_sqrt(1-cosTheta*cosTheta),
 	      sinPhi, cosPhi;
 
 	math::sincos(2*M_PI * sample.y, &sinPhi, &cosPhi);
@@ -58,14 +58,14 @@ Vector VonMisesFisherDistr::sample(const Point2 &sample) const {
 		sinPhi * sinTheta, cosTheta);
 }
 
-Float VonMisesFisherDistr::getMeanCosine() const {
+float VonMisesFisherDistr::getMeanCosine() const {
 	if (m_kappa == 0)
 		return 0;
-	Float coth = m_kappa > 6 ? 1 : ((std::exp(2*m_kappa)+1)/(std::exp(2*m_kappa)-1));
+	float coth = m_kappa > 6 ? 1 : ((std::exp(2*m_kappa)+1)/(std::exp(2*m_kappa)-1));
 	return coth-1/m_kappa;
 }
 
-static Float A3(Float kappa) {
+static float A3(float kappa) {
 	return 1/ std::tanh(kappa) - 1 / kappa;
 }
 
@@ -75,18 +75,18 @@ std::string VonMisesFisherDistr::toString() const {
 	return oss.str();
 }
 
-static Float dA3(Float kappa) {
-	Float csch = 2.0f /
+static float dA3(float kappa) {
+	float csch = 2.0f /
 		(math::fastexp(kappa)-math::fastexp(-kappa));
 	return 1/(kappa*kappa) - csch*csch;
 }
 
-static Float A3inv(Float y, Float guess) {
-	Float x = guess;
+static float A3inv(float y, float guess) {
+	float x = guess;
 	int it = 1;
 
 	while (true) {
-		Float residual = A3(x)-y,
+		float residual = A3(x)-y,
 			  deriv = dA3(x);
 		x -= residual/deriv;
 
@@ -102,31 +102,31 @@ static Float A3inv(Float y, Float guess) {
 	return x;
 }
 
-Float VonMisesFisherDistr::convolve(Float kappa1, Float kappa2) {
+float VonMisesFisherDistr::convolve(float kappa1, float kappa2) {
 	return A3inv(A3(kappa1) * A3(kappa2), std::min(kappa1, kappa2));
 }
 
-Float VonMisesFisherDistr::forPeakValue(Float x) {
+float VonMisesFisherDistr::forPeakValue(float x) {
 	if (x < INV_FOURPI) {
 		return 0.0f;
 	} else if (x > 0.795) {
 		return 2 * M_PI * x;
 	} else {
-		return std::max((Float) 0.0f,
+		return std::max((float) 0.0f,
 			(168.479f * x * x + 16.4585f * x - 2.39942f) /
 			(-1.12718f * x * x + 29.1433f * x + 1.0f));
 	}
 }
 
-static Float meanCosineFunctor(Float kappa, Float g) {
+static float meanCosineFunctor(float kappa, float g) {
 	return VonMisesFisherDistr(kappa).getMeanCosine()-g;
 }
 
-Float VonMisesFisherDistr::forMeanLength(Float l) {
+float VonMisesFisherDistr::forMeanLength(float l) {
 	return (3*l - l*l*l) / (1-l*l);
 }
 
-Float VonMisesFisherDistr::forMeanCosine(Float g) {
+float VonMisesFisherDistr::forMeanCosine(float g) {
 	if (g == 0)
 		return 0;
 	else if (g < 0)

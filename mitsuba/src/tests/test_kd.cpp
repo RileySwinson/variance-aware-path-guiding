@@ -110,8 +110,8 @@ public:
 			timer->reset();
 
 			for (size_t i=0; i<nRays; ++i) {
-				Point2 sample1(random->nextFloat(), random->nextFloat()),
-					sample2(random->nextFloat(), random->nextFloat());
+				Point2 sample1(random->nextfloat(), random->nextfloat()),
+					sample2(random->nextfloat(), random->nextfloat());
 				Point p1 = bsphere.center + warp::squareToUniformSphere(sample1) * bsphere.radius;
 				Point p2 = bsphere.center + warp::squareToUniformSphere(sample2) * bsphere.radius;
 				Ray r(p1, normalize(p2-p1), 0.0f);
@@ -121,18 +121,18 @@ public:
 					nIntersections++;
 			}
 
-			Float perc = nIntersections/(Float) nRays;
+			float perc = nIntersections/(float) nRays;
 			Log(EInfo, "  Found " SIZE_T_FMT " intersections (%.3f%%) in %i ms",
 				nIntersections, perc, timer->getMilliseconds());
 			Log(EInfo, "  -> %.3f MRays/s",
-				nRays / (timer->getMilliseconds() * (Float) 1000));
+				nRays / (timer->getMilliseconds() * (float) 1000));
 			Log(EInfo, "");
 		}
 	}
 
 	void test03_pointKDTree() {
-		typedef PointKDTree< SimpleKDNode<Point2, Float> > KDTree2;
-		typedef PointKDTree< LeftBalancedKDNode<Point2, Float> > KDTree2Left;
+		typedef PointKDTree< SimpleKDNode<Point2, float> > KDTree2;
+		typedef PointKDTree< LeftBalancedKDNode<Point2, float> > KDTree2Left;
 
 		size_t nPoints = 50000, nTries = 20;
 		ref<Random> random = new Random();
@@ -141,8 +141,8 @@ public:
 			KDTree2 kdtree(nPoints, (KDTree2::EHeuristic) heuristic);
 
 			for (size_t i=0; i<nPoints; ++i) {
-				kdtree[i].setPosition(Point2(random->nextFloat(), random->nextFloat()));
-				kdtree[i].setData(random->nextFloat());
+				kdtree[i].setPosition(Point2(random->nextfloat(), random->nextfloat()));
+				kdtree[i].setData(random->nextfloat());
 			}
 
 			KDTree2::SearchResult results[11];
@@ -165,8 +165,8 @@ public:
 			for (int k=1; k<=10; ++k) {
 				size_t nTraversals = 0;
 				for (size_t it = 0; it < nTries; ++it) {
-					Point2 p(random->nextFloat(), random->nextFloat());
-					Float searchRadius = std::numeric_limits<Float>::infinity();
+					Point2 p(random->nextfloat(), random->nextfloat());
+					float searchRadius = std::numeric_limits<float>::infinity();
 					kdtree.nnSearchCollectStatistics(p, searchRadius, k, results, nTraversals);
 					resultsBF.clear();
 					for (size_t j=0; j<nPoints; ++j)
@@ -183,8 +183,8 @@ public:
 		KDTree2Left kdtree(nPoints, KDTree2Left::ELeftBalanced);
 
 		for (size_t i=0; i<nPoints; ++i) {
-			kdtree[i].setPosition(Point2(random->nextFloat(), random->nextFloat()));
-			kdtree[i].setData(random->nextFloat());
+			kdtree[i].setPosition(Point2(random->nextfloat(), random->nextfloat()));
+			kdtree[i].setData(random->nextfloat());
 		}
 
 		std::vector<KDTree2Left::SearchResult> resultsBF;
@@ -197,8 +197,8 @@ public:
 		for (int k=1; k<=10; ++k) {
 			size_t nTraversals = 0;
 			for (size_t it = 0; it < nTries; ++it) {
-				Point2 p(random->nextFloat(), random->nextFloat());
-				Float searchRadius = std::numeric_limits<Float>::infinity();
+				Point2 p(random->nextfloat(), random->nextfloat());
+				float searchRadius = std::numeric_limits<float>::infinity();
 				kdtree.nnSearchCollectStatistics(p, searchRadius, k, results, nTraversals);
 				resultsBF.clear();
 				for (size_t j=0; j<nPoints; ++j)

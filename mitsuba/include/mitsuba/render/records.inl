@@ -85,14 +85,14 @@ inline const Medium *Intersection::getTargetMedium(const Vector &d) const {
 		return shape->getInteriorMedium();
 }
 
-inline const Medium *Intersection::getTargetMedium(Float cosTheta) const {
+inline const Medium *Intersection::getTargetMedium(float cosTheta) const {
 	if (cosTheta > 0)
 		return shape->getExteriorMedium();
 	else
 		return shape->getInteriorMedium();
 }
 
-void Intersection::adjustTime(Float time) {
+void Intersection::adjustTime(float time) {
 	if (instance)
 		instance->adjustTime(*this, time);
 	else if (shape)
@@ -147,7 +147,7 @@ inline Point2 RadianceQueryRecord::nextSample2D() {
 	return sampler->next2D();
 }
 
-inline Float RadianceQueryRecord::nextSample1D() {
+inline float RadianceQueryRecord::nextSample1D() {
 	return sampler->next1D();
 }
 

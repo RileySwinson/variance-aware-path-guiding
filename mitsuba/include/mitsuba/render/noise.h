@@ -36,7 +36,7 @@ public:
 	/**
 	 * \brief Evaluate the Perlin noise function at \a p.
 	 */
-	static Float perlinNoise(const Point &p);
+	static float perlinNoise(const Point &p);
 
 	/**
 	 * \brief Evaluate a fractional Brownian noise function
@@ -51,8 +51,8 @@ public:
 	 * \param maxOctaves Max. number of octaves used
 	 *   in the noise computation
 	 */
-	static Float fbm(const Point &p, const Vector &dpdx,
-		const Vector &dpdy, Float omega, int maxOctaves);
+	static float fbm(const Point &p, const Vector &dpdx,
+		const Vector &dpdy, float omega, int maxOctaves);
 
 	/**
 	 * \brief Similar to \ref fbm, but adds first-derivative
@@ -68,8 +68,8 @@ public:
 	 * \param maxOctaves Max. number of octaves used
 	 *   in the noise computation
 	 */
-	static Float turbulence(const Point &p, const Vector &dpdx,
-		const Vector &dpdy, Float omega, int maxOctaves);
+	static float turbulence(const Point &p, const Vector &dpdx,
+		const Vector &dpdy, float omega, int maxOctaves);
 };
 
 MTS_NAMESPACE_END

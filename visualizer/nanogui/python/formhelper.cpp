@@ -34,7 +34,7 @@ void register_formhelper(py::module &m) {
         .def("addDoubleVariable",
              [](FormHelper &h, const std::string &label,
                 const std::function<void(const double &) > &setter,
-                const std::function<double(void) > &getter, bool editable) -> FloatBox<double>* {
+                const std::function<double(void) > &getter, bool editable) -> floatBox<double>* {
                 return h.addVariable(label, setter, getter, editable);
              },
              py::arg("label"), py::arg("setter"), py::arg("getter"),

@@ -117,15 +117,15 @@ public:
 			memString((m_transSize + m_diffTransSize) * sizeof(float)).c_str(),
 			sourceFile.string().c_str());
 
-		m_trans = new Float[m_transSize];
-		m_diffTrans = new Float[m_diffTransSize];
+		m_trans = new float[m_transSize];
+		m_diffTrans = new float[m_diffTransSize];
 		m_etaFixed = false;
 		m_alphaFixed = false;
 
-		m_etaMin = (Float) fstream->readSingle();
-		m_etaMax = (Float) fstream->readSingle();
-		m_alphaMin = (Float) fstream->readSingle();
-		m_alphaMax = (Float) fstream->readSingle();
+		m_etaMin = (float) fstream->readSingle();
+		m_etaMax = (float) fstream->readSingle();
+		m_alphaMin = (float) fstream->readSingle();
+		m_alphaMax = (float) fstream->readSingle();
 
 		SLog(EDebug, "Precomputed data is available for the IOR range "
 			"[%.4f, %.1f] and roughness range [%.4f, %.1f]",  m_etaMin,
@@ -139,8 +139,8 @@ public:
 		for (size_t i=0; i<2*m_etaSamples; ++i) {
 			for (size_t j=0; j<m_alphaSamples; ++j) {
 				for (size_t k=0; k<m_thetaSamples; ++k)
-					m_trans[dataEntry++] = (Float) *ptr++;
-				m_diffTrans[fdrEntry++] = (Float) *ptr++;
+					m_trans[dataEntry++] = (float) *ptr++;
+				m_diffTrans[fdrEntry++] = (float) *ptr++;
 			}
 		}
 		delete[] temp;
@@ -158,16 +158,16 @@ public:
 	}
 
 	/// Return the minimum roughness value that is available in the precomputed data
-	inline Float getAlphaMin() { return m_alphaMin; }
+	inline float getAlphaMin() { return m_alphaMin; }
 
 	/// Return the maximum roughness value that is available in the precomputed data
-	inline Float getAlphaMax() { return m_alphaMax; }
+	inline float getAlphaMax() { return m_alphaMax; }
 
 	/// Return the minimum index of refraction that is available in the precomputed data
-	inline Float getEtaMin() { return m_etaMin; }
+	inline float getEtaMin() { return m_etaMin; }
 
 	/// Return the maximum index of refraction that is available in the precomputed data
-	inline Float getEtaMax() { return m_etaMax; }
+	inline float getEtaMax() { return m_etaMax; }
 
 	/**
 	 * \brief Evaluate the rough transmittance for a given index of refraction,
@@ -180,8 +180,8 @@ public:
 	 * \param eta
 	 *     Relative index of refraction
 	 */
-	Float eval(Float cosTheta, Float alpha = 0, Float eta = 0) const {
-		Float warpedCosTheta = std::pow(std::abs(cosTheta), (Float) 0.25f),
+	float eval(float cosTheta, float alpha = 0, float eta = 0) const {
+		float warpedCosTheta = std::pow(std::abs(cosTheta), (float) 0.25f),
 			  result;
 
 		if (m_alphaFixed && m_etaFixed) {
@@ -196,8 +196,8 @@ public:
 		        return 0.f;
 			//SAssert(cosTheta >= 0);
 
-			Float warpedAlpha = std::pow((alpha - m_alphaMin)
-					/ (m_alphaMax-m_alphaMin), (Float) 0.25f);
+			float warpedAlpha = std::pow((alpha - m_alphaMin)
+					/ (m_alphaMax-m_alphaMin), (float) 0.25f);
 
 			result = evalCubicInterp2D(Point2(warpedCosTheta, warpedAlpha),
 				m_trans, Size2(m_thetaSamples, m_alphaSamples),
@@ -208,7 +208,7 @@ public:
 				eta = 1.0f / eta;
 			}
 
-			Float *data = m_trans;
+			float *data = m_trans;
 			if (eta < 1) {
 				/* Entering a less dense medium -- skip ahead to the
 				   second data block */
@@ -220,17 +220,17 @@ public:
 				eta = m_etaMin;
 
 			/* Transform the roughness and IOR values into the warped parameter space */
-			Float warpedAlpha = std::pow((alpha - m_alphaMin)
-					/ (m_alphaMax-m_alphaMin), (Float) 0.25f);
-			Float warpedEta = std::pow((eta - m_etaMin)
-					/ (m_etaMax-m_etaMin), (Float) 0.25f);
+			float warpedAlpha = std::pow((alpha - m_alphaMin)
+					/ (m_alphaMax-m_alphaMin), (float) 0.25f);
+			float warpedEta = std::pow((eta - m_etaMin)
+					/ (m_etaMax-m_etaMin), (float) 0.25f);
 
 			result = evalCubicInterp3D(Point3(warpedCosTheta, warpedAlpha, warpedEta),
 				data, Size3(m_thetaSamples, m_alphaSamples, m_etaSamples),
 				Point3(0.0f), Point3(1.0f));
 		}
 
-		return std::min((Float) 1.0f, std::max((Float) 0.0f, result));
+		return std::min((float) 1.0f, std::max((float) 0.0f, result));
 	}
 
 
@@ -246,19 +246,19 @@ public:
 	 * \param alpha
 	 *     Roughness parameter
 	 */
-	Float evalDiffuse(Float alpha = 0, Float eta = 0) const {
-		Float result;
+	float evalDiffuse(float alpha = 0, float eta = 0) const {
+		float result;
 
 		if (m_alphaFixed && m_etaFixed) {
 			result = m_diffTrans[0];
 		} else if (m_etaFixed) {
-			Float warpedAlpha = std::pow((alpha - m_alphaMin)
-					/ (m_alphaMax-m_alphaMin), (Float) 0.25f);
+			float warpedAlpha = std::pow((alpha - m_alphaMin)
+					/ (m_alphaMax-m_alphaMin), (float) 0.25f);
 
 			result = evalCubicInterp1D(warpedAlpha,
 				m_diffTrans, m_alphaSamples, 0.0f, 1.0f);
 		} else {
-			Float *data = m_diffTrans;
+			float *data = m_diffTrans;
 			if (eta < 1) {
 				/* Entering a less dense medium -- skip ahead to the
 				   second data block */
@@ -270,17 +270,17 @@ public:
 				eta = m_etaMin;
 
 			/* Transform the roughness and IOR values into the warped parameter space */
-			Float warpedAlpha = std::pow((alpha - m_alphaMin)
-					/ (m_alphaMax-m_alphaMin), (Float) 0.25f);
-			Float warpedEta = std::pow((eta - m_etaMin)
-					/ (m_etaMax-m_etaMin), (Float) 0.25f);
+			float warpedAlpha = std::pow((alpha - m_alphaMin)
+					/ (m_alphaMax-m_alphaMin), (float) 0.25f);
+			float warpedEta = std::pow((eta - m_etaMin)
+					/ (m_etaMax-m_etaMin), (float) 0.25f);
 
 			result = evalCubicInterp2D(Point2(warpedAlpha, warpedEta), data,
 				Size2(m_alphaSamples, m_etaSamples), Point2(0.0f), Point2(1.0f));
 
 		}
 
-		return std::min((Float) 1.0f, std::max((Float) 0.0f,  result));
+		return std::min((float) 1.0f, std::max((float) 0.0f,  result));
 	}
 
 	/**
@@ -289,7 +289,7 @@ public:
 	 *
 	 * Should only be called once!
 	 */
-	void setEta(Float eta) {
+	void setEta(float eta) {
 		if (m_etaFixed)
 			return;
 
@@ -297,9 +297,9 @@ public:
 		m_diffTransSize = m_alphaSamples;
 
 		SLog(EDebug, "Reducing dimension from 3D to 2D (%s), eta = %f",
-			memString((m_transSize + m_diffTransSize) * sizeof(Float)).c_str(), eta);
+			memString((m_transSize + m_diffTransSize) * sizeof(float)).c_str(), eta);
 
-		Float *trans = m_trans,
+		float *trans = m_trans,
 			  *diffTrans = m_diffTrans;
 
 		if (eta < 1) {
@@ -313,13 +313,13 @@ public:
 		if (eta < m_etaMin)
 			eta = m_etaMin;
 
-		Float warpedEta = std::pow((eta - m_etaMin)
-				/ (m_etaMax-m_etaMin), (Float) 0.25f);
+		float warpedEta = std::pow((eta - m_etaMin)
+				/ (m_etaMax-m_etaMin), (float) 0.25f);
 
-		Float *newTrans = new Float[m_transSize];
-		Float *newDiffTrans = new Float[m_diffTransSize];
+		float *newTrans = new float[m_transSize];
+		float *newDiffTrans = new float[m_diffTransSize];
 
-		Float dAlpha = 1.0f / (m_alphaSamples - 1),
+		float dAlpha = 1.0f / (m_alphaSamples - 1),
 			  dTheta = 1.0f / (m_thetaSamples - 1);
 
 		for (size_t i=0; i<m_alphaSamples; ++i) {
@@ -350,7 +350,7 @@ public:
 	 *
 	 * Should only be called once!
 	 */
-	void setAlpha(Float alpha) {
+	void setAlpha(float alpha) {
 		if (!m_etaFixed)
 			SLog(EError, "setAlpha(): needs a preceding call to setEta()!");
 		if (m_alphaFixed)
@@ -360,15 +360,15 @@ public:
 		m_diffTransSize = 1;
 
 		SLog(EDebug, "Reducing dimension from 2D to 1D (%s), alpha = %f",
-			memString((m_transSize + m_diffTransSize) * sizeof(Float)).c_str(), alpha);
+			memString((m_transSize + m_diffTransSize) * sizeof(float)).c_str(), alpha);
 
-		Float warpedAlpha = std::pow((alpha - m_alphaMin)
-				/ (m_alphaMax-m_alphaMin), (Float) 0.25f);
+		float warpedAlpha = std::pow((alpha - m_alphaMin)
+				/ (m_alphaMax-m_alphaMin), (float) 0.25f);
 
-		Float *newTrans = new Float[m_transSize];
-		Float *newDiffTrans = new Float[m_diffTransSize];
+		float *newTrans = new float[m_transSize];
+		float *newDiffTrans = new float[m_diffTransSize];
 
-		Float dTheta = 1.0f / (m_thetaSamples - 1);
+		float dTheta = 1.0f / (m_thetaSamples - 1);
 
 		for (size_t i=0; i<m_thetaSamples; ++i)
 			newTrans[i] = evalCubicInterp2D(
@@ -387,7 +387,7 @@ public:
 		m_alphaFixed = true;
 	}
 
-	void checkAlpha(Float alpha) {
+	void checkAlpha(float alpha) {
 		if (alpha < m_alphaMin || alpha > m_alphaMax) {
 			SLog(EError, "Error: the requested roughness value alpha=%f is"
 				" outside of the supported range [%f, %f]! Please scale "
@@ -396,7 +396,7 @@ public:
 		}
 	}
 
-	void checkEta(Float eta) {
+	void checkEta(float eta) {
 		if (eta < 1)
 			eta = 1/eta;
 		if (eta < m_etaMin || eta > m_etaMax)
@@ -421,10 +421,10 @@ public:
 		result->m_alphaMax = m_alphaMax;
 		result->m_transSize = m_transSize;
 		result->m_diffTransSize = m_diffTransSize;
-		result->m_trans = new Float[m_transSize];
-		result->m_diffTrans = new Float[m_diffTransSize];
-		memcpy(result->m_trans, m_trans, m_transSize * sizeof(Float));
-		memcpy(result->m_diffTrans, m_diffTrans, m_diffTransSize * sizeof(Float));
+		result->m_trans = new float[m_transSize];
+		result->m_diffTrans = new float[m_diffTransSize];
+		memcpy(result->m_trans, m_trans, m_transSize * sizeof(float));
+		memcpy(result->m_diffTrans, m_diffTrans, m_diffTransSize * sizeof(float));
 		return result;
 	}
 protected:
@@ -436,11 +436,11 @@ protected:
 	size_t m_thetaSamples;
 	bool m_etaFixed;
 	bool m_alphaFixed;
-	Float m_etaMin, m_etaMax;
-	Float m_alphaMin, m_alphaMax;
+	float m_etaMin, m_etaMax;
+	float m_alphaMin, m_alphaMax;
 	size_t m_transSize;
 	size_t m_diffTransSize;
-	Float *m_trans, *m_diffTrans;
+	float *m_trans, *m_diffTrans;
 };
 
 MTS_NAMESPACE_END

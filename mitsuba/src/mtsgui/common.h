@@ -174,7 +174,7 @@ struct SceneContext {
 	int sceneResID;
 	QString fileName;
 	QString shortName;
-	Float movementScale;
+	float movementScale;
 	Vector up;
 
 	/* Rendering/Preview-related */
@@ -188,14 +188,14 @@ struct SceneContext {
 	std::set<VisualWorkUnit, block_comparator> workUnits;
 	int currentLayer;
 	EMode mode, cancelMode;
-	Float gamma, exposure, clamping;
+	float gamma, exposure, clamping;
 	bool srgb;
 	int pathLength, shadowMapResolution;
 	EPreviewMethod previewMethod;
 	EToneMappingMethod toneMappingMethod;
 	QSize windowSize, sizeIncrease;
 	Vector2i scrollOffset;
-	Float reinhardKey, reinhardBurn;
+	float reinhardKey, reinhardBurn;
 	bool diffuseSources;
 	bool diffuseReceivers;
 	bool showKDTree;

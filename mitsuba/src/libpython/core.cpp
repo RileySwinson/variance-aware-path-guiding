@@ -98,7 +98,7 @@ StringVector *StringVector_fromList(bp::list list) {
 
 template <typename SpectrumType> class SpectrumWrapper {
 public:
-	static Float get(const SpectrumType &spec, int i) {
+	static float get(const SpectrumType &spec, int i) {
 		if (i < 0 || i >= SpectrumType::dim) {
 			SLog(EError, "Index %i is out of range!", i);
 			return 0.0f;
@@ -106,7 +106,7 @@ public:
 		return spec[i];
 	}
 
-	static void set(SpectrumType &spec, int i, Float value) {
+	static void set(SpectrumType &spec, int i, float value) {
 		if (i < 0 || i >= SpectrumType::dim)
 			SLog(EError, "Index %i is out of range!", i);
 		else
@@ -131,8 +131,8 @@ public:
 				return bp::object(props.getString(name));
 			case Properties::EInteger:
 				return bp::object(props.getInteger(name));
-			case Properties::EFloat:
-				return bp::object(props.getFloat(name));
+			case Properties::Efloat:
+				return bp::object(props.getfloat(name));
 			case Properties::EVector:
 				return bp::object(props.getVector(name));
 			case Properties::EPoint:
@@ -153,7 +153,7 @@ public:
 		bp::extract<std::string> extractString(value);
 		bp::extract<bool> extractBoolean(value);
 		bp::extract<int> extractInteger(value);
-		bp::extract<Float> extractFloat(value);
+		bp::extract<float> extractfloat(value);
 		bp::extract<Vector> extractVector(value);
 		bp::extract<Point> extractPoint(value);
 		bp::extract<Transform> extractTransform(value);
@@ -166,8 +166,8 @@ public:
 			props.setBoolean(name, extractBoolean(), false);
 		} else if (extractInteger.check()) {
 			props.setInteger(name, extractInteger(), false);
-		} else if (extractFloat.check()) {
-			props.setFloat(name, extractFloat(), false);
+		} else if (extractfloat.check()) {
+			props.setfloat(name, extractfloat(), false);
 		} else if (extractPoint.check()) {
 			props.setPoint(name, extractPoint(), false);
 		} else if (extractVector.check()) {
@@ -192,7 +192,7 @@ struct path_to_python_str {
 };
 
 struct TSpectrum_to_Spectrum {
-	static PyObject* convert(const TSpectrum<Float, SPECTRUM_SAMPLES> &spectrum) {
+	static PyObject* convert(const TSpectrum<float, SPECTRUM_SAMPLES> &spectrum) {
 		return bp::incref(bp::object(Spectrum(spectrum)).ptr());
 	}
 };
@@ -209,19 +209,19 @@ static void scheduler_wait(Scheduler *scheduler, const ParallelProcess *proc) {
 
 static Matrix4x4 *Matrix4x4_fromList(bp::list list) {
 	if (bp::len(list) == 4) {
-		Float buf[4][4];
+		float buf[4][4];
 		for (int i=0; i<4; ++i) {
 			bp::list subList = bp::extract<bp::list>(list[i]);
 			if (bp::len(subList) != 4)
 				SLog(EError, "Matrix4x4 list constructor: invalid argument");
 			for (int j=0; j<4; ++j)
-				buf[i][j] = bp::extract<Float>(subList[j]);
+				buf[i][j] = bp::extract<float>(subList[j]);
 		}
 		return new Matrix4x4(buf);
 	} else if (bp::len(list) == 16) {
-		Float buf[16];
+		float buf[16];
 		for (int i=0; i<16; ++i)
-			buf[i] = bp::extract<Float>(list[i]);
+			buf[i] = bp::extract<float>(list[i]);
 		return new Matrix4x4(buf);
 	} else {
 		SLog(EError, "Matrix4x4 list constructor: invalid argument");
@@ -229,7 +229,7 @@ static Matrix4x4 *Matrix4x4_fromList(bp::list list) {
 	}
 }
 
-static void Matrix4x4_setItem(Matrix4x4 *matrix, bp::tuple tuple, Float value) {
+static void Matrix4x4_setItem(Matrix4x4 *matrix, bp::tuple tuple, float value) {
 	if (bp::len(tuple) != 2)
 		SLog(EError, "Invalid matrix indexing operation, required a tuple of length 2");
 	int i = bp::extract<int>(tuple[0]);
@@ -241,7 +241,7 @@ static void Matrix4x4_setItem(Matrix4x4 *matrix, bp::tuple tuple, Float value) {
 	matrix->operator()(i, j) = value;
 }
 
-static Float Matrix4x4_getItem(Matrix4x4 *matrix, bp::tuple tuple) {
+static float Matrix4x4_getItem(Matrix4x4 *matrix, bp::tuple tuple) {
 	if (bp::len(tuple) != 2)
 		SLog(EError, "Invalid matrix indexing operation, required a tuple of length 2");
 	int i = bp::extract<int>(tuple[0]);
@@ -267,7 +267,7 @@ static Matrix4x4 Matrix4x4_invert(Matrix4x4 *matrix) {
 
 static bp::tuple Matrix4x4_symEig(Matrix4x4 *matrix) {
 	Matrix4x4 Q;
-	Float d[4];
+	float d[4];
 	matrix->symEig(Q, d);
 
 	bp::list list;
@@ -291,7 +291,7 @@ static bp::tuple Matrix4x4_lu(Matrix4x4 *matrix) {
 }
 
 static Vector4 Matrix4x4_cholSolve(Matrix4x4 *matrix, Vector B) {
-	typedef Matrix<4, 1, Float> Matrix4x1;
+	typedef Matrix<4, 1, float> Matrix4x1;
 	Vector4 X;
 	Matrix4x1 & aliasedB MTS_MAY_ALIAS = reinterpret_cast<Matrix4x1 &>(B);
 	Matrix4x1 & aliasedX MTS_MAY_ALIAS = reinterpret_cast<Matrix4x1 &>(X);
@@ -300,14 +300,14 @@ static Vector4 Matrix4x4_cholSolve(Matrix4x4 *matrix, Vector B) {
 }
 
 static Vector4 Matrix4x4_luSolve(Matrix4x4 *matrix, Vector B, bp::list pivList) {
-	typedef Matrix<4, 1, Float> Matrix4x1;
+	typedef Matrix<4, 1, float> Matrix4x1;
 	Vector4 X;
 	int piv[4];
 
 	if (bp::len(pivList) != 4)
 		SLog(EError, "Matrix4x4 list constructor: invalid argument");
 	for (int i=0; i<4; ++i)
-		piv[i] = bp::extract<Float>(pivList[i]);
+		piv[i] = bp::extract<float>(pivList[i]);
 
 	Matrix4x1 & aliasedB MTS_MAY_ALIAS = reinterpret_cast<Matrix4x1 &>(B);
 	Matrix4x1 & aliasedX MTS_MAY_ALIAS = reinterpret_cast<Matrix4x1 &>(X);
@@ -315,7 +315,7 @@ static Vector4 Matrix4x4_luSolve(Matrix4x4 *matrix, Vector B, bp::list pivList) 
 	return X;
 }
 
-static void SHVector_setItem(SHVector *v, bp::tuple tuple, Float value) {
+static void SHVector_setItem(SHVector *v, bp::tuple tuple, float value) {
 	if (bp::len(tuple) != 2)
 		SLog(EError, "Invalid v indexing operation, required a tuple of length 2");
 	int i = bp::extract<int>(tuple[0]);
@@ -327,7 +327,7 @@ static void SHVector_setItem(SHVector *v, bp::tuple tuple, Float value) {
 	v->operator()(i, j) = value;
 }
 
-static Float SHVector_getItem(SHVector *v, bp::tuple tuple) {
+static float SHVector_getItem(SHVector *v, bp::tuple tuple) {
 	if (bp::len(tuple) != 2)
 		SLog(EError, "Invalid v indexing operation, required a tuple of length 2");
 	int i = bp::extract<int>(tuple[0]);
@@ -355,12 +355,12 @@ static ref<SerializableObject> instance_manager_getinstance(InstanceManager *man
 	return manager->getInstance(stream);
 }
 
-void appender_logProgress(Appender *appender, Float progress, const std::string &name,
+void appender_logProgress(Appender *appender, float progress, const std::string &name,
 	const std::string &formatted, const std::string &eta) {
 	appender->logProgress(progress, name, formatted, eta, NULL);
 }
 
-static void logger_logProgress(Logger *logger, Float progress, const std::string &name,
+static void logger_logProgress(Logger *logger, float progress, const std::string &name,
 	const std::string &formatted, const std::string &eta) {
 	logger->logProgress(progress, name, formatted, eta, NULL);
 }
@@ -411,7 +411,7 @@ public:
 		bp::call_method<void>(m_self, "append", level, text);
 	}
 
-	void logProgress(Float progress, const std::string &name,
+	void logProgress(float progress, const std::string &name,
 		const std::string &formatted, const std::string &eta,
 		const void *ptr) {
         CALLBACK_SYNC_GIL();
@@ -427,46 +427,46 @@ private:
 };
 
 static Spectrum *spectrum_array_constructor(bp::list list) {
-	Float spec[SPECTRUM_SAMPLES];
+	float spec[SPECTRUM_SAMPLES];
 	if (bp::len(list) != SPECTRUM_SAMPLES)
 		SLog(EError, "Spectrum: expected %i arguments", SPECTRUM_SAMPLES);
 
 	for (int i=0; i<bp::len(list); ++i)
-		spec[i] = bp::extract<Float>(list[i]);
+		spec[i] = bp::extract<float>(list[i]);
 
 	return new Spectrum(spec);
 }
 
-static Point ray_eval(const Ray &ray, Float t) {
+static Point ray_eval(const Ray &ray, float t) {
 	return ray(t);
 }
 
 static bp::tuple spectrum_toLinearRGB(const Spectrum &s) {
-	Float r, g, b;
+	float r, g, b;
 	s.toLinearRGB(r, g, b);
 	return bp::make_tuple(r, g, b);
 }
 
 static bp::tuple spectrum_toSRGB(const Spectrum &s) {
-	Float r, g, b;
+	float r, g, b;
 	s.toSRGB(r, g, b);
 	return bp::make_tuple(r, g, b);
 }
 
 static bp::tuple spectrum_toXYZ(const Spectrum &s) {
-	Float x, y, z;
+	float x, y, z;
 	s.toXYZ(x, y, z);
 	return bp::make_tuple(x, y, z);
 }
 
 static bp::tuple spectrum_toIPT(const Spectrum &s) {
-	Float I, P, T;
+	float I, P, T;
 	s.toIPT(I, P, T);
 	return bp::make_tuple(I, P, T);
 }
 
 static bp::object bsphere_rayIntersect(BSphere *bsphere, const Ray &ray) {
-	Float nearT, farT;
+	float nearT, farT;
 	if (bsphere->rayIntersect(ray, nearT, farT))
 		return bp::make_tuple(nearT, farT);
 	else
@@ -475,7 +475,7 @@ static bp::object bsphere_rayIntersect(BSphere *bsphere, const Ray &ray) {
 }
 
 static bp::object aabb_rayIntersect(AABB *aabb, const Ray &ray) {
-	Float nearT, farT;
+	float nearT, farT;
 	if (aabb->rayIntersect(ray, nearT, farT))
 		return bp::make_tuple(nearT, farT);
 	else
@@ -491,7 +491,7 @@ static bp::object logger_readLog(Logger *logger) {
 		return bp::object();
 }
 
-static bp::object aabb_rayIntersect2(AABB *aabb, const Ray &ray, Float nearT, Float farT) {
+static bp::object aabb_rayIntersect2(AABB *aabb, const Ray &ray, float nearT, float farT) {
 	Point nearP, farP;
 	if (aabb->rayIntersect(ray, nearT, farT, nearP, farP))
 		return bp::make_tuple(nearT, farT, nearP, farP);
@@ -632,23 +632,23 @@ static bp::tuple mkCoordinateSystem(const Vector &n) {
 	return bp::make_tuple(s, t);
 }
 
-static bp::tuple fresnelDielectricExt1(Float cosThetaI, Float eta) {
-	Float cosThetaT;
-	Float result = fresnelDielectricExt(cosThetaI, cosThetaT, eta);
+static bp::tuple fresnelDielectricExt1(float cosThetaI, float eta) {
+	float cosThetaT;
+	float result = fresnelDielectricExt(cosThetaI, cosThetaT, eta);
 
 	return bp::make_tuple(result, cosThetaT);
 }
 
-static Float fresnelDielectricExt2(Float cosThetaI, Float eta) {
+static float fresnelDielectricExt2(float cosThetaI, float eta) {
 	return fresnelDielectricExt(cosThetaI, eta);
 }
 
-static Vector refract1(const Vector &wi, const Normal &n, Float eta, Float cosThetaT) {
+static Vector refract1(const Vector &wi, const Normal &n, float eta, float cosThetaT) {
 	return refract(wi, n, eta, cosThetaT);
 }
 
-static bp::tuple refract2(const Vector &wi, const Normal &n, Float eta) {
-	Float cosThetaT, F;
+static bp::tuple refract2(const Vector &wi, const Normal &n, float eta) {
+	float cosThetaT, F;
 	Vector result = refract(wi, n, eta, cosThetaT, F);
 	return bp::make_tuple(result, cosThetaT, F);
 }
@@ -658,12 +658,12 @@ static void bitmap_applyMatrix(Bitmap *bitmap, bp::list list) {
 	if (length != 9)
 		SLog(EError, "Require a color matrix specified as a list with 9 entries!");
 
-	Float matrix[3][3];
+	float matrix[3][3];
 
 	int idx = 0;
 	for (int i=0; i<3; ++i)
 		for (int j=0; j<3; ++j)
-			matrix[i][j] = bp::extract<Float>(list[idx++]);
+			matrix[i][j] = bp::extract<float>(list[idx++]);
 
 	bitmap->applyMatrix(matrix);
 }
@@ -696,26 +696,26 @@ static void bitmap_convert_0(Bitmap *bitmap, Bitmap *target) {
     bitmap->convert(target);
 }
 
-static void bitmap_convert_1(Bitmap *bitmap, Bitmap *target, Float multiplier) {
+static void bitmap_convert_1(Bitmap *bitmap, Bitmap *target, float multiplier) {
     bitmap->convert(target, multiplier);
 }
 
-static void bitmap_convert_2(Bitmap *bitmap, Bitmap *target, Float multiplier, Spectrum::EConversionIntent intent) {
+static void bitmap_convert_2(Bitmap *bitmap, Bitmap *target, float multiplier, Spectrum::EConversionIntent intent) {
 	bitmap->convert(target, multiplier, intent);
 }
 
 static ref<Bitmap> bitmap_convert_3(Bitmap *bitmap, Bitmap::EPixelFormat pixelFormat, Bitmap::EComponentFormat componentFormat,
-		Float gamma, Float multiplier, Spectrum::EConversionIntent intent) {
+		float gamma, float multiplier, Spectrum::EConversionIntent intent) {
 	return bitmap->convert(pixelFormat, componentFormat, gamma, multiplier, intent);
 }
 
 static ref<Bitmap> bitmap_convert_4(Bitmap *bitmap, Bitmap::EPixelFormat pixelFormat, Bitmap::EComponentFormat componentFormat,
-		Float gamma, Float multiplier) {
+		float gamma, float multiplier) {
 	return bitmap->convert(pixelFormat, componentFormat, gamma, multiplier);
 }
 
 static ref<Bitmap> bitmap_convert_5(Bitmap *bitmap, Bitmap::EPixelFormat pixelFormat, Bitmap::EComponentFormat componentFormat,
-		Float gamma) {
+		float gamma) {
 	return bitmap->convert(pixelFormat, componentFormat, gamma);
 }
 
@@ -775,7 +775,7 @@ static bp::object bitmap_toByteArray_2(const Bitmap *bitmap) {
 			(char *) bitmap->getUInt8Data(), bitmap->getBufferSize())));
 }
 
-static bp::tuple bitmap_tonemapReinhard(Bitmap *bitmap, Float logAvgLuminance, Float maxLuminance, Float key, Float burn) {
+static bp::tuple bitmap_tonemapReinhard(Bitmap *bitmap, float logAvgLuminance, float maxLuminance, float key, float burn) {
 	bitmap->tonemapReinhard(logAvgLuminance, maxLuminance, key, burn);
 	return bp::make_tuple(logAvgLuminance, maxLuminance);
 }
@@ -789,12 +789,12 @@ static bp::object bitmap_join(Bitmap::EPixelFormat fmt, bp::list list) {
 	return bp::object(Bitmap::join(fmt, bitmaps));
 }
 
-static Transform transform_glOrthographic1(Float clipNear, Float clipFar) {
+static Transform transform_glOrthographic1(float clipNear, float clipFar) {
 	return Transform::glOrthographic(clipNear, clipFar);
 }
 
-static Transform transform_glOrthographic2(Float clipLeft, Float clipRight,
-		Float clipBottom, Float clipTop, Float clipNear, Float clipFar) {
+static Transform transform_glOrthographic2(float clipLeft, float clipRight,
+		float clipBottom, float clipTop, float clipNear, float clipFar) {
 	return Transform::glOrthographic(clipLeft, clipRight,
 		clipBottom, clipTop, clipNear, clipFar);
 }
@@ -809,19 +809,19 @@ static bp::list fileresolver_resolveAll(const FileResolver *fres, const fs::path
 	return result;
 }
 
-static bp::tuple DiscreteDistribution_sample(DiscreteDistribution *d, Float sampleValue) {
-	Float pdf;
+static bp::tuple DiscreteDistribution_sample(DiscreteDistribution *d, float sampleValue) {
+	float pdf;
 	size_t index = d->sample(sampleValue, pdf);
 	return bp::make_tuple(index, pdf);
 }
 
-static bp::tuple DiscreteDistribution_sampleReuse(DiscreteDistribution *d, Float sampleValue) {
-	Float pdf;
+static bp::tuple DiscreteDistribution_sampleReuse(DiscreteDistribution *d, float sampleValue) {
+	float pdf;
 	size_t index = d->sampleReuse(sampleValue, pdf);
 	return bp::make_tuple(index, pdf, sampleValue);
 }
 
-static Float DiscreteDistribution_getitem(DiscreteDistribution *d, int i) {
+static float DiscreteDistribution_getitem(DiscreteDistribution *d, int i) {
 	if (i < 0 || i >= (int) d->size()) {
 		SLog(EError, "Index %i is out of range!", i);
 		return 0.0f;
@@ -835,8 +835,8 @@ static bp::tuple legendrePD_double(int l, double x) {
 }
 
 static bp::tuple gaussLegendre_(int n) {
-	Float *nodes  = new Float[n];
-	Float *weights= new Float[n];
+	float *nodes  = new float[n];
+	float *weights= new float[n];
 	gaussLegendre(n, nodes, weights);
 
 	bp::list nodeList, weightList;
@@ -851,8 +851,8 @@ static bp::tuple gaussLegendre_(int n) {
 }
 
 static bp::tuple gaussLobatto_(int n) {
-	Float *nodes  = new Float[n];
-	Float *weights= new Float[n];
+	float *nodes  = new float[n];
+	float *weights= new float[n];
 	gaussLobatto(n, nodes, weights);
 
 	bp::list nodeList, weightList;
@@ -889,7 +889,7 @@ static bp::tuple gaussLobatto_(int n) {
  * \param nodes
  *     Length-\c n array used to store the weights of the quadrature rule
  */
-extern MTS_EXPORT_CORE void gaussLobatto(int n, Float *nodes, Float *weights);
+extern MTS_EXPORT_CORE void gaussLobatto(int n, float *nodes, float *weights);
 
 struct NativeBuffer {
 	ref<Object> owner;
@@ -906,9 +906,9 @@ struct NativeBuffer {
 			case Bitmap::EUInt8:   formatString = "B"; itemSize = 1; break;
 			case Bitmap::EUInt16:  formatString = "H"; itemSize = 2; break;
 			case Bitmap::EUInt32:  formatString = "I"; itemSize = 4; break;
-			case Bitmap::EFloat16: formatString = "e"; itemSize = 2; break;
-			case Bitmap::EFloat32: formatString = "f"; itemSize = 4; break;
-			case Bitmap::EFloat64: formatString = "d"; itemSize = 8; break;
+			case Bitmap::Efloat16: formatString = "e"; itemSize = 2; break;
+			case Bitmap::Efloat32: formatString = "f"; itemSize = 4; break;
+			case Bitmap::Efloat64: formatString = "d"; itemSize = 8; break;
 			default:
 				SLog(EError, "Unsupported bufer format!");
 		}
@@ -1019,9 +1019,9 @@ struct NativeBuffer {
 			case Bitmap::EUInt8:   result = bp::object(((uint8_t *) buf.ptr)[idx]); break;
 			case Bitmap::EUInt16:  result = bp::object(((uint16_t *) buf.ptr)[idx]); break;
 			case Bitmap::EUInt32:  result = bp::object(((uint32_t *) buf.ptr)[idx]); break;
-			case Bitmap::EFloat16: result = bp::object((float) ((half *) buf.ptr)[idx]); break;
-			case Bitmap::EFloat32: result = bp::object(((float *) buf.ptr)[idx]); break;
-			case Bitmap::EFloat64: result = bp::object(((double *) buf.ptr)[idx]); break;
+			case Bitmap::Efloat16: result = bp::object((float) ((half *) buf.ptr)[idx]); break;
+			case Bitmap::Efloat32: result = bp::object(((float *) buf.ptr)[idx]); break;
+			case Bitmap::Efloat64: result = bp::object(((double *) buf.ptr)[idx]); break;
 			default:
 				PyErr_SetString(PyExc_BufferError, "Unsupported buffer format!");
 				return 0;
@@ -1090,9 +1090,9 @@ static ref<Bitmap> bitmap_array_constructor(bp::object _obj) {
 		case 'B': componentFormat = Bitmap::EUInt8; break;
 		case 'H': componentFormat = Bitmap::EUInt16; break;
 		case 'I': componentFormat = Bitmap::EUInt32; break;
-		case 'e': componentFormat = Bitmap::EFloat16; break;
-		case 'f': componentFormat = Bitmap::EFloat32; break;
-		case 'd': componentFormat = Bitmap::EFloat64; break;
+		case 'e': componentFormat = Bitmap::Efloat16; break;
+		case 'f': componentFormat = Bitmap::Efloat32; break;
+		case 'd': componentFormat = Bitmap::Efloat64; break;
 		default:
 			SLog(EError, "Invalid buffer format \"%s\"", buffer.format);
 	}
@@ -1130,10 +1130,10 @@ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(filter2_overloads, filter, 3, 5)
 struct PythonIntegrand {
 	PythonIntegrand(bp::object integrand) : integrand(integrand) {}
 
-	Float operator()(Float value) {
+	float operator()(float value) {
 		bp::object obj = integrand(value);
-		bp::extract<Float> extract(obj);
-		return (Float) extract();
+		bp::extract<float> extract(obj);
+		return (float) extract();
 	}
 
 	bp::object integrand;
@@ -1160,16 +1160,16 @@ struct PythonIntegrandFromPythonCallable {
 };
 
 static bp::tuple GaussLobattoIntegrator_integrate(GaussLobattoIntegrator *integrator,
-		const GaussLobattoIntegrator::Integrand &integrand, Float a, Float b) {
+		const GaussLobattoIntegrator::Integrand &integrand, float a, float b) {
 	size_t nEvals = 0;
-	Float result = integrator->integrate(integrand, a, b, &nEvals);
+	float result = integrator->integrate(integrand, a, b, &nEvals);
 	return bp::make_tuple(result, nEvals);
 }
 
 static std::string memString1(size_t size) { return mitsuba::memString(size); }
 static std::string memString2(size_t size, bool precise) { return mitsuba::memString(size, precise); }
-static std::string timeString1(Float size) { return mitsuba::timeString(size); }
-static std::string timeString2(Float size, bool precise) { return mitsuba::timeString(size, precise); }
+static std::string timeString1(float size) { return mitsuba::timeString(size); }
+static std::string timeString2(float size, bool precise) { return mitsuba::timeString(size, precise); }
 
 // Based on 'http://stackoverflow.com/questions/15842126/feeding-a-python-list-into-a-function-taking-in-a-vector-with-boost-python'
 struct iterable_converter {
@@ -1212,7 +1212,7 @@ struct iterable_converter {
 void export_core() {
 	/* Set up various implicit conversions */
 	bp::to_python_converter<fs::path, path_to_python_str>();
-	bp::to_python_converter<TSpectrum<Float, SPECTRUM_SAMPLES>, TSpectrum_to_Spectrum>();
+	bp::to_python_converter<TSpectrum<float, SPECTRUM_SAMPLES>, TSpectrum_to_Spectrum>();
 	bp::implicitly_convertible<std::string, fs::path>();
 	PythonIntegrandFromPythonCallable();
 
@@ -1315,8 +1315,8 @@ void export_core() {
 		.def("readLong", &Stream::readLong)
 		.def("writeULong", &Stream::writeULong)
 		.def("readULong", &Stream::readULong)
-		.def("writeFloat", &Stream::writeFloat)
-		.def("readFloat", &Stream::readFloat)
+		.def("writefloat", &Stream::writefloat)
+		.def("readfloat", &Stream::readfloat)
 		.def("writeSingle", &Stream::writeSingle)
 		.def("readSingle", &Stream::readSingle)
 		.def("writeDouble", &Stream::writeDouble)
@@ -1478,7 +1478,7 @@ void export_core() {
 		.def("zeroExtend", &InterpolatedSpectrum::zeroExtend);
 
 	bp::class_<BlackBodySpectrum, bp::bases<ContinuousSpectrum>, boost::noncopyable>
-			("BlackBodySpectrum", bp::init<Float>());
+			("BlackBodySpectrum", bp::init<float>());
 
 	void (Bitmap::*accumulate_1)(const Bitmap *bitmap, Point2i sourceOffset, Point2i targetOffset, Vector2i size) = &Bitmap::accumulate;
 	void (Bitmap::*accumulate_2)(const Bitmap *bitmap, Point2i targetOffset) = &Bitmap::accumulate;
@@ -1490,19 +1490,19 @@ void export_core() {
 
 	void (Bitmap::*resample_1)(const ReconstructionFilter *,
 		ReconstructionFilter::EBoundaryCondition, ReconstructionFilter::EBoundaryCondition,
-		Bitmap *, Bitmap *, Float, Float) const  = &Bitmap::resample;
+		Bitmap *, Bitmap *, float, float) const  = &Bitmap::resample;
 
 	ref<Bitmap> (Bitmap::*resample_2)(const ReconstructionFilter *,
 		ReconstructionFilter::EBoundaryCondition, ReconstructionFilter::EBoundaryCondition,
-		const Vector2i &, Float, Float) const  = &Bitmap::resample;
+		const Vector2i &, float, float) const  = &Bitmap::resample;
 
 	void (Bitmap::*filter_1)(const ReconstructionFilter *,
 		ReconstructionFilter::EBoundaryCondition, ReconstructionFilter::EBoundaryCondition,
-		Bitmap *, Bitmap *, Float, Float) const  = &Bitmap::filter;
+		Bitmap *, Bitmap *, float, float) const  = &Bitmap::filter;
 
 	ref<Bitmap> (Bitmap::*filter_2)(const ReconstructionFilter *,
 		ReconstructionFilter::EBoundaryCondition, ReconstructionFilter::EBoundaryCondition,
-		Float, Float) const  = &Bitmap::filter;
+		float, float) const  = &Bitmap::filter;
 
 	const std::vector<std::string> & (Bitmap::*getChannelNames_1)() const = &Bitmap::getChannelNames;
 
@@ -1611,10 +1611,10 @@ void export_core() {
 		.value("EUInt8", Bitmap::EUInt8)
 		.value("EUInt16", Bitmap::EUInt16)
 		.value("EUInt32", Bitmap::EUInt32)
-		.value("EFloat16", Bitmap::EFloat16)
-		.value("EFloat32", Bitmap::EFloat32)
-		.value("EFloat64", Bitmap::EFloat64)
-		.value("EFloat", Bitmap::EFloat)
+		.value("Efloat16", Bitmap::Efloat16)
+		.value("Efloat32", Bitmap::Efloat32)
+		.value("Efloat64", Bitmap::Efloat64)
+		.value("Efloat", Bitmap::Efloat)
 		.value("EInvalid", Bitmap::EInvalid)
 		.export_values();
 
@@ -1712,7 +1712,7 @@ void export_core() {
 		.def("nextULong", &Random::nextULong)
 		.def("nextUInt", &Random::nextUInt)
 		.def("nextSize", &Random::nextSize)
-		.def("nextFloat", &Random::nextFloat)
+		.def("nextfloat", &Random::nextfloat)
 		.def("nextStandardNormal", &Random::nextStandardNormal)
 		.def("serialize", &Random::serialize);
 
@@ -1815,7 +1815,7 @@ void export_core() {
 
 	BP_CLASS_DECL(StreamBackend, Thread, (bp::init<const std::string, Scheduler *, const std::string &, Stream *, bool>()));
 
-	IMPLEMENT_ANIMATION_TRACK(FloatTrack);
+	IMPLEMENT_ANIMATION_TRACK(floatTrack);
 	IMPLEMENT_ANIMATION_TRACK(VectorTrack);
 	IMPLEMENT_ANIMATION_TRACK(PointTrack);
 	IMPLEMENT_ANIMATION_TRACK(QuatTrack);
@@ -1859,8 +1859,8 @@ void export_core() {
 		.def("eval", &AnimatedTransform::eval, BP_RETURN_VALUE);
 
 	BP_STRUCT(Color3, bp::init<>())
-		.def(bp::init<Float>())
-		.def(bp::init<Float, Float, Float>())
+		.def(bp::init<float>())
+		.def(bp::init<float, float, float>())
 		.def(bp::self != bp::self)
 		.def(bp::self == bp::self)
 		.def(-bp::self)
@@ -1868,12 +1868,12 @@ void export_core() {
 		.def(bp::self += bp::self)
 		.def(bp::self - bp::self)
 		.def(bp::self -= bp::self)
-		.def(bp::self *= Float())
-		.def(bp::self * Float())
+		.def(bp::self *= float())
+		.def(bp::self * float())
 		.def(bp::self *= bp::self)
 		.def(bp::self * bp::self)
-		.def(bp::self / Float())
-		.def(bp::self /= Float())
+		.def(bp::self / float())
+		.def(bp::self /= float())
 		.def(bp::self /= bp::self)
 		.def(bp::self / bp::self)
 		.def("isValid", &Color3::isValid)
@@ -1897,7 +1897,7 @@ void export_core() {
 
 	BP_STRUCT(Spectrum, bp::init<>())
 		.def("__init__", bp::make_constructor(spectrum_array_constructor))
-		.def(bp::init<Float>())
+		.def(bp::init<float>())
 		.def(bp::init<Stream *>())
 		.def(bp::self != bp::self)
 		.def(bp::self == bp::self)
@@ -1906,12 +1906,12 @@ void export_core() {
 		.def(bp::self += bp::self)
 		.def(bp::self - bp::self)
 		.def(bp::self -= bp::self)
-		.def(bp::self *= Float())
-		.def(bp::self * Float())
+		.def(bp::self *= float())
+		.def(bp::self * float())
 		.def(bp::self *= bp::self)
 		.def(bp::self * bp::self)
-		.def(bp::self / Float())
-		.def(bp::self /= Float())
+		.def(bp::self / float())
+		.def(bp::self /= float())
 		.def(bp::self /= bp::self)
 		.def(bp::self / bp::self)
 		.def("isValid", &Spectrum::isValid)
@@ -1975,7 +1975,7 @@ void export_core() {
 	bp::enum_<Properties::EPropertyType>("EPropertyType")
 		.value("EBoolean", Properties::EBoolean)
 		.value("EInteger", Properties::EInteger)
-		.value("EFloat", Properties::EFloat)
+		.value("Efloat", Properties::Efloat)
 		.value("EPoint", Properties::EPoint)
 		.value("ETransform", Properties::ETransform)
 		.value("ESpectrum", Properties::ESpectrum)
@@ -1985,13 +1985,13 @@ void export_core() {
 	BP_SETSCOPE(coreModule);
 
 	BP_STRUCT(Vector1, bp::init<>())
-		.def(bp::init< Float>())
+		.def(bp::init< float>())
 		.def(bp::init<Point1>())
 		.def_readwrite("x", &Vector1::x);
 
 	BP_STRUCT(Vector2, bp::init<>())
-		.def(bp::init<Float>())
-		.def(bp::init<Float, Float>())
+		.def(bp::init<float>())
+		.def(bp::init<float, float>())
 		.def(bp::init<Point2>())
 		.def_readwrite("x", &Vector2::x)
 		.def_readwrite("y", &Vector2::y);
@@ -2004,8 +2004,8 @@ void export_core() {
 		.def_readwrite("y", &Vector2i::y);
 
 	BP_STRUCT(Vector3, bp::init<>())
-		.def(bp::init<Float>())
-		.def(bp::init<Float, Float, Float>())
+		.def(bp::init<float>())
+		.def(bp::init<float, float, float>())
 		.def(bp::init<Point3>())
 		.def(bp::init<Normal>())
 		.def_readwrite("x", &Vector3::x)
@@ -2013,7 +2013,7 @@ void export_core() {
 		.def_readwrite("z", &Vector3::z);
 
 	BP_SUBSTRUCT(Normal, Vector3, bp::init<>())
-		.def(bp::init<Float, Float, Float>())
+		.def(bp::init<float, float, float>())
 		.def(bp::init<Vector>())
 		.def_readwrite("x", &Normal::x)
 		.def_readwrite("y", &Normal::y)
@@ -2028,8 +2028,8 @@ void export_core() {
 		.def_readwrite("z", &Vector3i::z);
 
 	BP_STRUCT(Vector4, bp::init<>())
-		.def(bp::init<Float>())
-		.def(bp::init<Float, Float, Float, Float>())
+		.def(bp::init<float>())
+		.def(bp::init<float, float, float, float>())
 		.def(bp::init<Point4>())
 		.def_readwrite("x", &Vector4::x)
 		.def_readwrite("y", &Vector4::y)
@@ -2046,13 +2046,13 @@ void export_core() {
 		.def_readwrite("w", &Vector4i::w);
 
 	BP_STRUCT(Point1, bp::init<>())
-		.def(bp::init<Float>())
+		.def(bp::init<float>())
 		.def(bp::init<Vector1>())
 		.def_readwrite("x", &Point1::x);
 
 	BP_STRUCT(Point2, bp::init<>())
-		.def(bp::init<Float>())
-		.def(bp::init<Float, Float>())
+		.def(bp::init<float>())
+		.def(bp::init<float, float>())
 		.def(bp::init<Vector2>())
 		.def_readwrite("x", &Point2::x)
 		.def_readwrite("y", &Point2::y);
@@ -2065,8 +2065,8 @@ void export_core() {
 		.def_readwrite("y", &Point2i::y);
 
 	BP_STRUCT(Point3, bp::init<>())
-		.def(bp::init<Float>())
-		.def(bp::init<Float, Float, Float>())
+		.def(bp::init<float>())
+		.def(bp::init<float, float, float>())
 		.def(bp::init<Vector3>())
 		.def(bp::init<Normal>())
 		.def_readwrite("x", &Point3::x)
@@ -2082,8 +2082,8 @@ void export_core() {
 		.def_readwrite("z", &Point3i::z);
 
 	BP_STRUCT(Point4, bp::init<>())
-		.def(bp::init<Float>())
-		.def(bp::init<Float, Float, Float, Float>())
+		.def(bp::init<float>())
+		.def(bp::init<float, float, float, float>())
 		.def(bp::init<Vector4>())
 		.def_readwrite("x", &Point4::x)
 		.def_readwrite("y", &Point4::y)
@@ -2099,26 +2099,26 @@ void export_core() {
 		.def_readwrite("z", &Point4i::z)
 		.def_readwrite("w", &Point4i::w);
 
-	BP_IMPLEMENT_VECTOR_OPS(Normal, Float, 3);
+	BP_IMPLEMENT_VECTOR_OPS(Normal, float, 3);
 	BP_IMPLEMENT_VECTOR_OPS(Vector2i, int, 2);
 	BP_IMPLEMENT_VECTOR_OPS(Vector3i, int, 3);
 	BP_IMPLEMENT_VECTOR_OPS(Vector4i, int, 3);
-	BP_IMPLEMENT_VECTOR_OPS(Vector2, Float, 2);
-	BP_IMPLEMENT_VECTOR_OPS(Vector3, Float, 3);
-	BP_IMPLEMENT_VECTOR_OPS(Vector4, Float, 3);
+	BP_IMPLEMENT_VECTOR_OPS(Vector2, float, 2);
+	BP_IMPLEMENT_VECTOR_OPS(Vector3, float, 3);
+	BP_IMPLEMENT_VECTOR_OPS(Vector4, float, 3);
 	BP_IMPLEMENT_POINT_OPS(Point2i, int, 2);
 	BP_IMPLEMENT_POINT_OPS(Point3i, int, 3);
 	BP_IMPLEMENT_POINT_OPS(Point4i, int, 3);
-	BP_IMPLEMENT_POINT_OPS(Point2, Float, 2);
-	BP_IMPLEMENT_POINT_OPS(Point3, Float, 3);
-	BP_IMPLEMENT_POINT_OPS(Point4, Float, 3);
+	BP_IMPLEMENT_POINT_OPS(Point2, float, 2);
+	BP_IMPLEMENT_POINT_OPS(Point3, float, 3);
+	BP_IMPLEMENT_POINT_OPS(Point4, float, 3);
 
-	Float (*dot2)(const Vector2 &, const Vector2 &) = &dot;
-	Float (*dot3)(const Vector3 &, const Vector3 &) = &dot;
-	Float (*dot4)(const Vector4 &, const Vector4 &) = &dot;
-	Float (*absDot2)(const Vector2 &, const Vector2 &) = &absDot;
-	Float (*absDot3)(const Vector3 &, const Vector3 &) = &absDot;
-	Float (*absDot4)(const Vector4 &, const Vector4 &) = &absDot;
+	float (*dot2)(const Vector2 &, const Vector2 &) = &dot;
+	float (*dot3)(const Vector3 &, const Vector3 &) = &dot;
+	float (*dot4)(const Vector4 &, const Vector4 &) = &dot;
+	float (*absDot2)(const Vector2 &, const Vector2 &) = &absDot;
+	float (*absDot3)(const Vector3 &, const Vector3 &) = &absDot;
+	float (*absDot4)(const Vector4 &, const Vector4 &) = &absDot;
 	Vector2 (*normalize2)(const Vector2 &) = &normalize;
 	Vector3 (*normalize3)(const Vector3 &) = &normalize;
 	Vector4 (*normalize4)(const Vector4 &) = &normalize;
@@ -2138,7 +2138,7 @@ void export_core() {
 	coreModule.attr("Point") = coreModule.attr("Point3");
 
 	bp::class_<Matrix4x4>("Matrix4x4", bp::init<>())
-		.def(bp::init<Float>())
+		.def(bp::init<float>())
 		.def(bp::init<Stream *>())
 		.def(bp::init<Matrix4x4>())
 		.def(bp::init<Vector4, Vector4, Vector4, Vector4>())
@@ -2168,19 +2168,19 @@ void export_core() {
 		.def(-bp::self)
 		.def(bp::self + bp::self)
 		.def(bp::self += bp::self)
-		.def(bp::self + Float())
-		.def(bp::self += Float())
+		.def(bp::self + float())
+		.def(bp::self += float())
 		.def(bp::self - bp::self)
 		.def(bp::self -= bp::self)
-		.def(bp::self - Float())
-		.def(bp::self -= Float())
-		.def(bp::self * Float())
-		.def(Float() * bp::self)
-		.def(bp::self *= Float())
+		.def(bp::self - float())
+		.def(bp::self -= float())
+		.def(bp::self * float())
+		.def(float() * bp::self)
+		.def(bp::self *= float())
 		.def(bp::self * bp::self)
 		.def(bp::self *= bp::self)
-		.def(bp::self / Float())
-		.def(bp::self /= Float())
+		.def(bp::self / float())
+		.def(bp::self /= float())
 		.def("__repr__", &Matrix4x4::toString);
 
 	bp::class_<DiscreteDistribution>("DiscreteDistribution", bp::init<bp::optional<size_t> >())
@@ -2198,9 +2198,9 @@ void export_core() {
 
 	bp::class_<Ray>("Ray", bp::init<>())
 		.def(bp::init<Ray &>())
-		.def(bp::init<Ray &, Float, Float>())
-		.def(bp::init<Point, Vector, Float>())
-		.def(bp::init<Point, Vector, Float, Float, Float>())
+		.def(bp::init<Ray &, float, float>())
+		.def(bp::init<Point, Vector, float>())
+		.def(bp::init<Point, Vector, float, float, float>())
 		.def_readwrite("o", &Ray::o)
 		.def_readwrite("d", &Ray::d)
 		.def_readwrite("dRcp", &Ray::dRcp)
@@ -2216,7 +2216,7 @@ void export_core() {
 	bp::class_<RayDifferential, bp::bases<Ray> >("RayDifferential", bp::init<>())
 		.def(bp::init<Ray &>())
 		.def(bp::init<RayDifferential &>())
-		.def(bp::init<Point, Vector, Float>())
+		.def(bp::init<Point, Vector, float>())
 		.def_readwrite("rxOrigin", &RayDifferential::rxOrigin)
 		.def_readwrite("ryOrigin", &RayDifferential::ryOrigin)
 		.def_readwrite("rxDirection", &RayDifferential::rxDirection)
@@ -2227,7 +2227,7 @@ void export_core() {
 
 	bp::class_<BSphere>("BSphere", bp::init<>())
 		.def(bp::init<BSphere>())
-		.def(bp::init<Point, Float>())
+		.def(bp::init<Point, float>())
 		.def(bp::init<Stream *>())
 		.def_readwrite("center", &BSphere::center)
 		.def_readwrite("radius", &BSphere::radius)
@@ -2338,10 +2338,10 @@ void export_core() {
 		.staticmethod("glOrthographic")
 		.staticmethod("fromFrame");
 
-	Float (*fresnelConductorApprox1)(Float, Float, Float) = &fresnelConductorApprox;
-	Float (*fresnelConductorExact1)(Float, Float, Float) = &fresnelConductorExact;
-	Spectrum (*fresnelConductorApprox2)(Float, const Spectrum &, const Spectrum &) = &fresnelConductorApprox;
-	Spectrum (*fresnelConductorExact2)(Float, const Spectrum &, const Spectrum &) = &fresnelConductorExact;
+	float (*fresnelConductorApprox1)(float, float, float) = &fresnelConductorApprox;
+	float (*fresnelConductorExact1)(float, float, float) = &fresnelConductorExact;
+	Spectrum (*fresnelConductorApprox2)(float, const Spectrum &, const Spectrum &) = &fresnelConductorApprox;
+	Spectrum (*fresnelConductorExact2)(float, const Spectrum &, const Spectrum &) = &fresnelConductorExact;
 
 	/* Functions from util.h */
 	bp::def("fresnelDielectric", &fresnelDielectric);
@@ -2378,7 +2378,7 @@ void export_core() {
 	bp::def("sample02Double", sample02Double);
 	bp::def("sample02", sample02);
 	bp::def("sampleTEA", sampleTEA);
-	bp::def("sampleTEAFloat", sampleTEAFloat);
+	bp::def("sampleTEAfloat", sampleTEAfloat);
 	bp::def("radicalInverse", radicalInverse);
 	bp::def("radicalInverseFast", radicalInverseFast);
 	bp::def("radicalInverseIncremental", radicalInverseIncremental);
@@ -2393,11 +2393,11 @@ void export_core() {
 	bp::def("gaussLegendre", gaussLegendre_);
 	bp::def("gaussLobatto", gaussLobatto_);
 
-	bp::class_<GaussLobattoIntegrator>("GaussLobattoIntegrator", (bp::init<size_t, bp::optional<Float, Float, bool, bool> >()))
+	bp::class_<GaussLobattoIntegrator>("GaussLobattoIntegrator", (bp::init<size_t, bp::optional<float, float, bool, bool> >()))
 		.def("integrate", GaussLobattoIntegrator_integrate);
 
 	BP_STRUCT(Quaternion, bp::init<>())
-		.def(bp::init<Vector, Float>())
+		.def(bp::init<Vector, float>())
 		.def(bp::init<Stream *>())
 		.def_readwrite("v", &Quaternion::v)
 		.def_readwrite("w", &Quaternion::w)
@@ -2408,14 +2408,14 @@ void export_core() {
 		.def(bp::self += bp::self)
 		.def(bp::self - bp::self)
 		.def(bp::self -= bp::self)
-		.def(bp::self *= Float())
-		.def(bp::self * Float())
+		.def(bp::self *= float())
+		.def(bp::self * float())
 		.def(bp::self *= bp::self)
 		.def(bp::self * bp::self)
 		.def(bp::self *= bp::self)
 		.def(bp::self * bp::self)
-		.def(bp::self / Float())
-		.def(bp::self /= Float())
+		.def(bp::self / float())
+		.def(bp::self /= float())
 		.def("isIdentity", &Quaternion::isIdentity)
 		.def("axis", &Quaternion::axis)
 		.def("angle", &Quaternion::angle)
@@ -2447,9 +2447,9 @@ void export_core() {
 		.export_values();
 	BP_SETSCOPE(coreModule);
 
-	Float (*dotQ)(const Quaternion &, const Quaternion &) = &dot;
+	float (*dotQ)(const Quaternion &, const Quaternion &) = &dot;
 	Quaternion (*normalizeQ)(const Quaternion &) = &normalize;
-	Quaternion (*slerpQ)(const Quaternion &, const Quaternion &, Float) = &slerp;
+	Quaternion (*slerpQ)(const Quaternion &, const Quaternion &, float) = &slerp;
 
 	bp::def("dot", dotQ);
 	bp::def("normalize", normalizeQ);
@@ -2471,10 +2471,10 @@ void export_core() {
 		.export_values();
 	BP_SETSCOPE(coreModule);
 
-	Float (SHVector::*shvector_eval1)(Float, Float) const = &SHVector::eval;
-	Float (SHVector::*shvector_eval2)(const Vector &) const = &SHVector::eval;
-	Float (SHVector::*shvector_evalAzimuthallyInvariant1)(Float, Float) const = &SHVector::evalAzimuthallyInvariant;
-	Float (SHVector::*shvector_evalAzimuthallyInvariant2)(const Vector &) const = &SHVector::evalAzimuthallyInvariant;
+	float (SHVector::*shvector_eval1)(float, float) const = &SHVector::eval;
+	float (SHVector::*shvector_eval2)(const Vector &) const = &SHVector::eval;
+	float (SHVector::*shvector_evalAzimuthallyInvariant1)(float, float) const = &SHVector::evalAzimuthallyInvariant;
+	float (SHVector::*shvector_evalAzimuthallyInvariant2)(const Vector &) const = &SHVector::evalAzimuthallyInvariant;
 
 	BP_STRUCT(SHVector, bp::init<>())
 		.def(bp::init<int>())
@@ -2487,10 +2487,10 @@ void export_core() {
 		.def(bp::self += bp::self)
 		.def(bp::self - bp::self)
 		.def(bp::self -= bp::self)
-		.def(bp::self *= Float())
-		.def(bp::self * Float())
-		.def(bp::self / Float())
-		.def(bp::self /= Float())
+		.def(bp::self *= float())
+		.def(bp::self * float())
+		.def(bp::self / float())
+		.def(bp::self /= float())
 		.def("getBands", &SHVector::getBands)
 		.def("serialize", &SHVector::serialize)
 		.def("energy", &SHVector::energy)
@@ -2509,7 +2509,7 @@ void export_core() {
 		.def("rotation", &SHVector::rotation)
 		.staticmethod("rotation");
 
-	Float (*dotSH)(const SHVector &, const SHVector &) = &mitsuba::dot;
+	float (*dotSH)(const SHVector &, const SHVector &) = &mitsuba::dot;
 	bp::def("dot", dotSH);
 
 	BP_CLASS(SHSampler, Object, (bp::init<int, int>()))
@@ -2532,7 +2532,7 @@ void export_core() {
 		.def("getMillisecondsSinceStart", &Timer::getMillisecondsSinceStart)
 		.def("getSecondsSinceStart", &Timer::getSecondsSinceStart);
 
-	BP_STRUCT(VonMisesFisherDistr, bp::init<Float>())
+	BP_STRUCT(VonMisesFisherDistr, bp::init<float>())
 		.def("getKappa", &VonMisesFisherDistr::getKappa)
 		.def("setKappa", &VonMisesFisherDistr::setKappa)
 		.def("eval", &VonMisesFisherDistr::eval)

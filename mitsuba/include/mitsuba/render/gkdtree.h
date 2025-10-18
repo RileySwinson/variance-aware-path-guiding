@@ -758,7 +758,7 @@ public:
 	/**
 	 * \brief Set the traversal cost used by the tree construction heuristic
 	 */
-	inline void setTraversalCost(Float traversalCost) {
+	inline void setTraversalCost(float traversalCost) {
 		m_traversalCost = traversalCost;
 	}
 
@@ -770,7 +770,7 @@ public:
 	/**
 	 * \brief Return the traversal cost used by the tree construction heuristic
 	 */
-	inline Float getTraversalCost() const {
+	inline float getTraversalCost() const {
 		return m_traversalCost;
 	}
 
@@ -779,7 +779,7 @@ public:
 	 * (This is the average cost for testing a contained shape against
 	 *  a kd-tree search query)
 	 */
-	inline void setQueryCost(Float queryCost) {
+	inline void setQueryCost(float queryCost) {
 		m_queryCost = queryCost;
 	}
 
@@ -788,7 +788,7 @@ public:
 	 * (This is the average cost for testing a contained shape against
 	 *  a kd-tree search query)
 	 */
-	inline Float getQueryCost() const {
+	inline float getQueryCost() const {
 		return m_queryCost;
 	}
 
@@ -796,7 +796,7 @@ public:
 	 * \brief Set the bonus factor for empty space used by the
 	 * tree construction heuristic
 	 */
-	inline void setEmptySpaceBonus(Float emptySpaceBonus) {
+	inline void setEmptySpaceBonus(float emptySpaceBonus) {
 		m_emptySpaceBonus = emptySpaceBonus;
 	}
 
@@ -804,7 +804,7 @@ public:
 	 * \brief Return the bonus factor for empty space used by the
  	 * tree construction heuristic
 	 */
-	inline Float getEmptySpaceBonus() const {
+	inline float getEmptySpaceBonus() const {
 		return m_emptySpaceBonus;
 	}
 
@@ -1096,10 +1096,10 @@ protected:
 		timer->reset();
 		KDLog(m_logLevel, "Optimizing memory layout ..");
 
-		Float expTraversalSteps = 0;
-		Float expLeavesVisited = 0;
-		Float expPrimitivesIntersected = 0;
-		Float heuristicCost = 0;
+		float expTraversalSteps = 0;
+		float expLeavesVisited = 0;
+		float expPrimitivesIntersected = 0;
+		float heuristicCost = 0;
 
 		SizeType nodePtr = 0, indexPtr = 0;
 		SizeType maxPrimsInLeaf = 0;
@@ -1135,7 +1135,7 @@ protected:
 						  primsInLeaf = primEnd-primStart;
 				item.target->initLeafNode(indexPtr, primsInLeaf);
 
-				Float quantity = TreeConstructionHeuristic::getQuantity(item.aabb),
+				float quantity = TreeConstructionHeuristic::getQuantity(item.aabb),
 					  weightedQuantity = quantity * primsInLeaf;
 				expLeavesVisited += quantity;
 				expPrimitivesIntersected += weightedQuantity;
@@ -1152,7 +1152,7 @@ protected:
 					m_indices[indexPtr++] = indices[idx];
 				}
 			} else {
-				Float quantity = TreeConstructionHeuristic::getQuantity(item.aabb);
+				float quantity = TreeConstructionHeuristic::getQuantity(item.aabb);
 				expTraversalSteps += quantity;
 				heuristicCost += quantity * m_traversalCost;
 
@@ -1171,7 +1171,7 @@ protected:
 					KDLog(EError, "Cannot represent relative pointer -- "
 						"too many primitives?");
 
-				Float tmp = item.aabb.min[axis];
+				float tmp = item.aabb.min[axis];
 				item.aabb.min[axis] = split;
 				stack.push(RewriteItem(left+1, children+1, item.context, item.aabb));
 				item.aabb.min[axis] = tmp;
@@ -1204,7 +1204,7 @@ protected:
 
 		KDLog(m_logLevel, "");
 
-		Float rootQuantity = TreeConstructionHeuristic::getQuantity(aabb);
+		float rootQuantity = TreeConstructionHeuristic::getQuantity(aabb);
 		expTraversalSteps /= rootQuantity;
 		expLeavesVisited /= rootQuantity;
 		expPrimitivesIntersected /= rootQuantity;
@@ -1214,7 +1214,7 @@ protected:
 		   (necessary e.g. when the scene is planar) */
 		m_tightAABB = aabb;
 
-		const Float eps = MTS_KD_AABB_EPSILON;
+		const float eps = MTS_KD_AABB_EPSILON;
 
 		aabb.min -= (aabb.max-aabb.min) * eps + VectorType(eps);
 		aabb.max += (aabb.max-aabb.min) * eps + VectorType(eps);
@@ -1248,7 +1248,7 @@ protected:
 		KDLog(m_logLevel, "   Largest leaf node           : %i primitives",
 				maxPrimsInLeaf);
 		KDLog(m_logLevel, "   Avg. prims/nonempty leaf    : %.2f",
-				ctx.primIndexCount / (Float) ctx.nonemptyLeafNodeCount);
+				ctx.primIndexCount / (float) ctx.nonemptyLeafNodeCount);
 		KDLog(m_logLevel, "   Expected traversals/query   : %.2f", expTraversalSteps);
 		KDLog(m_logLevel, "   Expected leaf visits/query  : %.2f", expLeavesVisited);
 		KDLog(m_logLevel, "   Expected prim. visits/query : %.2f",
@@ -1345,7 +1345,7 @@ protected:
 	 * the O(n log n) greedy optimization method.
 	 * */
 	struct SplitCandidate {
-		Float cost;
+		float cost;
 		float pos;
 		int axis;
 		SizeType numLeft, numRight;
@@ -1353,7 +1353,7 @@ protected:
 		int leftBin;
 
 		inline SplitCandidate() :
-			cost(std::numeric_limits<Float>::infinity()),
+			cost(std::numeric_limits<float>::infinity()),
 			pos(0), axis(0), numLeft(0), numRight(0), planarLeft(false), leftBin(-1) {
 		}
 
@@ -1726,13 +1726,13 @@ protected:
 	 * \returns
 	 *     Final cost of the node
 	 */
-	inline Float transitionToNLogN(BuildContext &ctx, unsigned int depth, KDNode *node,
+	inline float transitionToNLogN(BuildContext &ctx, unsigned int depth, KDNode *node,
 			const AABBType &nodeAABB, IndexType *indices,
 			SizeType primCount, bool isLeftChild, SizeType badRefines) {
 		OrderedChunkAllocator &alloc = isLeftChild
 				? ctx.leftAlloc : ctx.rightAlloc;
 		EventList events = createEventList(alloc, nodeAABB, indices, primCount);
-		Float cost;
+		float cost;
 		if (m_parallelBuild) {
 			LockGuard lock(m_interface.mutex);
 			m_interface.depth = depth;
@@ -1749,7 +1749,7 @@ protected:
 				m_interface.condJobTaken->wait();
 
 			// Never tear down this subtree (return a cost of -infinity)
-			cost = -std::numeric_limits<Float>::infinity();
+			cost = -std::numeric_limits<float>::infinity();
 		} else {
 			std::sort(events.start, events.end, EdgeEventOrdering());
 
@@ -1789,12 +1789,12 @@ protected:
 	 * \returns
 	 *     Final cost of the node
 	 */
-	Float buildTreeMinMax(BuildContext &ctx, unsigned int depth, KDNode *node,
+	float buildTreeMinMax(BuildContext &ctx, unsigned int depth, KDNode *node,
 			const AABBType &nodeAABB, const AABBType &tightAABB, IndexType *indices,
 			SizeType primCount, bool isLeftChild, SizeType badRefines) {
 		KDAssert(nodeAABB.contains(tightAABB));
 
-		Float leafCost = primCount * m_queryCost;
+		float leafCost = primCount * m_queryCost;
 		if (primCount <= m_stopPrims || depth >= m_maxDepth) {
 			createLeaf(ctx, node, indices, primCount);
 			return leafCost;
@@ -1817,7 +1817,7 @@ protected:
 		SplitCandidate bestSplit = ctx.minMaxBins.minimizeCost(m_traversalCost,
 				m_queryCost);
 
-		if (bestSplit.cost == std::numeric_limits<Float>::infinity()) {
+		if (bestSplit.cost == std::numeric_limits<float>::infinity()) {
 			/* This is bad: we have either run out of floating point precision to
 			   accurately represent split planes (e.g. 'tightAABB' is almost collapsed
 			   along an axis), or the compiler made overly liberal use of floating point
@@ -1876,25 +1876,25 @@ protected:
 		AABBType childAABB(nodeAABB);
 		childAABB.max[bestSplit.axis] = bestSplit.pos;
 
-		Float leftCost = buildTreeMinMax(ctx, depth+1, children,
+		float leftCost = buildTreeMinMax(ctx, depth+1, children,
 				childAABB, partition.left, partition.leftIndices,
 				bestSplit.numLeft, true, badRefines);
 
 		childAABB.min[bestSplit.axis] = bestSplit.pos;
 		childAABB.max[bestSplit.axis] = nodeAABB.max[bestSplit.axis];
 
-		Float rightCost = buildTreeMinMax(ctx, depth+1, children + 1,
+		float rightCost = buildTreeMinMax(ctx, depth+1, children + 1,
 				childAABB, partition.right, partition.rightIndices,
 				bestSplit.numRight, false, badRefines);
 
 		TreeConstructionHeuristic tch(nodeAABB);
-		std::pair<Float, Float> prob = tch(bestSplit.axis,
+		std::pair<float, float> prob = tch(bestSplit.axis,
 			bestSplit.pos - nodeAABB.min[bestSplit.axis],
 			nodeAABB.max[bestSplit.axis] - bestSplit.pos);
 
 		/* Compute the final cost given the updated cost
 		   values received from the children */
-		Float finalCost = m_traversalCost +
+		float finalCost = m_traversalCost +
 			(prob.first * leftCost + prob.second * rightCost);
 
 		/* Release the index lists not needed by the children anymore */
@@ -1951,11 +1951,11 @@ protected:
 	 * \returns
 	 *     Final cost of the node
 	 */
-	Float buildTree(BuildContext &ctx, unsigned int depth, KDNode *node,
+	float buildTree(BuildContext &ctx, unsigned int depth, KDNode *node,
 		const AABBType &nodeAABB, EdgeEvent *eventStart, EdgeEvent *eventEnd,
 		SizeType primCount, bool isLeftChild, SizeType badRefines) {
 
-		Float leafCost = primCount * m_queryCost;
+		float leafCost = primCount * m_queryCost;
 		if (primCount <= m_stopPrims || depth >= m_maxDepth) {
 			createLeaf(ctx, node, eventStart, eventEnd, primCount);
 			return leafCost;
@@ -2030,14 +2030,14 @@ protected:
 			/* Calculate a score using the tree construction heuristic */
 			if (EXPECT_TAKEN(pos > nodeAABB.min[axis] && pos < nodeAABB.max[axis])) {
 				const SizeType nL = numLeft[axis], nR = numRight[axis];
-				const Float nLF = (Float) nL, nRF = (Float) nR;
+				const float nLF = (float) nL, nRF = (float) nR;
 
-				std::pair<Float, Float> prob = tch(axis,
+				std::pair<float, float> prob = tch(axis,
 						pos - nodeAABB.min[axis],
 						nodeAABB.max[axis] - pos);
 
 				if (numPlanar == 0) {
-					Float cost = m_traversalCost + m_queryCost
+					float cost = m_traversalCost + m_queryCost
 						* (prob.first * nLF + prob.second * nRF);
 					if (nL == 0 || nR == 0)
 						cost *= m_emptySpaceBonus;
@@ -2049,9 +2049,9 @@ protected:
 						bestSplit.numRight = nR;
 					}
 				} else {
-					Float costPlanarLeft  = m_traversalCost
+					float costPlanarLeft  = m_traversalCost
 						+ m_queryCost * (prob.first * (nL+numPlanar) + prob.second * nRF);
-					Float costPlanarRight = m_traversalCost
+					float costPlanarRight = m_traversalCost
 						+ m_queryCost * (prob.first * nLF + prob.second * (nR+numPlanar));
 
 					if (nL + numPlanar == 0 || nR == 0)
@@ -2106,7 +2106,7 @@ protected:
 		if (bestSplit.cost >= leafCost) {
 			if ((bestSplit.cost > 4 * leafCost && primCount < 16)
 				|| badRefines >= m_maxBadRefines
-				|| bestSplit.cost == std::numeric_limits<Float>::infinity()) {
+				|| bestSplit.cost == std::numeric_limits<float>::infinity()) {
 				createLeaf(ctx, node, eventStart, eventEnd, primCount);
 				return leafCost;
 			}
@@ -2352,21 +2352,21 @@ protected:
 		}
 		ctx.innerNodeCount++;
 
-		Float leftCost = buildTree(ctx, depth+1, children,
+		float leftCost = buildTree(ctx, depth+1, children,
 				leftNodeAABB, leftEventsStart, leftEventsEnd,
 				bestSplit.numLeft - prunedLeft, true, badRefines);
 
-		Float rightCost = buildTree(ctx, depth+1, children+1,
+		float rightCost = buildTree(ctx, depth+1, children+1,
 				rightNodeAABB, rightEventsStart, rightEventsEnd,
 				bestSplit.numRight - prunedRight, false, badRefines);
 
-		std::pair<Float, Float> prob = tch(bestSplit.axis,
+		std::pair<float, float> prob = tch(bestSplit.axis,
 			bestSplit.pos - nodeAABB.min[bestSplit.axis],
 			nodeAABB.max[bestSplit.axis] - bestSplit.pos);
 
 		/* Compute the final cost given the updated cost
 		   values received from the children */
-		Float finalCost = m_traversalCost +
+		float finalCost = m_traversalCost +
 			(prob.first * leftCost + prob.second * rightCost);
 
 		/* Release the index lists not needed by the children anymore */
@@ -2462,14 +2462,14 @@ protected:
 		 * binning uses no "empty space bonus" since it cannot create such
 		 * splits.
 		 */
-		SplitCandidate minimizeCost(Float traversalCost, Float queryCost) {
+		SplitCandidate minimizeCost(float traversalCost, float queryCost) {
 			TreeConstructionHeuristic tch(m_aabb);
 			SplitCandidate candidate;
 			int binIdx = 0;
 
 			for (int axis=0; axis<PointType::dim; ++axis) {
 				SizeType numLeft = 0, numRight = m_primCount;
-				Float leftWidth = 0, rightWidth = m_aabb.max[axis] - m_aabb.min[axis];
+				float leftWidth = 0, rightWidth = m_aabb.max[axis] - m_aabb.min[axis];
 				const float binSize = m_binSize[axis];
 
 				for (int i=0; i<m_binCount-1; ++i) {
@@ -2477,10 +2477,10 @@ protected:
 					numRight -= m_maxBins[binIdx];
 					leftWidth += binSize;
 					rightWidth -= binSize;
-					std::pair<Float, Float> prob =
+					std::pair<float, float> prob =
 						tch(axis, leftWidth, rightWidth);
 
-					Float cost = traversalCost + queryCost
+					float cost = traversalCost + queryCost
 						* (prob.first * numLeft + prob.second * numRight);
 
 					if (cost < candidate.cost) {
@@ -2496,7 +2496,7 @@ protected:
 				binIdx++;
 			}
 
-			KDAssert(candidate.cost != std::numeric_limits<Float>::infinity() &&
+			KDAssert(candidate.cost != std::numeric_limits<float>::infinity() &&
 			         candidate.leftBin >= 0);
 
 			return candidate;
@@ -2521,8 +2521,8 @@ protected:
 		 */
 		Partition partition(
 				BuildContext &ctx, const Derived *derived, IndexType *primIndices,
-				SplitCandidate &split, bool isLeftChild, Float traversalCost,
-				Float queryCost) {
+				SplitCandidate &split, bool isLeftChild, float traversalCost,
+				float queryCost) {
 			SizeType numLeft = 0, numRight = 0;
 			AABBType leftBounds, rightBounds;
 			const int axis = split.axis;
@@ -2564,8 +2564,8 @@ protected:
 			leftBounds.clip(m_aabb);
 			rightBounds.clip(m_aabb);
 			split.pos = m_min[axis] + m_binSize[axis] * (split.leftBin + 1);
-			leftBounds.max[axis] = std::min(leftBounds.max[axis], (Float) split.pos);
-			rightBounds.min[axis] = std::max(rightBounds.min[axis], (Float) split.pos);
+			leftBounds.max[axis] = std::min(leftBounds.max[axis], (float) split.pos);
+			rightBounds.min[axis] = std::max(rightBounds.min[axis], (float) split.pos);
 
 			KDAssert(numLeft == split.numLeft);
 			KDAssert(numRight == split.numRight);
@@ -2592,9 +2592,9 @@ protected:
 
 protected:
 	IndexType *m_indices;
-	Float m_traversalCost;
-	Float m_queryCost;
-	Float m_emptySpaceBonus;
+	float m_traversalCost;
+	float m_queryCost;
+	float m_emptySpaceBonus;
 	bool m_clip, m_retract, m_parallelBuild;
 	SizeType m_maxDepth;
 	SizeType m_stopPrims;

@@ -77,18 +77,18 @@ public:
 	 * Greg Spencer, Peter Shirley, Kurt Zimmerman and Donald P. Greenberg
 	 * SIGGRAPH 1995
 	 */
-	ref<Bitmap> computeBloomFilter(int size, Float fov) {
-		ref<Bitmap> bitmap = new Bitmap(Bitmap::ELuminance, Bitmap::EFloat, Vector2i(size));
+	ref<Bitmap> computeBloomFilter(int size, float fov) {
+		ref<Bitmap> bitmap = new Bitmap(Bitmap::ELuminance, Bitmap::Efloat, Vector2i(size));
 
-		Float scale       = 2.f / (size - 1),
+		float scale       = 2.f / (size - 1),
 		      halfLength  = std::tan(.5f * degToRad(fov));
 
-		Float *ptr = bitmap->getFloatData();
+		float *ptr = bitmap->getfloatData();
 		double sum = 0;
 
 		for (int y=0; y<size; ++y) {
 			for (int x=0; x<size; ++x) {
-				Float xf = x*scale - 1,
+				float xf = x*scale - 1,
 					  yf = y*scale - 1,
 					  r = std::sqrt(xf*xf+yf*yf),
 					  angle = radToDeg(std::atan(r * halfLength)),
@@ -102,8 +102,8 @@ public:
 				sum += f;
 			}
 		}
-		ptr = bitmap->getFloatData();
-		Float normalization = (Float) (1/sum);
+		ptr = bitmap->getfloatData();
+		float normalization = (float) (1/sum);
 		for (int i=0; i<size*size; ++i)
 			*ptr++ *= normalization;
 
@@ -115,20 +115,20 @@ public:
 		int optchar;
 		char *end_ptr = NULL;
 		optind = 1;
-		Float gamma = -1, multiplier = 1;
+		float gamma = -1, multiplier = 1;
 		Bitmap::EFileFormat format = Bitmap::EPNG;
-		Float cbal[] = {1, 1, 1};
+		float cbal[] = {1, 1, 1};
 		int crop[] = {0, 0, -1, -1};
 		int resize[] = {-1, -1};
-		Float tonemapper[] = {-1, -1};
+		float tonemapper[] = {-1, -1};
 		bool temporalCoherence = false;
 		std::vector<Rect> rects;
 		std::string outputFilename;
 		Bitmap::EPixelFormat pixelFormat = Bitmap::ERGB;
-		Float logAvgLuminance = 0, maxLuminance = 0;
+		float logAvgLuminance = 0, maxLuminance = 0;
 		bool runParallel = false;
 		ReconstructionFilter *rfilter = NULL;
-		Float bloomFov = 0;
+		float bloomFov = 0;
 		std::string rfilterName = "lanczos";
 
 		/* Parse command-line arguments */
@@ -141,7 +141,7 @@ public:
 					break;
 
 				case 'g':
-					gamma = (Float) strtod(optarg, &end_ptr);
+					gamma = (float) strtod(optarg, &end_ptr);
 					if (*end_ptr != '\0')
 						SLog(EError, "Could not parse the gamma value!");
 					break;
@@ -166,7 +166,7 @@ public:
 					break;
 
 				case 'B':
-					bloomFov = (Float) strtod(optarg, &end_ptr);
+					bloomFov = (float) strtod(optarg, &end_ptr);
 					#if !defined(MTS_HAS_FFTW)
 						Log(EWarn, "Applying a bloom filter without FFTW support compiled into "
 							"Mitsuba is likely going to be very, very slow!");
@@ -177,7 +177,7 @@ public:
 
 
 				case 'm':
-					multiplier = (Float) strtod(optarg, &end_ptr);
+					multiplier = (float) strtod(optarg, &end_ptr);
 					if (*end_ptr != '\0')
 						SLog(EError, "Could not parse the multiplier!");
 					break;
@@ -191,7 +191,7 @@ public:
 						if (tokens.size() != 3)
 							Log(EError, "Invalid color balancing parameter!");
 						for (int i=0; i<3; ++i) {
-							cbal[i] = (Float) std::strtod(tokens[i].c_str(), &end_ptr);
+							cbal[i] = (float) std::strtod(tokens[i].c_str(), &end_ptr);
 							if (*end_ptr != '\0')
 								Log(EError, "Cannot parse floating point number "
 									"in color balancing parameter!");
@@ -216,7 +216,7 @@ public:
 						if (tokens.size() != 2)
 							Log(EError, "Invalid tone mapper parameter!");
 						for (int i=0; i<2; ++i) {
-							tonemapper[i] = (Float) std::strtod(tokens[i].c_str(), &end_ptr);
+							tonemapper[i] = (float) std::strtod(tokens[i].c_str(), &end_ptr);
 							if (*end_ptr != '\0')
 								Log(EError, "Cannot parse tone mapper parameters!");
 						}
@@ -316,8 +316,8 @@ public:
 
 						ref<Bitmap> bloomFilter = computeBloomFilter(maxDim, bloomFov);
 
-						if (input->getComponentFormat() != Bitmap::EFloat)
-							input = input->convert(input->getPixelFormat(), Bitmap::EFloat);
+						if (input->getComponentFormat() != Bitmap::Efloat)
+							input = input->convert(input->getPixelFormat(), Bitmap::Efloat);
 
 						Log(EInfo, "Convolving image with bloom filter ..");
 						input->convolve(bloomFilter);
@@ -331,7 +331,7 @@ public:
 						input->colorBalance(cbal[0], cbal[1], cbal[2]);
 
 					if (tonemapper[0] != -1) {
-						Float logAvgLuminance = 0, maxLuminance = 0;
+						float logAvgLuminance = 0, maxLuminance = 0;
 						input->tonemapReinhard(logAvgLuminance, maxLuminance, tonemapper[0], tonemapper[1]);
 						Log(EInfo, "Tonemapper reports: log-average luminance = %f, max. luminance = %f",
 							logAvgLuminance, maxLuminance);
@@ -385,8 +385,8 @@ public:
 					if (bloomFilter == NULL || bloomFilter->getWidth() != maxDim)
 						bloomFilter = computeBloomFilter(maxDim, bloomFov);
 
-					if (input->getComponentFormat() != Bitmap::EFloat)
-						input = input->convert(input->getPixelFormat(), Bitmap::EFloat);
+					if (input->getComponentFormat() != Bitmap::Efloat)
+						input = input->convert(input->getPixelFormat(), Bitmap::Efloat);
 
 					Log(EInfo, "Convolving image with bloom filter ..");
 					input->convolve(bloomFilter);

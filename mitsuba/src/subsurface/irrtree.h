@@ -28,7 +28,7 @@ MTS_NAMESPACE_BEGIN
 class IrradianceOctree : public StaticOctree<IrradianceSample, IrradianceSample>, public SerializableObject {
 public:
 	/// Construct a new irradiance octree
-	IrradianceOctree(const AABB &aabb, Float solidAngleThreshold,
+	IrradianceOctree(const AABB &aabb, float solidAngleThreshold,
 		std::vector<IrradianceSample> &records);
 
 	/// Unserialize an octree from a binary data stream
@@ -50,7 +50,7 @@ protected:
 	/// Query the octree using a customizable functor, while representatives for distant nodes
 	template <typename QueryType> void performQuery(const AABB &aabb, OctreeNode *node, QueryType &query) const {
 		/* Compute the approximate solid angle subtended by samples within this node */
-		Float approxSolidAngle = node->data.area / (query.p - node->data.p).lengthSquared();
+		float approxSolidAngle = node->data.area / (query.p - node->data.p).lengthSquared();
 
 		/* Use the representative if this is a distant node */
 		if (!aabb.contains(query.p) && approxSolidAngle < m_solidAngleThreshold) {
@@ -72,7 +72,7 @@ protected:
 		}
 	}
 private:
-	Float m_solidAngleThreshold;
+	float m_solidAngleThreshold;
 };
 
 MTS_NAMESPACE_END

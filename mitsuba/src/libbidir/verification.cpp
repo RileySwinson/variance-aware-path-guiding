@@ -26,8 +26,8 @@ static bool validateValue(const std::string name, const Spectrum &value, const S
 	bool valid = true;
 
 	for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-		Float err = std::abs(cached[i]-value[i]);
-		Float mag = std::max(std::abs(cached[i]), std::abs(value[i]));
+		float err = std::abs(cached[i]-value[i]);
+		float mag = std::max(std::abs(cached[i]), std::abs(value[i]));
 
 		if (std::isnan(err))
 			valid = false;
@@ -43,11 +43,11 @@ static bool validateValue(const std::string name, const Spectrum &value, const S
 	return valid;
 }
 
-static bool validateValue(const std::string name, Float value, Float cached, std::ostream &os) {
+static bool validateValue(const std::string name, float value, float cached, std::ostream &os) {
 	bool valid = true;
 
-	Float err = std::abs(cached-value);
-	Float mag = std::max(std::abs(cached), std::abs(value));
+	float err = std::abs(cached-value);
+	float mag = std::max(std::abs(cached), std::abs(value));
 
 	if (std::isnan(err))
 		valid = false;
@@ -65,8 +65,8 @@ static bool validateValue(const std::string name, Float value, Float cached, std
 static bool validateValue(const std::string name, Vector value, Vector cached, std::ostream &os) {
 	bool valid = true;
 
-	Float err = (cached-value).length();
-	Float mag = std::max(cached.length(), value.length());
+	float err = (cached-value).length();
+	float mag = std::max(cached.length(), value.length());
 
 	if(std::isnan(err))
 		valid = false;
@@ -88,7 +88,7 @@ bool PathVertex::verify(const Scene *scene, const PathVertex *pred, const PathVe
 
 	EMeasure measure = (EMeasure) this->measure;
 
-	Float pdfL = evalPdf(scene, pred, succ, EImportance, measure),
+	float pdfL = evalPdf(scene, pred, succ, EImportance, measure),
 	      pdfE = evalPdf(scene, succ, pred, ERadiance, measure);
 
 	bool valid = true;
@@ -161,7 +161,7 @@ bool PathEdge::verify(const Scene *scene, const PathVertex *pred,
 
 	Spectrum weightL = evalTransmittance(pred, succ),
 			 weightE = evalTransmittance(succ, pred);
-	Float    pdfL    = evalPdf(pred, succ),
+	float    pdfL    = evalPdf(pred, succ),
 	         pdfE    = evalPdf(succ, pred);
 
 	weightL = pdfL != 0 ? (weightL / pdfL) : Spectrum(0.0f);
@@ -171,7 +171,7 @@ bool PathEdge::verify(const Scene *scene, const PathVertex *pred,
 
 	if (!pred->isSupernode() && !succ->isSupernode()) {
 		Vector refDireciton = succ->getPosition()-pred->getPosition();
-		Float refLength = refDireciton.length();
+		float refLength = refDireciton.length();
 		refDireciton /= refLength;
 		valid &= validateValue("length", refLength, length, os);
 		valid &= validateValue("d", refDireciton, d, os);

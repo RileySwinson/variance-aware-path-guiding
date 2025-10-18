@@ -49,7 +49,7 @@ MTS_NAMESPACE_BEGIN
  *       Default: \code{repeat}. The parameter \code{wrapMode} is a shortcut for
  *       setting both \code{wrapModeU} and \code{wrapModeV} at the same time.
  *     }
- *     \parameter{gamma}{\Float}{
+ *     \parameter{gamma}{\float}{
  *       Optional parameter to override the gamma value of the source bitmap,
  *       where 1 indicates a linear color space and the special value -1
  *       corresponds to sRGB. \default{automatically detect based on the
@@ -65,7 +65,7 @@ MTS_NAMESPACE_BEGIN
  *       \end{enumerate}
  *       Default: \code{ewa}.
  *     }
- *     \parameter{maxAnisotropy}{\Float}{
+ *     \parameter{maxAnisotropy}{\float}{
  *        Specific to \code{ewa} filtering, this parameter limits the
  *        anisotropy (and thus the computational cost) of filtured texture lookups. The
  *        default of 20 is a good compromise.
@@ -75,10 +75,10 @@ MTS_NAMESPACE_BEGIN
  *        \emph{filename}\code{.mip} to be created.
  *        \default{automatic---use caching for textures larger than 1M pixels.}
  *     }
- *     \parameter{uoffset, voffset}{\Float}{
+ *     \parameter{uoffset, voffset}{\float}{
  *       Numerical offset that should be applied to UV lookups
  *     }
- *     \parameter{uscale, vscale}{\Float}{
+ *     \parameter{uscale, vscale}{\float}{
  *       Multiplicative factors that should be applied to UV lookups
  *     }
  *     \parameter{channel}{\String}{
@@ -169,8 +169,8 @@ public:
 	/* Store texture data using half precision, but perform computations in
 	   single/double precision based on compilation flags. The following
 	   generates efficient implementations for both luminance and RGB data */
-	typedef TSpectrum<Float, 1> Color1;
-	typedef TSpectrum<Float, 3> Color3;
+	typedef TSpectrum<float, 1> Color1;
+	typedef TSpectrum<float, 3> Color3;
 	typedef TSpectrum<half, 1>  Color1h;
 	typedef TSpectrum<half, 3>  Color3h;
 	typedef TMIPMap<Color1, Color1h> MIPMap1;
@@ -215,7 +215,7 @@ public:
 		m_wrapModeU = parseWrapMode(props.getString("wrapModeU", wrapMode));
 		m_wrapModeV = parseWrapMode(props.getString("wrapModeV", wrapMode));
 
-		m_gamma = props.getFloat("gamma", 0);
+		m_gamma = props.getfloat("gamma", 0);
 
 		if (filterType == "ewa")
 			m_filterType = EEWA;
@@ -229,7 +229,7 @@ public:
 			Log(EError, "Unknown filter type '%s' -- must be "
 				"'ewa', 'trilinear', or 'nearest'!", filterType.c_str());
 
-		m_maxAnisotropy = props.getFloat("maxAnisotropy", 20);
+		m_maxAnisotropy = props.getfloat("maxAnisotropy", 20);
 
 		if (m_filterType != EEWA)
 			m_maxAnisotropy = 1.0f;
@@ -291,11 +291,11 @@ public:
 				bitmap->getSize().x * bitmap->getSize().y > 1024*1024);
 
 			if (pixelFormat == Bitmap::ELuminance)
-				m_mipmap1 = new MIPMap1(bitmap, pixelFormat, Bitmap::EFloat,
+				m_mipmap1 = new MIPMap1(bitmap, pixelFormat, Bitmap::Efloat,
 					rfilter, m_wrapModeU, m_wrapModeV, m_filterType, m_maxAnisotropy,
 					createCache ? cacheFile : fs::path(), timestamp);
 			else
-				m_mipmap3 = new MIPMap3(bitmap, pixelFormat, Bitmap::EFloat,
+				m_mipmap3 = new MIPMap3(bitmap, pixelFormat, Bitmap::Efloat,
 					rfilter, m_wrapModeU, m_wrapModeV, m_filterType, m_maxAnisotropy,
 					createCache ? cacheFile : fs::path(), timestamp);
 		}
@@ -345,8 +345,8 @@ public:
 		m_filterType = (EMIPFilterType) stream->readUInt();
 		m_wrapModeU = (ReconstructionFilter::EBoundaryCondition) stream->readUInt();
 		m_wrapModeV = (ReconstructionFilter::EBoundaryCondition) stream->readUInt();
-		m_gamma = stream->readFloat();
-		m_maxAnisotropy = stream->readFloat();
+		m_gamma = stream->readfloat();
+		m_maxAnisotropy = stream->readfloat();
 		m_channel = stream->readString();
 
 		size_t size = stream->readSize();
@@ -389,11 +389,11 @@ public:
 		}
 
 		if (pixelFormat == Bitmap::ELuminance)
-			m_mipmap1 = new MIPMap1(bitmap, pixelFormat, Bitmap::EFloat,
+			m_mipmap1 = new MIPMap1(bitmap, pixelFormat, Bitmap::Efloat,
 				rfilter, m_wrapModeU, m_wrapModeV, m_filterType, m_maxAnisotropy,
 				fs::path(), 0);
 		else
-			m_mipmap3 = new MIPMap3(bitmap, pixelFormat, Bitmap::EFloat,
+			m_mipmap3 = new MIPMap3(bitmap, pixelFormat, Bitmap::Efloat,
 				rfilter, m_wrapModeU, m_wrapModeV, m_filterType, m_maxAnisotropy,
 				fs::path(), 0);
 	}
@@ -404,8 +404,8 @@ public:
 		stream->writeUInt(m_filterType);
 		stream->writeUInt(m_wrapModeU);
 		stream->writeUInt(m_wrapModeV);
-		stream->writeFloat(m_gamma);
-		stream->writeFloat(m_maxAnisotropy);
+		stream->writefloat(m_gamma);
+		stream->writefloat(m_maxAnisotropy);
 
 		if (!m_filename.empty() && fs::exists(m_filename)) {
 			/* We still have access to the original image -- use that, since
@@ -585,7 +585,7 @@ protected:
 	EMIPFilterType m_filterType;
 	ReconstructionFilter::EBoundaryCondition m_wrapModeU;
 	ReconstructionFilter::EBoundaryCondition m_wrapModeV;
-	Float m_gamma, m_maxAnisotropy;
+	float m_gamma, m_maxAnisotropy;
 	std::string m_channel;
 	fs::path m_filename;
 };
@@ -599,7 +599,7 @@ public:
 			const Point2 &uvOffset, const Vector2 &uvScale,
 			ReconstructionFilter::EBoundaryCondition wrapModeU,
 			ReconstructionFilter::EBoundaryCondition wrapModeV,
-			Float maxAnisotropy)
+			float maxAnisotropy)
 		: Shader(renderer, ETextureShader), m_uvOffset(uvOffset), m_uvScale(uvScale) {
 
 		ref<Bitmap> bitmap = mipmap1 ? mipmap1->toBitmap() : mipmap3->toBitmap();

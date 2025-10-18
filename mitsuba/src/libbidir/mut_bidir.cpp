@@ -39,7 +39,7 @@ Mutator::EMutationType BidirectionalMutator::getType() const {
 	return EBidirectionalMutation;
 }
 
-Float BidirectionalMutator::suitability(const Path &path) const {
+float BidirectionalMutator::suitability(const Path &path) const {
 	return 1.0f;
 }
 
@@ -175,7 +175,7 @@ bool BidirectionalMutator::sampleMutation(
 	return true;
 }
 
-Float BidirectionalMutator::pmfMutation(const Path &source, const MutationRecord &muRec) const {
+float BidirectionalMutator::pmfMutation(const Path &source, const MutationRecord &muRec) const {
 	TwoTailedGeoDistr desiredLength(2), deletionLength(2);
 	const int k = source.length(), m = muRec.m, l = muRec.l,
 		kd = m - l, ka = muRec.ka, kPrime = k - kd + ka;
@@ -206,15 +206,15 @@ Float BidirectionalMutator::pmfMutation(const Path &source, const MutationRecord
 	desiredLength.configure(k, m_kmin, m_kmax);
 	deletionLength.configure(2, minDeletion, k);
 
-	Float factor1 = desiredLength.pmf(kPrime);
-	Float factor2 = deletionLength.pmf(kd);
-	Float factor3 = 1 / (Float) ctr;
-	Float factor4 = (Float) 1 / (Float) (sMax-sMin+1);
+	float factor1 = desiredLength.pmf(kPrime);
+	float factor2 = deletionLength.pmf(kd);
+	float factor3 = 1 / (float) ctr;
+	float factor4 = (float) 1 / (float) (sMax-sMin+1);
 
 	return factor1 * factor2 * factor3 * factor4;
 }
 
-Float BidirectionalMutator::Q(const Path &source, const Path &proposal,
+float BidirectionalMutator::Q(const Path &source, const Path &proposal,
 		const MutationRecord &muRec) const {
 	const int k = source.length(), l = muRec.l,
 		      m = muRec.m, ka = muRec.ka, mPrime = l+ka;
@@ -242,7 +242,7 @@ Float BidirectionalMutator::Q(const Path &source, const Path &proposal,
 	else if (m == k && m_scene->hasDegenerateSensor())
 		--sMax;
 
-	Float result = 0.0f;
+	float result = 0.0f;
 	for (int s = sMin; s <= sMax; ++s) {
 		const PathEdge *edge = proposal.edge(l+s);
 		const PathVertex *vs = proposal.vertex(l+s),
@@ -258,7 +258,7 @@ Float BidirectionalMutator::Q(const Path &source, const Path &proposal,
 			* edge->evalCached(vs, vt, PathEdge::EEverything)
 			* muRec.weight;
 
-		Float luminance = weight.getLuminance();
+		float luminance = weight.getLuminance();
 
 		if (luminance <= RCPOVERFLOW || !std::isfinite(luminance)) {
 			Log(EWarn, "Internal error: luminance = %f!", luminance);

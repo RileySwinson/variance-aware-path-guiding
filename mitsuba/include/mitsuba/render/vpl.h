@@ -43,7 +43,7 @@ struct VPL {
 	Spectrum P;
 	Intersection its;
 	const Emitter *emitter;
-	Float emitterScale;
+	float emitterScale;
 
 	std::string toString() const;
 };

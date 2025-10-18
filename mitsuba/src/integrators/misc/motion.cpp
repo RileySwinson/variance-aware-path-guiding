@@ -31,7 +31,7 @@ static StatsCounter statsConverged(
 
 /*!\plugin{motion}{Motion and specular motion vector integrator}
  * \parameters{
- *     \parameter{time}{\Float}{
+ *     \parameter{time}{\float}{
  *       Denotes the time stamp of the target frame of the motion vectors. 
  *       The current frame is specified via the sensor's \code{shutterOpen}
  *       and \code{shutterClose} parameters, which should both be set to 
@@ -53,7 +53,7 @@ static StatsCounter statsConverged(
  *       the nonlinear solver is deactivated, and only first-order extrapolations are provided.
  *       \default{\code{false}}
  *     }
- *     \parameter{glossyThreshold}{\Float}{
+ *     \parameter{glossyThreshold}{\float}{
  *        Threshold on the roughness parameter of reflectance models
  *        to be classified as specular.
  *        \default{\texttt{0}, i.e.~only perfectly specular materials are classified as specular}
@@ -131,14 +131,14 @@ static StatsCounter statsConverged(
 
 class MotionIntegrator : public SamplingIntegrator {
 public:
-	typedef Eigen::Matrix<Float, Eigen::Dynamic, Eigen::Dynamic> EMatrix;
-	typedef Eigen::Matrix<Float, Eigen::Dynamic, 1> EVector;
-	typedef Eigen::Matrix<Float, 1, 7> Gradient;
-	typedef DScalar1<Float, Gradient> DScalar;
+	typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> EMatrix;
+	typedef Eigen::Matrix<float, Eigen::Dynamic, 1> EVector;
+	typedef Eigen::Matrix<float, 1, 7> Gradient;
+	typedef DScalar1<float, Gradient> DScalar;
 	typedef DScalar::DVector3 DVector;
 
 	MotionIntegrator(const Properties &props) : SamplingIntegrator(props) {
-		m_time = props.getFloat("time");
+		m_time = props.getfloat("time");
 		m_config = boost::to_lower_copy(props.getString("config", "d"));
 		if (m_config.length() == 0)
 			Log(EError, "Path configuration string must have at least one entry!");
@@ -148,29 +148,29 @@ public:
 		m_derivativesOnly = props.getBoolean("derivativesOnly", false);
 		m_maxTimeSteps = props.getInteger("maxTimeSteps", 5);
 		m_maxSpaceSteps = props.getInteger("maxSpaceSteps", 10);
-		m_glossyThreshold = props.getFloat("glossyThreshold", 0);
+		m_glossyThreshold = props.getfloat("glossyThreshold", 0);
 		m_subSteps = props.getInteger("subSteps", 1);
 	}
 
 	MotionIntegrator(Stream *stream, InstanceManager *manager)
 	 : SamplingIntegrator(stream, manager) {
-		 m_time = stream->readFloat();
+		 m_time = stream->readfloat();
 		 m_config = stream->readString();
 		 m_derivativesOnly = stream->readBool();
 		 m_maxTimeSteps = stream->readInt();
 		 m_maxSpaceSteps = stream->readInt();
-		 m_glossyThreshold = stream->readFloat();
+		 m_glossyThreshold = stream->readfloat();
 		 m_subSteps = stream->readInt();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		SamplingIntegrator::serialize(stream, manager);
-		stream->writeFloat(m_time);
+		stream->writefloat(m_time);
 		stream->writeString(m_config);
 		stream->writeBool(m_derivativesOnly);
 		stream->writeInt(m_maxTimeSteps);
 		stream->writeInt(m_maxSpaceSteps);
-		stream->writeFloat(m_glossyThreshold);
+		stream->writefloat(m_glossyThreshold);
 		stream->writeInt(m_subSteps);
 	}
 
@@ -184,7 +184,7 @@ public:
 			// compute motion of environment
 			if (!rRec.rayIntersect(r)) {
 				BSphere sphere = rRec.scene->getBSphere();
-				Float nearT, farT;
+				float nearT, farT;
 				sphere.radius = 1e6;
 				sphere.rayIntersect(r, nearT, farT);
 				p0 = r(nearT);
@@ -213,13 +213,13 @@ public:
 
 			int timeIteration = 0;
 
-			Float stepSizeReduction = 1.0f;
+			float stepSizeReduction = 1.0f;
 			while (true) {
 				if (++timeIteration > m_maxTimeSteps)
-					return Spectrum(std::numeric_limits<Float>::infinity());
+					return Spectrum(std::numeric_limits<float>::infinity());
 
-				Float maxStepSize = (m_time-r.time) / m_subSteps;
-				Float timeStepSize = std::min((Float) 1.0f, maxStepSize / (m_time-source[0].time));
+				float maxStepSize = (m_time-r.time) / m_subSteps;
+				float timeStepSize = std::min((float) 1.0f, maxStepSize / (m_time-source[0].time));
 				timeStepSize *= stepSizeReduction;
 
 				/* Compute updated intersection records for time 'm_time' */
@@ -246,7 +246,7 @@ public:
 					stepSizeReduction *= 0.5f;
 				} else {
 					p1 = source[1].p;
-					stepSizeReduction = std::min((Float) 1.0f, stepSizeReduction * 2);
+					stepSizeReduction = std::min((float) 1.0f, stepSizeReduction * 2);
 
 					if (std::abs(source[0].time-m_time) < 1e-5f) {
 						++statsConverged;
@@ -262,11 +262,11 @@ public:
 		sensor->sampleDirect(dRec1, apertureSample);
 
 		/* Step 4: Compute depth difference */
-		Float dDelta = dRec1.dist - dRec0.dist;
+		float dDelta = dRec1.dist - dRec0.dist;
 		Spectrum result(0.0f);
 		result.fromLinearRGB(dRec1.uv.x-dRec0.uv.x,
 				dRec1.uv.y-dRec0.uv.y,
-				std::isfinite(dDelta) ? dDelta : (Float) 0);
+				std::isfinite(dDelta) ? dDelta : (float) 0);
 		return result;
 	}
 
@@ -276,9 +276,9 @@ public:
 		if (!tracePath(rRec, ray, temp))
 			return false;
 
-		Float error = computeError(temp, target);
+		float error = computeError(temp, target);
 
-		Float spaceStepSize = 1.0f;
+		float spaceStepSize = 1.0f;
 		int spaceIteration = 0;
 		while (error > 1e-5f) {
 			++spaceIteration;
@@ -289,16 +289,16 @@ public:
 
 			Ray candidateRay = extrapolateSpaceRay(temp, target, spaceStepSize);
 
-			Float candidateError = 0;
+			float candidateError = 0;
 			if (!tracePath(rRec, candidateRay, temp2))
-				candidateError = std::numeric_limits<Float>::infinity();
+				candidateError = std::numeric_limits<float>::infinity();
 			else
 				candidateError = computeError(temp2, target);
 
 			if (candidateError < error) {
 				temp = temp2;
 				error = candidateError;
-				spaceStepSize = std::min((Float) 1.0f, spaceStepSize * 2);
+				spaceStepSize = std::min((float) 1.0f, spaceStepSize * 2);
 			} else {
 				spaceStepSize *= 0.5f;
 			}
@@ -326,7 +326,7 @@ public:
 			if (interactionType == 'd') {
 				if (!its.isValid()) {
 					BSphere sphere = rRec.scene->getBSphere();
-					Float nearT, farT;
+					float nearT, farT;
 					sphere.radius *= 1000;
 					bool success = sphere.rayIntersect(ray, nearT, farT);
 					Assert(success && nearT < 0 && farT > 0);
@@ -390,10 +390,10 @@ public:
 		return true;
 	}
 
-	void adjustTime(const RadianceQueryRecord &rRec, const Point2 &apertureSample, const std::vector<Intersection> &source, std::vector<Intersection> &target, Float timeStepSize) const {
+	void adjustTime(const RadianceQueryRecord &rRec, const Point2 &apertureSample, const std::vector<Intersection> &source, std::vector<Intersection> &target, float timeStepSize) const {
 		target = source;
 
-		Float targetTime = (1-timeStepSize) * source[0].time + timeStepSize * m_time;
+		float targetTime = (1-timeStepSize) * source[0].time + timeStepSize * m_time;
 
 		const Sensor *sensor = rRec.scene->getSensor();
 		DirectSamplingRecord dRec0(Point(0.0f), source[0].time),
@@ -471,7 +471,7 @@ public:
 			wi *= inverse(sqrt(wi.dot(wi)));
 			wo *= inverse(sqrt(wo.dot(wo)));
 
-			Float eta = source[i].shape->getBSDF()->getEta();
+			float eta = source[i].shape->getBSDF()->getEta();
 
 			if (m_config[i-1] == 'r')
 				eta = 1;
@@ -508,13 +508,13 @@ public:
 		return Ray(rayOrigin, normalize(rayTarget-rayOrigin), target[1].time);
 	}
 
-	Float computeError(const std::vector<Intersection> &source, const std::vector<Intersection> &target) const {
+	float computeError(const std::vector<Intersection> &source, const std::vector<Intersection> &target) const {
 		int last = source.size()-1;
-		Float scale = std::max(Epsilon,std::max(std::abs(target[last].p.x), std::max(std::abs(target[last].p.y), std::abs(target[last].p.z))));
+		float scale = std::max(Epsilon,std::max(std::abs(target[last].p.x), std::max(std::abs(target[last].p.y), std::abs(target[last].p.z))));
 		return (target[last].p-source[last].p).length() / scale;
 	}
 
-	Ray extrapolateSpaceRay(const std::vector<Intersection> &source, const std::vector<Intersection> &target, Float stepSize) const {
+	Ray extrapolateSpaceRay(const std::vector<Intersection> &source, const std::vector<Intersection> &target, float stepSize) const {
 		EMatrix M;
 		assembleMatrix(source, target, M);
 
@@ -525,13 +525,13 @@ public:
 		       dpdu = source[last].dpdu,
 			   dpdv = source[last].dpdv;
 
-		Float b1 = dot(rel, dpdu),
+		float b1 = dot(rel, dpdu),
 			  b2 = dot(rel, dpdv),
 			  a11 = dot(dpdu, dpdu), a12 = dot(dpdu, dpdv),
 			  a22 = dot(dpdv, dpdv),
 			  det = a11 * a22 - a12 * a12;
 
-		Float invDet = 1.0f / det,
+		float invDet = 1.0f / det,
 		      du = ( a22 * b1 - a12 * b2) * invDet,
 		      dv = (-a12 * b1 + a11 * b2) * invDet;
 
@@ -548,13 +548,13 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	Float m_time;
+	float m_time;
 	std::string m_config;
 	bool m_derivativesOnly;
 	int m_maxSpaceSteps;
 	int m_maxTimeSteps;
 	int m_subSteps;
-	Float m_glossyThreshold;
+	float m_glossyThreshold;
 	mutable const Scene *m_scene;
 };
 

@@ -38,7 +38,7 @@ MTS_NAMESPACE_BEGIN
  *       Resolution of the shadow maps that are used
  *       to compute the point-to-point visibility \default{512}
  *     }
- *     \parameter{clamping}{\Float}{
+ *     \parameter{clamping}{\float}{
  *       A relative clamping factor between $[0,1]$ that is
  *       used to control the rendering artifact discussed below.
  *       \default{0.1}
@@ -84,7 +84,7 @@ public:
 		/* Max. depth (expressed as path length) */
 		m_maxDepth = props.getInteger("maxDepth", 5);
 		/* Relative clamping factor (0=no clamping, 1=full clamping) */
-		m_clamping = props.getFloat("clamping", 0.1f);
+		m_clamping = props.getfloat("clamping", 0.1f);
 
 		m_session = Session::create();
 		m_device = Device::create(m_session);
@@ -97,15 +97,15 @@ public:
 	void drawShadowedScene(const Scene *scene, const VPL &vpl) {
 		const ProjectiveCamera *sensor = static_cast<const ProjectiveCamera *>(scene->getSensor());
 
-		Point2 aaSample = Point2(m_random->nextFloat(), m_random->nextFloat());
+		Point2 aaSample = Point2(m_random->nextfloat(), m_random->nextfloat());
 		Point2 apertureSample(0.5f);
 		if (sensor->needsApertureSample())
-			apertureSample = Point2(m_random->nextFloat(), m_random->nextFloat());
+			apertureSample = Point2(m_random->nextfloat(), m_random->nextfloat());
 
 		Transform projTransform = sensor->getProjectionTransform(apertureSample, aaSample);
 		Transform worldTransform = sensor->getWorldTransform()->eval(
 			sensor->getShutterOpen() +
-			m_random->nextFloat() * sensor->getShutterOpenTime());
+			m_random->nextfloat() * sensor->getShutterOpenTime());
 		m_shaderManager->setVPL(vpl);
 		m_framebuffer->activateTarget();
 		m_framebuffer->clear();
@@ -125,7 +125,7 @@ public:
 
 		m_vpls.clear();
 		size_t sampleCount = scene->getSampler()->getSampleCount();
-		Float normalization = (Float) 1 / generateVPLs(scene, m_random,
+		float normalization = (float) 1 / generateVPLs(scene, m_random,
 				0, sampleCount, m_maxDepth, true, m_vpls);
 		for (size_t i=0; i<m_vpls.size(); ++i) {
 			m_vpls[i].P *= normalization;
@@ -152,16 +152,16 @@ public:
 		/* Initialize hardware rendering */
 		m_framebuffer = m_renderer->createGPUTexture("Framebuffer", NULL);
 		m_framebuffer->setFrameBufferType(GPUTexture::EColorBuffer);
-		m_framebuffer->setComponentFormat(GPUTexture::EFloat32);
+		m_framebuffer->setComponentFormat(GPUTexture::Efloat32);
 		m_framebuffer->setPixelFormat(GPUTexture::ERGB);
 		m_framebuffer->setSize(Point3i(film->getSize().x, film->getSize().y, 1));
 		m_framebuffer->setFilterType(GPUTexture::ENearest);
 		m_framebuffer->setMipMapped(false);
 
 		m_accumBuffer = m_renderer->createGPUTexture("Accumulation buffer",
-			new Bitmap(Bitmap::ERGB, Bitmap::EFloat32, film->getSize()));
+			new Bitmap(Bitmap::ERGB, Bitmap::Efloat32, film->getSize()));
 		m_accumBuffer->setFrameBufferType(GPUTexture::EColorBuffer);
-		m_framebuffer->setComponentFormat(GPUTexture::EFloat32);
+		m_framebuffer->setComponentFormat(GPUTexture::Efloat32);
 		m_framebuffer->setPixelFormat(GPUTexture::ERGB);
 		m_accumBuffer->setMipMapped(false);
 
@@ -179,11 +179,11 @@ public:
 			RendererCapabilities::ERenderToTexture))
 			Log(EError, "Render-to-texture support is required!");
 		if (!m_renderer->getCapabilities()->isSupported(
-			RendererCapabilities::EFloatingPointTextures))
-			Log(EError, "Floating point texture support is required!");
+			RendererCapabilities::EfloatingPointTextures))
+			Log(EError, "floating point texture support is required!");
 		if (!m_renderer->getCapabilities()->isSupported(
-			RendererCapabilities::EFloatingPointBuffer))
-			Log(EError, "Floating point render buffer support is required!");
+			RendererCapabilities::EfloatingPointBuffer))
+			Log(EError, "floating point render buffer support is required!");
 		if (!m_renderer->getCapabilities()->isSupported(
 			RendererCapabilities::EVertexBufferObjects))
 			Log(EError, "Vertex buffer object support is required!");
@@ -259,7 +259,7 @@ private:
 	ref<Random> m_random;
 	int m_maxDepth;
 	int m_shadowMapResolution;
-	Float m_clamping;
+	float m_clamping;
 	bool m_cancel;
 };
 

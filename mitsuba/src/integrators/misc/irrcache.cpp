@@ -26,14 +26,14 @@ MTS_NAMESPACE_BEGIN
  * \parameters{
  *     \parameter{resolution}{\Integer}{Elevational resolution of the stratified
  *      final gather hemisphere. The azimuthal resolution is two times this value. \default{14, i.e. $2\cdot14^2$=392 samples in total}}
- *     \parameter{quality}{\Float}{Quality factor (the $\kappa$ parameter of
+ *     \parameter{quality}{\float}{Quality factor (the $\kappa$ parameter of
  *     Tabellion et al. \cite{Tabellion2004Approximate})\default{1.0, which is adequate for most cases}}
  *     \parameter{gradients}{\Boolean}{Use irradiance gradients \cite{Ward1992Irradiance}?\default{\code{true}}}
  *     \parameter{clampNeighbor}{\Boolean}{Use neighbor clamping \cite{Krivanek2006Making}?\default{\code{true}}}
  *     \parameter{clampScreen}{\Boolean}{Use a screen-space clamping criterion \cite{Tabellion2004Approximate}? \default{\code{true}}}
  *     \parameter{overture}{\Boolean}{Do an overture pass before starting the main rendering process?
  *      Usually a good idea.\default{\code{true}}}
- *     \parameter{quality\showbreak Adjustment}{\Float}{When an overture pass is used, Mitsuba subsequently reduces
+ *     \parameter{quality\showbreak Adjustment}{\float}{When an overture pass is used, Mitsuba subsequently reduces
  *      the quality parameter by this amount to interpolate amongst more samples, creating a visually
  *      smoother result. \default{0.5}}
  *     \parameter{indirectOnly}{\Boolean}{Only show the indirect illumination? This can be useful to check
@@ -93,12 +93,12 @@ public:
 		m_overture = props.getBoolean("overture", true);
 		/* Quality setting (\kappa in the [Tabellion et al.] paper).
 		   A value of 1 should be adequate in most cases. */
-		m_quality = props.getFloat("quality", 1.0f);
+		m_quality = props.getfloat("quality", 1.0f);
 		/* Multiplicative factor for the quality parameter following an
 		   overture pass. This can be used to interpolate amongst more
 		   samples, creating a visually smoother result. Must be
 		   1 or less. */
-		m_qualityAdjustment = props.getFloat("qualityAdjustment", .5f);
+		m_qualityAdjustment = props.getfloat("qualityAdjustment", .5f);
 		/* If set to true, sample locations will be visually highlighted */
 		m_debug = props.getBoolean("debug", false);
 		/* Should irradiance gradients be used? Generally, this will
@@ -127,9 +127,9 @@ public:
 		m_irrCache = static_cast<IrradianceCache *>(manager->getInstance(stream));
 		m_subIntegrator = static_cast<SamplingIntegrator *>(manager->getInstance(stream));
 		m_resolution = stream->readInt();
-		m_quality = stream->readFloat();
-		m_qualityAdjustment = stream->readFloat();
-		m_diffScaleFactor = stream->readFloat();
+		m_quality = stream->readfloat();
+		m_qualityAdjustment = stream->readfloat();
+		m_diffScaleFactor = stream->readfloat();
 		m_clampScreen = stream->readBool();
 		m_clampNeighbor = stream->readBool();
 		m_overture = stream->readBool();
@@ -143,9 +143,9 @@ public:
 		manager->serialize(stream, m_irrCache.get());
 		manager->serialize(stream, m_subIntegrator.get());
 		stream->writeInt(m_resolution);
-		stream->writeFloat(m_quality);
-		stream->writeFloat(m_qualityAdjustment);
-		stream->writeFloat(m_diffScaleFactor);
+		stream->writefloat(m_quality);
+		stream->writefloat(m_qualityAdjustment);
+		stream->writefloat(m_diffScaleFactor);
 		stream->writeBool(m_clampScreen);
 		stream->writeBool(m_clampNeighbor);
 		stream->writeBool(m_overture);
@@ -156,7 +156,7 @@ public:
 
 	void configureSampler(const Scene *scene, Sampler *sampler) {
 		m_subIntegrator->configureSampler(scene, sampler);
-		m_diffScaleFactor = std::sqrt((Float) sampler->getSampleCount());
+		m_diffScaleFactor = std::sqrt((float) sampler->getSampleCount());
 	}
 
 	void bindUsedResources(ParallelProcess *proc) const {
@@ -307,7 +307,7 @@ public:
 		for (unsigned int j=0; j<hs->getM(); j++) {
 			for (unsigned int k=0; k<hs->getN(); k++) {
 				HemisphereSampler::SampleEntry &entry = (*hs)(j, k);
-					entry.dist = std::numeric_limits<Float>::infinity();
+					entry.dist = std::numeric_limits<float>::infinity();
 				rRec2.recursiveQuery(rRec,
 					RadianceQueryRecord::ERadianceNoEmission | RadianceQueryRecord::EDistance);
 				rRec2.extra = 1;
@@ -338,7 +338,7 @@ public:
 				dRec, its, medium, maxIntermediateInteractions, sampler->next2D());
 
 			if (!directRadiance.isZero()) {
-				Float dp = dot(dRec.d, its.shFrame.n);
+				float dp = dot(dRec.d, its.shFrame.n);
 				if (dp > 0)
 					EDir += directRadiance * dp;
 			}
@@ -352,7 +352,7 @@ public:
 				handleMiss(RayDifferential(), rRec, EIndir);
 		}
 
-		return (EDir / (Float) nSamples) + EIndir;
+		return (EDir / (float) nSamples) + EIndir;
 	}
 
 	const Integrator *getSubIntegrator(int idx) const {
@@ -378,7 +378,7 @@ private:
 	mutable ref<IrradianceCache> m_irrCache;
 	ref<SamplingIntegrator> m_subIntegrator;
 	ref<ParallelProcess> m_proc;
-	Float m_quality, m_qualityAdjustment, m_diffScaleFactor;
+	float m_quality, m_qualityAdjustment, m_diffScaleFactor;
 	bool m_clampScreen, m_clampNeighbor;
 	bool m_overture, m_gradients, m_debug, m_indirectOnly;
 	int m_resolution;

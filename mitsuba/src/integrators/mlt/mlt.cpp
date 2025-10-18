@@ -58,7 +58,7 @@ MTS_NAMESPACE_BEGIN
  *	     perturbation). It is possible to extend
  *	     this integrator with additional custom perturbations strategies if needed.
  *	   }
- *	   \parameter{lambda}{\Float}{
+ *	   \parameter{lambda}{\float}{
  *	       Jump size of the manifold perturbation \default{50}}
  * }
  * Metropolis Light Transport (MLT) is a seminal rendering technique proposed by Veach and
@@ -192,7 +192,7 @@ public:
 
 		/* Selectively enable/disable the manifold perturbation */
 		m_config.manifoldPerturbation = props.getBoolean("manifoldPerturbation", false);
-		m_config.probFactor = props.getFloat("probFactor", props.getFloat("lambda", 50));
+		m_config.probFactor = props.getfloat("probFactor", props.getfloat("lambda", 50));
 
 		/* Stop MLT after X seconds -- useful for equal-time comparisons */
 		m_config.timeout = props.getInteger("timeout", 0);

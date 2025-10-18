@@ -37,7 +37,7 @@ static StatsCounter avgSampleIterations("Micro-flake model",
 
 /*!\plugin{microflake}{Micro-flake phase function}
  * \parameters{
- *     \parameter{stddev}{\Float}{
+ *     \parameter{stddev}{\float}{
  *       Standard deviation of the micro-flake normals. This
  *       specifies the roughness of the fibers in the medium.
  *     }
@@ -81,12 +81,12 @@ class MicroflakePhaseFunction : public PhaseFunction {
 public:
 	MicroflakePhaseFunction(const Properties &props) : PhaseFunction(props) {
 		/// Standard deviation of the flake distribution
-		m_fiberDistr = GaussianFiberDistribution(props.getFloat("stddev"));
+		m_fiberDistr = GaussianFiberDistribution(props.getfloat("stddev"));
 	}
 
 	MicroflakePhaseFunction(Stream *stream, InstanceManager *manager)
 		: PhaseFunction(stream, manager) {
-		m_fiberDistr = GaussianFiberDistribution(stream->readFloat());
+		m_fiberDistr = GaussianFiberDistribution(stream->readfloat());
 		configure();
 	}
 
@@ -99,10 +99,10 @@ public:
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		PhaseFunction::serialize(stream, manager);
-		stream->writeFloat(m_fiberDistr.getStdDev());
+		stream->writefloat(m_fiberDistr.getStdDev());
 	}
 
-	Float eval(const PhaseFunctionSamplingRecord &pRec) const {
+	float eval(const PhaseFunctionSamplingRecord &pRec) const {
 		if (pRec.mRec.orientation.isZero()) {
 			/* What to do when the local orientation is undefined */
 			#if 0
@@ -116,7 +116,7 @@ public:
 		Vector wi = frame.toLocal(pRec.wi);
 		Vector wo = frame.toLocal(pRec.wo);
 		Vector H = wi + wo;
-		Float length = H.length();
+		float length = H.length();
 
 		if (length == 0)
 			return 0.0f;
@@ -125,7 +125,7 @@ public:
 				/ m_fiberDistr.sigmaT(Frame::cosTheta(wi));
 	}
 
-	inline Float sample(PhaseFunctionSamplingRecord &pRec, Sampler *sampler) const {
+	inline float sample(PhaseFunctionSamplingRecord &pRec, Sampler *sampler) const {
 		if (pRec.mRec.orientation.isZero()) {
 			/* What to do when the local orientation is undefined */
 			#if 0
@@ -170,8 +170,8 @@ public:
 		return 1.0f;
 	}
 
-	Float sample(PhaseFunctionSamplingRecord &pRec,
-			Float &pdf, Sampler *sampler) const {
+	float sample(PhaseFunctionSamplingRecord &pRec,
+			float &pdf, Sampler *sampler) const {
 		if (sample(pRec, sampler) == 0) {
 			pdf = 0; return 0.0f;
 		}
@@ -181,13 +181,13 @@ public:
 
 	bool needsDirectionallyVaryingCoefficients() const { return true; }
 
-	Float sigmaDir(Float cosTheta) const {
+	float sigmaDir(float cosTheta) const {
 		// Scaled such that replacing an isotropic phase function with an
 		// isotropic microflake distribution does not cause changes
 		return 2 * m_fiberDistr.sigmaT(cosTheta);
 	}
 
-	Float sigmaDirMax() const {
+	float sigmaDirMax() const {
 		return sigmaDir(0);
 	}
 

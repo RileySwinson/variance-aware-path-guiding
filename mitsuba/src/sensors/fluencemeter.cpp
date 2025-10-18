@@ -30,7 +30,7 @@ MTS_NAMESPACE_BEGIN
  *	      Specifies an optional sensor-to-world transformation.
  *        \default{none (i.e. sensor space $=$ world space)}
  *     }
- *     \parameter{shutterOpen, shutterClose}{\Float}{
+ *     \parameter{shutterOpen, shutterClose}{\float}{
  *         Specifies the time interval of the measurement---this
  *         is only relevant when the scene is in motion.
  *         \default{0}
@@ -85,10 +85,10 @@ public:
 	}
 
 	Spectrum sampleRay(Ray &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 		ray.mint = Epsilon;
-		ray.maxt = std::numeric_limits<Float>::infinity();
+		ray.maxt = std::numeric_limits<float>::infinity();
 
 		const Transform &trafo = m_worldTransform->eval(ray.time);
 		ray.setOrigin(trafo(Point(0.0f)));
@@ -110,7 +110,7 @@ public:
 		return Spectrum((pRec.measure == EDiscrete) ? 1.0f : 0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -124,7 +124,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		return (dRec.measure == ESolidAngle) ? INV_FOURPI : 0.0f;
 	}
@@ -143,7 +143,7 @@ public:
 		dRec.uv = Point2(0.5f);
 		dRec.d = dRec.p - dRec.ref;
 		dRec.dist = dRec.d.length();
-		Float invDist = 1.0f / dRec.dist;
+		float invDist = 1.0f / dRec.dist;
 		dRec.d *= invDist;
 		dRec.n = Normal(0.0f);
 		dRec.pdf = 1;
@@ -152,7 +152,7 @@ public:
 		return Spectrum(INV_FOURPI * invDist * invDist);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return dRec.measure == EDiscrete ? 1.0f : 0.0f;
 	}
 

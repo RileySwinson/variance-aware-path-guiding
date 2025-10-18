@@ -128,13 +128,13 @@ static int irrOctreeIndex = 0;
  *         These parameters are mutually exclusive with \code{sigmaA} and \code{sigmaS}
  *         \default{configured based on \code{material}}
  *     }
- *     \parameter{scale}{\Float}{
+ *     \parameter{scale}{\float}{
  *         Optional scale factor that will be applied to the \code{sigma*} parameters.
  *         It is provided for convenience when accomodating data based on different units,
  *         or to simply tweak the density of the medium. \default{1}}
- *     \parameter{intIOR}{\Float\Or\String}{Interior index of refraction specified
+ *     \parameter{intIOR}{\float\Or\String}{Interior index of refraction specified
  *      numerically or using a known material name. \default{based on \code{material}}}
- *     \parameter{extIOR}{\Float\Or\String}{Exterior index of refraction specified
+ *     \parameter{extIOR}{\float\Or\String}{Exterior index of refraction specified
  *      numerically or using a known material name. \default{based on \code{material}}}
  *     \parameter{irrSamples}{\Integer}{
  *         Number of samples to use when estimating the
@@ -284,10 +284,10 @@ public:
 
 		/* Multiplicative factor, which can be used to adjust the number of
 		   irradiance samples */
-		m_sampleMultiplier = props.getFloat("sampleMultiplier", 1.0f);
+		m_sampleMultiplier = props.getfloat("sampleMultiplier", 1.0f);
 
 		/* Error threshold - lower means better quality */
-		m_quality = props.getFloat("quality", 0.2f);
+		m_quality = props.getfloat("quality", 0.2f);
 
 		/* Asymmetry parameter of the phase function */
 		m_octreeResID = -1;
@@ -300,9 +300,9 @@ public:
 		m_sigmaS = Spectrum(stream);
 		m_sigmaA = Spectrum(stream);
 		m_g = Spectrum(stream);
-		m_eta = stream->readFloat();
-		m_sampleMultiplier = stream->readFloat();
-		m_quality = stream->readFloat();
+		m_eta = stream->readfloat();
+		m_sampleMultiplier = stream->readfloat();
+		m_quality = stream->readfloat();
 		m_octreeIndex = stream->readInt();
 		m_irrSamples = stream->readInt();
 		m_irrIndirect = stream->readBool();
@@ -325,9 +325,9 @@ public:
 		m_sigmaS.serialize(stream);
 		m_sigmaA.serialize(stream);
 		m_g.serialize(stream);
-		stream->writeFloat(m_eta);
-		stream->writeFloat(m_sampleMultiplier);
-		stream->writeFloat(m_quality);
+		stream->writefloat(m_eta);
+		stream->writefloat(m_sampleMultiplier);
+		stream->writefloat(m_quality);
 		stream->writeInt(m_octreeIndex);
 		stream->writeInt(m_irrSamples);
 		stream->writeBool(m_irrIndirect);
@@ -354,7 +354,7 @@ public:
 
 		/* Find the smallest mean-free path over all wavelengths */
 		Spectrum mfp = Spectrum(1.0f) / m_sigmaTPrime;
-		m_radius = std::numeric_limits<Float>::max();
+		m_radius = std::numeric_limits<float>::max();
 		for (int lambda=0; lambda<SPECTRUM_SAMPLES; lambda++)
 			m_radius = std::min(m_radius, mfp[lambda]);
 
@@ -362,7 +362,7 @@ public:
 		m_Fdr = fresnelDiffuseReflectance(1 / m_eta);
 
 		/* Dipole boundary condition distance term */
-		Float A = (1 + m_Fdr) / (1 - m_Fdr);
+		float A = (1 + m_Fdr) / (1 - m_Fdr);
 
 		/* Effective transport extinction coefficient */
 		m_sigmaTr = (m_sigmaA * m_sigmaTPrime * 3.0f).sqrt();
@@ -386,12 +386,12 @@ public:
 		ref<Timer> timer = new Timer();
 
 		AABB aabb;
-		Float sa;
+		float sa;
 
 		ref<PositionSampleVector> points = new PositionSampleVector();
 		/* It is necessary to increase the sampling resolution to
 		   prevent low-frequency noise in the output */
-		Float actualRadius = m_radius / std::sqrt(m_sampleMultiplier * 20);
+		float actualRadius = m_radius / std::sqrt(m_sampleMultiplier * 20);
 		blueNoisePointSet(scene, m_shapes, actualRadius, points, sa, aabb, job);
 
 		/* 2. Gather irradiance in parallel */
@@ -462,8 +462,8 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	Float m_radius, m_sampleMultiplier;
-	Float m_Fdr, m_quality, m_eta;
+	float m_radius, m_sampleMultiplier;
+	float m_Fdr, m_quality, m_eta;
 	Spectrum m_sigmaS, m_sigmaA, m_g;
 	Spectrum m_sigmaTr, m_zr, m_zv;
 	Spectrum m_sigmaSPrime, m_sigmaTPrime;

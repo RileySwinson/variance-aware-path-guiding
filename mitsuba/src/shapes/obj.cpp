@@ -41,7 +41,7 @@ MTS_NAMESPACE_BEGIN
  *       discarded and \emph{face normals} will instead be used during rendering.
  *       This gives the rendered object a faceted appearance.\default{\code{false}}
  *	   }
- *     \parameter{maxSmoothAngle}{\Float}{
+ *     \parameter{maxSmoothAngle}{\float}{
  *       When specified, Mitsuba will discard all vertex normals in the input mesh and rebuild
  *       them in a way that is sensitive to the presence of creases and corners. For more
  *       details on this parameter, see below. Disabled by default.
@@ -301,7 +301,7 @@ public:
 			} else if (buf == "mtllib") {
 				materialLibrary = fileResolver->resolve(trim(line.substr(6, line.length()-1)));
 			} else if (buf == "vt") {
-				Float u, v;
+				float u, v;
 				iss >> u >> v;
 				if (flipTexCoords)
 					v = 1-v;
@@ -337,7 +337,7 @@ public:
 			if (m_faceNormals)
 				Log(EError, "The properties 'maxSmoothAngle' and 'faceNormals' "
 				"can't be specified at the same time!");
-			Float maxSmoothAngle = props.getFloat("maxSmoothAngle");
+			float maxSmoothAngle = props.getfloat("maxSmoothAngle");
 			for (size_t i=0; i<m_meshes.size(); ++i)
 				m_meshes[i]->rebuildTopology(maxSmoothAngle);
 		}
@@ -414,7 +414,7 @@ public:
 		Properties props("bitmap");
 		props.setString("filename", path.string());
 		if (noGamma)
-			props.setFloat("gamma", 1.0f);
+			props.setfloat("gamma", 1.0f);
 		ref<Texture> texture = static_cast<Texture *> (PluginManager::getInstance()->
 			createObject(MTS_CLASS(Texture), props));
 		texture->configure();
@@ -441,7 +441,7 @@ public:
 		int illum = 0;
 		specular = new ConstantSpectrumTexture(Spectrum(0.0f));
 		diffuse = new ConstantSpectrumTexture(Spectrum(0.0f));
-		exponent = new ConstantFloatTexture(0.0f);
+		exponent = new ConstantfloatTexture(0.0f);
 		std::map<std::string, Texture *> cache;
 
 		while (is.good() && !is.eof() && fetch_line(is, line)) {
@@ -457,12 +457,12 @@ public:
 
 				specular = new ConstantSpectrumTexture(Spectrum(0.0f));
 				diffuse = new ConstantSpectrumTexture(Spectrum(0.0f));
-				exponent = new ConstantFloatTexture(0.0f);
+				exponent = new ConstantfloatTexture(0.0f);
 				mask = NULL;
 				bump = NULL;
 				illum = 0;
 			} else if (buf == "Kd") {
-				Float r, g, b;
+				float r, g, b;
 				iss >> r >> g >> b;
 				Spectrum value;
 				value.fromSRGB(r, g, b);
@@ -472,7 +472,7 @@ public:
 				iss >> filename;
 				diffuse = loadTexture(fileResolver, cache, mtlPath, filename);
 			} else if (buf == "Ks") {
-				Float r, g, b;
+				float r, g, b;
 				iss >> r >> g >> b;
 				Spectrum value;
 				value.fromSRGB(r, g, b);
@@ -490,16 +490,16 @@ public:
 				iss >> filename;
 				mask = loadTexture(fileResolver, cache, mtlPath, filename);
 			} else if (buf == "d" /* || buf == "Tr" */) {
-				Float value;
+				float value;
 				iss >> value;
 				if (value == 1)
 					mask = NULL;
 				else
-					mask = new ConstantFloatTexture(value);
+					mask = new ConstantfloatTexture(value);
 			} else if (buf == "Ns") {
-				Float value;
+				float value;
 				iss >> value;
-				exponent = new ConstantFloatTexture(value);
+				exponent = new ConstantfloatTexture(value);
 			} else if (buf == "illum") {
 				iss >> illum;
 			} else {
@@ -808,8 +808,8 @@ public:
 		return m_aabb;
 	}
 
-	Float getSurfaceArea() const {
-		Float sa = 0;
+	float getSurfaceArea() const {
+		float sa = 0;
 		for (size_t i=0; i<m_meshes.size(); ++i)
 			sa += m_meshes[i]->getSurfaceArea();
 		return sa;

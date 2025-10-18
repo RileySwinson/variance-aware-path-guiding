@@ -47,14 +47,14 @@ MTS_NAMESPACE_BEGIN
  */
 struct EndpointRecord {
 	/// Time value associated with the path
-	Float time;
+	float time;
 
 	/// Create a new endpoint record for a given time value
-	inline EndpointRecord(Float time)
+	inline EndpointRecord(float time)
 		: time(time) { }
 
 	/// Create a new endpoint record for a given time value
-	inline EndpointRecord(Float time,
+	inline EndpointRecord(float time,
 		const Point2 &uv) : time(time) { }
 
 	/// Return a human-readable description

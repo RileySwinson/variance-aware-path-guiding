@@ -32,7 +32,7 @@ MTS_NAMESPACE_BEGIN
  *           \tblref{conductor-iors}.\!\default{\texttt{Cu} / copper}}
  *     \parameter{eta, k}{\Spectrum}{Real and imaginary components of the material's index of
  *             refraction \default{based on the value of \texttt{material}}}
- *     \parameter{extEta}{\Float\Or\String}{
+ *     \parameter{extEta}{\float\Or\String}{
  *           Real-valued index of refraction of the surrounding dielectric,
  *           or a material name of a dielectric \default{\code{air}}
  *     }
@@ -169,7 +169,7 @@ public:
 				fResolver->resolve("data/ior/" + materialName + ".k.spd")));
 		}
 
-		Float extEta = lookupIOR(props, "extEta", "air");
+		float extEta = lookupIOR(props, "extEta", "air");
 
 		m_eta = props.getSpectrum("eta", intEta) / extEta;
 		m_k   = props.getSpectrum("k", intK) / extEta;
@@ -236,7 +236,7 @@ public:
 			fresnelConductorExact(Frame::cosTheta(bRec.wi), m_eta, m_k);
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		bool sampleReflection   = (bRec.typeMask & EDeltaReflection)
 				&& (bRec.component == -1 || bRec.component == 0);
 
@@ -267,7 +267,7 @@ public:
 			fresnelConductorExact(Frame::cosTheta(bRec.wi), m_eta, m_k);
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		bool sampleReflection   = (bRec.typeMask & EDeltaReflection)
 				&& (bRec.component == -1 || bRec.component == 0);
 
@@ -284,7 +284,7 @@ public:
 			fresnelConductorExact(Frame::cosTheta(bRec.wi), m_eta, m_k);
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return 0.0f;
 	}
 
@@ -396,7 +396,7 @@ private:
 	ref<const Texture> m_specularReflectance;
 	ref<Shader> m_specularReflectanceShader;
 	Spectrum m_R0;
-	Float m_alpha;
+	float m_alpha;
 };
 
 Shader *SmoothConductor::createShader(Renderer *renderer) const {

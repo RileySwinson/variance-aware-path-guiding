@@ -109,7 +109,7 @@ public:
 	SobolSampler(Stream *stream, InstanceManager *manager)
 	 : Sampler(stream, manager) {
 		m_scramble = stream->readULong();
-		m_resolution = stream->readFloat();
+		m_resolution = stream->readfloat();
 		m_logResolution = stream->readUInt();
 		m_arrayStartDim = stream->readUInt();
 		m_arrayEndDim = stream->readUInt();
@@ -119,7 +119,7 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Sampler::serialize(stream, manager);
 		stream->writeULong(m_scramble);
-		stream->writeFloat(m_resolution);
+		stream->writefloat(m_resolution);
 		stream->writeUInt(m_logResolution);
 		stream->writeUInt(m_arrayStartDim);
 		stream->writeUInt(m_arrayEndDim);
@@ -152,7 +152,7 @@ public:
 			uint32_t resolution = math::roundToPowerOfTwo(
 				(uint32_t) std::max(res.x, res.y));
 
-			m_resolution = (Float) resolution;
+			m_resolution = (float) resolution;
 			m_logResolution = math::log2i(resolution);
 		}
 	}
@@ -162,7 +162,7 @@ public:
 		for (Iterator it = it2 - 1; it > it1; --it) {
 			size_t size = it - it1;
 			size_t value = std::max((size_t) (size * (sampleTEA(seed, ctr++)
-					/ (Float) std::numeric_limits<uint64_t>::max())), size-1);
+					/ (float) std::numeric_limits<uint64_t>::max())), size-1);
 			std::iter_swap(it, it1 + value);
 		}
 	}
@@ -215,7 +215,7 @@ public:
 		}
 	}
 
-	Float next1D() {
+	float next1D() {
 		/* Skip over dimensions that were reserved to arrays */
 		if (m_dimension >= m_arrayStartDim && m_dimension < m_arrayEndDim)
 			m_dimension = m_arrayEndDim;
@@ -228,7 +228,7 @@ public:
 	}
 
 	Point2 next2D() {
-		Float value1, value2;
+		float value1, value2;
 
 		/* Skip over dimensions that were reserved to arrays */
 		if (m_dimension + 1 >= m_arrayStartDim && m_dimension < m_arrayEndDim)
@@ -265,7 +265,7 @@ private:
 	uint32_t m_dimension;
 	uint64_t m_scramble;
 	uint64_t m_sobolSampleIndex;
-	Float m_resolution;
+	float m_resolution;
 	uint32_t m_logResolution;
 	uint32_t m_arrayStartDim;
 	uint32_t m_arrayEndDim;

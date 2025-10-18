@@ -55,16 +55,16 @@ public:
 	 *     reachable using the caustic perturbation
 	 */
 	CausticPerturbation(const Scene *scene, Sampler *sampler,
-		MemoryPool &pool, Float minJump, Float coveredArea);
+		MemoryPool &pool, float minJump, float coveredArea);
 
 	// =============================================================
 	//! @{ \name Implementation of the Mutator interface
 
 	EMutationType getType() const;
-	Float suitability(const Path &path) const;
+	float suitability(const Path &path) const;
 	bool sampleMutation(Path &source, Path &proposal,
 			MutationRecord &muRec, const MutationRecord& sourceMuRec);
-	Float Q(const Path &source, const Path &proposal,
+	float Q(const Path &source, const Path &proposal,
 			const MutationRecord &muRec) const;
 	void accept(const MutationRecord &muRec);
 
@@ -79,7 +79,7 @@ protected:
 	ref<const Scene> m_scene;
 	ref<Sampler> m_sampler;
 	MemoryPool &m_pool;
-	Float m_theta1, m_theta2, m_logRatio;
+	float m_theta1, m_theta2, m_logRatio;
 };
 
 MTS_NAMESPACE_END

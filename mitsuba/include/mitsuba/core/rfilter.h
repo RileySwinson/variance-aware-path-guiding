@@ -64,16 +64,16 @@ public:
 	};
 
 	/// Return the filter's width
-	inline Float getRadius() const { return m_radius; }
+	inline float getRadius() const { return m_radius; }
 
 	/// Return the block border size required when rendering with this filter
 	inline int getBorderSize() const { return m_borderSize; }
 
 	/// Evaluate the filter function
-	virtual Float eval(Float x) const = 0;
+	virtual float eval(float x) const = 0;
 
 	/// Perform a lookup into the discretized version
-	inline Float evalDiscretized(Float x) const { return m_values[
+	inline float evalDiscretized(float x) const { return m_values[
 		std::min((int) std::abs(x * m_scaleFactor), MTS_FILTER_RESOLUTION)]; }
 
 	/// Serialize the filter to a binary data stream
@@ -93,8 +93,8 @@ protected:
 	/// Virtual destructor
 	virtual ~ReconstructionFilter();
 protected:
-	Float m_radius, m_scaleFactor;
-	Float m_values[MTS_FILTER_RESOLUTION+1];
+	float m_radius, m_scaleFactor;
+	float m_values[MTS_FILTER_RESOLUTION+1];
 	int m_borderSize;
 };
 
@@ -124,11 +124,11 @@ template <typename Scalar> struct Resampler {
 			int sourceRes, int targetRes) : m_bc(bc), m_sourceRes(sourceRes), m_targetRes(targetRes),
 			m_start(NULL), m_weights(NULL) {
 		SAssert(sourceRes > 0 && targetRes > 0);
-		Float filterRadius = rfilter->getRadius(), scale = (Float)1.0, invScale = (Float)1.0;
+		float filterRadius = rfilter->getRadius(), scale = (float)1.0, invScale = (float)1.0;
 
 		/* Low-pass filter: scale reconstruction filters when downsampling */
 		if (targetRes < sourceRes) {
-			scale = (Float) sourceRes / (Float) targetRes;
+			scale = (float) sourceRes / (float) targetRes;
 			invScale = 1 / scale;
 			filterRadius *= scale;
 		}
@@ -146,10 +146,10 @@ template <typename Scalar> struct Resampler {
 
 			for (int i=0; i<targetRes; i++) {
 				/* Compute the fractional coordinates of the new sample i in the original coordinates */
-				Float center = (i + (Float) 0.5f) / targetRes * sourceRes;
+				float center = (i + (float) 0.5f) / targetRes * sourceRes;
 
 				/* Determine the index of the first original sample that might contribute */
-				m_start[i] = math::floorToInt(center - filterRadius + (Float) 0.5f);
+				m_start[i] = math::floorToInt(center - filterRadius + (float) 0.5f);
 
 				/* Determine the size of center region, on which to run fast non condition-aware code */
 				if (m_start[i] < 0)
@@ -157,36 +157,36 @@ template <typename Scalar> struct Resampler {
 				else if (m_start[i] + m_taps - 1 >= m_sourceRes)
 					m_fastEnd = std::min(m_fastEnd, i - 1);
 
-				Float sum = 0;
+				float sum = 0;
 				for (int j=0; j<m_taps; j++) {
 					/* Compute the the position where the filter should be evaluated */
-					Float pos = m_start[i] + j + (Float) 0.5f - center;
+					float pos = m_start[i] + j + (float) 0.5f - center;
 
 					/* Perform the evaluation and record the weight */
-					Float weight = rfilter->eval(pos * invScale);
+					float weight = rfilter->eval(pos * invScale);
 					m_weights[i * m_taps + j] = (Scalar) weight;
 					sum += weight;
 				}
 
 				/* Normalize the contribution of each sample */
-				Float normalization = 1.0f / sum;
+				float normalization = 1.0f / sum;
 				for (int j=0; j<m_taps; j++) {
 					Scalar &value = m_weights[i * m_taps + j];
-					value = (Scalar) ((Float) value * normalization);
+					value = (Scalar) ((float) value * normalization);
 				}
 			}
 		} else { /* Filtering mode */
 			m_weights = new Scalar[m_taps];
-			Float sum = 0;
+			float sum = 0;
 			for (int i=0; i<m_taps; i++) {
-				Scalar weight = (Scalar) rfilter->eval((Float) (i-m_halfTaps));
+				Scalar weight = (Scalar) rfilter->eval((float) (i-m_halfTaps));
 				m_weights[i] = weight;
-				sum += (Float) weight;
+				sum += (float) weight;
 			}
-			Float normalization = 1.0f / sum;
+			float normalization = 1.0f / sum;
 			for (int i=0; i<m_taps; i++) {
 				Scalar &value = m_weights[i];
-				value = (Scalar) ((Float) value * normalization);
+				value = (Scalar) ((float) value * normalization);
 			}
 			m_fastStart = std::min(m_halfTaps, m_targetRes-1);
 			m_fastEnd = std::max(m_targetRes-m_halfTaps-1, 0);

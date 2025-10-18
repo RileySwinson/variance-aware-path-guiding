@@ -36,19 +36,19 @@ public:
 	/// Temporarily holds some intersection information
 	struct IntersectionCache {
 		IndexType frameIndex;
-		Float alpha;
+		float alpha;
 		IndexType shapeIndex, primIndex;
-		Float u, v;
+		float u, v;
 	};
 
-	SpaceTimeKDTree(const std::vector<Float> &times) : m_times(times) { }
+	SpaceTimeKDTree(const std::vector<float> &times) : m_times(times) { }
 
 	SpaceTimeKDTree(Stream *stream, InstanceManager *manager) {
 		size_t times = (size_t) stream->readUInt();
 		m_times.resize(times);
 		m_meshes.resize(times);
 		for (size_t i=0; i<times; ++i) {
-			m_times[i] = stream->readFloat();
+			m_times[i] = stream->readfloat();
 			size_t count = (size_t) stream->readUInt();
 			std::vector<const TriMesh *> &meshes = m_meshes.at(i);
 			meshes.resize(count);
@@ -68,7 +68,7 @@ public:
 
 		for (size_t i=0; i<m_times.size(); ++i) {
 			const std::vector<const TriMesh *> &meshes = m_meshes.at(i);
-			stream->writeFloat(m_times[i]);
+			stream->writefloat(m_times[i]);
 			stream->writeUInt((uint32_t) meshes.size());
 			for (size_t j=0; j<meshes.size(); ++j)
 				manager->serialize(stream, meshes[j]);
@@ -178,7 +178,7 @@ public:
 		return (IndexType) (it - m_shapeMap.begin());
 	}
 
-	inline IndexType findFrame(Float time) const {
+	inline IndexType findFrame(float time) const {
 		return (IndexType) std::min(std::max((int) (std::lower_bound(
 			m_times.begin(), m_times.end(), time) - m_times.begin()) - 1, 0), (int) m_times.size()-1);
 	}
@@ -241,11 +241,11 @@ public:
 
 	/// Cast a normal (i.e. non-shadow) ray against a specific animated triangle
 	inline bool intersect(const Ray &ray, IndexType index,
-			Float mint, Float maxt, Float &t, void *tmp) const {
+			float mint, float maxt, float &t, void *tmp) const {
 		IntersectionCache *cache = static_cast<IntersectionCache *>(tmp);
 		IndexType shapeIndex = findShape(index);
 		IndexType frameIndex = findFrame(ray.time);
-		Float alpha = std::max((Float) 0.0f, std::min((Float) 1.0f,
+		float alpha = std::max((float) 0.0f, std::min((float) 1.0f,
 			(ray.time - m_times[frameIndex])
 			/ (m_times[frameIndex + 1] - m_times[frameIndex])));
 
@@ -259,7 +259,7 @@ public:
 		for (int i=0; i<3; ++i)
 			p[i] = (1 - alpha) * pos0[tri.idx[i]] + alpha * pos1[tri.idx[i]];
 
-		Float tempU, tempV, tempT;
+		float tempU, tempV, tempT;
 		if (!Triangle::rayIntersect(p[0], p[1], p[2], ray, tempU, tempV, tempT))
 			return false;
 
@@ -277,12 +277,12 @@ public:
 	}
 
 	/// Cast a shadow ray against a specific triangle
-	inline bool intersect(const Ray &ray, IndexType index, Float mint, Float maxt) const {
+	inline bool intersect(const Ray &ray, IndexType index, float mint, float maxt) const {
 		IndexType shapeIndex = findShape(index);
 		const Triangle &tri = m_meshes[0][shapeIndex]->getTriangles()[index];
 
 		IndexType frameIndex = findFrame(ray.time);
-		Float alpha = std::max((Float) 0.0f, std::min((Float) 1.0f,
+		float alpha = std::max((float) 0.0f, std::min((float) 1.0f,
 			(ray.time - m_times[frameIndex])
 			/ (m_times[frameIndex + 1] - m_times[frameIndex])));
 
@@ -294,7 +294,7 @@ public:
 		for (int i=0; i<3; ++i)
 			p[i] = (1 - alpha) * pos0[tri.idx[i]] + alpha * pos1[tri.idx[i]];
 
-		Float tempU, tempV, tempT;
+		float tempU, tempV, tempT;
 		if (!Triangle::rayIntersect(p[0], p[1], p[2], ray, tempU, tempV, tempT))
 			return false;
 
@@ -309,12 +309,12 @@ public:
 	// ========================================================================
 
 	/// Intersect a ray with all primitives stored in the kd-tree
-	inline bool rayIntersect(const Ray &ray, Float _mint, Float _maxt,
-			Float &t, void *temp) const {
+	inline bool rayIntersect(const Ray &ray, float _mint, float _maxt,
+			float &t, void *temp) const {
 		IntersectionCache *cache = static_cast<IntersectionCache *>(temp);
 
-		Float tempT = std::numeric_limits<Float>::infinity();
-		Float mint, maxt;
+		float tempT = std::numeric_limits<float>::infinity();
+		float mint, maxt;
 
 		if (m_spatialAABB.rayIntersect(ray, mint, maxt)) {
 			if (_mint > mint) mint = _mint;
@@ -334,9 +334,9 @@ public:
 	 * \brief Intersect a ray with all primitives stored in the kd-tree
 	 * (Visiblity query version)
 	 */
-	inline bool rayIntersect(const Ray &ray, Float _mint, Float _maxt) const {
-		Float tempT = std::numeric_limits<Float>::infinity();
-		Float mint, maxt;
+	inline bool rayIntersect(const Ray &ray, float _mint, float _maxt) const {
+		float tempT = std::numeric_limits<float>::infinity();
+		float mint, maxt;
 
 		if (m_spatialAABB.rayIntersect(ray, mint, maxt)) {
 			if (_mint > mint) mint = _mint;
@@ -360,7 +360,7 @@ public:
 		return m_times.size();
 	}
 
-	inline const std::vector<Float> getTimes() const {
+	inline const std::vector<float> getTimes() const {
 		return m_times;
 	}
 
@@ -378,11 +378,11 @@ public:
 
 	MTS_DECLARE_CLASS()
 protected:
-	std::vector<Float> m_times;
+	std::vector<float> m_times;
 	std::vector<std::vector<const TriMesh *> > m_meshes;
 	std::vector<IndexType> m_shapeMap;
 	AABB m_spatialAABB;
-	Float m_traceTime;
+	float m_traceTime;
 };
 
 class Deformable : public Shape {
@@ -390,11 +390,11 @@ public:
 	Deformable(const Properties &props) : Shape(props) {
 		std::vector<std::string> times_str =
 			tokenize(props.getString("times", ""), " ,;");
-		std::vector<Float> times(times_str.size());
+		std::vector<float> times(times_str.size());
 
 		char *end_ptr = NULL;
 		for (size_t i=0; i<times_str.size(); ++i) {
-			Float value = (Float) strtod(times_str[i].c_str(), &end_ptr);
+			float value = (float) strtod(times_str[i].c_str(), &end_ptr);
 			if (*end_ptr != '\0')
 				SLog(EError, "Could not parse the times parameter!");
 			times[i] = value;
@@ -416,12 +416,12 @@ public:
 		m_kdtree->build();
 	}
 
-	bool rayIntersect(const Ray &ray, Float mint,
-			Float maxt, Float &t, void *temp) const {
+	bool rayIntersect(const Ray &ray, float mint,
+			float maxt, float &t, void *temp) const {
 		return m_kdtree->rayIntersect(ray, mint, maxt, t, temp);
 	}
 
-	bool rayIntersect(const Ray &ray, Float mint, Float maxt) const {
+	bool rayIntersect(const Ray &ray, float mint, float maxt) const {
 		return m_kdtree->rayIntersect(ray, mint, maxt);
 	}
 
@@ -434,7 +434,7 @@ public:
 		const Vector b(1 - cache->u - cache->v, cache->u, cache->v);
 		const Triangle tri = m_kdtree->getTriangle(cache->shapeIndex, cache->primIndex);
 		const uint32_t idx0 = tri.idx[0], idx1 = tri.idx[1], idx2 = tri.idx[2];
-		const Float alpha = cache->alpha;
+		const float alpha = cache->alpha;
 
 		const Point *vertexPositions0 = trimesh0->getVertexPositions();
 		const Point *vertexPositions1 = trimesh1->getVertexPositions();
@@ -455,7 +455,7 @@ public:
 
 		Vector side1(p1-p0), side2(p2-p0);
 		Normal faceNormal(cross(side1, side2));
-		Float length = faceNormal.length();
+		float length = faceNormal.length();
 		if (!faceNormal.isZero())
 			faceNormal /= length;
 
@@ -516,9 +516,9 @@ public:
 	void getNormalDerivative(const Intersection &its,
 			Vector &dndu, Vector &dndv, bool shadingFrame) const {
 
-		const std::vector<Float> &times = m_kdtree->getTimes();
+		const std::vector<float> &times = m_kdtree->getTimes();
 		int frameIndex = m_kdtree->findFrame(its.time);
-		Float alpha = std::max((Float) 0.0f, std::min((Float) 1.0f,
+		float alpha = std::max((float) 0.0f, std::min((float) 1.0f,
 			(its.time - times[frameIndex])
 			/ (times[frameIndex + 1] - times[frameIndex])));
 
@@ -549,7 +549,7 @@ public:
 			   overwritten with coordinates of the texture "parameterization". */
 			Vector rel = its.p - p0, du = p1 - p0, dv = p2 - p0;
 
-			Float b1  = dot(du, rel), b2 = dot(dv, rel), /* Normal equations */
+			float b1  = dot(du, rel), b2 = dot(dv, rel), /* Normal equations */
 				  a11 = dot(du, du), a12 = dot(du, dv),
 				  a22 = dot(dv, dv),
 				  det = a11 * a22 - a12 * a12;
@@ -559,7 +559,7 @@ public:
 				return;
 			}
 
-			Float invDet = 1.0f / det,
+			float invDet = 1.0f / det,
 				  u = ( a22 * b1 - a12 * b2) * invDet,
 				  v = (-a12 * b1 + a11 * b2) * invDet,
 				  w = 1 - u - v;
@@ -577,7 +577,7 @@ public:
 			*/
 
 			Normal N(u * n1 + v * n2 + w * n0);
-			Float il = 1.0f / N.length(); N *= il;
+			float il = 1.0f / N.length(); N *= il;
 
 			dndu = (n1 - n0) * il; dndu -= N * dot(N, dndu);
 			dndv = (n2 - n0) * il; dndv -= N * dot(N, dndv);
@@ -608,15 +608,15 @@ public:
 	}
 
 
-	void adjustTime(Intersection &its, Float time) const {
+	void adjustTime(Intersection &its, float time) const {
 		SpaceTimeKDTree::IntersectionCache cache;
 
-		const std::vector<Float> &times = m_kdtree->getTimes();
+		const std::vector<float> &times = m_kdtree->getTimes();
 
 		cache.primIndex = its.primIndex;
 		cache.shapeIndex = its.other;
 		cache.frameIndex = m_kdtree->findFrame(its.time);
-		cache.alpha = std::max((Float) 0.0f, std::min((Float) 1.0f,
+		cache.alpha = std::max((float) 0.0f, std::min((float) 1.0f,
 			(its.time - times[cache.frameIndex])
 			/ (times[cache.frameIndex + 1] - times[cache.frameIndex])));
 
@@ -633,7 +633,7 @@ public:
 
 		Vector rel = its.p - p0, du = p1 - p0, dv = p2 - p0;
 
-		Float b1  = dot(du, rel), b2 = dot(dv, rel),
+		float b1  = dot(du, rel), b2 = dot(dv, rel),
 			  a11 = dot(du, du), a12 = dot(du, dv),
 			  a22 = dot(dv, dv),
 			  invDet = 1.0f / (a11 * a22 - a12 * a12);
@@ -642,7 +642,7 @@ public:
 		cache.v = (-a12 * b1 + a11 * b2) * invDet;
 
 		cache.frameIndex = m_kdtree->findFrame(time);
-		cache.alpha = std::max((Float) 0.0f, std::min((Float) 1.0f,
+		cache.alpha = std::max((float) 0.0f, std::min((float) 1.0f,
 			(time - times[cache.frameIndex])
 			/ (times[cache.frameIndex + 1] - times[cache.frameIndex])));
 

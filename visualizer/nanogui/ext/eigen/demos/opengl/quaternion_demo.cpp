@@ -255,8 +255,8 @@ void RenderingWidget::drawScene()
   glEnable(GL_LIGHT1);
 
   sFancySpheres.draw();
-  glVertexPointer(3, GL_FLOAT, 0, mVertices[0].data());
-  glNormalPointer(GL_FLOAT, 0, mNormals[0].data());
+  glVertexPointer(3, GL_float, 0, mVertices[0].data());
+  glNormalPointer(GL_float, 0, mNormals[0].data());
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_NORMAL_ARRAY);
   glDrawArrays(GL_TRIANGLES, 0, mVertices.size());

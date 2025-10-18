@@ -80,7 +80,7 @@ public:
 	 *    View transformation of the source
 	 */
 	void render(Renderer *renderer, GPUTexture *shadowMap, EShadowMapType type,
-		const Transform &trafo, Float minDepth, Float maxDepth,
+		const Transform &trafo, float minDepth, float maxDepth,
 		const std::vector<Renderer::TransformedGPUGeometry> &geo);
 
 	/**

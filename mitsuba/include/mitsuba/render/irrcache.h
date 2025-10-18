@@ -46,9 +46,9 @@ public:
 	struct SampleEntry {
 		Vector d;
 		Spectrum L;
-		Float dist;
-		Float cosTheta;
-		Float sinTheta;
+		float dist;
+		float cosTheta;
+		float sinTheta;
 	};
 
 	/**
@@ -90,17 +90,17 @@ public:
 	}
 
 	/// Return the average distance over all cells (harmonic mean)
-	inline Float getHarmonicMeanDistance() const {
+	inline float getHarmonicMeanDistance() const {
 		return m_hMean;
 	}
 
 	/// Return the minimum distance over all cells
-	inline Float getMinimumDistance() const {
+	inline float getMinimumDistance() const {
 		return m_hMin;
 	}
 
 	/// Return the minimum distance over all cells (>10 deg in elevation)
-	inline Float getMinimumDistanceRestricted() const {
+	inline float getMinimumDistanceRestricted() const {
 		return m_hMinRestricted;
 	}
 
@@ -120,7 +120,7 @@ private:
 	Spectrum m_E;
 	RotationalGradient m_rGrad;
 	TranslationalGradient m_tGrad;
-	Float m_hMean, m_hMin, m_hMinRestricted;
+	float m_hMean, m_hMin, m_hMinRestricted;
 	ref<Random> m_random;
 };
 
@@ -168,13 +168,13 @@ public:
 	 * Tabellion and Lamorlette paper. Once samples
 	 * have been stored, this should only be decreased.
 	 */
-	inline void setQuality(Float quality) { m_kappa = quality; }
+	inline void setQuality(float quality) { m_kappa = quality; }
 
 	/**
 	 * Set the influence region cutoff values of samples in the
 	 * cache. Will be multiplied by the scene size
 	 */
-	void clampInfluence(Float min, Float max);
+	void clampInfluence(float min, float max);
 
 	/**
 	 * Minimal influence region falloff with increasing distance
@@ -233,13 +233,13 @@ public:
 		/* Normal vector of the associated surface */
 		Normal n;
 		/* Minimum intersection distance */
-		Float R0;
+		float R0;
 		/* Unclamped distance - must be stored for
 		   neighbor clamping */
-		Float originalR0;
+		float originalR0;
 		/* Minimum/Maximum distance - must be
 		   stored for neighbor clamping. */
-		Float R0_min, R0_max;
+		float R0_min, R0_max;
 		/* Irradiance value */
 		Spectrum E;
 		/* Rotational gradient for improved interpolation */
@@ -264,10 +264,10 @@ public:
 		inline Record(Stream *stream) {
 			p = Point(stream);
 			n = Normal(stream);
-			R0 = stream->readFloat();
-			originalR0 = stream->readFloat();
-			R0_min = stream->readFloat();
-			R0_max = stream->readFloat();
+			R0 = stream->readfloat();
+			originalR0 = stream->readfloat();
+			R0_min = stream->readfloat();
+			R0_max = stream->readfloat();
 			E = Spectrum(stream);
 			for (int i=0; i<3; ++i)
 				rGrad[i] = Spectrum(stream);
@@ -279,10 +279,10 @@ public:
 		inline void serialize(Stream *stream) const {
 			p.serialize(stream);
 			n.serialize(stream);
-			stream->writeFloat(R0);
-			stream->writeFloat(originalR0);
-			stream->writeFloat(R0_min);
-			stream->writeFloat(R0_max);
+			stream->writefloat(R0);
+			stream->writefloat(originalR0);
+			stream->writefloat(R0_min);
+			stream->writefloat(R0_max);
 			E.serialize(stream);
 			for (int i=0; i<3; ++i)
 				rGrad[i].serialize(stream);
@@ -294,8 +294,8 @@ public:
 		 * Calculate contribution of this sample if it were used
 		 * to calculate an interpolated value at the given position
 		 */
-		inline Float getWeight(const Point &p2, const Normal &n2, Float kappa) const {
-			Float dp = dot(n, n2);
+		inline float getWeight(const Point &p2, const Normal &n2, float kappa) const {
+			float dp = dot(n, n2);
 
 			/* Quickly discard opposite-facing samples */
 			if (dp < 0.0f)
@@ -308,10 +308,10 @@ public:
 				return 0.0f;
 
 			/* Ad-hoc weight function (Tabellion & Lamorlette) */
-			Float ePI = (p-p2).length() / (.5f * R0);
-			Float eNI = std::sqrt(1.0f - std::abs(dp))
+			float ePI = (p-p2).length() / (.5f * R0);
+			float eNI = std::sqrt(1.0f - std::abs(dp))
 				/ 0.12326f;
-			Float weight = 1 - kappa*std::max(ePI, eNI);
+			float weight = 1 - kappa*std::max(ePI, eNI);
 
 			if (weight < 0)
 				return 0.0f;
@@ -331,9 +331,9 @@ protected:
 
 	DynamicOctree<Record *> m_octree;
 	std::vector<Record *> m_records;
-	Float m_kappa;
-	Float m_sceneSize;
-	Float m_minDist, m_maxDist;
+	float m_kappa;
+	float m_sceneSize;
+	float m_minDist, m_maxDist;
 	bool m_clampScreen, m_clampNeighbor, m_useGradients;
 	ref<Mutex> m_mutex;
 };

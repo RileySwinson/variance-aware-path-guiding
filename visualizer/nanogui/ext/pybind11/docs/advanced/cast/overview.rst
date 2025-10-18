@@ -88,7 +88,7 @@ as arguments and return values, refer to the section on binding :ref:`classes`.
 +------------------------------------+---------------------------+-------------------------------+
 | ``ssize_t``, ``size_t``            | Platform-dependent size   | :file:`pybind11/pybind11.h`   |
 +------------------------------------+---------------------------+-------------------------------+
-| ``float``, ``double``              | Floating point types      | :file:`pybind11/pybind11.h`   |
+| ``float``, ``double``              | floating point types      | :file:`pybind11/pybind11.h`   |
 +------------------------------------+---------------------------+-------------------------------+
 | ``bool``                           | Two-state Boolean type    | :file:`pybind11/pybind11.h`   |
 +------------------------------------+---------------------------+-------------------------------+

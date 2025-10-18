@@ -173,7 +173,7 @@ float legendreP(int l, int m, float x) {
 	return (float) p_ll;
 }
 
-void gaussLegendre(int n, Float *nodes, Float *weights) {
+void gaussLegendre(int n, float *nodes, float *weights) {
 	if (n-- < 1)
 		SLog(EError, "gaussLegendre(): n must be >= 1");
 
@@ -181,7 +181,7 @@ void gaussLegendre(int n, Float *nodes, Float *weights) {
 		nodes[0] = 0;
 		weights[0] = 2;
 	} else if (n == 1) {
-		nodes[0] = (Float) -std::sqrt(1.0/3.0);
+		nodes[0] = (float) -std::sqrt(1.0/3.0);
 		nodes[1] = -nodes[0];
 		weights[0] = weights[1] = 1;
 	}
@@ -207,25 +207,25 @@ void gaussLegendre(int n, Float *nodes, Float *weights) {
 		}
 
 		std::pair<double, double> L = legendrePD(n+1, x);
-		weights[i] = weights[n-i] = (Float) (2.0 / ((1-x*x) * (L.second*L.second)));
-		nodes[i] = (Float) x; nodes[n-i] = (Float) -x;
+		weights[i] = weights[n-i] = (float) (2.0 / ((1-x*x) * (L.second*L.second)));
+		nodes[i] = (float) x; nodes[n-i] = (float) -x;
 		SAssert(i == 0 || x > nodes[i-1]);
 	}
 
 	if ((n % 2) == 0) {
 		std::pair<double, double> L = legendrePD(n+1, 0.0);
-		weights[n/2] = (Float) (2.0 / (L.second*L.second));
+		weights[n/2] = (float) (2.0 / (L.second*L.second));
 		nodes[n/2] = 0;
 	}
 }
 
-void gaussLobatto(int n, Float *nodes, Float *weights) {
+void gaussLobatto(int n, float *nodes, float *weights) {
 	if (n-- < 2)
 		SLog(EError, "gaussLobatto(): n must be >= 2");
 
 	nodes[0] = -1;
 	nodes[n] =  1;
-	weights[0] = weights[n] = (Float) 2 / (Float) (n * (n+1));
+	weights[0] = weights[n] = (float) 2 / (float) (n * (n+1));
 
 	int m = (n+1)/2;
 	for (int i=1; i<m; ++i) {
@@ -251,14 +251,14 @@ void gaussLobatto(int n, Float *nodes, Float *weights) {
 		}
 
 		double Ln = legendreP(n, x);
-		weights[i] = weights[n-i] = (Float) (2.0 / ((n * (n+1)) * Ln * Ln));
-		nodes[i] = (Float) x; nodes[n-i] = (Float) -x;
+		weights[i] = weights[n-i] = (float) (2.0 / ((n * (n+1)) * Ln * Ln));
+		nodes[i] = (float) x; nodes[n-i] = (float) -x;
 		SAssert(x > nodes[i-1]);
 	}
 
 	if ((n % 2) == 0) {
 		double Ln = legendreP(n, 0.0);
-		weights[n/2] = (Float) (2.0 / ((n * (n+1)) * Ln * Ln));
+		weights[n/2] = (float) (2.0 / ((n * (n+1)) * Ln * Ln));
 		nodes[n/2] = 0.0;
 	}
 }
@@ -284,14 +284,14 @@ void gaussLobatto(int n, Float *nodes, Float *weights) {
  FOR A PARTICULAR PURPOSE. See the license for more details.
 */
 
-const Float GaussLobattoIntegrator::m_alpha = (Float) std::sqrt(2.0/3.0);
-const Float GaussLobattoIntegrator::m_beta  = (Float) (1.0/std::sqrt(5.0));
-const Float GaussLobattoIntegrator::m_x1	= (Float) 0.94288241569547971906;
-const Float GaussLobattoIntegrator::m_x2	= (Float) 0.64185334234578130578;
-const Float GaussLobattoIntegrator::m_x3	= (Float) 0.23638319966214988028;
+const float GaussLobattoIntegrator::m_alpha = (float) std::sqrt(2.0/3.0);
+const float GaussLobattoIntegrator::m_beta  = (float) (1.0/std::sqrt(5.0));
+const float GaussLobattoIntegrator::m_x1	= (float) 0.94288241569547971906;
+const float GaussLobattoIntegrator::m_x2	= (float) 0.64185334234578130578;
+const float GaussLobattoIntegrator::m_x3	= (float) 0.23638319966214988028;
 
 GaussLobattoIntegrator::GaussLobattoIntegrator(size_t maxEvals,
-	Float absError, Float relError, bool useConvergenceEstimate, bool warn)
+	float absError, float relError, bool useConvergenceEstimate, bool warn)
 	: m_absError(absError),
 	  m_relError(relError),
 	  m_maxEvals(maxEvals),
@@ -302,9 +302,9 @@ GaussLobattoIntegrator::GaussLobattoIntegrator(size_t maxEvals,
 			"error requirements can't both be zero!");
 }
 
-Float GaussLobattoIntegrator::integrate(
-		const boost::function<Float (Float)>& f, Float a, Float b, size_t *_evals) const {
-	Float factor = 1;
+float GaussLobattoIntegrator::integrate(
+		const boost::function<float (float)>& f, float a, float b, size_t *_evals) const {
+	float factor = 1;
 	size_t evals = 0;
 	if (a == b) {
 		return 0;
@@ -312,9 +312,9 @@ Float GaussLobattoIntegrator::integrate(
 		std::swap(a, b);
 		factor = -1;
 	}
-	const Float absTolerance = calculateAbsTolerance(f, a, b, evals);
+	const float absTolerance = calculateAbsTolerance(f, a, b, evals);
 	evals += 2;
-	Float result = factor * adaptiveGaussLobattoStep(f, a, b, f(a), f(b), absTolerance, evals);
+	float result = factor * adaptiveGaussLobattoStep(f, a, b, f(a), f(b), absTolerance, evals);
 	if (evals >= m_maxEvals && m_warn)
 		SLog(EWarn, "GaussLobattoIntegrator: Maximum number of evaluations reached!");
 	if (_evals)
@@ -322,31 +322,31 @@ Float GaussLobattoIntegrator::integrate(
 	return result;
 }
 
-Float GaussLobattoIntegrator::calculateAbsTolerance(
-		const boost::function<Float (Float)>& f, Float a, Float b, size_t &evals) const {
-	const Float m = (a+b)/2;
-	const Float h = (b-a)/2;
-	const Float y1 = f(a);
-	const Float y3 = f(m-m_alpha*h);
-	const Float y5 = f(m-m_beta*h);
-	const Float y7 = f(m);
-	const Float y9 = f(m+m_beta*h);
-	const Float y11= f(m+m_alpha*h);
-	const Float y13= f(b);
+float GaussLobattoIntegrator::calculateAbsTolerance(
+		const boost::function<float (float)>& f, float a, float b, size_t &evals) const {
+	const float m = (a+b)/2;
+	const float h = (b-a)/2;
+	const float y1 = f(a);
+	const float y3 = f(m-m_alpha*h);
+	const float y5 = f(m-m_beta*h);
+	const float y7 = f(m);
+	const float y9 = f(m+m_beta*h);
+	const float y11= f(m+m_alpha*h);
+	const float y13= f(b);
 
-	Float acc = h*((Float) 0.0158271919734801831*(y1+y13)
-				 + (Float) 0.0942738402188500455*(f(m-m_x1*h)+f(m+m_x1*h))
-				 + (Float) 0.1550719873365853963*(y3+y11)
-				 + (Float) 0.1888215739601824544*(f(m-m_x2*h)+ f(m+m_x2*h))
-				 + (Float) 0.1997734052268585268*(y5+y9)
-				 + (Float) 0.2249264653333395270*(f(m-m_x3*h)+f(m+m_x3*h))
-				 + (Float) 0.2426110719014077338*y7);
+	float acc = h*((float) 0.0158271919734801831*(y1+y13)
+				 + (float) 0.0942738402188500455*(f(m-m_x1*h)+f(m+m_x1*h))
+				 + (float) 0.1550719873365853963*(y3+y11)
+				 + (float) 0.1888215739601824544*(f(m-m_x2*h)+ f(m+m_x2*h))
+				 + (float) 0.1997734052268585268*(y5+y9)
+				 + (float) 0.2249264653333395270*(f(m-m_x3*h)+f(m+m_x3*h))
+				 + (float) 0.2426110719014077338*y7);
 	evals += 13;
 
-	Float r = 1.0;
+	float r = 1.0;
 	if (m_useConvergenceEstimate) {
-		const Float integral2 = (h/6)*(y1+y13+5*(y5+y9));
-		const Float integral1 = (h/1470)*
+		const float integral2 = (h/6)*(y1+y13+5*(y5+y9));
+		const float integral1 = (h/1470)*
 			(77*(y1+y13) + 432*(y3+y11) + 625*(y5+y9) + 672*y7);
 
 		if (std::abs(integral2-acc) != 0.0)
@@ -354,40 +354,40 @@ Float GaussLobattoIntegrator::calculateAbsTolerance(
 		if (r == 0.0 || r > 1.0)
 			r = 1.0;
 	}
-	Float result = std::numeric_limits<Float>::infinity();
+	float result = std::numeric_limits<float>::infinity();
 
 	if (m_relError != 0 && acc != 0)
 		result = acc * std::max(m_relError,
-			std::numeric_limits<Float>::epsilon())
-			/ (r*std::numeric_limits<Float>::epsilon());
+			std::numeric_limits<float>::epsilon())
+			/ (r*std::numeric_limits<float>::epsilon());
 
 	if (m_absError != 0)
 		result = std::min(result, m_absError
-			/ (r*std::numeric_limits<Float>::epsilon()));
+			/ (r*std::numeric_limits<float>::epsilon()));
 
 	return result;
 }
 
-Float GaussLobattoIntegrator::adaptiveGaussLobattoStep(
-								 const boost::function<Float (Float)>& f,
-								 Float a, Float b, Float fa, Float fb,
-								 Float acc, size_t &evals) const {
-	const Float h=(b-a)/2;
-	const Float m=(a+b)/2;
+float GaussLobattoIntegrator::adaptiveGaussLobattoStep(
+								 const boost::function<float (float)>& f,
+								 float a, float b, float fa, float fb,
+								 float acc, size_t &evals) const {
+	const float h=(b-a)/2;
+	const float m=(a+b)/2;
 
-	const Float mll=m-m_alpha*h;
-	const Float ml =m-m_beta*h;
-	const Float mr =m+m_beta*h;
-	const Float mrr=m+m_alpha*h;
+	const float mll=m-m_alpha*h;
+	const float ml =m-m_beta*h;
+	const float mr =m+m_beta*h;
+	const float mrr=m+m_alpha*h;
 
-	const Float fmll= f(mll);
-	const Float fml = f(ml);
-	const Float fm  = f(m);
-	const Float fmr = f(mr);
-	const Float fmrr= f(mrr);
+	const float fmll= f(mll);
+	const float fml = f(ml);
+	const float fm  = f(m);
+	const float fmr = f(mr);
+	const float fmrr= f(mrr);
 
-	const Float integral2=(h/6)*(fa+fb+5*(fml+fmr));
-	const Float integral1=(h/1470)*(77*(fa+fb)
+	const float integral2=(h/6)*(fa+fb+5*(fml+fmr));
+	const float integral1=(h/1470)*(77*(fa+fb)
 		+ 432*(fmll+fmrr) + 625*(fml+fmr) + 672*fm);
 
 	evals += 5;
@@ -395,7 +395,7 @@ Float GaussLobattoIntegrator::adaptiveGaussLobattoStep(
 	if (evals >= m_maxEvals)
 		return integral1;
 
-	Float dist = acc + (integral1-integral2);
+	float dist = acc + (integral1-integral2);
 	if (dist==acc || mll<=a || b<=mrr) {
 		return integral1;
 	} else {
@@ -489,16 +489,16 @@ Float GaussLobattoIntegrator::adaptiveGaussLobattoStep(
 typedef NDIntegrator::VectorizedIntegrand VectorizedIntegrand;
 
 typedef struct {
-	Float val, err;
+	float val, err;
 } esterr;
 
-static Float relError(esterr ee) {
-	return (ee.val == 0 ? std::numeric_limits<Float>::infinity() :
+static float relError(esterr ee) {
+	return (ee.val == 0 ? std::numeric_limits<float>::infinity() :
 		std::abs(ee.err / ee.val));
 }
 
-static Float errMax(unsigned int fdim, const esterr *ee) {
-	Float errmax = 0;
+static float errMax(unsigned int fdim, const esterr *ee) {
+	float errmax = 0;
 	unsigned int k;
 	for (k = 0; k < fdim; ++k)
 		if (ee[k].err > errmax) errmax = ee[k].err;
@@ -507,23 +507,23 @@ static Float errMax(unsigned int fdim, const esterr *ee) {
 
 typedef struct {
 	unsigned int dim;
-	Float *data;	/* length 2*dim = center followed by half-widths */
-	Float vol;	/* cache volume = product of widths */
+	float *data;	/* length 2*dim = center followed by half-widths */
+	float vol;	/* cache volume = product of widths */
 } hypercube;
 
-static Float compute_vol(const hypercube *h) {
+static float compute_vol(const hypercube *h) {
 	unsigned int i;
-	Float vol = 1;
+	float vol = 1;
 	for (i = 0; i < h->dim; ++i)
 		vol *= 2 * h->data[i + h->dim];
 	return vol;
 }
 
-static hypercube make_hypercube(unsigned int dim, const Float *center, const Float *halfwidth) {
+static hypercube make_hypercube(unsigned int dim, const float *center, const float *halfwidth) {
 	unsigned int i;
 	hypercube h;
 	h.dim = dim;
-	h.data = (Float *) malloc(sizeof(Float) * dim * 2);
+	h.data = (float *) malloc(sizeof(float) * dim * 2);
 	h.vol = 0;
 	if (h.data) {
 		for (i = 0; i < dim; ++i) {
@@ -535,7 +535,7 @@ static hypercube make_hypercube(unsigned int dim, const Float *center, const Flo
 	return h;
 }
 
-static hypercube make_hypercube_range(unsigned int dim, const Float *xmin, const Float *xmax) {
+static hypercube make_hypercube_range(unsigned int dim, const float *xmin, const float *xmax) {
 	hypercube h = make_hypercube(dim, xmin, xmax);
 	unsigned int i;
 	if (h.data) {
@@ -558,7 +558,7 @@ typedef struct {
 	unsigned int splitDim;
 	unsigned int fdim; /* dimensionality of vector const Integrand & */
 	esterr *ee; /* array of length fdim */
-	Float errmax; /* max ee[k].err */
+	float errmax; /* max ee[k].err */
 } region;
 
 static region make_region(const hypercube *h, unsigned int fdim) {
@@ -601,8 +601,8 @@ typedef struct rule_s {
 	unsigned int dim, fdim;         /* the dimensionality & number of functions */
 	unsigned int num_points;       /* number of evaluation points */
 	unsigned int num_regions; /* max number of regions evaluated at once */
-	Float *pts; /* points to eval: num_regions * num_points * dim */
-	Float *vals; /* num_regions * num_points * fdim */
+	float *pts; /* points to eval: num_regions * num_points * dim */
+	float *vals; /* num_regions * num_points * fdim */
 	evalError_func evalError;
 	destroy_func destroy;
 } rule;
@@ -624,7 +624,7 @@ static NDIntegrator::EResult alloc_rule_pts(rule *r, unsigned int num_regions) {
 		/* allocate extra so that repeatedly calling alloc_rule_pts with
 		   growing num_regions only needs a logarithmic number of allocations */
 		num_regions *= 2;
-		r->pts = (Float *) malloc(sizeof(Float) *
+		r->pts = (float *) malloc(sizeof(float) *
 			     (num_regions * r->num_points * (r->dim + r->fdim)));
 		if (r->fdim + r->dim > 0 && !r->pts)
 			return NDIntegrator::EFailure;
@@ -713,7 +713,7 @@ static unsigned int ls0(unsigned int n)
  *  A Gray-code ordering is used to minimize the number of coordinate updates
  *  in p, although this doesn't matter as much now that we are saving all pts.
  */
-static void evalR_Rfs(Float *pts, unsigned int dim, Float *p, const Float *c, const Float *r) {
+static void evalR_Rfs(float *pts, unsigned int dim, float *p, const float *c, const float *r) {
 	unsigned int signs = 0; /* 0/1 bit = +/- for corresponding element of r[] */
 
 	/* We start with the point where r is ADDed in every coordinate
@@ -724,7 +724,7 @@ static void evalR_Rfs(Float *pts, unsigned int dim, Float *p, const Float *c, co
 	/* Loop through the points in Gray-code ordering */
 	for (unsigned i = 0;; ++i) {
 		unsigned int mask, d;
-		memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+		memcpy(pts, p, sizeof(float) * dim); pts += dim;
 		d = ls0(i);	/* which coordinate to flip */
 		if (d >= dim)
 			break;
@@ -736,36 +736,36 @@ static void evalR_Rfs(Float *pts, unsigned int dim, Float *p, const Float *c, co
 	}
 }
 
-static void evalRR0_0fs(Float *pts, unsigned int dim, Float *p, const Float *c, const Float *r) {
+static void evalRR0_0fs(float *pts, unsigned int dim, float *p, const float *c, const float *r) {
 	for (unsigned i = 0; i < dim - 1; ++i) {
 		p[i] = c[i] - r[i];
 		for (unsigned j = i + 1; j < dim; ++j) {
 			p[j] = c[j] - r[j];
-			memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+			memcpy(pts, p, sizeof(float) * dim); pts += dim;
 			p[i] = c[i] + r[i];
-			memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+			memcpy(pts, p, sizeof(float) * dim); pts += dim;
 			p[j] = c[j] + r[j];
-			memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+			memcpy(pts, p, sizeof(float) * dim); pts += dim;
 			p[i] = c[i] - r[i];
-			memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+			memcpy(pts, p, sizeof(float) * dim); pts += dim;
 			p[j] = c[j];	/* Done with j -> Restore p[j] */
 		}
 		p[i] = c[i];		/* Done with i -> Restore p[i] */
 	}
 }
 
-static void evalR0_0fs4d(Float *pts, unsigned int dim, Float *p, const Float *c,
-			 const Float *r1, const Float *r2) {
-	memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+static void evalR0_0fs4d(float *pts, unsigned int dim, float *p, const float *c,
+			 const float *r1, const float *r2) {
+	memcpy(pts, p, sizeof(float) * dim); pts += dim;
 	for (unsigned i = 0; i < dim; i++) {
 		p[i] = c[i] - r1[i];
-		memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+		memcpy(pts, p, sizeof(float) * dim); pts += dim;
 		p[i] = c[i] + r1[i];
-		memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+		memcpy(pts, p, sizeof(float) * dim); pts += dim;
 		p[i] = c[i] - r2[i];
-		memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+		memcpy(pts, p, sizeof(float) * dim); pts += dim;
 		p[i] = c[i] + r2[i];
-		memcpy(pts, p, sizeof(Float) * dim); pts += dim;
+		memcpy(pts, p, sizeof(float) * dim); pts += dim;
 		p[i] = c[i];
 	}
 }
@@ -789,14 +789,14 @@ typedef struct {
      rule parent;
 
      /* temporary arrays of length dim */
-     Float *widthLambda, *widthLambda2, *p;
+     float *widthLambda, *widthLambda2, *p;
 
      /* dimension-dependent constants */
-     Float weight1, weight3, weight5;
-     Float weightE1, weightE3;
+     float weight1, weight3, weight5;
+     float weightE1, weightE3;
 } rule75genzmalik;
 
-#define real(x) ((Float)(x))
+#define real(x) ((float)(x))
 #define to_int(n) ((int)(n))
 
 static int isqr(int x)
@@ -812,26 +812,26 @@ static void destroy_rule75genzmalik(rule *r_)
 
 static NDIntegrator::EResult rule75genzmalik_evalError(rule *r_, unsigned int fdim, const VectorizedIntegrand &f, unsigned int nR, region *R) {
 	/* lambda2 = sqrt(9/70), lambda4 = sqrt(9/10), lambda5 = sqrt(9/19) */
-	const Float lambda2 = (Float) 0.3585685828003180919906451539079374954541;
-	const Float lambda4 = (Float) 0.9486832980505137995996680633298155601160;
-	const Float lambda5 = (Float) 0.6882472016116852977216287342936235251269;
-	const Float weight2 = (Float) (980.0 / 6561.0);
-	const Float weight4 = (Float) (200.0 / 19683.0);
-	const Float weightE2 = (Float) (245.0 / 486.0);
-	const Float weightE4 = (Float) (25.0 / 729.0);
-	const Float ratio = (lambda2 * lambda2) / (lambda4 * lambda4);
+	const float lambda2 = (float) 0.3585685828003180919906451539079374954541;
+	const float lambda4 = (float) 0.9486832980505137995996680633298155601160;
+	const float lambda5 = (float) 0.6882472016116852977216287342936235251269;
+	const float weight2 = (float) (980.0 / 6561.0);
+	const float weight4 = (float) (200.0 / 19683.0);
+	const float weightE2 = (float) (245.0 / 486.0);
+	const float weightE4 = (float) (25.0 / 729.0);
+	const float ratio = (lambda2 * lambda2) / (lambda4 * lambda4);
 
 	rule75genzmalik *r = (rule75genzmalik *) r_;
 	unsigned int i, j, dim = r_->dim, npts = 0;
-	Float *diff, *pts, *vals;
+	float *diff, *pts, *vals;
 
 	if (alloc_rule_pts(r_, nR))
 		return NDIntegrator::EFailure;
 	pts = r_->pts; vals = r_->vals;
 
 	for (unsigned int iR = 0; iR < nR; ++iR) {
-		const Float *center = R[iR].h.data;
-		const Float *halfwidth = R[iR].h.data + dim;
+		const float *center = R[iR].h.data;
+		const float *halfwidth = R[iR].h.data + dim;
 
 		for (i = 0; i < dim; ++i)
 			r->p[i] = center[i];
@@ -870,8 +870,8 @@ static NDIntegrator::EResult rule75genzmalik_evalError(rule *r_, unsigned int fd
 
 	for (j = 0; j < fdim; ++j) {
 		for (unsigned int iR = 0; iR < nR; ++iR) {
-			Float result, res5th;
-			Float val0, sum2=0, sum3=0, sum4=0, sum5=0;
+			float result, res5th;
+			float val0, sum2=0, sum3=0, sum4=0, sum5=0;
 			unsigned int k, k0 = 0;
 
 			/* accumulate j-th function values into j-th integrals
@@ -883,10 +883,10 @@ static NDIntegrator::EResult rule75genzmalik_evalError(rule *r_, unsigned int fd
 			k0 += 1;
 
 			for (k = 0; k < dim; ++k) {
-				Float v0 = vals[k0 + 4*k];
-				Float v1 = vals[(k0 + 4*k) + 1];
-				Float v2 = vals[(k0 + 4*k) + 2];
-				Float v3 = vals[(k0 + 4*k) + 3];
+				float v0 = vals[k0 + 4*k];
+				float v1 = vals[(k0 + 4*k) + 1];
+				float v2 = vals[(k0 + 4*k) + 2];
+				float v3 = vals[(k0 + 4*k) + 3];
 
 				sum2 += v0 + v1;
 				sum3 += v2 + v3;
@@ -916,7 +916,7 @@ static NDIntegrator::EResult rule75genzmalik_evalError(rule *r_, unsigned int fd
 
 	/* figure out dimension to split: */
 	for (unsigned int iR = 0; iR < nR; ++iR) {
-		Float maxdiff = 0;
+		float maxdiff = 0;
 		unsigned int dimDiffMax = 0;
 
 		for (i = 0; i < dim; ++i) {
@@ -956,7 +956,7 @@ static rule *make_rule75genzmalik(unsigned int dim, unsigned int fdim) {
 	r->weight5 = real(6859) / real(19683) / real(1U << dim);
 	r->weightE1 = (real(729 - 950 * to_int(dim) + 50 * isqr(to_int(dim))) / real(729));
 	r->weightE3 = real(265 - 100 * to_int(dim)) / real(1458);
-	r->p = (Float *) malloc(sizeof(Float) * dim * 3);
+	r->p = (float *) malloc(sizeof(float) * dim * 3);
 	if (!r->p) {
 		destroy_rule((rule *) r);
 		return NULL;
@@ -977,36 +977,36 @@ static NDIntegrator::EResult rule15gauss_evalError(rule *r,
 	    weights as evaluated with 80 decimal digit arithmetic by
 	    L. W. Fullerton, Bell Labs, Nov. 1981. */
 	const unsigned int n = 8;
-	const Float xgk[8] = {  /* abscissae of the 15-point kronrod rule */
-		(Float) 0.991455371120812639206854697526329,
-		(Float) 0.949107912342758524526189684047851,
-		(Float) 0.864864423359769072789712788640926,
-		(Float) 0.741531185599394439863864773280788,
-		(Float) 0.586087235467691130294144838258730,
-		(Float) 0.405845151377397166906606412076961,
-		(Float) 0.207784955007898467600689403773245,
-		(Float) 0.000000000000000000000000000000000
+	const float xgk[8] = {  /* abscissae of the 15-point kronrod rule */
+		(float) 0.991455371120812639206854697526329,
+		(float) 0.949107912342758524526189684047851,
+		(float) 0.864864423359769072789712788640926,
+		(float) 0.741531185599394439863864773280788,
+		(float) 0.586087235467691130294144838258730,
+		(float) 0.405845151377397166906606412076961,
+		(float) 0.207784955007898467600689403773245,
+		(float) 0.000000000000000000000000000000000
 		/* xgk[1], xgk[3], ... abscissae of the 7-point gauss rule.
 		   xgk[0], xgk[2], ... to optimally extend the 7-point gauss rule */
 	};
-	static const Float wg[4] = {  /* weights of the 7-point gauss rule */
-		(Float) 0.129484966168869693270611432679082,
-		(Float) 0.279705391489276667901467771423780,
-		(Float) 0.381830050505118944950369775488975,
-		(Float) 0.417959183673469387755102040816327
+	static const float wg[4] = {  /* weights of the 7-point gauss rule */
+		(float) 0.129484966168869693270611432679082,
+		(float) 0.279705391489276667901467771423780,
+		(float) 0.381830050505118944950369775488975,
+		(float) 0.417959183673469387755102040816327
 	};
-	static const Float wgk[8] = { /* weights of the 15-point kronrod rule */
-		(Float) 0.022935322010529224963732008058970,
-		(Float) 0.063092092629978553290700663189204,
-		(Float) 0.104790010322250183839876322541518,
-		(Float) 0.140653259715525918745189590510238,
-		(Float) 0.169004726639267902826583426598550,
-		(Float) 0.190350578064785409913256402421014,
-		(Float) 0.204432940075298892414161999234649,
-		(Float) 0.209482141084727828012999174891714
+	static const float wgk[8] = { /* weights of the 15-point kronrod rule */
+		(float) 0.022935322010529224963732008058970,
+		(float) 0.063092092629978553290700663189204,
+		(float) 0.104790010322250183839876322541518,
+		(float) 0.140653259715525918745189590510238,
+		(float) 0.169004726639267902826583426598550,
+		(float) 0.190350578064785409913256402421014,
+		(float) 0.204432940075298892414161999234649,
+		(float) 0.209482141084727828012999174891714
 	};
 	unsigned int j, npts = 0;
-	Float *pts, *vals;
+	float *pts, *vals;
 
 	if (alloc_rule_pts(r, nR))
 		return NDIntegrator::EFailure;
@@ -1014,20 +1014,20 @@ static NDIntegrator::EResult rule15gauss_evalError(rule *r,
 	pts = r->pts; vals = r->vals;
 
 	for (unsigned int iR = 0; iR < nR; ++iR) {
-		const Float center = R[iR].h.data[0];
-		const Float halfwidth = R[iR].h.data[1];
+		const float center = R[iR].h.data[0];
+		const float halfwidth = R[iR].h.data[1];
 
 		pts[npts++] = center;
 
 		for (j = 0; j < (n - 1) / 2; ++j) {
 			int j2 = 2*j + 1;
-			Float w = halfwidth * xgk[j2];
+			float w = halfwidth * xgk[j2];
 			pts[npts++] = center - w;
 			pts[npts++] = center + w;
 		}
 		for (j = 0; j < n/2; ++j) {
 			int j2 = 2*j;
-			Float w = halfwidth * xgk[j2];
+			float w = halfwidth * xgk[j2];
 			pts[npts++] = center - w;
 			pts[npts++] = center + w;
 		}
@@ -1039,17 +1039,17 @@ static NDIntegrator::EResult rule15gauss_evalError(rule *r,
 
 	for (unsigned int k = 0; k < fdim; ++k) {
 		for (unsigned int iR = 0; iR < nR; ++iR) {
-			const Float halfwidth = R[iR].h.data[1];
-			Float result_gauss = vals[0] * wg[n/2 - 1];
-			Float result_kronrod = vals[0] * wgk[n - 1];
-			Float result_abs = std::abs(result_kronrod);
-			Float result_asc, mean, err;
+			const float halfwidth = R[iR].h.data[1];
+			float result_gauss = vals[0] * wg[n/2 - 1];
+			float result_kronrod = vals[0] * wgk[n - 1];
+			float result_abs = std::abs(result_kronrod);
+			float result_asc, mean, err;
 
 			/* accumulate integrals */
 			npts = 1;
 			for (j = 0; j < (n - 1) / 2; ++j) {
 				int j2 = 2*j + 1;
-				Float v = vals[npts] + vals[npts+1];
+				float v = vals[npts] + vals[npts+1];
 				result_gauss += wg[j] * v;
 				result_kronrod += wgk[j2] * v;
 				result_abs += wgk[j2] * (std::abs(vals[npts]) + std::abs(vals[npts+1]));
@@ -1088,14 +1088,14 @@ static NDIntegrator::EResult rule15gauss_evalError(rule *r,
 			result_asc *= halfwidth;
 			if (result_asc != 0 && err != 0) {
 				/* Recommended error estimate for the 7-15 G-K rule */
-				Float scale = std::pow((200 * err / result_asc), (Float) 1.5);
+				float scale = std::pow((200 * err / result_asc), (float) 1.5);
 				err = (scale < 1) ? result_asc * scale : result_asc;
 			}
 			#if 0
 				/* This seems a bit excessive (and creates problems for single
 				   precision code) */
-				if (result_abs > std::numeric_limits<Float>::min() / (50 * std::numeric_limits<Float>::epsilon())) {
-					Float min_err = 50 * std::numeric_limits<Float>::epsilon() * result_abs;
+				if (result_abs > std::numeric_limits<float>::min() / (50 * std::numeric_limits<float>::epsilon())) {
+					float min_err = 50 * std::numeric_limits<float>::epsilon() * result_abs;
 					if (min_err > err)
 						err = min_err;
 				}
@@ -1229,7 +1229,7 @@ static heap_item heap_pop(heap *h) {
 
 static NDIntegrator::EResult ruleadapt_integrate(rule *r, unsigned int fdim,
 		const VectorizedIntegrand & f, const hypercube *h, size_t maxEval,
-		Float reqAbsError, Float reqRelError, Float *val, Float *err, size_t &numEval, int parallel) {
+		float reqAbsError, float reqRelError, float *val, float *err, size_t &numEval, int parallel) {
 	heap regions;
 	unsigned int i, j;
 	region *R = NULL; /* array of regions to evaluate */
@@ -1346,9 +1346,9 @@ bad:
 }
 
 static NDIntegrator::EResult integrate(unsigned fdim, const VectorizedIntegrand & f,
-		     unsigned dim, const Float *xmin, const Float *xmax,
-		     size_t maxEval, Float reqAbsError, Float reqRelError,
-		     Float *val, Float *err, size_t &numEval, int parallel) {
+		     unsigned dim, const float *xmin, const float *xmax,
+		     size_t maxEval, float reqAbsError, float reqRelError,
+		     float *val, float *err, size_t &numEval, int parallel) {
 	NDIntegrator::EResult status;
 
 	numEval = 0;
@@ -1365,7 +1365,7 @@ static NDIntegrator::EResult integrate(unsigned fdim, const VectorizedIntegrand 
 	if (!r) {
 		for (unsigned int i = 0; i < fdim; ++i) {
 			val[i] = 0;
-			err[i] = std::numeric_limits<Float>::infinity();
+			err[i] = std::numeric_limits<float>::infinity();
 		}
 		return NDIntegrator::EFailure;
 	}
@@ -1383,14 +1383,14 @@ class VectorizationAdapter {
 public:
 	VectorizationAdapter(const NDIntegrator::Integrand &integrand, size_t fdim,
 			size_t dim) : m_integrand(integrand), m_fdim(fdim), m_dim(dim) {
-		m_temp = new Float[m_fdim];
+		m_temp = new float[m_fdim];
 	}
 
 	~VectorizationAdapter() {
 		delete[] m_temp;
 	}
 
-	void f(size_t nPt, const Float *in, Float *out) {
+	void f(size_t nPt, const float *in, float *out) {
 		for (size_t i = 0; i < nPt; ++i) {
 			m_integrand(in + i*m_dim, m_temp);
 	  		for (size_t k = 0; k < m_fdim; ++k)
@@ -1400,16 +1400,16 @@ public:
 private:
 	const NDIntegrator::Integrand &m_integrand;
 	size_t m_fdim, m_dim;
-	Float *m_temp;
+	float *m_temp;
 };
 
 NDIntegrator::NDIntegrator(size_t fDim, size_t dim,
-			size_t maxEvals, Float absError, Float relError)
+			size_t maxEvals, float absError, float relError)
  : m_fdim(fDim), m_dim(dim), m_maxEvals(maxEvals), m_absError(absError),
   m_relError(relError) { }
 
-NDIntegrator::EResult NDIntegrator::integrate(const Integrand &f, const Float *min,
-		const Float *max, Float *result, Float *error, size_t *_evals) const {
+NDIntegrator::EResult NDIntegrator::integrate(const Integrand &f, const float *min,
+		const float *max, float *result, float *error, size_t *_evals) const {
 	VectorizationAdapter adapter(f, m_fdim, m_dim);
 	size_t evals = 0;
 	EResult retval = mitsuba::integrate((unsigned int) m_fdim, boost::bind(
@@ -1420,8 +1420,8 @@ NDIntegrator::EResult NDIntegrator::integrate(const Integrand &f, const Float *m
 	return retval;
 }
 
-NDIntegrator::EResult NDIntegrator::integrateVectorized(const VectorizedIntegrand &f, const Float *min,
-		const Float *max, Float *result, Float *error, size_t *_evals) const {
+NDIntegrator::EResult NDIntegrator::integrateVectorized(const VectorizedIntegrand &f, const float *min,
+		const float *max, float *result, float *error, size_t *_evals) const {
 	size_t evals = 0;
 	EResult retval = mitsuba::integrate((unsigned int) m_fdim, f, (unsigned int) m_dim,
 		min, max, m_maxEvals, m_absError, m_relError, result, error, evals, true);

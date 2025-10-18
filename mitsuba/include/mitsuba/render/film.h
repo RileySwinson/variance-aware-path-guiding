@@ -52,16 +52,16 @@ public:
 	virtual void put(const ImageBlock *block) = 0;
 
 	/// Overwrite the film with the given bitmap and optionally multiply it by a scalar
-	virtual void setBitmap(const Bitmap *bitmap, Float multiplier = 1.0f) = 0;
+	virtual void setBitmap(const Bitmap *bitmap, float multiplier = 1.0f) = 0;
 
 	/// Accumulate a bitmap on top of the radiance values stored in the film
-	virtual void addBitmap(const Bitmap *bitmap, Float multiplier = 1.0f) = 0;
+	virtual void addBitmap(const Bitmap *bitmap, float multiplier = 1.0f) = 0;
 
 	/// Set the target filename (with or without extension)
 	virtual void setDestinationFile(const fs::path &filename, uint32_t blockSize) = 0;
 
 	/// Develop the film and write the result to the previously specified filename
-	virtual void develop(const Scene *scene, Float renderTime) = 0;
+	virtual void develop(const Scene *scene, float renderTime) = 0;
 
 	/**
 	 * \brief Develop the contents of a subregion of the film and store

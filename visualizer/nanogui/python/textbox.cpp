@@ -2,7 +2,7 @@
 
 #include "python.h"
 
-typedef FloatBox<double> DoubleBox;
+typedef floatBox<double> DoubleBox;
 typedef IntBox<int64_t> Int64Box;
 
 DECLARE_WIDGET(TextBox);
@@ -49,16 +49,16 @@ void register_textbox(py::module &m) {
         .def("setMaxValue", &Int64Box::setMaxValue, D(IntBox, setMaxValue))
         .def("setMinValue", &Int64Box::setMinMaxValues, D(IntBox, setMinMaxValues));
 
-    py::class_<DoubleBox, TextBox, ref<DoubleBox>, PyDoubleBox>(m, "FloatBox", D(FloatBox))
+    py::class_<DoubleBox, TextBox, ref<DoubleBox>, PyDoubleBox>(m, "floatBox", D(floatBox))
         .def(py::init<Widget *, double>(), py::arg("parent"), py::arg("value") = 0.0)
-        .def("value", &DoubleBox::value, D(FloatBox, value))
-        .def("setValue", (void (DoubleBox::*)(double)) &DoubleBox::setValue, D(FloatBox, setValue))
+        .def("value", &DoubleBox::value, D(floatBox, value))
+        .def("setValue", (void (DoubleBox::*)(double)) &DoubleBox::setValue, D(floatBox, setValue))
         .def("setCallback", (void (DoubleBox::*)(const std::function<void(double)>&))
-                &DoubleBox::setCallback, D(FloatBox, setCallback))
-        .def("setValueIncrement", &DoubleBox::setValueIncrement, D(FloatBox, setValueIncrement))
-        .def("setMinValue", &DoubleBox::setMinValue, D(FloatBox, setMinValue))
-        .def("setMaxValue", &DoubleBox::setMaxValue, D(FloatBox, setMaxValue))
-        .def("setMinValue", &DoubleBox::setMinMaxValues, D(FloatBox, setMinMaxValues));
+                &DoubleBox::setCallback, D(floatBox, setCallback))
+        .def("setValueIncrement", &DoubleBox::setValueIncrement, D(floatBox, setValueIncrement))
+        .def("setMinValue", &DoubleBox::setMinValue, D(floatBox, setMinValue))
+        .def("setMaxValue", &DoubleBox::setMaxValue, D(floatBox, setMaxValue))
+        .def("setMinValue", &DoubleBox::setMinMaxValues, D(floatBox, setMinMaxValues));
 }
 
 #endif

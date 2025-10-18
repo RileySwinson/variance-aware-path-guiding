@@ -57,7 +57,7 @@ public:
 	AABB getAABB() const;
 
 	/// Returns the surface area
-	Float getSurfaceArea() const;
+	float getSurfaceArea() const;
 
 	/// Return a pointer to the internal KD-tree
 	inline const ShapeKDTree *getKDTree() const { return m_kdtree.get(); }

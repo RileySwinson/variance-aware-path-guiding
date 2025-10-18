@@ -72,7 +72,7 @@ private:
 class OvertureProcess : public BlockedImageProcess {
 public:
 	OvertureProcess(const RenderJob *job, int resolution, bool gradients,
-		bool clampNeighbor, bool clampScreen, Float quality);
+		bool clampNeighbor, bool clampScreen, float quality);
 
 	inline const IrradianceRecordVector *getSamples() const {
 		return m_samples.get();
@@ -94,7 +94,7 @@ private:
 	ref<IrradianceRecordVector> m_samples;
 	int m_resolution;
 	bool m_gradients, m_clampNeighbor, m_clampScreen;
-	Float m_quality;
+	float m_quality;
 	ProgressReporter *m_progress;
 };
 

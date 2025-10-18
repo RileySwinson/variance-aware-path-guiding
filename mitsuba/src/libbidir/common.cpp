@@ -60,16 +60,16 @@ MutatorBase::MutatorBase() {
 	m_mediumDensityMultiplier = 100.0f;
 }
 
-Float MutatorBase::perturbMediumDistance(Sampler *sampler, const PathVertex *vertex) {
+float MutatorBase::perturbMediumDistance(Sampler *sampler, const PathVertex *vertex) {
 	if (vertex->isMediumInteraction()) {
 #if MTS_BD_MEDIUM_PERTURBATION_MONOCHROMATIC == 1
 		/* Monochromatic version */
 		const MediumSamplingRecord &mRec = vertex->getMediumSamplingRecord();
-		Float sigma = (mRec.sigmaA + mRec.sigmaS).average() * m_mediumDensityMultiplier;
+		float sigma = (mRec.sigmaA + mRec.sigmaS).average() * m_mediumDensityMultiplier;
 #else
 		const MediumSamplingRecord &mRec = vertex->getMediumSamplingRecord();
 		Spectrum sigmaT = (mRec.sigmaA + mRec.sigmaS) * m_mediumDensityMultiplier;
-		Float sigma = sigmaT[
+		float sigma = sigmaT[
 			std::min((int) (sampler->next1D() * SPECTRUM_SAMPLES), SPECTRUM_SAMPLES-1)];
 #endif
 		return (sampler->next1D() > .5 ? -1.0f : 1.0f) *
@@ -79,18 +79,18 @@ Float MutatorBase::perturbMediumDistance(Sampler *sampler, const PathVertex *ver
 	}
 }
 
-Float MutatorBase::pdfMediumPerturbation(const PathVertex *oldVertex,
+float MutatorBase::pdfMediumPerturbation(const PathVertex *oldVertex,
 		const PathEdge *oldEdge, const PathEdge *newEdge) const {
 	BDAssert(oldEdge->medium && newEdge->medium);
 	const MediumSamplingRecord &mRec = oldVertex->getMediumSamplingRecord();
 #if MTS_BD_MEDIUM_PERTURBATION_MONOCHROMATIC == 1
-	Float sigmaT = (mRec.sigmaA + mRec.sigmaS).average() * m_mediumDensityMultiplier;
-	Float diff = std::abs(oldEdge->length - newEdge->length);
+	float sigmaT = (mRec.sigmaA + mRec.sigmaS).average() * m_mediumDensityMultiplier;
+	float diff = std::abs(oldEdge->length - newEdge->length);
 	return 0.5f * sigmaT*math::fastexp(-sigmaT*diff);
 #else
 	Spectrum sigmaT = (mRec.sigmaA + mRec.sigmaS) * m_mediumDensityMultiplier;
-	Float diff = std::abs(oldEdge->length - newEdge->length);
-	Float sum = 0.0f;
+	float diff = std::abs(oldEdge->length - newEdge->length);
+	float sum = 0.0f;
 	for (int i=0; i<SPECTRUM_SAMPLES; ++i)
 		sum += sigmaT[i]*math::fastexp(-sigmaT[i]*diff);
 	return sum * (0.5f / SPECTRUM_SAMPLES);

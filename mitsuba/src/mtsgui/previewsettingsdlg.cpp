@@ -111,7 +111,7 @@ void PreviewSettingsDialog::on_resetButton_clicked() {
 }
 
 void PreviewSettingsDialog::on_keySlider_valueChanged(int value) {
-	emit reinhardKeyChanged((Float) ((value / 100.0f) * REINHARD_RANGE + REINHARD_MIN));
+	emit reinhardKeyChanged((float) ((value / 100.0f) * REINHARD_RANGE + REINHARD_MIN));
 
 }
 
@@ -144,18 +144,18 @@ void PreviewSettingsDialog::on_exposureSpinBox_valueChanged(double value) {
 	ui->exposureSlider->setValue(value * 100.0f);
 	m_ignoreEvent = false;
 	if (ui->toneMappingMethodCombo->currentIndex() == EGamma)
-		emit exposureChanged((Float) value);
+		emit exposureChanged((float) value);
 	else
-		emit reinhardBurnChanged((Float) value);
+		emit reinhardBurnChanged((float) value);
 }
 
 void PreviewSettingsDialog::on_gammaSpinBox_valueChanged(double value) {
-	emit gammaChanged(ui->sRGBCheckBox->checkState() == Qt::Checked, (Float) value);
+	emit gammaChanged(ui->sRGBCheckBox->checkState() == Qt::Checked, (float) value);
 }
 
 void PreviewSettingsDialog::on_sRGBCheckBox_stateChanged(int state) {
 	ui->gammaSpinBox->setEnabled(state == Qt::Unchecked);
-	emit gammaChanged(state == Qt::Checked, (Float) ui->gammaSpinBox->value());
+	emit gammaChanged(state == Qt::Checked, (float) ui->gammaSpinBox->value());
 }
 
 void PreviewSettingsDialog::on_diffuseReceiversBox_stateChanged(int state) {

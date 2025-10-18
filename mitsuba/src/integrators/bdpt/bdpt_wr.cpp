@@ -90,7 +90,7 @@ void BDPTWorkResult::clear() {
    the individual sampling strategies to a series of images */
 void BDPTWorkResult::dump(const BDPTConfiguration &conf,
 		const fs::path &prefix, const fs::path &stem) const {
-	Float weight = (Float) 1.0f / (Float) conf.sampleCount;
+	float weight = (float) 1.0f / (float) conf.sampleCount;
 	for (int k = 1; k<=conf.maxDepth; ++k) {
 		for (int t=0; t<=k+1; ++t) {
 			size_t s = k+1-t;

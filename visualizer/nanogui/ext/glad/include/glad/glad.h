@@ -292,7 +292,7 @@ typedef GLintptr GLvdpauSurfaceNV;
 #define GL_UNSIGNED_SHORT 0x1403
 #define GL_INT 0x1404
 #define GL_UNSIGNED_INT 0x1405
-#define GL_FLOAT 0x1406
+#define GL_float 0x1406
 #define GL_DOUBLE 0x140A
 #define GL_CLEAR 0x1500
 #define GL_AND 0x1501
@@ -545,13 +545,13 @@ typedef GLintptr GLvdpauSurfaceNV;
 #define GL_VERTEX_SHADER 0x8B31
 #define GL_MAX_FRAGMENT_UNIFORM_COMPONENTS 0x8B49
 #define GL_MAX_VERTEX_UNIFORM_COMPONENTS 0x8B4A
-#define GL_MAX_VARYING_FLOATS 0x8B4B
+#define GL_MAX_VARYING_floatS 0x8B4B
 #define GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS 0x8B4C
 #define GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS 0x8B4D
 #define GL_SHADER_TYPE 0x8B4F
-#define GL_FLOAT_VEC2 0x8B50
-#define GL_FLOAT_VEC3 0x8B51
-#define GL_FLOAT_VEC4 0x8B52
+#define GL_float_VEC2 0x8B50
+#define GL_float_VEC3 0x8B51
+#define GL_float_VEC4 0x8B52
 #define GL_INT_VEC2 0x8B53
 #define GL_INT_VEC3 0x8B54
 #define GL_INT_VEC4 0x8B55
@@ -559,9 +559,9 @@ typedef GLintptr GLvdpauSurfaceNV;
 #define GL_BOOL_VEC2 0x8B57
 #define GL_BOOL_VEC3 0x8B58
 #define GL_BOOL_VEC4 0x8B59
-#define GL_FLOAT_MAT2 0x8B5A
-#define GL_FLOAT_MAT3 0x8B5B
-#define GL_FLOAT_MAT4 0x8B5C
+#define GL_float_MAT2 0x8B5A
+#define GL_float_MAT3 0x8B5B
+#define GL_float_MAT4 0x8B5C
 #define GL_SAMPLER_1D 0x8B5D
 #define GL_SAMPLER_2D 0x8B5E
 #define GL_SAMPLER_3D 0x8B5F
@@ -592,12 +592,12 @@ typedef GLintptr GLvdpauSurfaceNV;
 #define GL_PIXEL_UNPACK_BUFFER 0x88EC
 #define GL_PIXEL_PACK_BUFFER_BINDING 0x88ED
 #define GL_PIXEL_UNPACK_BUFFER_BINDING 0x88EF
-#define GL_FLOAT_MAT2x3 0x8B65
-#define GL_FLOAT_MAT2x4 0x8B66
-#define GL_FLOAT_MAT3x2 0x8B67
-#define GL_FLOAT_MAT3x4 0x8B68
-#define GL_FLOAT_MAT4x2 0x8B69
-#define GL_FLOAT_MAT4x3 0x8B6A
+#define GL_float_MAT2x3 0x8B65
+#define GL_float_MAT2x4 0x8B66
+#define GL_float_MAT3x2 0x8B67
+#define GL_float_MAT3x4 0x8B68
+#define GL_float_MAT4x2 0x8B69
+#define GL_float_MAT4x3 0x8B6A
 #define GL_SRGB 0x8C40
 #define GL_SRGB8 0x8C41
 #define GL_SRGB_ALPHA 0x8C42
@@ -706,7 +706,7 @@ typedef GLintptr GLvdpauSurfaceNV;
 #define GL_BUFFER_MAP_OFFSET 0x9121
 #define GL_DEPTH_COMPONENT32F 0x8CAC
 #define GL_DEPTH32F_STENCIL8 0x8CAD
-#define GL_FLOAT_32_UNSIGNED_INT_24_8_REV 0x8DAD
+#define GL_float_32_UNSIGNED_INT_24_8_REV 0x8DAD
 #define GL_INVALID_FRAMEBUFFER_OPERATION 0x0506
 #define GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING 0x8210
 #define GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE 0x8211
@@ -802,7 +802,7 @@ typedef GLintptr GLvdpauSurfaceNV;
 #define GL_MAX_SAMPLES 0x8D57
 #define GL_INDEX 0x8222
 #define GL_FRAMEBUFFER_SRGB 0x8DB9
-#define GL_HALF_FLOAT 0x140B
+#define GL_HALF_float 0x140B
 #define GL_MAP_READ_BIT 0x0001
 #define GL_MAP_WRITE_BIT 0x0002
 #define GL_MAP_INVALIDATE_RANGE_BIT 0x0004
@@ -1091,9 +1091,9 @@ GLAPI PFNGLGETDOUBLEVPROC glad_glGetDoublev;
 typedef GLenum (APIENTRYP PFNGLGETERRORPROC)();
 GLAPI PFNGLGETERRORPROC glad_glGetError;
 #define glGetError glad_glGetError
-typedef void (APIENTRYP PFNGLGETFLOATVPROC)(GLenum pname, GLfloat* data);
-GLAPI PFNGLGETFLOATVPROC glad_glGetFloatv;
-#define glGetFloatv glad_glGetFloatv
+typedef void (APIENTRYP PFNGLGETfloatVPROC)(GLenum pname, GLfloat* data);
+GLAPI PFNGLGETfloatVPROC glad_glGetfloatv;
+#define glGetfloatv glad_glGetfloatv
 typedef void (APIENTRYP PFNGLGETINTEGERVPROC)(GLenum pname, GLint* data);
 GLAPI PFNGLGETINTEGERVPROC glad_glGetIntegerv;
 #define glGetIntegerv glad_glGetIntegerv

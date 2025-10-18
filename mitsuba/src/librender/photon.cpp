@@ -20,22 +20,22 @@
 
 MTS_NAMESPACE_BEGIN
 
-Float Photon::m_cosTheta[256];
-Float Photon::m_sinTheta[256];
-Float Photon::m_cosPhi[256];
-Float Photon::m_sinPhi[256];
-Float Photon::m_expTable[256];
+float Photon::m_cosTheta[256];
+float Photon::m_sinTheta[256];
+float Photon::m_cosPhi[256];
+float Photon::m_sinPhi[256];
+float Photon::m_expTable[256];
 
 bool Photon::m_precompTableReady = Photon::createPrecompTables();
 
 bool Photon::createPrecompTables() {
 	for (int i=0; i<256; i++) {
-		Float angle = (Float) i * ((Float) M_PI / 256.0f);
+		float angle = (float) i * ((float) M_PI / 256.0f);
 		m_cosPhi[i] = std::cos(2.0f * angle);
 		m_sinPhi[i] = std::sin(2.0f * angle);
 		m_cosTheta[i] = std::cos(angle);
 		m_sinTheta[i] = std::sin(angle);
-		m_expTable[i] = std::ldexp((Float) 1, i - (128+8));
+		m_expTable[i] = std::ldexp((float) 1, i - (128+8));
 	}
 	m_expTable[0] = 0;
 

@@ -43,7 +43,7 @@ public:
 		}
 	}
 
-    void logProgress(Float progress, const std::string &name,
+    void logProgress(float progress, const std::string &name,
 		const std::string &formatted, const std::string &eta,
 		const void *ptr) {
 		emit progressMessage((RenderJob *) ptr,
@@ -55,7 +55,7 @@ public:
 		++m_messageCount;
 		int ms = m_timer->getMilliseconds();
 		if (ms > 1000) {
-			Float messagesPerSecond = m_messageCount / (ms / 1000.0f);
+			float messagesPerSecond = m_messageCount / (ms / 1000.0f);
 			if (messagesPerSecond > 1000) {
 				emit textMessage(EError,
 						QString("Flood alert: received %1 messages in %2 ms! Ignoring "

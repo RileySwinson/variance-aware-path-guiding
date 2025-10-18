@@ -239,7 +239,7 @@ namespace internal {                                                            
 }
 
 EIGEN_GL_FUNC1_DECLARATION       (glGet,GLenum,_)
-EIGEN_GL_FUNC1_SPECIALIZATION_MAT(glGet,GLenum,_,float,  4,4,Floatv)
+EIGEN_GL_FUNC1_SPECIALIZATION_MAT(glGet,GLenum,_,float,  4,4,floatv)
 EIGEN_GL_FUNC1_SPECIALIZATION_MAT(glGet,GLenum,_,double, 4,4,Doublev)
 
 // glUniform API

@@ -85,7 +85,7 @@ public:
 		m_pool = &m_pathSampler->getMemoryPool();
 
 		/* Jump sizes recommended by Eric Veach */
-		Float minJump = 0.1f, coveredArea = 0.05f;
+		float minJump = 0.1f, coveredArea = 0.05f;
 
 		/* Register all available mutators */
 		if (m_config.bidirectionalMutation)
@@ -131,7 +131,7 @@ public:
 		ref<Timer> timer = new Timer();
 
 		size_t consecRejections = 0;
-		Float accumulatedWeight = 0;
+		float accumulatedWeight = 0;
 
 		#if defined(MTS_DEBUG_FP)
 			enableFPExceptions();
@@ -197,21 +197,21 @@ public:
 
 			statsAccepted.incrementBase(1);
 			if (success) {
-				Float Qxy = mutator->Q(*current, *proposed, muRec) * suitabilities[mutatorIdx];
+				float Qxy = mutator->Q(*current, *proposed, muRec) * suitabilities[mutatorIdx];
 				suitabilities.clear();
 				for (size_t j=0; j<m_mutators.size(); ++j)
 					suitabilities.append(m_mutators[j]->suitability(*proposed));
 				suitabilities.normalize();
-				Float Qyx = mutator->Q(*proposed, *current, muRec.reverse()) * suitabilities[mutatorIdx];
+				float Qyx = mutator->Q(*proposed, *current, muRec.reverse()) * suitabilities[mutatorIdx];
 
-				Float a;
+				float a;
 				if (!m_config.importanceMap) {
 					if(Qxy > RCPOVERFLOW)
-					a = std::min((Float) 1, Qyx / Qxy);
+					a = std::min((float) 1, Qyx / Qxy);
 					else
 						a = 0.f;
 				} else {
-					const Float *luminanceValues = m_config.importanceMap->getFloatData();
+					const float *luminanceValues = m_config.importanceMap->getfloatData();
 					const Point2 &curPos = current->getSamplePosition();
 					const Point2 &propPos = proposed->getSamplePosition();
 					Vector2i size = m_config.importanceMap->getSize();
@@ -222,10 +222,10 @@ public:
 						std::min(std::max(0, (int) propPos.x), size.x-1),
 						std::min(std::max(0, (int) propPos.y), size.y-1));
 
-					Float curValue = luminanceValues[curPosI.x + curPosI.y * size.x];
-					Float propValue = luminanceValues[propPosI.x + propPosI.y * size.x];
+					float curValue = luminanceValues[curPosI.x + curPosI.y * size.x];
+					float propValue = luminanceValues[propPosI.x + propPosI.y * size.x];
 
-					a = std::min((Float) 1, (Qyx * curValue) / (Qxy * propValue));
+					a = std::min((float) 1, (Qyx * curValue) / (Qxy * propValue));
 				}
 
 				#if defined(MTS_BD_DEBUG_HEAVY)
@@ -347,12 +347,12 @@ void MLTProcess::develop() {
 	const Spectrum *accum = (Spectrum *) m_accum->getBitmap()->getData();
 	const Spectrum *direct = m_directImage != NULL ?
 		(Spectrum *) m_directImage->getData() : NULL;
-	const Float *importanceMap = m_config.importanceMap != NULL ?
-			m_config.importanceMap->getFloatData() : NULL;
+	const float *importanceMap = m_config.importanceMap != NULL ?
+			m_config.importanceMap->getfloatData() : NULL;
 	Spectrum *target = (Spectrum *) m_developBuffer->getData();
 
 	/* Compute the luminance correction factor */
-	Float avgLuminance = 0;
+	float avgLuminance = 0;
 	if (importanceMap) {
 		for (size_t i=0; i<pixelCount; ++i)
 			avgLuminance += accum[i].getLuminance() * importanceMap[i];
@@ -361,11 +361,11 @@ void MLTProcess::develop() {
 			avgLuminance += accum[i].getLuminance();
 	}
 
-	avgLuminance /= (Float) pixelCount;
-	Float luminanceFactor = m_config.luminance / avgLuminance;
+	avgLuminance /= (float) pixelCount;
+	float luminanceFactor = m_config.luminance / avgLuminance;
 
 	for (size_t i=0; i<pixelCount; ++i) {
-		Float correction = luminanceFactor;
+		float correction = luminanceFactor;
 		if (importanceMap)
 			correction *= importanceMap[i];
 		Spectrum value = accum[i] * correction;
@@ -419,7 +419,7 @@ void MLTProcess::bindResource(const std::string &name, int id) {
 		m_progress = new ProgressReporter("Rendering", m_config.workUnits, m_job);
 		m_accum = new ImageBlock(Bitmap::ESpectrum, m_film->getCropSize());
 		m_accum->clear();
-		m_developBuffer = new Bitmap(Bitmap::ESpectrum, Bitmap::EFloat, m_film->getCropSize());
+		m_developBuffer = new Bitmap(Bitmap::ESpectrum, Bitmap::Efloat, m_film->getCropSize());
 	}
 }
 

@@ -46,7 +46,7 @@ template <typename _PointType, typename _VectorType> struct TRay {
 	VectorType d;    ///< Ray direction
 	Scalar maxt;     ///< Maximum range for intersection tests
 	VectorType dRcp; ///< Componentwise reciprocals of the ray direction
-	Float time;  ///< Time value associated with this ray
+	float time;  ///< Time value associated with this ray
 
 	/// Construct a new ray
 	inline TRay() : mint(Epsilon),
@@ -146,7 +146,7 @@ struct RayDifferential : public Ray {
 		: hasDifferentials(false) {
 	}
 
-	inline RayDifferential(const Point &p, const Vector &d, Float time)
+	inline RayDifferential(const Point &p, const Vector &d, float time)
 		: Ray(p, d, time), hasDifferentials(false) {
 	}
 
@@ -160,7 +160,7 @@ struct RayDifferential : public Ray {
 		  hasDifferentials(ray.hasDifferentials) {
 	}
 
-	void scaleDifferential(Float amount) {
+	void scaleDifferential(float amount) {
 		rxOrigin = o + (rxOrigin - o) * amount;
 		ryOrigin = o + (ryOrigin - o) * amount;
 		rxDirection = d + (rxDirection - d) * amount;

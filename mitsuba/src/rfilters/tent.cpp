@@ -39,8 +39,8 @@ public:
 		configure();
 	}
 
-	Float eval(Float x) const {
-		return std::max((Float) 0.0f, 1.0f - std::abs(x / m_radius));
+	float eval(float x) const {
+		return std::max((float) 0.0f, 1.0f - std::abs(x / m_radius));
 	}
 
 	std::string toString() const {

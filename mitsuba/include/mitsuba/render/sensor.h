@@ -143,7 +143,7 @@ public:
 	virtual Spectrum sampleRay(Ray &ray,
 		const Point2 &samplePosition,
 		const Point2 &apertureSample,
-		Float timeSample) const = 0;
+		float timeSample) const = 0;
 
 	/**
 	 * \brief Importance sample a ray differential according to the
@@ -195,10 +195,10 @@ public:
 	virtual Spectrum sampleRayDifferential(RayDifferential &ray,
 		const Point2 &samplePosition,
 		const Point2 &apertureSample,
-		Float timeSample) const;
+		float timeSample) const;
 
 	/// Importance sample the temporal part of the sensor response function
-	inline Float sampleTime(Float sample) const {
+	inline float sampleTime(float sample) const {
 		return m_shutterOpen + m_shutterOpenTime * sample;
 	}
 
@@ -269,19 +269,19 @@ public:
 	 * \brief Evaluate the temporal component of the sampling density
 	 * implemented by the \ref sampleRay() method.
 	 */
-	Float pdfTime(const Ray &ray, EMeasure measure) const;
+	float pdfTime(const Ray &ray, EMeasure measure) const;
 
 	/// Return the time value of the shutter opening event
-	inline Float getShutterOpen() const { return m_shutterOpen; }
+	inline float getShutterOpen() const { return m_shutterOpen; }
 
 	/// Set the time value of the shutter opening event
-	void setShutterOpen(Float time) { m_shutterOpen = time; }
+	void setShutterOpen(float time) { m_shutterOpen = time; }
 
 	/// Return the length, for which the shutter remains open
-	inline Float getShutterOpenTime() const { return m_shutterOpenTime; }
+	inline float getShutterOpenTime() const { return m_shutterOpenTime; }
 
 	/// Set the length, for which the shutter remains open
-	void setShutterOpenTime(Float time);
+	void setShutterOpenTime(float time);
 
 	/**
 	 * \brief Does the method \ref sampleRay() require a uniformly distributed
@@ -309,7 +309,7 @@ public:
 	inline const Film *getFilm() const { return m_film.get(); }
 
 	/// Return the aspect ratio of the sensor and its underlying film
-	inline Float getAspect() const { return m_aspect; }
+	inline float getAspect() const { return m_aspect; }
 
 	/**
 	 * \brief Return the sensor's sample generator
@@ -369,9 +369,9 @@ protected:
 	ref<Sampler> m_sampler;
 	Vector2 m_resolution;
 	Vector2 m_invResolution;
-	Float m_shutterOpen;
-	Float m_shutterOpenTime;
-	Float m_aspect;
+	float m_shutterOpen;
+	float m_shutterOpenTime;
+	float m_aspect;
 };
 
 /**
@@ -395,12 +395,12 @@ public:
 	using Sensor::getWorldTransform;
 
 	/// Return the world-to-view (aka "view") transformation at time \c t
-	inline const Transform getViewTransform(Float t) const {
+	inline const Transform getViewTransform(float t) const {
 		return getWorldTransform()->eval(t).inverse();
 	}
 
 	/// Return the view-to-world transformation at time \c t
-	inline const Transform getWorldTransform(Float t) const {
+	inline const Transform getWorldTransform(float t) const {
 		return getWorldTransform()->eval(t);
 	}
 
@@ -440,22 +440,22 @@ public:
 	virtual void serialize(Stream *stream, InstanceManager *manager) const;
 
 	/// Return the near clip plane distance
-	inline Float getNearClip() const { return m_nearClip; }
+	inline float getNearClip() const { return m_nearClip; }
 
 	/// Set the near clip plane distance
-	void setNearClip(Float nearClip);
+	void setNearClip(float nearClip);
 
 	/// Return the far clip plane distance
-	inline Float getFarClip() const { return m_farClip; }
+	inline float getFarClip() const { return m_farClip; }
 
 	/// Set the far clip plane distance
-	void setFarClip(Float farClip);
+	void setFarClip(float farClip);
 
 	/// Return the distance to the focal plane
-	inline Float getFocusDistance() const { return m_focusDistance; }
+	inline float getFocusDistance() const { return m_focusDistance; }
 
 	/// Set the distance to the focal plane
-	void setFocusDistance(Float focusDistance);
+	void setFocusDistance(float focusDistance);
 
 	MTS_DECLARE_CLASS()
 protected:
@@ -468,9 +468,9 @@ protected:
 	/// Virtual destructor
 	virtual ~ProjectiveCamera();
 protected:
-	Float m_nearClip;
-	Float m_farClip;
-	Float m_focusDistance;
+	float m_nearClip;
+	float m_farClip;
+	float m_focusDistance;
 };
 
 /**
@@ -496,22 +496,22 @@ public:
 	// =============================================================
 
 	/// Return the horizontal field of view in degrees
-	inline Float getXFov() const { return m_xfov; }
+	inline float getXFov() const { return m_xfov; }
 
 	/// Set the horizontal field of view in degrees
-	void setXFov(Float xfov);
+	void setXFov(float xfov);
 
 	/// Return the vertical field of view in degrees
-	Float getYFov() const;
+	float getYFov() const;
 
 	/// Set the vertical field of view in degrees
-	void setYFov(Float yfov);
+	void setYFov(float yfov);
 
 	/// Return the diagonal field of view in degrees
-	Float getDiagonalFov() const;
+	float getDiagonalFov() const;
 
 	/// Set the diagonal field of view in degrees
-	void setDiagonalFov(Float dfov);
+	void setDiagonalFov(float dfov);
 
 	//! @}
 	// =============================================================
@@ -534,7 +534,7 @@ protected:
 	/// Virtual destructor
 	virtual ~PerspectiveCamera();
 protected:
-	Float m_xfov;
+	float m_xfov;
 };
 
 MTS_NAMESPACE_END

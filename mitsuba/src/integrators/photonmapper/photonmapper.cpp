@@ -39,8 +39,8 @@ MTS_NAMESPACE_BEGIN
  *     \parameter{globalPhotons}{\Integer}{Number of photons that will be collected for the global photon map\default{250000}}
  *     \parameter{causticPhotons}{\Integer}{Number of photons that will be collected for the caustic photon map\default{250000}}
  *     \parameter{volumePhotons}{\Integer}{Number of photons that will be collected for the volumetric photon map\default{250000}}
- *     \parameter{globalLookup\showbreak Radius}{\Float}{Maximum radius of photon lookups in the global photon map (relative to the scene size)\default{0.05}}
- *     \parameter{causticLookup\showbreak Radius}{\Float}{Maximum radius of photon lookups in the caustic photon map (relative to the scene size)\default{0.0125}}
+ *     \parameter{globalLookup\showbreak Radius}{\float}{Maximum radius of photon lookups in the global photon map (relative to the scene size)\default{0.05}}
+ *     \parameter{causticLookup\showbreak Radius}{\float}{Maximum radius of photon lookups in the caustic photon map (relative to the scene size)\default{0.0125}}
  *     \parameter{lookupSize}{\Integer}{Number of photons that should be fetched in photon map queries\default{120}}
  *     \parameter{granularity}{\Integer}{
  *		Granularity of photon tracing work units for the purpose
@@ -116,9 +116,9 @@ public:
 		/* Number of photons to collect for the volumetric photon map */
 		m_volumePhotons = props.getSize("volumePhotons", 250000);
 		/* Max. radius of lookups in the global photon map (relative to the scene size) */
-		m_globalLookupRadiusRel = props.getFloat("globalLookupRadius", 0.05f);
+		m_globalLookupRadiusRel = props.getfloat("globalLookupRadius", 0.05f);
 		/* Max. radius of lookups in the caustic photon map (relative to the scene size) */
-		m_causticLookupRadiusRel = props.getFloat("causticLookupRadius", 0.0125f);
+		m_causticLookupRadiusRel = props.getfloat("causticLookupRadius", 0.0125f);
 		/* Minimum amount of photons to consider a photon map lookup valid */
 		int lookupSize = props.getInteger("lookupSize", 120);
 		/* Minimum amount of photons to consider a volumetric photon map lookup valid */
@@ -160,8 +160,8 @@ public:
 		m_globalPhotons = stream->readSize();
 		m_causticPhotons = stream->readSize();
 		m_volumePhotons = stream->readSize();
-		m_globalLookupRadius = stream->readFloat();
-		m_causticLookupRadius = stream->readFloat();
+		m_globalLookupRadius = stream->readfloat();
+		m_causticLookupRadius = stream->readfloat();
 		m_globalLookupSize = stream->readInt();
 		m_causticLookupSize = stream->readInt();
 		m_volumeLookupSize = stream->readInt();
@@ -192,8 +192,8 @@ public:
 		stream->writeSize(m_globalPhotons);
 		stream->writeSize(m_causticPhotons);
 		stream->writeSize(m_volumePhotons);
-		stream->writeFloat(m_globalLookupRadius);
-		stream->writeFloat(m_causticLookupRadius);
+		stream->writefloat(m_globalLookupRadius);
+		stream->writefloat(m_causticLookupRadius);
 		stream->writeInt(m_globalLookupSize);
 		stream->writeInt(m_causticLookupSize);
 		stream->writeInt(m_volumeLookupSize);
@@ -277,7 +277,7 @@ public:
 					SIZE_T_FMT, proc->getShotParticles(), proc->getExcessPhotons());
 
 				m_globalPhotonMap = globalPhotonMap;
-				m_globalPhotonMap->setScaleFactor(1 / (Float) proc->getShotParticles());
+				m_globalPhotonMap->setScaleFactor(1 / (float) proc->getShotParticles());
 				m_globalPhotonMap->build();
 				m_globalPhotonMapID = sched->registerResource(m_globalPhotonMap);
 			}
@@ -308,7 +308,7 @@ public:
 					SIZE_T_FMT, proc->getShotParticles(), proc->getExcessPhotons());
 
 				m_causticPhotonMap = causticPhotonMap;
-				m_causticPhotonMap->setScaleFactor(1 / (Float) proc->getShotParticles());
+				m_causticPhotonMap->setScaleFactor(1 / (float) proc->getShotParticles());
 				m_causticPhotonMap->build();
 				m_causticPhotonMapID = sched->registerResource(m_causticPhotonMap);
 			}
@@ -339,7 +339,7 @@ public:
 				Log(EDebug, "Volume photon map full. Shot " SIZE_T_FMT " particles, excess photons due to parallelism: "
 					SIZE_T_FMT, proc->getShotParticles(), proc->getExcessPhotons());
 
-				volumePhotonMap->setScaleFactor(1 / (Float) proc->getShotParticles());
+				volumePhotonMap->setScaleFactor(1 / (float) proc->getShotParticles());
 				volumePhotonMap->build();
 				m_bre = new BeamRadianceEstimator(volumePhotonMap, m_volumeLookupSize);
 				m_breID = sched->registerResource(m_bre);
@@ -485,7 +485,7 @@ public:
 
 		/* Estimate the direct illumination if this is requested */
 		int numEmitterSamples = m_directSamples, numBSDFSamples;
-		Float weightLum, weightBSDF;
+		float weightLum, weightBSDF;
 		Point2 *sampleArray;
 		Point2 sample;
 
@@ -537,13 +537,13 @@ public:
 						if (!hasSpecular || exhaustiveSpecular)
 							bRec.typeMask = BSDF::ESmooth;
 
-						Float bsdfPdf = (emitter->isOnSurface()
+						float bsdfPdf = (emitter->isOnSurface()
 								&& dRec.measure == ESolidAngle
 								&& interactions == 0)
-								? bsdf->pdf(bRec) : (Float) 0.0f;
+								? bsdf->pdf(bRec) : (float) 0.0f;
 
 						/* Weight using the power heuristic */
-						const Float weight = miWeight(dRec.pdf * numEmitterSamples,
+						const float weight = miWeight(dRec.pdf * numEmitterSamples,
 								bsdfPdf * numBSDFSamples) * weightLum;
 
 						LiSurf += value * bsdfVal * weight;
@@ -587,7 +587,7 @@ public:
 				if (!hasSpecular || exhaustiveSpecular)
 					bRec.typeMask = BSDF::ESmooth;
 
-				Float bsdfPdf;
+				float bsdfPdf;
 				Spectrum bsdfVal = bsdf->sample(bRec, bsdfPdf, sampleArray[i]);
 				if (bsdfVal.isZero())
 					continue;
@@ -616,12 +616,12 @@ public:
 				}
 
 				if (hitEmitter) {
-					const Float emitterPdf = scene->pdfEmitterDirect(dRec);
+					const float emitterPdf = scene->pdfEmitterDirect(dRec);
 
 					Spectrum transmittance = rRec2.medium ?
 						rRec2.medium->evalTransmittance(Ray(bsdfRay, 0, bsdfIts.t)) : Spectrum(1.0f);
 
-					const Float weight = miWeight(bsdfPdf * numBSDFSamples,
+					const float weight = miWeight(bsdfPdf * numBSDFSamples,
 						emitterPdf * numEmitterSamples) * weightBSDF;
 
 					LiSurf += value * bsdfVal * weight * transmittance;
@@ -665,7 +665,7 @@ public:
 		return oss.str();
 	}
 
-	inline Float miWeight(Float pdfA, Float pdfB) const {
+	inline float miWeight(float pdfA, float pdfB) const {
 		pdfA *= pdfA; pdfB *= pdfB;
 		return pdfA / (pdfA + pdfB);
 	}
@@ -681,9 +681,9 @@ private:
 	int m_globalPhotonMapID, m_causticPhotonMapID, m_breID;
 	size_t m_globalPhotons, m_causticPhotons, m_volumePhotons;
 	int m_globalLookupSize, m_causticLookupSize, m_volumeLookupSize;
-	Float m_globalLookupRadiusRel, m_globalLookupRadius;
-	Float m_causticLookupRadiusRel, m_causticLookupRadius;
-	Float m_invEmitterSamples, m_invGlossySamples;
+	float m_globalLookupRadiusRel, m_globalLookupRadius;
+	float m_causticLookupRadiusRel, m_causticLookupRadius;
+	float m_invEmitterSamples, m_invGlossySamples;
 	int m_granularity, m_directSamples, m_glossySamples;
 	int m_rrDepth, m_maxDepth, m_maxSpecularDepth;
 	bool m_gatherLocally, m_autoCancelGathering;

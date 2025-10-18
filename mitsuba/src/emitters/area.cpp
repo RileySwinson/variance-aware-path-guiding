@@ -32,7 +32,7 @@ MTS_NAMESPACE_BEGIN
  *         Specifies the emitted radiance in units of
  *         power per unit area per unit steradian.
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -108,7 +108,7 @@ public:
 			return m_radiance;
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return m_shape->pdfPosition(pRec);
 	}
 
@@ -124,7 +124,7 @@ public:
 
 	Spectrum evalDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
-		Float dp = dot(dRec.d, pRec.n);
+		float dp = dot(dRec.d, pRec.n);
 
 		if (dRec.measure != ESolidAngle || dp < 0)
 			dp = 0.0f;
@@ -132,9 +132,9 @@ public:
 		return Spectrum(INV_PI * dp);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
-		Float dp = dot(dRec.d, pRec.n);
+		float dp = dot(dRec.d, pRec.n);
 
 		if (dRec.measure != ESolidAngle || dp < 0)
 			dp = 0.0f;
@@ -145,7 +145,7 @@ public:
 	Spectrum sampleRay(Ray &ray,
 			const Point2 &spatialSample,
 			const Point2 &directionalSample,
-			Float time) const {
+			float time) const {
 		PositionSamplingRecord pRec(time);
 		m_shape->samplePosition(pRec, spatialSample);
 		Vector local = warp::squareToCosineHemisphere(directionalSample);
@@ -172,7 +172,7 @@ public:
 		}
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		/* Check that the emitter and receiver are oriented correctly
 		   with respect to each other. */
 		if (dot(dRec.d, dRec.refN) >= 0 && dot(dRec.d, dRec.n) < 0) {

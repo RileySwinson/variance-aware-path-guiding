@@ -72,7 +72,7 @@ void StreamAppender::append(ELogLevel level, const std::string &text) {
 	m_lastMessageWasProgress = false;
 }
 
-void StreamAppender::logProgress(Float progress, const std::string &name,
+void StreamAppender::logProgress(float progress, const std::string &name,
 	const std::string &formatted, const std::string &eta, const void *ptr) {
 	if (!m_isFile) {
 		(*m_stream) << formatted;
@@ -119,7 +119,7 @@ void UnbufferedAppender::append(ELogLevel level, const std::string &text) {
 #endif
 }
 
-void UnbufferedAppender::logProgress(Float progress, const std::string &name,
+void UnbufferedAppender::logProgress(float progress, const std::string &name,
 	const std::string &formatted, const std::string &eta, const void *ptr) {
 	/* Ignore */
 }

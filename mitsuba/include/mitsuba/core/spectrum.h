@@ -54,7 +54,7 @@ public:
 	 *
 	 * \param lambda  A wavelength in nanometers
 	 */
-	virtual Float eval(Float lambda) const = 0;
+	virtual float eval(float lambda) const = 0;
 
 	/**
 	 * \brief Integrate the spectral power distribution
@@ -72,7 +72,7 @@ public:
 	 * \remark If \c lambdaMin >= \c lambdaMax, the
 	 *     implementation will return zero.
 	 */
-	virtual Float average(Float lambdaMin, Float lambdaMax) const;
+	virtual float average(float lambdaMin, float lambdaMax) const;
 
 	/// \brief Return a string representation
 	virtual std::string toString() const = 0;
@@ -95,7 +95,7 @@ public:
 	 * \brief Construct a new black body spectrum given the emitter's
 	 * temperature in Kelvin.
 	 */
-	inline BlackBodySpectrum(Float temperature) {
+	inline BlackBodySpectrum(float temperature) {
 		m_temperature = temperature;
 	}
 
@@ -107,12 +107,12 @@ public:
 	 * The units are Watts per unit surface area (m^-2)
 	 * per unit wavelength (nm^-1) per steradian (sr^-1)
 	 */
-	virtual Float eval(Float lambda) const;
+	virtual float eval(float lambda) const;
 
 	/// Return a string representation
 	std::string toString() const;
 private:
-	Float m_temperature;
+	float m_temperature;
 };
 
 /**
@@ -142,7 +142,7 @@ public:
 	 * \param eta         Refractive index of the medium (e.g. air)
 	 * \param height      Height above sea level (in meters)
 	 */
-	RayleighSpectrum(EMode mode, Float eta = 1.000277f, Float height = 0);
+	RayleighSpectrum(EMode mode, float eta = 1.000277f, float height = 0);
 
 	virtual ~RayleighSpectrum() { }
 
@@ -151,12 +151,12 @@ public:
 	 *
 	 * The returned value is in units of 1/meter.
 	 */
-	virtual Float eval(Float lambda) const;
+	virtual float eval(float lambda) const;
 
 	/// Return a string representation
 	std::string toString() const;
 private:
-	Float m_precomp;
+	float m_precomp;
 };
 
 /**
@@ -175,7 +175,7 @@ public:
 	/** \brief Return the value of the spectral power distribution
 	 * at the given wavelength.
 	 */
-	virtual Float eval(Float lambda) const;
+	virtual float eval(float lambda) const;
 
 	/// Virtual destructor
 	virtual ~ProductSpectrum() { }
@@ -212,8 +212,8 @@ public:
 	 * \brief Create a interpolated spectrum instance from
 	 * a float array
 	 */
-	InterpolatedSpectrum(const Float *wavelengths,
-		const Float *values, size_t nEntries);
+	InterpolatedSpectrum(const float *wavelengths,
+		const float *values, size_t nEntries);
 
 	/**
 	 * \brief Read an interpolated spectrum from a simple
@@ -232,7 +232,7 @@ public:
 	 *
 	 * Entries must be added in order of increasing wavelength
 	 */
-	void append(Float lambda, Float value);
+	void append(float lambda, float value);
 
 	/**
 	 * \brief This function adds a zero entry before and after
@@ -252,7 +252,7 @@ public:
 	 * \brief Return the value of the spectral power distribution
 	 * at the given wavelength.
 	 */
-	Float eval(Float lambda) const;
+	float eval(float lambda) const;
 
 	/**
 	 * \brief Integrate the spectral power distribution
@@ -271,7 +271,7 @@ public:
 	 * \remark If \c lambdaMin >= \c lambdaMax, the
 	 *     implementation will return zero.
 	 */
-	Float average(Float lambdaMin, Float lambdaMax) const;
+	float average(float lambdaMin, float lambdaMax) const;
 
 	/// \brief Return a string representation
 	std::string toString() const;
@@ -279,7 +279,7 @@ public:
 	/// Virtual destructor
 	virtual ~InterpolatedSpectrum() { }
 protected:
-	std::vector<Float> m_wavelengths, m_values;
+	std::vector<float> m_wavelengths, m_values;
 };
 
 /**
@@ -609,9 +609,9 @@ protected:
  * \ingroup libcore
  * \ingroup libpython
  */
-struct MTS_EXPORT_CORE Color3 : public TSpectrum<Float, 3> {
+struct MTS_EXPORT_CORE Color3 : public TSpectrum<float, 3> {
 public:
-	typedef TSpectrum<Float, 3> Parent;
+	typedef TSpectrum<float, 3> Parent;
 
 	/// Create a new color value, but don't initialize the contents
 #if !defined(MTS_DEBUG_UNINITIALIZED)
@@ -627,15 +627,15 @@ public:
 	inline Color3(const Parent &s) : Parent(s) { }
 
 	/// Initialize to a constant value
-	inline Color3(Float value) : Parent(value) { }
+	inline Color3(float value) : Parent(value) { }
 
 	/// Initialize to the given RGB value
-	inline Color3(Float r, Float g, Float b) {
+	inline Color3(float r, float g, float b) {
 		s[0] = r; s[1] = g; s[2] = b;
 	}
 
 	/// Return the luminance (assuming the color value is expressed in linear sRGB)
-	inline Float getLuminance() const {
+	inline float getLuminance() const {
 		return s[0] * 0.212671f + s[1] * 0.715160f + s[2] * 0.072169f;
 	}
 };
@@ -660,9 +660,9 @@ public:
  * \ingroup libcore
  * \ingroup libpython
  */
-struct MTS_EXPORT_CORE Spectrum : public TSpectrum<Float, SPECTRUM_SAMPLES> {
+struct MTS_EXPORT_CORE Spectrum : public TSpectrum<float, SPECTRUM_SAMPLES> {
 public:
-	typedef TSpectrum<Float, SPECTRUM_SAMPLES> Parent;
+	typedef TSpectrum<float, SPECTRUM_SAMPLES> Parent;
 
 	/**
 	 * \brief When converting from RGB reflectance values to
@@ -698,14 +698,14 @@ public:
 	}
 
 	/// Create a new spectral power distribution with all samples set to the given value
-	explicit inline Spectrum(Float v) {
+	explicit inline Spectrum(float v) {
 		for (int i=0; i<SPECTRUM_SAMPLES; i++)
 			s[i] = v;
 	}
 
 	/// Copy a spectral power distribution
-	explicit inline Spectrum(Float value[SPECTRUM_SAMPLES]) {
-		memcpy(s, value, sizeof(Float)*SPECTRUM_SAMPLES);
+	explicit inline Spectrum(float value[SPECTRUM_SAMPLES]) {
+		memcpy(s, value, sizeof(float)*SPECTRUM_SAMPLES);
 	}
 
 	/// Unserialize a spectral power distribution from a binary data stream
@@ -715,18 +715,18 @@ public:
 	 * \brief Evaluate the SPD for the given wavelength
 	 * in nanometers.
 	 */
-	Float eval(Float lambda) const;
+	float eval(float lambda) const;
 
 	/// \brief Return the wavelength range covered by a spectral bin
-	static std::pair<Float, Float> getBinCoverage(size_t index);
+	static std::pair<float, float> getBinCoverage(size_t index);
 
 	/// Return the luminance in candelas.
 #if SPECTRUM_SAMPLES == 3
-	inline Float getLuminance() const {
+	inline float getLuminance() const {
 		return s[0] * 0.212671f + s[1] * 0.715160f + s[2] * 0.072169f;
 	}
 #else
-	Float getLuminance() const;
+	float getLuminance() const;
 #endif
 
 	/**
@@ -736,7 +736,7 @@ public:
 	 * In the Python API, this function returns a 3-tuple
 	 * with the result of the operation.
 	 */
-	void toXYZ(Float &x, Float &y, Float &z) const;
+	void toXYZ(float &x, float &y, float &z) const;
 
 	/**
 	 * \brief Convert XYZ tristimulus into a plausible spectral
@@ -746,7 +746,7 @@ public:
 	 * information on how to solve this highly under-constrained problem.
 	 * The default is \ref EReflectance.
 	 */
-	void fromXYZ(Float x, Float y, Float z,
+	void fromXYZ(float x, float y, float z,
 			EConversionIntent intent = EReflectance);
 
 	/**
@@ -763,7 +763,7 @@ public:
 	 * In the Python API, this function returns a 3-tuple
 	 * with the result of the operation.
 	 */
-	void toIPT(Float &I, Float &P, Float &T) const;
+	void toIPT(float &I, float &P, float &T) const;
 
 	/**
 	 * \brief Convert a color value represented in the IPT
@@ -774,7 +774,7 @@ public:
 	 * information on how to solve this highly under-constrained problem.
 	 * The default is \ref EReflectance.
 	 */
-	void fromIPT(Float I, Float P, Float T,
+	void fromIPT(float I, float P, float T,
 			EConversionIntent intent = EReflectance);
 
 #if SPECTRUM_SAMPLES == 3
@@ -784,13 +784,13 @@ public:
 	 * In the Python API, this function returns a 3-tuple
 	 * with the result of the operation.
 	 */
-	inline void toLinearRGB(Float &r, Float &g, Float &b) const {
+	inline void toLinearRGB(float &r, float &g, float &b) const {
 		/* Nothing to do -- the renderer is in RGB mode */
 		r = s[0]; g = s[1]; b = s[2];
 	}
 
 	/// Convert from linear RGB
-	inline void fromLinearRGB(Float r, Float g, Float b,
+	inline void fromLinearRGB(float r, float g, float b,
 			EConversionIntent intent = EReflectance /* unused */) {
 		/* Nothing to do -- the renderer is in RGB mode */
 		s[0] = r; s[1] = g; s[2] = b;
@@ -802,7 +802,7 @@ public:
 	 * In the Python API, this function returns a 3-tuple
 	 * with the result of the operation.
 	 */
-	void toLinearRGB(Float &r, Float &g, Float &b) const;
+	void toLinearRGB(float &r, float &g, float &b) const;
 
 	/**
 	 * \brief Convert linear RGB colors into a plausible
@@ -812,7 +812,7 @@ public:
 	 * information on how to solve this highly under-constrained problem.
 	 * The default is \ref EReflectance.
 	 */
-	void fromLinearRGB(Float r, Float g, Float b,
+	void fromLinearRGB(float r, float g, float b,
 			EConversionIntent intent = EReflectance);
 #endif
 
@@ -822,7 +822,7 @@ public:
 	 * In the Python API, this function returns a 3-tuple
 	 * with the result of the operation.
 	 */
-	void toSRGB(Float &r, Float &g, Float &b) const;
+	void toSRGB(float &r, float &g, float &b) const;
 
 	/**
 	 * \brief Convert sRGB color values into a plausible spectral
@@ -832,7 +832,7 @@ public:
 	 * is available. For sRGB colors, it is assumed that the intent is
 	 * always \ref EReflectance.
 	 */
-	void fromSRGB(Float r, Float g, Float b);
+	void fromSRGB(float r, float g, float b);
 
 	/**
 	 * \brief Convert linear RGBE colors into a plausible
@@ -891,13 +891,13 @@ public:
 protected:
 	#if SPECTRUM_SAMPLES != 3
 	/// Configured wavelengths bins in nanometers
-	static Float m_wavelengths[SPECTRUM_SAMPLES+1];
+	static float m_wavelengths[SPECTRUM_SAMPLES+1];
 
 	/// @{ \name Pre-integrated CIE 1931 XYZ color matching functions.
 	static Spectrum CIE_X;
 	static Spectrum CIE_Y;
 	static Spectrum CIE_Z;
-	static Float CIE_normalization;
+	static float CIE_normalization;
 	/// @}
 
 	/**

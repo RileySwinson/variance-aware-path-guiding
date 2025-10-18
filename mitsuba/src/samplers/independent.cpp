@@ -82,23 +82,23 @@ public:
 	void generate(const Point2i &) {
 		for (size_t i=0; i<m_req1D.size(); i++)
 			for (size_t j=0; j<m_sampleCount * m_req1D[i]; ++j)
-				m_sampleArrays1D[i][j] = m_random->nextFloat();
+				m_sampleArrays1D[i][j] = m_random->nextfloat();
 		for (size_t i=0; i<m_req2D.size(); i++)
 			for (size_t j=0; j<m_sampleCount * m_req2D[i]; ++j)
 				m_sampleArrays2D[i][j] = Point2(
-					m_random->nextFloat(),
-					m_random->nextFloat());
+					m_random->nextfloat(),
+					m_random->nextfloat());
 		m_sampleIndex = 0;
 		m_dimension1DArray = m_dimension2DArray = 0;
 	}
 
-	Float next1D() {
-		return m_random->nextFloat();
+	float next1D() {
+		return m_random->nextfloat();
 	}
 
 	Point2 next2D() {
-		Float value1 = m_random->nextFloat();
-		Float value2 = m_random->nextFloat();
+		float value1 = m_random->nextfloat();
+		float value2 = m_random->nextfloat();
 		return Point2(value1, value2);
 	}
 

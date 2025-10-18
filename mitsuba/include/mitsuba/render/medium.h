@@ -35,13 +35,13 @@ struct MTS_EXPORT_RENDER MediumSamplingRecord {
 public:
 
 	/// Traveled distance
-	Float t;
+	float t;
 
 	/// Location of the scattering interaction
 	Point p;
 
 	/// Time value associated with the medium scattering event
-	Float time;
+	float time;
 
 	/// Local particle orientation at \ref p
 	Vector orientation;
@@ -61,7 +61,7 @@ public:
 	Spectrum sigmaS;
 
 	/// Records the probability density of sampling a medium interaction at p
-	Float pdfSuccess;
+	float pdfSuccess;
 
 	/**
 	 * \brief Records the probability density of sampling a medium
@@ -71,7 +71,7 @@ public:
 	 * but starting at \c p and stopping at \c ray.o. These probabilities
 	 * are important for bidirectional methods.
 	 */
-	Float pdfSuccessRev;
+	float pdfSuccessRev;
 
 	/**
 	 * When the \ref Medium::sampleDistance() is successful, this function
@@ -82,7 +82,7 @@ public:
 	 * sampling from the other direction, which is why there is no
 	 * \c pdfFailureRev field.
 	 */
-	Float pdfFailure;
+	float pdfFailure;
 
 	/// Pointer to the associated medium
 	const Medium *medium;

@@ -90,7 +90,7 @@ public:
 
 	/// Convert the underlying bitmap to a different pixel format
 	void convert(Bitmap::EPixelFormat pixelFormat,
-		Bitmap::EComponentFormat componentFormat, Float gamma);
+		Bitmap::EComponentFormat componentFormat, float gamma);
 
 	/// Return the name of this font
 	inline const std::string &getName() const { return m_name; }

@@ -26,14 +26,14 @@ MTS_NAMESPACE_BEGIN
 
 void CaptureParticleWorkResult::load(Stream *stream) {
 	size_t nEntries = (size_t) m_size.x * (size_t) m_size.y;
-	stream->readFloatArray(reinterpret_cast<Float *>(m_bitmap->getFloatData()),
+	stream->readfloatArray(reinterpret_cast<float *>(m_bitmap->getfloatData()),
 		nEntries * SPECTRUM_SAMPLES);
 	m_range->load(stream);
 }
 
 void CaptureParticleWorkResult::save(Stream *stream) const {
 	size_t nEntries = (size_t) m_size.x * (size_t) m_size.y;
-	stream->writeFloatArray(reinterpret_cast<const Float *>(m_bitmap->getFloatData()),
+	stream->writefloatArray(reinterpret_cast<const float *>(m_bitmap->getfloatData()),
 		nEntries * SPECTRUM_SAMPLES);
 	m_range->save(stream);
 }
@@ -103,7 +103,7 @@ void CaptureParticleWorker::handleEmission(const PositionSamplingRecord &pRec,
 	value *= emitter->evalDirection(DirectionSamplingRecord(dRec.d), pRec);
 
 	/* Splat onto the accumulation buffer */
-	m_workResult->put(dRec.uv, (Float *) &value[0]);
+	m_workResult->put(dRec.uv, (float *) &value[0]);
 }
 
 void CaptureParticleWorker::handleSurfaceInteraction(int depth, int nullInteractions,
@@ -124,7 +124,7 @@ void CaptureParticleWorker::handleSurfaceInteraction(int depth, int nullInteract
 		if (value.isZero())
 			return;
 
-		m_workResult->put(uv, (Float *) &value[0]);
+		m_workResult->put(uv, (float *) &value[0]);
 		return;
 	}
 
@@ -148,20 +148,20 @@ void CaptureParticleWorker::handleSurfaceInteraction(int depth, int nullInteract
 
 	/* Prevent light leaks due to the use of shading normals -- [Veach, p. 158] */
 	Vector wi = its.toWorld(its.wi);
-	Float wiDotGeoN = dot(its.geoFrame.n, wi),
+	float wiDotGeoN = dot(its.geoFrame.n, wi),
 		  woDotGeoN = dot(its.geoFrame.n, wo);
 	if (wiDotGeoN * Frame::cosTheta(bRec.wi) <= 0 ||
 		woDotGeoN * Frame::cosTheta(bRec.wo) <= 0)
 		return;
 
 	/* Adjoint BSDF for shading normals -- [Veach, p. 155] */
-	Float correction = std::abs(
+	float correction = std::abs(
 		(Frame::cosTheta(bRec.wi) * woDotGeoN)/
 		(Frame::cosTheta(bRec.wo) * wiDotGeoN));
 	value *= bsdf->eval(bRec) * correction;
 
 	/* Splat onto the accumulation buffer */
-	m_workResult->put(dRec.uv, (Float *) &value[0]);
+	m_workResult->put(dRec.uv, (float *) &value[0]);
 }
 
 void CaptureParticleWorker::handleMediumInteraction(int depth, int nullInteractions, bool caustic,
@@ -190,7 +190,7 @@ void CaptureParticleWorker::handleMediumInteraction(int depth, int nullInteracti
 		return;
 
 	/* Splat onto the accumulation buffer */
-	m_workResult->put(dRec.uv, (Float *) &value[0]);
+	m_workResult->put(dRec.uv, (float *) &value[0]);
 }
 
 /* ==================================================================== */
@@ -198,8 +198,8 @@ void CaptureParticleWorker::handleMediumInteraction(int depth, int nullInteracti
 /* ==================================================================== */
 
 void CaptureParticleProcess::develop() {
-	Float weight = (m_accum->getWidth() * m_accum->getHeight())
-		/ (Float) m_receivedResultCount;
+	float weight = (m_accum->getWidth() * m_accum->getHeight())
+		/ (float) m_receivedResultCount;
 	m_film->setBitmap(m_accum->getBitmap(), weight);
 	m_queue->signalRefresh(m_job);
 }

@@ -72,10 +72,10 @@ Provided conversions
     the amount of time from the start of the clocks epoch.
 
 - ``float`` → ``std::chrono::duration``
-    Floats that are passed to C++ as durations be interpreted as a number of
+    floats that are passed to C++ as durations be interpreted as a number of
     seconds. These will be converted to the duration using ``duration_cast``
     from the float.
 
 - ``float`` → ``std::chrono::[other_clocks]::time_point``
-    Floats that are passed to C++ as time points will be interpreted as the
+    floats that are passed to C++ as time points will be interpreted as the
     number of seconds from the start of the clocks epoch.

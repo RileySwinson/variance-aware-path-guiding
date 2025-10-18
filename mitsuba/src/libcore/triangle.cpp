@@ -58,7 +58,7 @@ Point Triangle::sample(const Point *positions, const Normal *normals,
 	return p;
 }
 
-Float Triangle::surfaceArea(const Point *positions) const {
+float Triangle::surfaceArea(const Point *positions) const {
 	const Point &p0 = positions[idx[0]];
 	const Point &p1 = positions[idx[1]];
 	const Point &p2 = positions[idx[2]];
@@ -137,8 +137,8 @@ AABB Triangle::getClippedAABB(const Point *positions, const AABB &aabb) const {
 	for (int i=0; i<nVertices; ++i) {
 		for (int j=0; j<3; ++j) {
 			double pos = vertices1[i][j];
-			result.min[j] = std::min(result.min[j], (Float) math::castflt_down(pos));
-			result.max[j] = std::max(result.max[j], (Float) math::castflt_up(pos));
+			result.min[j] = std::min(result.min[j], (float) math::castflt_down(pos));
+			result.max[j] = std::max(result.max[j], (float) math::castflt_up(pos));
 		}
 	}
 	result.clip(aabb);

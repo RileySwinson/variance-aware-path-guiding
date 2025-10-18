@@ -39,8 +39,8 @@ static StatsCounter numTraversals("Height field", "Traversal operations per quer
 
 namespace {
 	/// Find the smallest t >= 0 such that a*t + b is a multiple of c
-	inline Float nextMultiple(Float a, Float b, Float c) {
-		Float tmp     = b/c,
+	inline float nextMultiple(float a, float b, float c) {
+		float tmp     = b/c,
 		      rounded = (a > 0 ? std::ceil(tmp) : std::floor(tmp)) * c,
 		      diff    = rounded - b;
 
@@ -83,7 +83,7 @@ namespace {
  *       this parameter specifies the resolution at which it should
  *       be rasterized to create a height field made of bilinear patches.
  *	   }
- *	   \parameter{scale}{\Float}{Scale factor that is applied to the height field
+ *	   \parameter{scale}{\float}{Scale factor that is applied to the height field
  *	     values\default{No scaling, i.e. \code{1}}
  *	   }
  *	   \parameter{filename}{\String}{
@@ -130,7 +130,7 @@ public:
 		m_objectToWorld = props.getTransform("toWorld", Transform());
 		m_shadingNormals = props.getBoolean("shadingNormals", true);
 		m_flipNormals = props.getBoolean("flipNormals", false);
-		m_scale = props.getFloat("scale", 1);
+		m_scale = props.getfloat("scale", 1);
 
 		m_filename = props.getString("filename", "");
 		if (!m_filename.empty())
@@ -143,12 +143,12 @@ public:
 		m_objectToWorld = Transform(stream);
 		m_shadingNormals = stream->readBool();
 		m_flipNormals = stream->readBool();
-		m_scale = stream->readFloat();
+		m_scale = stream->readfloat();
 		m_filename = stream->readString();
 		m_dataSize = Vector2i(stream);
 		size_t size = (size_t) m_dataSize.x * (size_t) m_dataSize.y;
-		m_data = (Float *) allocAligned(size * sizeof(Float));
-		stream->readFloatArray(m_data, size);
+		m_data = (float *) allocAligned(size * sizeof(float));
+		stream->readfloatArray(m_data, size);
 		configure();
 	}
 
@@ -173,10 +173,10 @@ public:
 		m_objectToWorld.serialize(stream);
 		stream->writeBool(m_shadingNormals);
 		stream->writeBool(m_flipNormals);
-		stream->writeFloat(m_scale);
+		stream->writefloat(m_scale);
 		stream->writeString(m_filename.string());
 		m_dataSize.serialize(stream);
-		stream->writeFloatArray(m_data, (size_t) m_dataSize.x * (size_t) m_dataSize.y);
+		stream->writefloatArray(m_data, (size_t) m_dataSize.x * (size_t) m_dataSize.y);
 	}
 
 	AABB getAABB() const {
@@ -187,7 +187,7 @@ public:
 		return result;
 	}
 
-	Float getSurfaceArea() const {
+	float getSurfaceArea() const {
 		return m_surfaceArea; /// XXX transformed surface area? ...
 	}
 
@@ -199,7 +199,7 @@ public:
 		return (size_t) m_levelSize[0].x * (size_t) m_levelSize[0].y;
 	}
 
-	inline static int signumToInt(Float value) {
+	inline static int signumToInt(float value) {
 		if (value < 0)
 			return -1;
 		else if (value > 0)
@@ -208,7 +208,7 @@ public:
 			return 0;
 	}
 
-	bool rayIntersect(const Ray &_ray, Float mint, Float maxt, Float &t, void *tmp) const {
+	bool rayIntersect(const Ray &_ray, float mint, float maxt, float &t, void *tmp) const {
 		StackEntry stack[MTS_QTREE_MAXDEPTH];
 
 		/* Transform ray into object space */
@@ -216,7 +216,7 @@ public:
 		m_objectToWorld.inverse()(_ray, ray);
 
 		/* Ray length to cross a single cell along the X or Y axis */
-		Float tDeltaXSingle = std::abs(ray.dRcp.x),
+		float tDeltaXSingle = std::abs(ray.dRcp.x),
 		      tDeltaYSingle = std::abs(ray.dRcp.y);
 
 		/* Cell coordinate increments for steps along the ray */
@@ -231,7 +231,7 @@ public:
 			   node. This can save some unnecessary work. */
 			{
 				Point enterPt, exitPt;
-				Float nearT = mint, farT = maxt;
+				float nearT = mint, farT = maxt;
 				if (!m_dataAABB.rayIntersect(ray, nearT, farT, enterPt, exitPt))
 					return false;
 
@@ -281,7 +281,7 @@ public:
 			/* Intersect the ray against the bounding box, in local coordinates */
 			Ray localRay(Point(ray.o.x - entry.x*blockSize.x,
 			                   ray.o.y - entry.y*blockSize.y, ray.o.z), ray.d, 0);
-			Float nearT = mint, farT = maxt;
+			float nearT = mint, farT = maxt;
 			Point enterPt, exitPt;
 
 			if (!aabb.rayIntersect(localRay, nearT, farT, enterPt, exitPt)) {
@@ -289,7 +289,7 @@ public:
 				continue;
 			}
 
-			Float tMax = farT - nearT;
+			float tMax = farT - nearT;
 
 			if (entry.level > 0) {
 				/* Inner node -- push child nodes in 2D DDA order */
@@ -300,7 +300,7 @@ public:
 				int x = (exitPt.x >= subBlockSize.x) ? numChildren.x-1 : 0;
 				int y = (exitPt.y >= subBlockSize.y) ? numChildren.y-1 : 0;
 
-				Float tDeltaX = tDeltaXSingle * subBlockSize.x,
+				float tDeltaX = tDeltaXSingle * subBlockSize.x,
 				      tDeltaY = tDeltaYSingle * subBlockSize.y,
 				      tNextX  = nextMultiple(-ray.d.x, exitPt.x, subBlockSize.x),
 				      tNextY  = nextMultiple(-ray.d.y, exitPt.y, subBlockSize.y),
@@ -324,26 +324,26 @@ public:
 				}
 			} else {
 				/* Intersect the ray against a bilinear patch */
-				Float
+				float
 					f00 = m_data[entry.y * m_dataSize.x + entry.x],
 					f01 = m_data[(entry.y + 1) * m_dataSize.x + entry.x],
 					f10 = m_data[entry.y * m_dataSize.x + entry.x + 1],
 					f11 = m_data[(entry.y + 1) * m_dataSize.x + entry.x + 1];
 
-				Float A = ray.d.x * ray.d.y * (f00 - f01 - f10 + f11);
-				Float B = ray.d.y * (f01 - f00 + enterPt.x * (f00 - f01 - f10 + f11))
+				float A = ray.d.x * ray.d.y * (f00 - f01 - f10 + f11);
+				float B = ray.d.y * (f01 - f00 + enterPt.x * (f00 - f01 - f10 + f11))
 				        + ray.d.x * (f10 - f00 + enterPt.y * (f00 - f01 - f10 + f11))
 						- ray.d.z;
-				Float C = (enterPt.x - 1) * (enterPt.y - 1) * f00
+				float C = (enterPt.x - 1) * (enterPt.y - 1) * f00
 				        + enterPt.y * f01 + enterPt.x * (f10 - enterPt.y * (f01 + f10 - f11))
 				        - enterPt.z;
 
-				Float t0, t1;
+				float t0, t1;
 				if (!solveQuadratic(A, B, C, t0, t1))
 					continue;
 
-				Float min = std::max(-Epsilon, mint - nearT);
-				Float max = std::min(tMax + Epsilon, maxt - nearT);
+				float min = std::max(-Epsilon, mint - nearT);
+				float max = std::min(tMax + Epsilon, maxt - nearT);
 
 				if (t0 >= min && t0 <= max)
 					t = t0;
@@ -374,7 +374,7 @@ public:
 		PatchIntersectionRecord &temp = *((PatchIntersectionRecord *) tmp);
 
 		int x = temp.x, y = temp.y, width = m_dataSize.x;
-		Float
+		float
 			f00 = m_data[y     * width + x],
 			f01 = m_data[(y+1) * width + x],
 			f10 = m_data[y     * width + x + 1],
@@ -418,8 +418,8 @@ public:
 		its.primIndex = x + y*width;
 	}
 
-	bool rayIntersect(const Ray &ray, Float mint, Float maxt) const {
-		Float t;
+	bool rayIntersect(const Ray &ray, float mint, float maxt) const {
+		float t;
 		return rayIntersect(ray, mint, maxt, t, NULL);
 	}
 
@@ -429,8 +429,8 @@ public:
 		    x = its.primIndex % width,
 		    y = its.primIndex / width;
 
-		Float u = its.uv.x * m_levelSize0f.x - x;
-		Float v = its.uv.y * m_levelSize0f.y - y;
+		float u = its.uv.x * m_levelSize0f.x - x;
+		float v = its.uv.y * m_levelSize0f.y - y;
 
 		Normal normal;
 		if (shadingFrame && m_shadingNormals) {
@@ -449,7 +449,7 @@ public:
 			dndv = m_objectToWorld(Normal((1.0f - u) * (n01 - n00) + u * (n11 - n10))) * m_levelSize0f.y;
 		} else {
 			/* Derivatives for bilinear patch with geometric normals */
-			Float
+			float
 				f00 = m_data[y     * width + x],
 				f01 = m_data[(y+1) * width + x],
 				f10 = m_data[y     * width + x + 1],
@@ -464,7 +464,7 @@ public:
 		}
 
 		/* Account for normalization */
-		Float invLength = 1/normal.length();
+		float invLength = 1/normal.length();
 
 		normal *= invLength;
 		dndu *= invLength;
@@ -513,28 +513,28 @@ public:
 		if (!math::isPowerOfTwo(m_dataSize.y - 1)) m_dataSize.y = (int) math::roundToPowerOfTwo((uint32_t) m_dataSize.y - 1) + 1;
 
 		if (m_bitmap->getSize() != m_dataSize) {
-			m_bitmap = m_bitmap->convert(Bitmap::ELuminance, Bitmap::EFloat);
+			m_bitmap = m_bitmap->convert(Bitmap::ELuminance, Bitmap::Efloat);
 
 			Log(EInfo, "Resampling heightfield texture from %ix%i to %ix%i ..",
 				m_bitmap->getWidth(), m_bitmap->getHeight(), m_dataSize.x, m_dataSize.y);
 
 			m_bitmap = m_bitmap->resample(m_rfilter, ReconstructionFilter::EClamp,
 				ReconstructionFilter::EClamp, m_dataSize,
-				-std::numeric_limits<Float>::infinity(),
-				std::numeric_limits<Float>::infinity());
+				-std::numeric_limits<float>::infinity(),
+				std::numeric_limits<float>::infinity());
 		}
 
-		size_t size = (size_t) m_dataSize.x * (size_t) m_dataSize.y * sizeof(Float);
-		m_data = (Float *) allocAligned(size);
-		m_bitmap->convert(m_data, Bitmap::ELuminance, Bitmap::EFloat, 1.0f, m_scale);
+		size_t size = (size_t) m_dataSize.x * (size_t) m_dataSize.y * sizeof(float);
+		m_data = (float *) allocAligned(size);
+		m_bitmap->convert(m_data, Bitmap::ELuminance, Bitmap::Efloat, 1.0f, m_scale);
 
 		m_objectToWorld = m_objectToWorld * Transform::translate(Vector(-1, -1, 0)) * Transform::scale(Vector(
-			(Float) 2 / (m_dataSize.x-1),
-			(Float) 2 / (m_dataSize.y-1), 1));
+			(float) 2 / (m_dataSize.x-1),
+			(float) 2 / (m_dataSize.y-1), 1));
 
 		m_bitmap = NULL;
 
-		size_t storageSize = (size_t) m_dataSize.x * (size_t) m_dataSize.y * sizeof(Float);
+		size_t storageSize = (size_t) m_dataSize.x * (size_t) m_dataSize.y * sizeof(float);
 		Log(EInfo, "Building acceleration data structure for %ix%i height field ..", m_dataSize.x, m_dataSize.y);
 
 		ref<Timer> timer = new Timer();
@@ -550,7 +550,7 @@ public:
 		m_levelSize0f  = Vector2(m_levelSize[0]);
 		m_blockSize[0] = Vector2i(1, 1);
 		m_blockSizeF[0] = Vector2(1, 1);
-		m_invSize = Vector2((Float) 1 / m_levelSize[0].x, (Float) 1 / m_levelSize[0].y);
+		m_invSize = Vector2((float) 1 / m_levelSize[0].x, (float) 1 / m_levelSize[0].y);
 		m_surfaceArea = 0;
 
 		size = (size_t) m_levelSize[0].x * (size_t) m_levelSize[0].y * sizeof(Interval);
@@ -561,16 +561,16 @@ public:
 		Interval *bounds = m_minmax[0];
 		for (int y=0; y<m_levelSize[0].y; ++y) {
 			for (int x=0; x<m_levelSize[0].x; ++x) {
-				Float f00 = m_data[y * m_dataSize.x + x];
-				Float f10 = m_data[y * m_dataSize.x + x + 1];
-				Float f01 = m_data[(y + 1) * m_dataSize.x + x];
-				Float f11 = m_data[(y + 1) * m_dataSize.x + x + 1];
-				Float fmin = std::min(std::min(f00, f01), std::min(f10, f11));
-				Float fmax = std::max(std::max(f00, f01), std::max(f10, f11));
+				float f00 = m_data[y * m_dataSize.x + x];
+				float f10 = m_data[y * m_dataSize.x + x + 1];
+				float f01 = m_data[(y + 1) * m_dataSize.x + x];
+				float f11 = m_data[(y + 1) * m_dataSize.x + x + 1];
+				float fmin = std::min(std::min(f00, f01), std::min(f10, f11));
+				float fmax = std::max(std::max(f00, f01), std::max(f10, f11));
 				*bounds++ = Interval(fmin, fmax);
 
 				/* Estimate the total surface area (this is approximate) */
-				Float diff0 = f01-f10, diff1 = f00-f11;
+				float diff0 = f01-f10, diff1 = f00-f11;
 				m_surfaceArea += std::sqrt(1.0f + .5f * (diff0*diff0 + diff1*diff1));
 			}
 		}
@@ -629,10 +629,10 @@ public:
 				#endif
 				for (int y=offset; y<m_levelSize[0].y; y+=2) {
 					for (int x=0; x<m_levelSize[0].x; ++x) {
-							Float f00 = m_data[y * m_dataSize.x + x];
-						Float f10 = m_data[y * m_dataSize.x + x + 1];
-						Float f01 = m_data[(y + 1) * m_dataSize.x + x];
-						Float f11 = m_data[(y + 1) * m_dataSize.x + x + 1];
+							float f00 = m_data[y * m_dataSize.x + x];
+						float f10 = m_data[y * m_dataSize.x + x + 1];
+						float f01 = m_data[(y + 1) * m_dataSize.x + x];
+						float f11 = m_data[(y + 1) * m_dataSize.x + x + 1];
 
 						m_normals[y       * m_dataSize.x + x]     += normalize(Normal(f00 - f10, f00 - f01, 1));
 						m_normals[y       * m_dataSize.x + x + 1] += normalize(Normal(f00 - f10, f10 - f11, 1));
@@ -681,10 +681,10 @@ public:
 		Point2 *texcoords = mesh->getVertexTexcoords();
 		Triangle *triangles = mesh->getTriangles();
 
-		Float dx = (Float) 1 / (size.x - 1);
-		Float dy = (Float) 1 / (size.y - 1);
-		Float scaleX = (Float) m_dataSize.x / size.x;
-		Float scaleY = (Float) m_dataSize.y / size.y;
+		float dx = (float) 1 / (size.x - 1);
+		float dy = (float) 1 / (size.y - 1);
+		float scaleX = (float) m_dataSize.x / size.x;
+		float scaleY = (float) m_dataSize.y / size.y;
 
 		uint32_t vertexIdx = 0;
 		for (int y=0; y<size.y; ++y) {
@@ -692,7 +692,7 @@ public:
 			for (int x=0; x<size.x; ++x) {
 				int px = std::min((int) (scaleX * x), m_dataSize.x-1);
 				texcoords[vertexIdx] = Point2(x*dx, y*dy);
-				vertices[vertexIdx++] = m_objectToWorld(Point((Float) px, (Float) py,
+				vertices[vertexIdx++] = m_objectToWorld(Point((float) px, (float) py,
 					m_data[px + py*m_dataSize.x]));
 			}
 		}
@@ -752,15 +752,15 @@ private:
 	AABB m_dataAABB;
 	bool m_shadingNormals;
 	bool m_flipNormals;
-	Float m_scale;
+	float m_scale;
 	fs::path m_filename;
 
 	/* Height field data */
-	Float *m_data;
+	float *m_data;
 	Normal *m_normals;
 	Vector2i m_dataSize;
 	Vector2 m_invSize;
-	Float m_surfaceArea;
+	float m_surfaceArea;
 
 	/* Min-max quadtree data */
 	int m_levelCount;

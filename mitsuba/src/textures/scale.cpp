@@ -28,7 +28,7 @@ MTS_NAMESPACE_BEGIN
  *     \parameter{value}{\Spectrum\Or\Texture}{
  *       Specifies the spectrum or nested texture that should be scaled
  *     }
- *     \parameter{value}{\Float}{
+ *     \parameter{value}{\float}{
  *       Specifies the scale value
  *     }
  * }
@@ -56,8 +56,8 @@ public:
 			m_nested = new ConstantSpectrumTexture(
 				props.getSpectrum("value"));
 
-		if (props.hasProperty("scale") && props.getType("scale") == Properties::EFloat)
-			m_scale = Spectrum(props.getFloat("scale", 1.0f));
+		if (props.hasProperty("scale") && props.getType("scale") == Properties::Efloat)
+			m_scale = Spectrum(props.getfloat("scale", 1.0f));
 		else
 			m_scale = props.getSpectrum("scale", Spectrum(1.0f));
 
@@ -114,9 +114,9 @@ public:
 		if (m_scale == Spectrum(m_scale[0])) {
 			result->scale(m_scale[0]);
 		} else {
-			result = result->convert(Bitmap::ESpectrum, Bitmap::EFloat);
+			result = result->convert(Bitmap::ESpectrum, Bitmap::Efloat);
 
-			Spectrum *data = (Spectrum *) result->getFloatData();
+			Spectrum *data = (Spectrum *) result->getfloatData();
 			size_t pixelCount = result->getPixelCount();
 			for (size_t i=0; i<pixelCount; ++i)
 				*data++ *= m_scale;

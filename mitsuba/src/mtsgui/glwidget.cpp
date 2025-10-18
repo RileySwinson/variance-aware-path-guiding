@@ -142,11 +142,11 @@ void GLWidget::initializeGL() {
 		RendererCapabilities::ERenderToTexture))
 		missingExtensions.push_back("Render-To-Texture");
 	if (!m_renderer->getCapabilities()->isSupported(
-		RendererCapabilities::EFloatingPointTextures))
-		missingExtensions.push_back("Floating point textures");
+		RendererCapabilities::EfloatingPointTextures))
+		missingExtensions.push_back("floating point textures");
 	if (!m_renderer->getCapabilities()->isSupported(
-		RendererCapabilities::EFloatingPointBuffer))
-		missingExtensions.push_back("Floating point render buffers");
+		RendererCapabilities::EfloatingPointBuffer))
+		missingExtensions.push_back("floating point render buffers");
 	if (!m_renderer->getCapabilities()->isSupported(
 		RendererCapabilities::EVertexBufferObjects))
 		missingExtensions.push_back("Vertex buffer objects");
@@ -286,14 +286,14 @@ void GLWidget::setPreviewMethod(EPreviewMethod method) {
 	}
 }
 
-void GLWidget::setClamping(Float clamping) {
+void GLWidget::setClamping(float clamping) {
 	if (clamping != m_context->clamping) {
 		m_context->clamping = clamping;
 		resetPreview();
 	}
 }
 
-void GLWidget::setGamma(bool srgb, Float gamma) {
+void GLWidget::setGamma(bool srgb, float gamma) {
 	if (srgb != m_context->srgb || gamma != m_context->gamma) {
 		m_context->srgb = srgb;
 		m_context->gamma = gamma;
@@ -308,21 +308,21 @@ void GLWidget::setToneMappingMethod(EToneMappingMethod method) {
 	}
 }
 
-void GLWidget::setExposure(Float exposure) {
+void GLWidget::setExposure(float exposure) {
 	if (exposure != m_context->exposure) {
 		m_context->exposure = exposure;
 		updateGL();
 	}
 }
 
-void GLWidget::setReinhardKey(Float value) {
+void GLWidget::setReinhardKey(float value) {
 	if (value != m_context->reinhardKey) {
 		m_context->reinhardKey = value;
 		updateGL();
 	}
 }
 
-void GLWidget::setReinhardBurn(Float value) {
+void GLWidget::setReinhardBurn(float value) {
 	if (value != m_context->reinhardBurn) {
 		m_context->reinhardBurn = value;
 		updateGL();
@@ -362,7 +362,7 @@ void GLWidget::downloadFramebuffer() {
 	entry.buffer->download(m_context->framebuffer);
 
 	// Scale by the number of developed VPLs
-	float *targetData = m_context->framebuffer->getFloat32Data();
+	float *targetData = m_context->framebuffer->getfloat32Data();
 	float factor = 1.0f / entry.vplSampleOffset;
 
 	for (size_t pos=0, total = size.x*size.y; pos<total; ++pos) {
@@ -400,8 +400,8 @@ void GLWidget::timerImpulse() {
 		return;
 	}
 	if (m_animation) {
-		Float x = std::min(m_animationTimer->getMilliseconds() / 500.0f, 1.0f);
-		Float t = x*x*x*(x*(x*6-15)+10); // smootherstep by Ken Perlin
+		float x = std::min(m_animationTimer->getMilliseconds() / 500.0f, 1.0f);
+		float t = x*x*x*(x*(x*6-15)+10); // smootherstep by Ken Perlin
 
 		Point origin = (1-t) * m_animationOrigin0 + t * m_animationOrigin1;
 		Point target = (1-t) * m_animationTarget0 + t * m_animationTarget1;
@@ -416,7 +416,7 @@ void GLWidget::timerImpulse() {
 	if (!(m_mouseDrag && m_navigationMode == EStandard) && !m_animation) {
 		ProjectiveCamera *camera = getProjectiveCamera();
 
-		Float delta = m_context->movementScale
+		float delta = m_context->movementScale
 			* m_clock->getMilliseconds();
 
 		if (m_leftKeyDown)
@@ -461,7 +461,7 @@ void GLWidget::timerImpulse() {
 
 bool GLWidget::askReallyCancelRendering() {
 	try {
-		Float renderTime = m_context->renderJob->getRenderTime();
+		float renderTime = m_context->renderJob->getRenderTime();
 
 		if (renderTime < 10) /* Only ask for jobs that have been rendering for a bit */
 			return true;
@@ -538,7 +538,7 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
 		case Qt::Key_BracketLeft:
 			if (m_context->layers.size() > 0) {
 				m_context->currentLayer = std::max(0, m_context->currentLayer-1);
-				m_context->framebuffer = m_context->layers[m_context->currentLayer].second->convert(Bitmap::ERGBA, Bitmap::EFloat32);
+				m_context->framebuffer = m_context->layers[m_context->currentLayer].second->convert(Bitmap::ERGBA, Bitmap::Efloat32);
 				m_statusMessage =
 					formatString("Showing layer \"%s\" (%i/%i); use '[' and ']' to switch.",
 						m_context->layers[m_context->currentLayer].first.c_str(),
@@ -554,7 +554,7 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
 		case Qt::Key_BracketRight:
 			if (m_context->layers.size() > 0) {
 				m_context->currentLayer = std::min((int) m_context->layers.size() - 1, m_context->currentLayer+1);
-				m_context->framebuffer = m_context->layers[m_context->currentLayer].second->convert(Bitmap::ERGBA, Bitmap::EFloat32);
+				m_context->framebuffer = m_context->layers[m_context->currentLayer].second->convert(Bitmap::ERGBA, Bitmap::Efloat32);
 				m_statusMessage =
 					formatString("Showing layer \"%s\" (%i/%i); use '[' and ']' to switch.",
 						m_context->layers[m_context->currentLayer].first.c_str(),
@@ -661,7 +661,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 	Vector d = invView(Vector(0,0,1));
 	bool didMove = false;
 
-	Float focusDistance = camera->getFocusDistance(),
+	float focusDistance = camera->getFocusDistance(),
 		nearClip = camera->getNearClip(),
 		farClip = camera->getFarClip();
 
@@ -697,8 +697,8 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 
 			setWorldTransform(Transform::lookAt(p, target, m_context->up));
 		} else {
-			Float yaw = -.03f * rel.x() * m_mouseSensitivity;
-			Float pitch = .03f * rel.y() * m_mouseSensitivity;
+			float yaw = -.03f * rel.x() * m_mouseSensitivity;
+			float pitch = .03f * rel.y() * m_mouseSensitivity;
 			if (m_invertMouse)
 				pitch *= -1;
 
@@ -712,33 +712,33 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 		didMove = true;
 	} else if (event->buttons() & Qt::MidButton) {
 		setWorldTransform(invView *
-			Transform::translate(Vector((Float) rel.x(), (Float) rel.y(), 0)
+			Transform::translate(Vector((float) rel.x(), (float) rel.y(), 0)
 				* m_mouseSensitivity * .6f * m_context->movementScale));
 		didMove = true;
 	} else if (event->buttons() & Qt::RightButton) {
 		if (event->modifiers() & Qt::ShiftModifier) {
-			Float roll = rel.x() * m_mouseSensitivity * .02f;
-			Float fovChange = rel.y() * m_mouseSensitivity * .03f;
+			float roll = rel.x() * m_mouseSensitivity * .02f;
+			float fovChange = rel.y() * m_mouseSensitivity * .03f;
 
 			m_context->up = Transform::rotate(d, isRightHanded() ? -roll : roll)(up);
 			setWorldTransform(Transform::lookAt(p, p+d, m_context->up));
 
-			camera->setXFov(std::min(std::max((Float) 1.0f, camera->getXFov()
-				+ fovChange), (Float) 160.0f));
+			camera->setXFov(std::min(std::max((float) 1.0f, camera->getXFov()
+				+ fovChange), (float) 160.0f));
 			m_statusMessage =
 				formatString("Field of view: %.2f degrees", camera->getXFov());
 			m_statusTimer->reset();
 		} else {
-			Float focusDistance = camera->getFocusDistance(),
+			float focusDistance = camera->getFocusDistance(),
 				nearClip = camera->getNearClip(),
 				farClip = camera->getFarClip();
 
 			if (focusDistance <= nearClip || focusDistance >= farClip)
 				focusDistance = autoFocus();
 
-			Float oldFocusDistance = focusDistance;
-			focusDistance = std::min(std::max(focusDistance * std::pow((Float) (1 - 2e-3f),
-					(Float) -rel.y() * m_mouseSensitivity * m_context->movementScale),
+			float oldFocusDistance = focusDistance;
+			focusDistance = std::min(std::max(focusDistance * std::pow((float) (1 - 2e-3f),
+					(float) -rel.y() * m_mouseSensitivity * m_context->movementScale),
 					1.2f*nearClip), farClip/1.2f);
 
 			camera->setFocusDistance(focusDistance);
@@ -891,16 +891,16 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
 		if (m_context->renderJob && !askReallyCancelRendering())
 			return;
 
-		Float focusDistance = camera->getFocusDistance(),
+		float focusDistance = camera->getFocusDistance(),
 			nearClip = camera->getNearClip(),
 			farClip = camera->getFarClip();
 
 		if (focusDistance <= nearClip || focusDistance >= farClip)
 			focusDistance = autoFocus();
 
-		Float oldFocusDistance = focusDistance;
-		focusDistance = std::min(std::max(focusDistance * std::pow((Float) (1 - 1e-3f),
-				(Float) event->delta()), 1.2f*nearClip), farClip/1.2f);
+		float oldFocusDistance = focusDistance;
+		focusDistance = std::min(std::max(focusDistance * std::pow((float) (1 - 1e-3f),
+				(float) event->delta()), 1.2f*nearClip), farClip/1.2f);
 
 		camera->setFocusDistance(focusDistance);
 
@@ -921,15 +921,15 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
 	event->accept();
 }
 
-Float GLWidget::autoFocus() const {
+float GLWidget::autoFocus() const {
 	if (m_context == NULL || m_context->scene == NULL)
-		return std::numeric_limits<Float>::infinity();
+		return std::numeric_limits<float>::infinity();
 	const Scene *scene = m_context->scene;
 	const ProjectiveCamera *camera = getProjectiveCamera();
 	if (!camera)
 		return 0.0f;
-	Float variance = 0.0625f; // (0.25f ^ 2)
-	Float t, avgDistance = 0, weightSum = 0;
+	float variance = 0.0625f; // (0.25f ^ 2)
+	float t, avgDistance = 0, weightSum = 0;
 	Vector2i size = camera->getFilm()->getCropSize();
 	ConstShapePtr ptr;
 	Normal n;
@@ -942,9 +942,9 @@ Float GLWidget::autoFocus() const {
 			radicalInverse(3, sampleIndex));
 		camera->sampleRay(ray, Point2(sample.x * size.x, sample.y*size.y), Point2(0.5f), 0.5f);
 		if (scene->rayIntersect(ray, t, ptr, n, uv)) {
-			Float weight = math::fastexp(-0.5 / variance * (
-				std::pow(sample.x - 0.5f, (Float) 2) +
-				std::pow(sample.y - 0.5f, (Float) 2)));
+			float weight = math::fastexp(-0.5 / variance * (
+				std::pow(sample.x - 0.5f, (float) 2) +
+				std::pow(sample.y - 0.5f, (float) 2)));
 			avgDistance += t * weight;
 			weightSum += weight;
 		}
@@ -1051,7 +1051,7 @@ void GLWidget::paintGL() {
 			if (m_framebufferChanged) {
 				if (m_softwareFallback) {
 #if MTS_SSE
-					Float mult = 1.0;
+					float mult = 1.0;
 					if (m_context->mode == EPreview) {
 						mult /= entry.vplSampleOffset;
 					}
@@ -1060,7 +1060,7 @@ void GLWidget::paintGL() {
 					/* Manually generate a gamma-corrected image
 					   on the CPU (with gamma=2.2) - this will be slow! */
 					Bitmap *source = m_context->framebuffer;
-					float *sourceData = source->getFloat32Data();
+					float *sourceData = source->getfloat32Data();
 					uint8_t *targetData = (uint8_t *) m_fallbackBitmap->getData();
 					for (int y=0; y<source->getHeight(); ++y) {
 						for (int x=0; x<source->getWidth(); ++x) {
@@ -1092,10 +1092,10 @@ void GLWidget::paintGL() {
 		if (m_softwareFallback) {
 #if MTS_SSE
 			m_cpuTonemap->setSRGB(m_context->srgb);
-			m_cpuTonemap->setInvGamma(static_cast<Float>(1) / m_context->gamma);
+			m_cpuTonemap->setInvGamma(static_cast<float>(1) / m_context->gamma);
 
 			if (m_context->toneMappingMethod == EGamma) {
-				Float invWhitePoint = std::pow((Float) 2.0f,
+				float invWhitePoint = std::pow((float) 2.0f,
 					m_context->exposure);
 				if (m_context->mode == EPreview)
 					invWhitePoint /= entry.vplSampleOffset;
@@ -1104,7 +1104,7 @@ void GLWidget::paintGL() {
 				m_cpuTonemap->gammaTonemap(m_context->framebuffer,
 					m_fallbackBitmap);
 			} else if (m_context->toneMappingMethod == EReinhard) {
-				Float mult = 1.0;
+				float mult = 1.0;
 				if (m_context->mode == EPreview)
 					mult /= entry.vplSampleOffset;
 
@@ -1113,11 +1113,11 @@ void GLWidget::paintGL() {
 				if (mult != m_cpuTonemap->multiplier()) {
 					m_cpuTonemap->setLuminanceInfo(m_context->framebuffer,mult);
 				}
-				Float burn = std::min((Float) 1, std::max((Float)1e-8f,
+				float burn = std::min((float) 1, std::max((float)1e-8f,
 					1-(m_context->reinhardBurn + 10) / 20.0f));
-				Float scale = m_context->reinhardKey /
+				float scale = m_context->reinhardKey /
 				              m_cpuTonemap->logAvgLuminance();
-				Float Lwhite = m_cpuTonemap->maxLuminance() * scale;
+				float Lwhite = m_cpuTonemap->maxLuminance() * scale;
 
 				m_cpuTonemap->setScale(scale);
 				m_cpuTonemap->setMultiplier(mult);
@@ -1134,7 +1134,7 @@ void GLWidget::paintGL() {
 				-m_context->scrollOffset);
 			buffer->unbind();
 		} else if (m_context->toneMappingMethod == EGamma) {
-			Float invWhitePoint = std::pow((Float) 2.0f, m_context->exposure);
+			float invWhitePoint = std::pow((float) 2.0f, m_context->exposure);
 			if (m_context->mode == EPreview)
 				invWhitePoint /= entry.vplSampleOffset;
 
@@ -1155,8 +1155,8 @@ void GLWidget::paintGL() {
 			if (m_luminanceBuffer[0] == NULL || m_luminanceBuffer[0]->getSize() != Point3i(size.x, size.y, 1)) {
 				for (int i=0; i<2; ++i) {
 					m_luminanceBuffer[i] = m_renderer->createGPUTexture(formatString("Luminance buffer %i", i),
-							new Bitmap(Bitmap::ERGB, Bitmap::EFloat32, size));
-					m_luminanceBuffer[i]->setComponentFormat(GPUTexture::EFloat32);
+							new Bitmap(Bitmap::ERGB, Bitmap::Efloat32, size));
+					m_luminanceBuffer[i]->setComponentFormat(GPUTexture::Efloat32);
 					m_luminanceBuffer[i]->setPixelFormat(GPUTexture::ERGB);
 					m_luminanceBuffer[i]->setSize(Point3i(size.x, size.y, 1));
 					m_luminanceBuffer[i]->setFilterType(GPUTexture::ENearest);
@@ -1166,7 +1166,7 @@ void GLWidget::paintGL() {
 				}
 			}
 
-			Float multiplier = 1.0f;
+			float multiplier = 1.0f;
 			if (m_context->mode == EPreview)
 				multiplier /= entry.vplSampleOffset;
 
@@ -1205,7 +1205,7 @@ void GLWidget::paintGL() {
 				source = target;
 			}
 			m_downsamplingProgram->unbind();
-			Float logAvgLuminance, maxLuminance;
+			float logAvgLuminance, maxLuminance;
 			Color3 result = m_luminanceBuffer[target]->getPixel(0, 0);
 			logAvgLuminance = result[0];
 			maxLuminance = result[1];
@@ -1216,7 +1216,7 @@ void GLWidget::paintGL() {
 				logAvgLuminance = 1;
 			}
 
-			Float burn = std::min((Float) 1, std::max((Float) 1e-8f, 1-(m_context->reinhardBurn + 10) / 20.0f)),
+			float burn = std::min((float) 1, std::max((float) 1e-8f, 1-(m_context->reinhardBurn + 10) / 20.0f)),
 			      scale = m_context->reinhardKey / logAvgLuminance,
 			      Lwhite = maxLuminance * scale;
 
@@ -1228,7 +1228,7 @@ void GLWidget::paintGL() {
 			m_reinhardTonemap->setParameter("depthSource", 1);
 			m_reinhardTonemap->setParameter("scale", scale);
 			m_reinhardTonemap->setParameter("multiplier", multiplier);
-			m_reinhardTonemap->setParameter("invWp2", 1 / (Lwhite * Lwhite * std::pow(burn, (Float) 4)));
+			m_reinhardTonemap->setParameter("invWp2", 1 / (Lwhite * Lwhite * std::pow(burn, (float) 4)));
 			m_reinhardTonemap->setParameter("invGamma", 1/m_context->gamma);
 			m_reinhardTonemap->setParameter("sRGB", m_context->srgb);
 			m_reinhardTonemap->setParameter("hasDepth", hasDepth);
@@ -1323,7 +1323,7 @@ void GLWidget::oglRenderKDTree(const KDTreeBase<AABB> *kdtree) {
 	std::stack<boost::tuple<const KDTreeBase<AABB>::KDNode *, AABB, uint32_t> > stack;
 
 	stack.push(boost::make_tuple(kdtree->getRoot(), kdtree->getTightAABB(), 0));
-	Float brightness = 0.1f;
+	float brightness = 0.1f;
 
 	glEnable(GL_LINE_SMOOTH);
 	glLineWidth(0.6f);
@@ -1339,7 +1339,7 @@ void GLWidget::oglRenderKDTree(const KDTreeBase<AABB> *kdtree) {
 			int axis = node->getAxis();
 			float split = node->getSplit();
 			if (level + 1 <= m_context->shownKDTreeLevel) {
-				Float tmp = aabb.max[axis];
+				float tmp = aabb.max[axis];
 				aabb.max[axis] = split;
 				stack.push(boost::make_tuple(node->getLeft(), aabb, level+1));
 				aabb.max[axis] = tmp;
@@ -1493,8 +1493,8 @@ void GLWidget::reveal(const AABB &aabb) {
 	Point p  = invView(Point(0,0,0));
 	Vector d = invView(Vector(0,0,1));
 
-	Float fov = std::min(camera->getXFov(), camera->getYFov())*0.9f/2;
-	Float distance = bsphere.radius/std::tan(fov * M_PI/180.0f);
+	float fov = std::min(camera->getXFov(), camera->getYFov())*0.9f/2;
+	float distance = bsphere.radius/std::tan(fov * M_PI/180.0f);
 	camera->setFocusDistance(distance);
 
 	m_animationTimer->reset();

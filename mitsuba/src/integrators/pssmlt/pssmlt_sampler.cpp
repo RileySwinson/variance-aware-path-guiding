@@ -37,16 +37,16 @@ PSSMLTSampler::PSSMLTSampler(PSSMLTSampler *sampler) : Sampler(Properties()),
 PSSMLTSampler::PSSMLTSampler(Stream *stream, InstanceManager *manager)
 	: Sampler(stream, manager) {
 	m_random = static_cast<Random *>(manager->getInstance(stream));
-	m_s1 = stream->readFloat();
-	m_s2 = stream->readFloat();
+	m_s1 = stream->readfloat();
+	m_s2 = stream->readfloat();
 	configure();
 }
 
 void PSSMLTSampler::serialize(Stream *stream, InstanceManager *manager) const {
 	Sampler::serialize(stream, manager);
 	manager->serialize(stream, m_random.get());
-	stream->writeFloat(m_s1);
-	stream->writeFloat(m_s2);
+	stream->writefloat(m_s1);
+	stream->writefloat(m_s2);
 }
 
 void PSSMLTSampler::configure() {
@@ -80,19 +80,19 @@ void PSSMLTSampler::reject() {
 	m_sampleIndex = 0;
 }
 
-Float PSSMLTSampler::primarySample(size_t i) {
+float PSSMLTSampler::primarySample(size_t i) {
 	while (i >= m_u.size())
-		m_u.push_back(SampleStruct(m_random->nextFloat()));
+		m_u.push_back(SampleStruct(m_random->nextfloat()));
 
 	if (m_u[i].modify < m_time) {
 		if (m_largeStep) {
 			m_backup.push_back(std::pair<size_t, SampleStruct>(i, m_u[i]));
 			m_u[i].modify = m_time;
-			m_u[i].value = m_random->nextFloat();
+			m_u[i].value = m_random->nextfloat();
 		} else {
 			if (m_u[i].modify < m_largeStepTime) {
 				m_u[i].modify = m_largeStepTime;
-				m_u[i].value = m_random->nextFloat();
+				m_u[i].value = m_random->nextfloat();
 			}
 
 			while (m_u[i].modify + 1 < m_time) {
@@ -118,14 +118,14 @@ ref<Sampler> PSSMLTSampler::clone() {
 	return sampler.get();
 }
 
-Float PSSMLTSampler::next1D() {
+float PSSMLTSampler::next1D() {
 	return primarySample(m_sampleIndex++);
 }
 
 Point2 PSSMLTSampler::next2D() {
 	/// Enforce a specific order of evaluation
-	Float value1 = primarySample(m_sampleIndex++);
-	Float value2 = primarySample(m_sampleIndex++);
+	float value1 = primarySample(m_sampleIndex++);
+	float value2 = primarySample(m_sampleIndex++);
 	return Point2(value1, value2);
 }
 

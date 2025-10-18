@@ -41,8 +41,8 @@ struct MLTConfiguration {
 	bool lensPerturbation;
 	bool multiChainPerturbation;
 	bool manifoldPerturbation;
-	Float luminance;
-	Float probFactor;
+	float luminance;
+	float probFactor;
 	int workUnits;
 	int directSamples;
 	int luminanceSamples;
@@ -98,8 +98,8 @@ struct MLTConfiguration {
 		lensPerturbation = stream->readBool();
 		multiChainPerturbation = stream->readBool();
 		manifoldPerturbation = stream->readBool();
-		luminance = stream->readFloat();
-		probFactor = stream->readFloat();
+		luminance = stream->readfloat();
+		probFactor = stream->readfloat();
 		workUnits = stream->readInt();
 		directSamples = stream->readInt();
 		luminanceSamples = stream->readInt();
@@ -109,8 +109,8 @@ struct MLTConfiguration {
 		firstStageSizeReduction = stream->readInt();
 		Vector2i size(stream);
 		if (size != Vector2i(0)) {
-			importanceMap = new Bitmap(Bitmap::ELuminance, Bitmap::EFloat, size);
-			stream->readFloatArray(importanceMap->getFloatData(),
+			importanceMap = new Bitmap(Bitmap::ELuminance, Bitmap::Efloat, size);
+			stream->readfloatArray(importanceMap->getfloatData(),
 				(size_t) size.x * (size_t) size.y);
 		}
 		timeout = stream->readSize();
@@ -124,8 +124,8 @@ struct MLTConfiguration {
 		stream->writeBool(lensPerturbation);
 		stream->writeBool(multiChainPerturbation);
 		stream->writeBool(manifoldPerturbation);
-		stream->writeFloat(luminance);
-		stream->writeFloat(probFactor);
+		stream->writefloat(luminance);
+		stream->writefloat(probFactor);
 		stream->writeInt(workUnits);
 		stream->writeInt(directSamples);
 		stream->writeInt(luminanceSamples);
@@ -135,7 +135,7 @@ struct MLTConfiguration {
 		stream->writeInt(firstStageSizeReduction);
 		if (importanceMap.get()) {
 			importanceMap->getSize().serialize(stream);
-			stream->writeFloatArray(importanceMap->getFloatData(),
+			stream->writefloatArray(importanceMap->getfloatData(),
 				(size_t) importanceMap->getWidth() * (size_t) importanceMap->getHeight());
 		} else {
 			Vector2i(0, 0).serialize(stream);

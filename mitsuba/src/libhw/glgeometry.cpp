@@ -86,7 +86,7 @@ void GLGeometry::refresh() {
 		for (size_t i=0; i<vertexCount; ++i) {
 			if (count[i] == 0)
 				continue;
-			sourceTangents[i] /= (Float) count[i];
+			sourceTangents[i] /= (float) count[i];
 		}
 
 		delete[] count;

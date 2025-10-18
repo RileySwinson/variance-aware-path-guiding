@@ -33,7 +33,7 @@ PhotonMap::PhotonMap(Stream *stream, InstanceManager *manager)
     : SerializableObject(stream, manager),
 	  m_kdtree(0, PhotonTree::ESlidingMidpoint) {
 	Assert(Photon::m_precompTableReady);
-	m_scale = (Float) stream->readFloat();
+	m_scale = (float) stream->readfloat();
 	m_kdtree.resize(stream->readSize());
 	m_kdtree.setDepth(stream->readSize());
 	m_kdtree.setAABB(AABB(stream));
@@ -44,7 +44,7 @@ PhotonMap::PhotonMap(Stream *stream, InstanceManager *manager)
 void PhotonMap::serialize(Stream *stream, InstanceManager *manager) const {
 	Log(EDebug, "Serializing a photon map (%s)",
 		memString(m_kdtree.size() * sizeof(Photon)).c_str());
-	stream->writeFloat(m_scale);
+	stream->writefloat(m_scale);
 	stream->writeSize(m_kdtree.size());
 	stream->writeSize(m_kdtree.getDepth());
 	m_kdtree.getAABB().serialize(stream);
@@ -82,13 +82,13 @@ void PhotonMap::dumpOBJ(const std::string &filename) {
 
 Spectrum PhotonMap::estimateIrradiance(
 		const Point &p, const Normal &n,
-		Float searchRadius, int maxDepth,
+		float searchRadius, int maxDepth,
 		size_t maxPhotons) const {
 	SearchResult *results = static_cast<SearchResult *>(
 		alloca((maxPhotons+1) * sizeof(SearchResult)));
-	Float squaredRadius = searchRadius*searchRadius;
+	float squaredRadius = searchRadius*searchRadius;
 	size_t resultCount = nnSearch(p, squaredRadius, maxPhotons, results);
-	Float invSquaredRadius = 1.0f / squaredRadius;
+	float invSquaredRadius = 1.0f / squaredRadius;
 
 	/* Sum over all contributions */
 	Spectrum result(0.0f);
@@ -100,7 +100,7 @@ Spectrum PhotonMap::estimateIrradiance(
 
 		Vector wi = -photon.getDirection();
 		Vector photonNormal = photon.getNormal();
-		Float wiDotGeoN = dot(photonNormal, wi),
+		float wiDotGeoN = dot(photonNormal, wi),
 			  wiDotShN  = dot(n, wi);
 
 		/* Only use photons from the top side of the surface */
@@ -109,7 +109,7 @@ Spectrum PhotonMap::estimateIrradiance(
 			Spectrum power = photon.getPower() * std::abs(wiDotShN / wiDotGeoN);
 
 			/* Weight the samples using Simpson's kernel */
-			Float sqrTerm = 1.0f - searchResult.distSquared*invSquaredRadius;
+			float sqrTerm = 1.0f - searchResult.distSquared*invSquaredRadius;
 
 			result += power * (sqrTerm*sqrTerm);
 		}
@@ -122,12 +122,12 @@ Spectrum PhotonMap::estimateIrradiance(
 }
 
 Spectrum PhotonMap::estimateRadiance(const Intersection &its,
-		Float searchRadius, size_t maxPhotons) const {
+		float searchRadius, size_t maxPhotons) const {
 	SearchResult *results = static_cast<SearchResult *>(
 		alloca((maxPhotons+1) * sizeof(SearchResult)));
-	Float squaredRadius = searchRadius*searchRadius;
+	float squaredRadius = searchRadius*searchRadius;
 	size_t resultCount = nnSearch(its.p, squaredRadius, maxPhotons, results);
-	Float invSquaredRadius = 1.0f / squaredRadius;
+	float invSquaredRadius = 1.0f / squaredRadius;
 
 	/* Sum over all contributions */
 	Spectrum result(0.0f);
@@ -135,7 +135,7 @@ Spectrum PhotonMap::estimateRadiance(const Intersection &its,
 	for (size_t i=0; i<resultCount; i++) {
 		const SearchResult &searchResult = results[i];
 		const Photon &photon = m_kdtree[searchResult.index];
-		Float sqrTerm = 1.0f - searchResult.distSquared*invSquaredRadius;
+		float sqrTerm = 1.0f - searchResult.distSquared*invSquaredRadius;
 
 		Vector wi = its.toLocal(-photon.getDirection());
 
@@ -158,7 +158,7 @@ struct RawRadianceQuery {
 	inline void operator()(const Photon &photon) {
 		Normal photonNormal(photon.getNormal());
 		Vector wi = -photon.getDirection();
-		Float wiDotGeoN = absDot(photonNormal, wi);
+		float wiDotGeoN = absDot(photonNormal, wi);
 
 		if (photon.getDepth() > maxDepth
 			|| dot(photonNormal, its.shFrame.n) < 1e-1f
@@ -185,7 +185,7 @@ struct RawRadianceQuery {
 };
 
 size_t PhotonMap::estimateRadianceRaw(const Intersection &its,
-		Float searchRadius, Spectrum &result, int maxDepth) const {
+		float searchRadius, Spectrum &result, int maxDepth) const {
 	RawRadianceQuery query(its, maxDepth);
 	size_t count = m_kdtree.executeQuery(its.p, searchRadius, query);
 	result = query.result;

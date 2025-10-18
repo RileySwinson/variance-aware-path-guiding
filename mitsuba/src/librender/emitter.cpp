@@ -84,40 +84,40 @@ Spectrum AbstractEmitter::evalDirection(const DirectionSamplingRecord &dRec,
 	NotImplementedError("evalDirection");
 }
 
-Float AbstractEmitter::pdfPosition(const PositionSamplingRecord &pRec) const {
+float AbstractEmitter::pdfPosition(const PositionSamplingRecord &pRec) const {
 	NotImplementedError("pdfPosition");
 }
 
-Float AbstractEmitter::pdfDirection(const DirectionSamplingRecord &dRec,
+float AbstractEmitter::pdfDirection(const DirectionSamplingRecord &dRec,
 		const PositionSamplingRecord &pRec) const {
 	NotImplementedError("pdfDirection");
 }
 
-Float AbstractEmitter::pdfDirect(const DirectSamplingRecord &dRec) const {
+float AbstractEmitter::pdfDirect(const DirectSamplingRecord &dRec) const {
 	NotImplementedError("pdfDirect");
 }
 
 Emitter::Emitter(const Properties &props)
  : AbstractEmitter(props) {
 	// Importance sampling weight (used by the luminaire sampling code in \ref Scene)
-	m_samplingWeight = props.getFloat("samplingWeight", 1.0f);
+	m_samplingWeight = props.getfloat("samplingWeight", 1.0f);
 }
 
 Emitter::Emitter(Stream *stream, InstanceManager *manager)
  : AbstractEmitter(stream, manager) {
-	m_samplingWeight = stream->readFloat();
+	m_samplingWeight = stream->readfloat();
 }
 
 void Emitter::serialize(Stream *stream, InstanceManager *manager) const {
 	AbstractEmitter::serialize(stream, manager);
 
-	stream->writeFloat(m_samplingWeight);
+	stream->writefloat(m_samplingWeight);
 }
 
 Spectrum Emitter::sampleRay(Ray &ray,
 		const Point2 &spatialSample,
 		const Point2 &directionalSample,
-		Float time) const {
+		float time) const {
 	NotImplementedError("sampleRay");
 }
 

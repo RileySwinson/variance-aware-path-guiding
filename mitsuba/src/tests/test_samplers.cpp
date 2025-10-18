@@ -35,7 +35,7 @@ public:
 				createObject(MTS_CLASS(Sampler), Properties("halton")));
 
 		/* MATLAB: p = haltonset(5); net(p,5) */
-		Float comparison[] = {
+		float comparison[] = {
 							0,                 0,                 0,                 0,                 0,
 			0.500000000000000, 0.333333333333333, 0.200000000000000, 0.142857142857143, 0.090909090909091,
 			0.250000000000000, 0.666666666666667, 0.400000000000000, 0.285714285714286, 0.181818181818182,
@@ -59,7 +59,7 @@ public:
 		ref<Sampler> sampler = static_cast<Sampler *> (PluginManager::getInstance()->
 				createObject(MTS_CLASS(Sampler), props));
 
-		Float comparison[] = {
+		float comparison[] = {
 			0.0,						0,                 0,                 0,                 0,                 0,
 			1.0/5.0,	0.500000000000000, 0.333333333333333, 0.200000000000000, 0.142857142857143, 0.090909090909091,
 			2.0/5.0,	0.250000000000000, 0.666666666666667, 0.400000000000000, 0.285714285714286, 0.181818181818182,
@@ -77,7 +77,7 @@ public:
 	}
 
 	void test03_radicalInverseIncr() {
-		Float x = 0.0f;
+		float x = 0.0f;
 
 		for (int i=0; i<20; ++i) {
 			assertEqualsEpsilon(x, radicalInverse(2, i), 0);

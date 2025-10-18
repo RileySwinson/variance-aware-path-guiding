@@ -136,8 +136,8 @@ public:
 		Spectrum grad[2];
 		m_displacement->evalGradient(its, grad);
 
-		Float dDispDu = grad[0].getLuminance();
-		Float dDispDv = grad[1].getLuminance();
+		float dDispDu = grad[0].getLuminance();
+		float dDispDv = grad[1].getLuminance();
 
 		/* Build a perturbed frame -- ignores the usually
 		   negligible normal derivative term */
@@ -174,7 +174,7 @@ public:
 		return m_nested->eval(perturbedQuery, measure);
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		const Intersection& its = bRec.its;
 		Intersection perturbed(its);
 		perturbed.shFrame = getFrame(its);
@@ -213,7 +213,7 @@ public:
 		return result;
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		const Intersection& its = bRec.its;
 		Intersection perturbed(its);
 		perturbed.shFrame = getFrame(its);
@@ -236,7 +236,7 @@ public:
 		return result;
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return m_nested->getRoughness(its, component);
 	}
 

@@ -184,7 +184,7 @@ void ParticleTracer::process(const WorkUnit *workUnit, WorkResult *workResult,
 
 				ray = Ray(mRec.p, pRec.wo, ray.time);
 				ray.mint = 0;
-			} else if (its.t == std::numeric_limits<Float>::infinity()) {
+			} else if (its.t == std::numeric_limits<float>::infinity()) {
 				/* There is no surface in this direction */
 				break;
 			} else {
@@ -207,7 +207,7 @@ void ParticleTracer::process(const WorkUnit *workUnit, WorkResult *workResult,
 
 				/* Prevent light leaks due to the use of shading normals -- [Veach, p. 158] */
 				Vector wi = -ray.d, wo = its.toWorld(bRec.wo);
-				Float wiDotGeoN = dot(its.geoFrame.n, wi),
+				float wiDotGeoN = dot(its.geoFrame.n, wi),
 				      woDotGeoN = dot(its.geoFrame.n, wo);
 				if (wiDotGeoN * Frame::cosTheta(bRec.wi) <= 0 ||
 					woDotGeoN * Frame::cosTheta(bRec.wo) <= 0)
@@ -256,7 +256,7 @@ void ParticleTracer::process(const WorkUnit *workUnit, WorkResult *workResult,
 				   Stop with at least some probability to avoid
 				   getting stuck (e.g. due to total internal reflection) */
 
-				Float q = std::min(throughput.max(), (Float) 0.95f);
+				float q = std::min(throughput.max(), (float) 0.95f);
 				if (m_sampler->next1D() >= q)
 					break;
 				throughput /= q;

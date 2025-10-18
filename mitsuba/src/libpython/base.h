@@ -110,10 +110,10 @@
 #define BP_IMPLEMENT_AABB_OPS(AABBType, PointType) \
 	void (AABBType::*AABBType ##_expandBy1)(const AABBType &) = &AABBType::expandBy; \
 	void (AABBType::*AABBType ##_expandBy2)(const PointType &) = &AABBType::expandBy; \
-	Float (AABBType::*AABBType ##_distanceTo1)(const AABBType &) const = &AABBType::distanceTo; \
-	Float (AABBType::*AABBType ##_distanceTo2)(const PointType &) const = &AABBType::distanceTo; \
-	Float (AABBType::*AABBType ##_squaredDistanceTo1)(const AABBType &) const = &AABBType::squaredDistanceTo; \
-	Float (AABBType::*AABBType ##_squaredDistanceTo2)(const PointType &) const = &AABBType::squaredDistanceTo; \
+	float (AABBType::*AABBType ##_distanceTo1)(const AABBType &) const = &AABBType::distanceTo; \
+	float (AABBType::*AABBType ##_distanceTo2)(const PointType &) const = &AABBType::distanceTo; \
+	float (AABBType::*AABBType ##_squaredDistanceTo1)(const AABBType &) const = &AABBType::squaredDistanceTo; \
+	float (AABBType::*AABBType ##_squaredDistanceTo2)(const PointType &) const = &AABBType::squaredDistanceTo; \
 	bool (AABBType::*AABBType ##_contains1)(const AABBType &) const = &AABBType::contains; \
 	bool (AABBType::*AABBType ##_contains2)(const PointType &) const = &AABBType::contains; \
 	\

@@ -39,7 +39,7 @@ struct SHVector;
  * \ingroup libpython
  */
 struct MTS_EXPORT_CORE SHRotation {
-	typedef Eigen::Matrix<Float, Eigen::Dynamic, Eigen::Dynamic> Matrix;
+	typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> Matrix;
 
 	std::vector<Matrix> blocks;
 
@@ -111,8 +111,8 @@ public:
 	void serialize(Stream *stream) const;
 
 	/// Get the energy per band
-	inline Float energy(int band) const {
-		Float result = 0;
+	inline float energy(int band) const {
+		float result = 0;
 		for (int m=-band; m<=band; ++m)
 			result += std::abs(operator()(band,m));
 		return result;
@@ -181,7 +181,7 @@ public:
 	}
 
 	/// Add a scalar multiple of another vector
-	inline SHVector& madd(Float f, const SHVector &v) {
+	inline SHVector& madd(float f, const SHVector &v) {
 		ptrdiff_t extendBy = v.m_coeffs.size() - m_coeffs.size();
 		if (extendBy > 0) {
 			m_coeffs.conservativeResize(v.m_coeffs.rows());
@@ -194,26 +194,26 @@ public:
 	}
 
 	/// Scalar multiplication
-	inline SHVector &operator*=(Float f) {
+	inline SHVector &operator*=(float f) {
 		m_coeffs *= f;
 		return *this;
 	}
 
 	/// Scalar multiplication
-	inline SHVector operator*(Float f) const {
+	inline SHVector operator*(float f) const {
 		SHVector vec(m_bands);
 		vec.m_coeffs = m_coeffs * f;
 		return vec;
 	}
 
 	/// Scalar division
-	inline SHVector &operator/=(Float f) {
-		m_coeffs *= (Float) 1 / f;
+	inline SHVector &operator/=(float f) {
+		m_coeffs *= (float) 1 / f;
 		return *this;
 	}
 
 	/// Scalar division
-	inline SHVector operator/(Float f) const {
+	inline SHVector operator/(float f) const {
 		SHVector vec(m_bands);
 		vec.m_coeffs = m_coeffs * (1/f);
 		return vec;
@@ -227,20 +227,20 @@ public:
 	}
 
 	/// Access coefficient m (in {-l, ..., l}) on band l
-	inline Float &operator()(int l, int m) {
+	inline float &operator()(int l, int m) {
 		return m_coeffs[l*(l+1) + m];
 	}
 
 	/// Access coefficient m (in {-l, ..., l}) on band l
-	inline const Float &operator()(int l, int m) const {
+	inline const float &operator()(int l, int m) const {
 		return m_coeffs[l*(l+1) + m];
 	}
 
 	/// Evaluate for a direction given in spherical coordinates
-	Float eval(Float theta, Float phi) const;
+	float eval(float theta, float phi) const;
 
 	/// Evaluate for a direction given in Cartesian coordinates
-	Float eval(const Vector &v) const;
+	float eval(const Vector &v) const;
 
 	/**
 	 * \brief Evaluate for a direction given in spherical coordinates.
@@ -248,7 +248,7 @@ public:
 	 * This function is much faster but only works for azimuthally
 	 * invariant functions
 	 */
-	Float evalAzimuthallyInvariant(Float theta, Float phi) const;
+	float evalAzimuthallyInvariant(float theta, float phi) const;
 
 	/**
 	 * \brief Evaluate for a direction given in cartesian coordinates.
@@ -256,7 +256,7 @@ public:
 	 * This function is much faster but only works for azimuthally
 	 * invariant functions
 	 */
-	Float evalAzimuthallyInvariant(const Vector &v) const;
+	float evalAzimuthallyInvariant(const Vector &v) const;
 
 	/// Check if this function is azumuthally invariant
 	bool isAzimuthallyInvariant() const;
@@ -272,7 +272,7 @@ public:
 	}
 
 	/// Dot product
-	inline friend Float dot(const SHVector &v1, const SHVector &v2);
+	inline friend float dot(const SHVector &v1, const SHVector &v2);
 
 	/// Normalize so that the represented function becomes a valid distribution
 	void normalize();
@@ -281,10 +281,10 @@ public:
 	Matrix3x3 mu2() const;
 
 	/// Brute-force search for the minimum value over the sphere
-	Float findMinimum(int res) const;
+	float findMinimum(int res) const;
 
 	/// Add a constant value
-	void addOffset(Float value);
+	void addOffset(float value);
 
 	/**
 	 * \brief Convolve the SH representation with the supplied kernel.
@@ -298,25 +298,25 @@ public:
 	template<typename Functor> void project(const Functor &f, int res = 32) {
 		SAssert(res % 2 == 0);
 		/* Nested composite Simpson's rule */
-		Float hExt = M_PI / res,
+		float hExt = M_PI / res,
 		      hInt = (2*M_PI)/(res*2);
 
 		for (int l=0; l<m_bands; ++l)
 			for (int m=-l; m<=l; ++m)
 				operator()(l,m) = 0;
 
-		Float *sinPhi = (Float *) alloca(sizeof(Float)*m_bands),
-			  *cosPhi = (Float *) alloca(sizeof(Float)*m_bands);
+		float *sinPhi = (float *) alloca(sizeof(float)*m_bands),
+			  *cosPhi = (float *) alloca(sizeof(float)*m_bands);
 
 		for (int i=0; i<=res; ++i) {
-			Float theta = hExt*i, cosTheta = std::cos(theta);
-			Float weightExt = (i & 1) ? 4.0f : 2.0f;
+			float theta = hExt*i, cosTheta = std::cos(theta);
+			float weightExt = (i & 1) ? 4.0f : 2.0f;
 			if (i == 0 || i == res)
 				weightExt = 1.0f;
 
 			for (int j=0; j<=res*2; ++j) {
-				Float phi = hInt*j;
-				Float weightInt = (j & 1) ? 4.0f : 2.0f;
+				float phi = hInt*j;
+				float weightInt = (j & 1) ? 4.0f : 2.0f;
 				if (j == 0 || j == 2*res)
 					weightInt = 1.0f;
 
@@ -325,12 +325,12 @@ public:
 					cosPhi[m] = std::cos((m+1)*phi);
 				}
 
-				Float value = f(sphericalDirection(theta, phi))*std::sin(theta)
+				float value = f(sphericalDirection(theta, phi))*std::sin(theta)
 					* weightExt*weightInt;
 
 				for (int l=0; l<m_bands; ++l) {
 					for (int m=1; m<=l; ++m) {
-						Float L = legendreP(l, m, cosTheta) * normalization(l, m);
+						float L = legendreP(l, m, cosTheta) * normalization(l, m);
 						operator()(l, -m) += value * SQRT_TWO * sinPhi[m-1] * L;
 						operator()(l, m) += value * SQRT_TWO * cosPhi[m-1] * L;
 					}
@@ -346,29 +346,29 @@ public:
 	}
 
 	/// Compute the relative L2 error
-	template<typename Functor> Float l2Error(const Functor &f, int res = 32) const {
+	template<typename Functor> float l2Error(const Functor &f, int res = 32) const {
 		SAssert(res % 2 == 0);
 		/* Nested composite Simpson's rule */
-		Float hExt = M_PI / res,
+		float hExt = M_PI / res,
 		      hInt = (2*M_PI)/(res*2);
-		Float error = 0.0f, denom=0.0f;
+		float error = 0.0f, denom=0.0f;
 
 		for (int i=0; i<=res; ++i) {
-			Float theta = hExt*i;
-			Float weightExt = (i & 1) ? 4.0f : 2.0f;
+			float theta = hExt*i;
+			float weightExt = (i & 1) ? 4.0f : 2.0f;
 			if (i == 0 || i == res)
 				weightExt = 1.0f;
 
 			for (int j=0; j<=res*2; ++j) {
-				Float phi = hInt*j;
-				Float weightInt = (j & 1) ? 4.0f : 2.0f;
+				float phi = hInt*j;
+				float weightInt = (j & 1) ? 4.0f : 2.0f;
 				if (j == 0 || j == 2*res)
 					weightInt = 1.0f;
 
-				Float value1 = f(sphericalDirection(theta, phi));
-				Float value2 = eval(theta, phi);
-				Float diff = value1-value2;
-				Float weight = std::sin(theta)*weightInt*weightExt;
+				float value1 = f(sphericalDirection(theta, phi));
+				float value2 = eval(theta, phi);
+				float diff = value1-value2;
+				float weight = std::sin(theta)*weightInt*weightExt;
 
 				error += diff*diff*weight;
 				denom += value1*value1*weight;
@@ -382,7 +382,7 @@ public:
 	std::string toString() const;
 
 	/// Return a normalization coefficient
-	inline static Float normalization(int l, int m) {
+	inline static float normalization(int l, int m) {
 		if (l < SH_NORMTBL_SIZE)
 			return m_normalization[l*(l+1)/2 + m];
 		else
@@ -408,14 +408,14 @@ protected:
 	static void rotationBlock(const SHRotation::Matrix &M1, const SHRotation::Matrix &Mp, SHRotation::Matrix &Mn);
 
 	/// Compute a normalization coefficient
-	static Float computeNormalization(int l, int m);
+	static float computeNormalization(int l, int m);
 private:
 	int m_bands;
-	Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
-	static Float *m_normalization;
+	Eigen::Matrix<float, Eigen::Dynamic, 1> m_coeffs;
+	static float *m_normalization;
 };
 
-inline Float dot(const SHVector &v1, const SHVector &v2) {
+inline float dot(const SHVector &v1, const SHVector &v2) {
 	const size_t size = std::min(v1.m_coeffs.size(), v2.m_coeffs.size());
 	return v1.m_coeffs.head(size).dot(v2.m_coeffs.head(size));
 }
@@ -446,7 +446,7 @@ public:
 	 * slightly different from the function evaluated at the
 	 * sample, even if $f$ is a distribution) will be returned.
 	 */
-	Float warp(const SHVector &f, Point2 &sample) const;
+	float warp(const SHVector &f, Point2 &sample) const;
 
 	/// Return information on the size of the precomputed tables
 	std::string toString() const;
@@ -462,23 +462,23 @@ protected:
 	/* Index into the phi table */
 	inline int P(int m) const { return m + m_bands; }
 
-	inline Float lookupIntegral(int depth, int zBlock, int phiBlock, int l, int m) const {
+	inline float lookupIntegral(int depth, int zBlock, int phiBlock, int l, int m) const {
 		return -m_phiMap[depth][phiBlock][P(m)] * m_legendreMap[depth][zBlock][I(l, std::abs(m))];
 	}
 
 	/// Recursively compute assoc. legendre & phi integrals
-	Float *legendreIntegrals(Float a, Float b);
-	Float *phiIntegrals(Float a, Float b);
+	float *legendreIntegrals(float a, float b);
+	float *phiIntegrals(float a, float b);
 
 	/// Integrate a SH expansion over the specified mip-map region
-	Float integrate(int depth, int zBlock, int phiBlock, const SHVector &f) const;
+	float integrate(int depth, int zBlock, int phiBlock, const SHVector &f) const;
 protected:
 	int m_bands;
 	int m_depth;
-	Float ***m_phiMap;
-	Float ***m_legendreMap;
+	float ***m_phiMap;
+	float ***m_legendreMap;
 	int m_dataSize;
-	Float *m_normalization;
+	float *m_normalization;
 };
 
 MTS_NAMESPACE_END

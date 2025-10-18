@@ -26,20 +26,20 @@ MTS_NAMESPACE_BEGIN
 /* Parallel irradiance sampling implementation (worker) */
 class IrradianceSamplingWorker : public WorkProcessor {
 public:
-	IrradianceSamplingWorker(int irrSamples, bool irrIndirect, Float time)
+	IrradianceSamplingWorker(int irrSamples, bool irrIndirect, float time)
 		: m_irrSamples(irrSamples), m_irrIndirect(irrIndirect), m_time(time) {
 	}
 
 	IrradianceSamplingWorker(Stream *stream, InstanceManager *manager) {
 		m_irrSamples = stream->readInt();
 		m_irrIndirect = stream->readBool();
-		m_time = stream->readFloat();
+		m_time = stream->readfloat();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		stream->writeInt(m_irrSamples);
 		stream->writeBool(m_irrIndirect);
-		stream->writeFloat(m_time);
+		stream->writefloat(m_time);
 	}
 
 	ref<WorkUnit> createWorkUnit() const {
@@ -97,7 +97,7 @@ private:
 	ref<SamplingIntegrator> m_integrator;
 	int m_irrSamples;
 	bool m_irrIndirect;
-	Float m_time;
+	float m_time;
 };
 
 void PositionSampleVector::load(Stream *stream) {
@@ -147,7 +147,7 @@ std::string IrradianceSampleVector::toString() const {
 }
 
 IrradianceSamplingProcess::IrradianceSamplingProcess(PositionSampleVector *positions,
-		size_t granularity, int irrSamples, bool irrIndirect, Float time,
+		size_t granularity, int irrSamples, bool irrIndirect, float time,
 		const void *data)
 	: m_positionSamples(positions), m_granularity(granularity),
 	  m_irrSamples(irrSamples), m_irrIndirect(irrIndirect), m_time(time) {

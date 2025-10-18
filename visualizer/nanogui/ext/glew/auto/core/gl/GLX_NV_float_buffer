@@ -2,4 +2,4 @@ GLX_NV_float_buffer
 http://cvs1.nvidia.com/inc/GL/glxtokens.h
 GLX_NV_float_buffer
 
-	GLX_FLOAT_COMPONENTS_NV 0x20B0
+	GLX_float_COMPONENTS_NV 0x20B0

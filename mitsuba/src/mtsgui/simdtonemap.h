@@ -49,31 +49,31 @@ public:
 		{}
 	};
 
-	inline mitsuba::Float logAvgLuminance() const {
+	inline mitsuba::float logAvgLuminance() const {
 		return m_params.avgLogLum;
 	}
 
-	inline mitsuba::Float maxLuminance() const {
+	inline mitsuba::float maxLuminance() const {
 		return m_params.maxLum;
 	}
 
-	inline mitsuba::Float multiplier() const {
+	inline mitsuba::float multiplier() const {
 		return m_params.multiplier;
 	}
 
-	inline void setInvWhitePoint(mitsuba::Float invWhitePoint) {
+	inline void setInvWhitePoint(mitsuba::float invWhitePoint) {
 		m_params.invWhitePoint = static_cast<float>(invWhitePoint);
 	}
 
-	inline void setInvGamma(mitsuba::Float invGamma) {
+	inline void setInvGamma(mitsuba::float invGamma) {
 		m_params.invGamma = static_cast<float>(invGamma);
 	}
 
-	inline void setScale(mitsuba::Float scale) {
+	inline void setScale(mitsuba::float scale) {
 		m_params.scale = static_cast<float>(scale);
 	}
 
-	inline void setMultiplier(mitsuba::Float multiplier) {
+	inline void setMultiplier(mitsuba::float multiplier) {
 		m_params.multiplier = static_cast<float>(multiplier);
 	}
 
@@ -87,7 +87,7 @@ public:
 
 	// Source: RGBA32F
 	bool setLuminanceInfo(const mitsuba::Bitmap* source,
-		mitsuba::Float multiplier = 1);
+		mitsuba::float multiplier = 1);
 
 	MTS_DECLARE_CLASS()
 protected:

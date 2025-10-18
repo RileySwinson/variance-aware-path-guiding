@@ -47,8 +47,8 @@ MTS_NAMESPACE_BEGIN
  *    (usually contains a pointer to the \ref RenderJob instance)
  */
 extern void blueNoisePointSet(const Scene *scene,
-	const std::vector<Shape *> &shapes, Float radius,
-	PositionSampleVector *target, Float &sa, AABB &aabb,
+	const std::vector<Shape *> &shapes, float radius,
+	PositionSampleVector *target, float &sa, AABB &aabb,
 	const void *data);
 
 MTS_NAMESPACE_END

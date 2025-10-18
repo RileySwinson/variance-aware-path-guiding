@@ -107,8 +107,8 @@ void TreeItem::setProperty(const std::string &name, const Properties &props) {
 		case Properties::EInteger:
 			data = QVariant(props.getInteger(name));
 			break;
-		case Properties::EFloat:
-			data = QVariant((double) props.getFloat(name));
+		case Properties::Efloat:
+			data = QVariant((double) props.getfloat(name));
 			break;
 		case Properties::EString:
 			data = QVariant(props.getString(name).c_str());
@@ -153,7 +153,7 @@ void TreeItem::putProperties(Properties &props) const {
 				props.setInteger(name, value.toInt());
 				break;
 			case QVariant::Double:
-				props.setFloat(name, (Float) value.toDouble());
+				props.setfloat(name, (float) value.toDouble());
 				break;
 			case QVariant::String:
 				props.setString(name, value.toString().toStdString());

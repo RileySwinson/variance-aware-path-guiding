@@ -47,7 +47,7 @@ public:
 	 */
 	inline SurfaceAreaHeuristic3(const AABB &aabb) {
 		const Vector extents(aabb.getExtents());
-		const Float temp = 1.0f / (extents.x * extents.y
+		const float temp = 1.0f / (extents.x * extents.y
 				+ extents.y*extents.z + extents.x*extents.z);
 		m_temp0 = Vector(
 			extents[1] * extents[2],
@@ -66,8 +66,8 @@ public:
 	 * operation. In the case of the surface area heuristic, this is simply
 	 * the ratio of surface areas.
 	 */
-	inline std::pair<Float, Float> operator()(int axis, Float leftWidth, Float rightWidth) const {
-		return std::pair<Float, Float>(
+	inline std::pair<float, float> operator()(int axis, float leftWidth, float rightWidth) const {
+		return std::pair<float, float>(
 			m_temp0[axis] + m_temp1[axis] * leftWidth,
 			m_temp0[axis] + m_temp1[axis] * rightWidth);
 	}
@@ -76,7 +76,7 @@ public:
 	 * Compute the underlying quantity used by the tree construction
 	 * heuristic. This is used to compute the final cost of a kd-tree.
 	 */
-	inline static Float getQuantity(const AABB &aabb) {
+	inline static float getQuantity(const AABB &aabb) {
 		return aabb.getSurfaceArea();
 	}
 private:
@@ -93,7 +93,7 @@ private:
  * /// Some temporary space is supplied, which can be used to cache
  * /// information about the intersection
  * bool intersect(const Ray &ray, IndexType idx,
- *     Float mint, Float maxt, Float &t, void *tmp);
+ *     float mint, float maxt, float &t, void *tmp);
  * \endcode
  *
  * This class implements an epsilon-free version of the optimized ray
@@ -154,7 +154,7 @@ protected:
 	/// Ray traversal stack entry for Wald-style incoherent ray tracing
 	struct KDStackEntry {
 		const KDNode * __restrict node;
-		Float mint, maxt;
+		float mint, maxt;
 	};
 
 	/// Ray traversal stack entry for Havran-style incoherent ray tracing
@@ -162,7 +162,7 @@ protected:
 		/* Pointer to the far child */
 		const KDNode * __restrict node;
 		/* Distance traveled along the ray (entry or exit) */
-		Float t;
+		float t;
 		/* Previous stack item */
 		uint32_t prev;
 		/* Associated point */
@@ -176,8 +176,8 @@ protected:
 	 * of the methods implemented in this class.
 	 */
 	template<bool shadowRay> FINLINE
-			bool rayIntersectHavran(const Ray &ray, Float mint, Float maxt,
-			Float &t, void *temp) const {
+			bool rayIntersectHavran(const Ray &ray, float mint, float maxt,
+			float &t, void *temp) const {
 		KDStackEntryHavran stack[MTS_KD_MAXDEPTH];
 		#if 0
 		static const int prevAxisTable[] = { 2, 0, 1 };
@@ -203,7 +203,7 @@ protected:
 		const KDNode * __restrict currNode = m_nodes;
 		while (currNode != NULL) {
 			while (EXPECT_TAKEN(!currNode->isLeaf())) {
-				const Float splitVal = (Float) currNode->getSplit();
+				const float splitVal = (float) currNode->getSplit();
 				const int axis = currNode->getAxis();
 				const KDNode * __restrict farChild;
 
@@ -238,7 +238,7 @@ protected:
 				}
 
 				/* Cases P4 and N4 -- calculate the distance to the split plane */
-				Float distToSplit = (splitVal - ray.o[axis]) * ray.dRcp[axis];
+				float distToSplit = (splitVal - ray.o[axis]) * ray.dRcp[axis];
 
 				/* Set up a new exit point */
 				const uint32_t tmp = exPt++;
@@ -328,7 +328,7 @@ protected:
 	 * (measured using rtdsc).
 	 */
 	FINLINE RayStatistics rayIntersectHavranCollectStatistics(
-			const Ray &ray, Float mint, Float maxt, Float &t, void *temp) const {
+			const Ray &ray, float mint, float maxt, float &t, void *temp) const {
 		KDStackEntryHavran stack[MTS_KD_MAXDEPTH];
 
 		/* Set up the entry point */
@@ -350,7 +350,7 @@ protected:
 		const KDNode * __restrict currNode = m_nodes;
 		while (currNode != NULL) {
 			while (EXPECT_TAKEN(!currNode->isLeaf())) {
-				const Float splitVal = (Float) currNode->getSplit();
+				const float splitVal = (float) currNode->getSplit();
 				const int axis = currNode->getAxis();
 				const KDNode * __restrict farChild;
 
@@ -432,10 +432,10 @@ protected:
 	 * \brief Ray tracing kd-tree traversal loop (PBRT variant)
 	 */
 	template<bool shadowRay> FINLINE bool rayIntersectPBRT(const Ray &ray,
-			Float mint_, Float maxt_, Float &t, void *temp) const {
+			float mint_, float maxt_, float &t, void *temp) const {
 		KDStackEntry stack[MTS_KD_MAXDEPTH];
 		int stackPos = 0;
-		Float mint = mint_, maxt=maxt_;
+		float mint = mint_, maxt=maxt_;
 		const KDNode *node = m_nodes;
 		bool foundIntersection = false;
 
@@ -444,7 +444,7 @@ protected:
 				break;
 
 			if (EXPECT_TAKEN(!node->isLeaf())) {
-				const Float split = (Float) node->getSplit();
+				const float split = (float) node->getSplit();
 				const int axis = node->getAxis();
 				const float tPlane = (split - ray.o[axis]) * ray.dRcp[axis];
 				bool leftOfSplit = (ray.o[axis] < split)
@@ -506,22 +506,22 @@ public:
 	 * This is done by running the traversal code on random rays
 	 * and fitting the SAH cost model to the collected statistics.
 	 */
-	void findCosts(Float &traversalCost, Float &intersectionCost) {
+	void findCosts(float &traversalCost, float &intersectionCost) {
 		ref<Random> random = new Random();
 		uint8_t temp[128];
 		BSphere bsphere = m_aabb.getBSphere();
 		int nRays = 10000000, warmup = nRays/4;
 		Vector *A = new Vector[nRays-warmup];
-		Float *b = new Float[nRays-warmup];
+		float *b = new float[nRays-warmup];
 		int nIntersections = 0, idx = 0;
 
 		for (int i=0; i<nRays; ++i) {
-			Point2 sample1(random->nextFloat(), random->nextFloat()),
-				sample2(random->nextFloat(), random->nextFloat());
+			Point2 sample1(random->nextfloat(), random->nextfloat()),
+				sample2(random->nextfloat(), random->nextfloat());
 			Point p1 = bsphere.center + warp::squareToUniformSphere(sample1) * bsphere.radius;
 			Point p2 = bsphere.center + warp::squareToUniformSphere(sample2) * bsphere.radius;
 			Ray ray(p1, normalize(p2-p1), 0.0f);
-			Float mint, maxt, t;
+			float mint, maxt, t;
 			if (m_aabb.rayIntersect(ray, mint, maxt)) {
 				if (ray.mint > mint) mint = ray.mint;
 				if (ray.maxt < maxt) maxt = ray.maxt;
@@ -532,9 +532,9 @@ public:
 						nIntersections++;
 					if (i > warmup) {
 						A[idx].x = 1;
-						A[idx].y = (Float) statistics.numTraversals;
-						A[idx].z = (Float) statistics.numIntersections;
-						b[idx]   = (Float) statistics.time;
+						A[idx].y = (float) statistics.numTraversals;
+						A[idx].z = (float) statistics.numIntersections;
+						b[idx]   = (float) statistics.time;
 						idx++;
 					}
 				}
@@ -561,10 +561,10 @@ public:
 
 		Transform(Minv, M)(rhs, x);
 
-		Float avgRdtsc = 0, avgResidual = 0;
+		float avgRdtsc = 0, avgResidual = 0;
 		for (int i=0; i<idx; ++i) {
 			avgRdtsc += b[i];
-			Float model = x[0] * A[i][0]
+			float model = x[0] * A[i][0]
 				+ x[1] * A[i][1]
 				+ x[2] * A[i][2];
 			avgResidual += std::abs(b[i] - model);

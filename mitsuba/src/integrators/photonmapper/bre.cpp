@@ -30,8 +30,8 @@ BeamRadianceEstimator::BeamRadianceEstimator(const PhotonMap *pmap, size_t looku
 	/* Use an optimization proposed by Jarosz et al, which accelerates
 	   the radius computation by extrapolating radius information obtained
 	   from a kd-tree lookup of a smaller size */
-	size_t reducedLookupSize = (size_t) std::sqrt((Float) lookupSize);
-	Float sizeFactor = (Float) lookupSize / (Float) reducedLookupSize;
+	size_t reducedLookupSize = (size_t) std::sqrt((float) lookupSize);
+	float sizeFactor = (float) lookupSize / (float) reducedLookupSize;
 
 	m_photonCount = pmap->size();
 	m_scaleFactor = pmap->getScaleFactor();
@@ -67,7 +67,7 @@ BeamRadianceEstimator::BeamRadianceEstimator(const PhotonMap *pmap, size_t looku
 		BRENode &node = m_nodes[i];
 		node.photon = photon;
 
-		Float searchRadiusSqr = std::numeric_limits<Float>::infinity();
+		float searchRadiusSqr = std::numeric_limits<float>::infinity();
 		pmap->nnSearch(photon.getPosition(), searchRadiusSqr, reducedLookupSize, results);
 
 		/* Compute photon radius based on a locally uniform density assumption */
@@ -89,13 +89,13 @@ BeamRadianceEstimator::BeamRadianceEstimator(const PhotonMap *pmap, size_t looku
 BeamRadianceEstimator::BeamRadianceEstimator(Stream *stream, InstanceManager *manager) {
 	m_photonCount = stream->readSize();
 	m_depth = stream->readSize();
-	m_scaleFactor = stream->readFloat();
+	m_scaleFactor = stream->readfloat();
 	m_nodes = new BRENode[m_photonCount];
 	for (size_t i=0; i<m_photonCount; ++i) {
 		BRENode &node = m_nodes[i];
 		node.aabb = AABB(stream);
 		node.photon = Photon(stream);
-		node.radius = stream->readFloat();
+		node.radius = stream->readfloat();
 	}
 }
 
@@ -104,12 +104,12 @@ void BeamRadianceEstimator::serialize(Stream *stream, InstanceManager *manager) 
 			memString(m_photonCount * sizeof(BRENode)).c_str());
 	stream->writeSize(m_photonCount);
 	stream->writeSize(m_depth);
-	stream->writeFloat(m_scaleFactor);
+	stream->writefloat(m_scaleFactor);
 	for (size_t i=0; i<m_photonCount; ++i) {
 		BRENode &node = m_nodes[i];
 		node.aabb.serialize(stream);
 		node.photon.serialize(stream);
-		stream->writeFloat(node.radius);
+		stream->writefloat(node.radius);
 	}
 }
 
@@ -117,7 +117,7 @@ AABB BeamRadianceEstimator::buildHierarchy(IndexType index) {
 	BRENode &node = m_nodes[index];
 
 	Point center = node.photon.getPosition();
-	Float radius = node.radius;
+	float radius = node.radius;
 	node.aabb = AABB(
 		center - Vector(radius, radius, radius),
 		center + Vector(radius, radius, radius)
@@ -150,7 +150,7 @@ Spectrum BeamRadianceEstimator::query(const Ray &r, const Medium *medium) const 
 		const Photon &photon = node.photon;
 
 		/* Test against the node's bounding box */
-		Float mint, maxt;
+		float mint, maxt;
 		if (!node.aabb.rayIntersect(ray, mint, maxt) || maxt < ray.mint || mint > ray.maxt) {
 			index = stack[--stackPos];
 			continue;
@@ -166,11 +166,11 @@ Spectrum BeamRadianceEstimator::query(const Ray &r, const Medium *medium) const 
 		}
 
 		Vector originToCenter = node.photon.getPosition() - ray.o;
-		Float diskDistance = dot(originToCenter, ray.d), radSqr = node.radius * node.radius;
-		Float distSqr = (ray(diskDistance) - node.photon.getPosition()).lengthSquared();
+		float diskDistance = dot(originToCenter, ray.d), radSqr = node.radius * node.radius;
+		float distSqr = (ray(diskDistance) - node.photon.getPosition()).lengthSquared();
 
 		if (diskDistance > 0 && distSqr < radSqr) {
-			Float weight = K2(distSqr/radSqr)/radSqr;
+			float weight = K2(distSqr/radSqr)/radSqr;
 
 			Vector wi = -node.photon.getDirection();
 

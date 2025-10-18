@@ -77,7 +77,7 @@ public:
 	void setCamera(const ProjectiveCamera *pCamera,
 		const Point2 &apertureSample = Point2(0.5f),
 		const Point2 &aaSample = Point2(0.5f),
-		Float timeSample = 0.5f);
+		float timeSample = 0.5f);
 
 	/// Configure the camera (manual)
 	void setCamera(const Matrix4x4 &proj, const Matrix4x4 &view);
@@ -126,7 +126,7 @@ public:
 			const Font *font, const std::string &text);
 
 	/// Set the size of point primitives
-	void setPointSize(Float size);
+	void setPointSize(float size);
 
 	/// Draw a point
 	void drawPoint(const Point &p);
@@ -178,13 +178,13 @@ public:
 	void setDepthTest(bool value);
 
 	/// Set the current fixed-function pipeline color
-	void setColor(const Color3 &color, Float alpha = 1.0f);
+	void setColor(const Color3 &color, float alpha = 1.0f);
 
 	/// Set the current fixed-function pipeline color
-	void setColor(const Spectrum &spec, Float alpha = 1.0f);
+	void setColor(const Spectrum &spec, float alpha = 1.0f);
 
 	/// Set the depth value that is written by \ref clear()
-	void setClearDepth(Float depth);
+	void setClearDepth(float depth);
 
 	/// Set the color value that is written by \ref clear()
 	void setClearColor(const Color3 &color);

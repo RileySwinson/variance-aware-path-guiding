@@ -148,7 +148,7 @@ void Logger::log(ELogLevel level, const Class *theClass,
 	}
 }
 
-void Logger::logProgress(Float progress, const std::string &name,
+void Logger::logProgress(float progress, const std::string &name,
 	const std::string &formatted, const std::string &eta, const void *ptr) {
 	LockGuard lock(m_mutex);
 	for (size_t i=0; i<m_appenders.size(); ++i)

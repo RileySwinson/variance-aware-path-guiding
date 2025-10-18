@@ -31,7 +31,7 @@ MTS_NAMESPACE_BEGIN
  */
 struct BSphere {
 	Point center;
-	Float radius;
+	float radius;
 
 	/// Construct a bounding sphere at the origin having radius zero
 	inline BSphere() : center(0.0f), radius(0.0f) { }
@@ -39,11 +39,11 @@ struct BSphere {
 	/// Unserialize a bounding sphere from a binary data stream
 	inline BSphere(Stream *stream) {
 		center = Point(stream);
-		radius = stream->readFloat();
+		radius = stream->readfloat();
 	}
 
 	/// Create a bounding sphere from a given center point and radius
-	inline BSphere(const Point &center, Float radius)
+	inline BSphere(const Point &center, float radius)
 		: center(center), radius(radius) {
 	}
 
@@ -85,11 +85,11 @@ struct BSphere {
 	 * \c nearT and \c farT values as a tuple (or \c None, when no
 	 * intersection was found)
 	 */
-	inline bool rayIntersect(const Ray &ray, Float &nearHit, Float &farHit) const {
+	inline bool rayIntersect(const Ray &ray, float &nearHit, float &farHit) const {
 		Vector o = ray.o - center;
-		Float A = ray.d.lengthSquared();
-		Float B = 2 * dot(o, ray.d);
-		Float C = o.lengthSquared() - radius*radius;
+		float A = ray.d.lengthSquared();
+		float B = 2 * dot(o, ray.d);
+		float C = o.lengthSquared() - radius*radius;
 
 		return solveQuadratic(A, B, C, nearHit, farHit);
 	}
@@ -97,7 +97,7 @@ struct BSphere {
 	/// Serialize this bounding sphere to a binary data stream
 	inline void serialize(Stream *stream) const {
 		center.serialize(stream);
-		stream->writeFloat(radius);
+		stream->writefloat(radius);
 	}
 
 	/// Return a string representation of the bounding sphere

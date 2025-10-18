@@ -53,7 +53,7 @@ MTS_NAMESPACE_BEGIN
  *       When set to \code{true}, Mitsuba will use face normals when rendering
  *       the object, which will give it a faceted appearance. \default{\code{false}}
  *	   }
- *     \parameter{maxSmoothAngle}{\Float}{
+ *     \parameter{maxSmoothAngle}{\float}{
  *       When specified, Mitsuba will discard all vertex normals in the input mesh and rebuild
  *       them in a way that is sensitive to the presence of creases and corners. For more
  *       details on this parameter, see page~\pageref{sec:maxSmoothAngle}. Disabled by default.
@@ -125,7 +125,7 @@ public:
 			if (m_faceNormals)
 				Log(EError, "The properties 'maxSmoothAngle' and 'faceNormals' "
 				"can't be specified at the same time!");
-			rebuildTopology(props.getFloat("maxSmoothAngle"));
+			rebuildTopology(props.getfloat("maxSmoothAngle"));
 		}
 
 		if (m_triangleCount < m_faceCount * 2) {
@@ -217,11 +217,11 @@ public:
 	}
 	void texcoord_v_callback(ply::float32 y) { m_uv.y = y; }
 
-	inline Float fromSRGBComponent(Float value) {
-		if (value <= (Float) 0.04045)
-			return value / (Float) 12.92;
-		return std::pow((value + (Float) 0.055)
-			/ (Float) (1.0 + 0.055), (Float) 2.4);
+	inline float fromSRGBComponent(float value) {
+		if (value <= (float) 0.04045)
+			return value / (float) 12.92;
+		return std::pow((value + (float) 0.055)
+			/ (float) (1.0 + 0.055), (float) 2.4);
 	}
 
 	void vertex_begin_callback() { }
@@ -315,7 +315,7 @@ public:
 private:
 	Point m_position;
 	Normal m_normal;
-	Float m_red, m_green, m_blue;
+	float m_red, m_green, m_blue;
 	Transform m_objectToWorld;
 	size_t m_faceCount, m_vertexCtr;
 	size_t m_faceCtr, m_indexCtr;

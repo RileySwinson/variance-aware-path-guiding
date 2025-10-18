@@ -189,7 +189,7 @@ windows.
 automatically iconify and restore the previous video mode on input focus loss.
 This hint is ignored for windowed mode windows.
 
-`GLFW_FLOATING` specifies whether the windowed mode window will be floating
+`GLFW_floatING` specifies whether the windowed mode window will be floating
 above other regular windows, also called topmost or always-on-top.  This is
 intended primarily for debugging purposes and cannot be used to implement proper
 full screen windows.  This hint is ignored for full screen windows.
@@ -362,7 +362,7 @@ Window hint                     | Default value               | Supported values
 `GLFW_DECORATED`                | `GLFW_TRUE`                 | `GLFW_TRUE` or `GLFW_FALSE`
 `GLFW_FOCUSED`                  | `GLFW_TRUE`                 | `GLFW_TRUE` or `GLFW_FALSE`
 `GLFW_AUTO_ICONIFY`             | `GLFW_TRUE`                 | `GLFW_TRUE` or `GLFW_FALSE`
-`GLFW_FLOATING`                 | `GLFW_FALSE`                | `GLFW_TRUE` or `GLFW_FALSE`
+`GLFW_floatING`                 | `GLFW_FALSE`                | `GLFW_TRUE` or `GLFW_FALSE`
 `GLFW_MAXIMIZED`                | `GLFW_FALSE`                | `GLFW_TRUE` or `GLFW_FALSE`
 `GLFW_RED_BITS`                 | 8                           | 0 to `INT_MAX` or `GLFW_DONT_CARE`
 `GLFW_GREEN_BITS`               | 8                           | 0 to `INT_MAX` or `GLFW_DONT_CARE`
@@ -899,7 +899,7 @@ user_.  This is set on creation with the [window hint](@ref window_hints_wnd)
 a border, a close widget, etc.  This is set on creation with the
 [window hint](@ref window_hints_wnd) with the same name. 
 
-`GLFW_FLOATING` indicates whether the specified window is floating, also called
+`GLFW_floatING` indicates whether the specified window is floating, also called
 topmost or always-on-top.  This is controlled by the
 [window hint](@ref window_hints_wnd) with the same name. 
 

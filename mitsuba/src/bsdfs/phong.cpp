@@ -25,7 +25,7 @@ MTS_NAMESPACE_BEGIN
 /*!\plugin{phong}{Modified Phong BRDF}
  * \order{14}
  * \parameters{
- *     \parameter{exponent}{\Float\Or\Texture}{
+ *     \parameter{exponent}{\float\Or\Texture}{
  *         Specifies the Phong exponent \default{30}.
  *     }
  *     \parameter{specular\showbreak Reflectance}{\Spectrum\Or\Texture}{
@@ -63,8 +63,8 @@ public:
 			props.getSpectrum("diffuseReflectance", Spectrum(0.5f)));
 		m_specularReflectance = new ConstantSpectrumTexture(
 			props.getSpectrum("specularReflectance", Spectrum(0.2f)));
-		m_exponent = new ConstantFloatTexture(
-			props.getFloat("exponent", 30.0f));
+		m_exponent = new ConstantfloatTexture(
+			props.getfloat("exponent", 30.0f));
 		m_specularSamplingWeight = 0.0f;
 	}
 
@@ -94,7 +94,7 @@ public:
 
 		/* Compute weights that steer samples towards
 		   the specular or diffuse components */
-		Float dAvg = m_diffuseReflectance->getAverage().getLuminance(),
+		float dAvg = m_diffuseReflectance->getAverage().getLuminance(),
 			  sAvg = m_specularReflectance->getAverage().getLuminance();
 		m_specularSamplingWeight = sAvg / (dAvg + sAvg);
 
@@ -131,7 +131,7 @@ public:
 
 		Spectrum result(0.0f);
 		if (hasSpecular) {
-			Float alpha    = dot(bRec.wo, reflect(bRec.wi)),
+			float alpha    = dot(bRec.wo, reflect(bRec.wi)),
 				  exponent = m_exponent->eval(bRec.its).average();
 
 			if (alpha > 0.0f) {
@@ -146,7 +146,7 @@ public:
 		return result * Frame::cosTheta(bRec.wo);
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		if (Frame::cosTheta(bRec.wi) <= 0 ||
 			Frame::cosTheta(bRec.wo) <= 0 || measure != ESolidAngle)
 			return 0.0f;
@@ -156,13 +156,13 @@ public:
 		bool hasDiffuse  = (bRec.typeMask & EDiffuseReflection)
 				&& (bRec.component == -1 || bRec.component == 1);
 
-		Float diffuseProb = 0.0f, specProb = 0.0f;
+		float diffuseProb = 0.0f, specProb = 0.0f;
 
 		if (hasDiffuse)
 			diffuseProb = warp::squareToCosineHemispherePdf(bRec.wo);
 
 		if (hasSpecular) {
-			Float alpha    = dot(bRec.wo, reflect(bRec.wi)),
+			float alpha    = dot(bRec.wo, reflect(bRec.wi)),
 				  exponent = m_exponent->eval(bRec.its).average();
 			if (alpha > 0)
 				specProb = std::pow(alpha, exponent) *
@@ -180,7 +180,7 @@ public:
 			return 0.0f;
 	}
 
-	inline Spectrum sample(BSDFSamplingRecord &bRec, Float &_pdf, const Point2 &_sample) const {
+	inline Spectrum sample(BSDFSamplingRecord &bRec, float &_pdf, const Point2 &_sample) const {
 		Point2 sample(_sample);
 
 		bool hasSpecular = (bRec.typeMask & EGlossyReflection)
@@ -205,12 +205,12 @@ public:
 
 		if (choseSpecular) {
 			Vector R = reflect(bRec.wi);
-			Float exponent = m_exponent->eval(bRec.its).average();
+			float exponent = m_exponent->eval(bRec.its).average();
 
 			/* Sample from a Phong lobe centered around (0, 0, 1) */
-			Float sinAlpha = std::sqrt(1-std::pow(sample.y, 2/(exponent + 1)));
-			Float cosAlpha = std::pow(sample.y, 1/(exponent + 1));
-			Float phi = (2.0f * M_PI) * sample.x;
+			float sinAlpha = std::sqrt(1-std::pow(sample.y, 2/(exponent + 1)));
+			float cosAlpha = std::pow(sample.y, 1/(exponent + 1));
+			float phi = (2.0f * M_PI) * sample.x;
 			Vector localDir = Vector(
 				sinAlpha * std::cos(phi),
 				sinAlpha * std::sin(phi),
@@ -240,7 +240,7 @@ public:
 	}
 
 	Spectrum sample(BSDFSamplingRecord &bRec, const Point2 &sample) const {
-		Float pdf;
+		float pdf;
 		return Phong::sample(bRec, pdf, sample);
 	}
 
@@ -267,13 +267,13 @@ public:
 		manager->serialize(stream, m_exponent.get());
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		Assert(component == 0 || component == 1);
 		/* Find the Beckmann-equivalent roughness */
 		if (component == 0)
 			return std::sqrt(2 / (2+m_exponent->eval(its).average()));
 		else
-			return std::numeric_limits<Float>::infinity();
+			return std::numeric_limits<float>::infinity();
 	}
 
 	std::string toString() const {
@@ -296,7 +296,7 @@ private:
 	ref<Texture> m_diffuseReflectance;
 	ref<Texture> m_specularReflectance;
 	ref<Texture> m_exponent;
-	Float m_specularSamplingWeight;
+	float m_specularSamplingWeight;
 };
 
 // ================ Hardware shader implementation ================

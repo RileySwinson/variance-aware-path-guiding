@@ -34,12 +34,12 @@ MTS_NAMESPACE_BEGIN
  *         in units of power per unit steradian.
  *         \default{1}
  *     }
- *     \parameter{cutoffAngle}{\Float}{Cutoff angle, beyond which the spot light is completely black \default{\code{20} degrees}}
- *     \parameter{beamWidth}{\Float}{Subtended angle of the central beam portion \default{\code{cutoffAngle}$\ \cdot\ \nicefrac 34$}}
+ *     \parameter{cutoffAngle}{\float}{Cutoff angle, beyond which the spot light is completely black \default{\code{20} degrees}}
+ *     \parameter{beamWidth}{\float}{Subtended angle of the central beam portion \default{\code{cutoffAngle}$\ \cdot\ \nicefrac 34$}}
  *     \parameter{texture}{\Texture}{
  *         An optional texture to be projected along the spot light
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -67,8 +67,8 @@ class SpotEmitter : public Emitter {
 public:
 	SpotEmitter(const Properties &props) : Emitter(props) {
 		m_intensity = props.getSpectrum("intensity", Spectrum(1.0f));
-		m_cutoffAngle = props.getFloat("cutoffAngle", 20);
-		m_beamWidth = props.getFloat("beamWidth", m_cutoffAngle * 3.0f/4.0f);
+		m_cutoffAngle = props.getfloat("cutoffAngle", 20);
+		m_beamWidth = props.getfloat("beamWidth", m_cutoffAngle * 3.0f/4.0f);
 		m_beamWidth = degToRad(m_beamWidth);
 		m_cutoffAngle = degToRad(m_cutoffAngle);
 		Assert(m_cutoffAngle >= m_beamWidth);
@@ -81,8 +81,8 @@ public:
 		: Emitter(stream, manager) {
 		m_texture = static_cast<Texture *>(manager->getInstance(stream));
 		m_intensity = Spectrum(stream);
-		m_beamWidth = stream->readFloat();
-		m_cutoffAngle = stream->readFloat();
+		m_beamWidth = stream->readfloat();
+		m_cutoffAngle = stream->readfloat();
 		configure();
 	}
 
@@ -98,12 +98,12 @@ public:
 
 		manager->serialize(stream, m_texture.get());
 		m_intensity.serialize(stream);
-		stream->writeFloat(m_beamWidth);
-		stream->writeFloat(m_cutoffAngle);
+		stream->writefloat(m_beamWidth);
+		stream->writefloat(m_cutoffAngle);
 	}
 
 	inline Spectrum falloffCurve(const Vector &d) const {
-		const Float cosTheta = Frame::cosTheta(d);
+		const float cosTheta = Frame::cosTheta(d);
 
 		if (cosTheta <= m_cosCutoffAngle)
 			return Spectrum(0.0f);
@@ -138,7 +138,7 @@ public:
 		return (pRec.measure == EDiscrete) ? (m_intensity * 4*M_PI) : Spectrum(0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -154,7 +154,7 @@ public:
 		return evalDirection(dRec, pRec)/dRec.pdf;
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		return (dRec.measure == ESolidAngle) ? warp::squareToUniformConePdf(m_cosCutoffAngle) : 0.0f;
 	}
@@ -169,7 +169,7 @@ public:
 	Spectrum sampleRay(Ray &ray,
 			const Point2 &spatialSample,
 			const Point2 &directionalSample,
-			Float time) const {
+			float time) const {
 		const Transform &trafo = m_worldTransform->eval(time);
 
 		Vector local = warp::squareToUniformCone(
@@ -177,7 +177,7 @@ public:
 		ray.setTime(time);
 		ray.setOrigin(trafo.transformAffine(Point(0.0f)));
 		ray.setDirection(trafo(local));
-		Float dirPdf = warp::squareToUniformConePdf(m_cosCutoffAngle);
+		float dirPdf = warp::squareToUniformConePdf(m_cosCutoffAngle);
 		return m_intensity * falloffCurve(local) / dirPdf;
 	}
 
@@ -190,7 +190,7 @@ public:
 		dRec.uv = Point2(0.5f);
 		dRec.d = dRec.p - dRec.ref;
 		dRec.dist = dRec.d.length();
-		Float invDist = 1.0f / dRec.dist;
+		float invDist = 1.0f / dRec.dist;
 		dRec.d *= invDist;
 		dRec.n = Normal(0.0f);
 		dRec.pdf = 1;
@@ -199,7 +199,7 @@ public:
 		return m_intensity * falloffCurve(trafo.inverse()(-dRec.d)) * (invDist * invDist);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return dRec.measure == EDiscrete ? 1.0f : 0.0f;
 	}
 
@@ -232,8 +232,8 @@ public:
 private:
 	Spectrum m_intensity;
 	ref<Texture> m_texture;
-	Float m_beamWidth, m_cutoffAngle, m_uvFactor;
-	Float m_cosBeamWidth, m_cosCutoffAngle, m_invTransitionWidth;
+	float m_beamWidth, m_cutoffAngle, m_uvFactor;
+	float m_cosBeamWidth, m_cosCutoffAngle, m_invTransitionWidth;
 };
 
 // ================ Hardware shader implementation ================
@@ -241,8 +241,8 @@ private:
 class SpotEmitterShader : public Shader {
 public:
 	SpotEmitterShader(Renderer *renderer, Transform worldToEmitter,
-		Float invTransitionWidth, Float cutoffAngle, Float cosCutoffAngle,
-		Float cosBeamWidth, Float uvFactor, const Texture *texture)
+		float invTransitionWidth, float cutoffAngle, float cosCutoffAngle,
+		float cosBeamWidth, float uvFactor, const Texture *texture)
 		: Shader(renderer, EEmitterShader), m_worldToEmitter(worldToEmitter),
 		  m_invTransitionWidth(invTransitionWidth), m_cutoffAngle(cutoffAngle),
 		  m_cosCutoffAngle(cosCutoffAngle), m_cosBeamWidth(cosBeamWidth),
@@ -305,9 +305,9 @@ public:
 	MTS_DECLARE_CLASS()
 private:
 	Transform m_worldToEmitter;
-	Float m_invTransitionWidth;
-	Float m_cutoffAngle, m_cosCutoffAngle;
-	Float m_cosBeamWidth, m_uvFactor;
+	float m_invTransitionWidth;
+	float m_cutoffAngle, m_cosCutoffAngle;
+	float m_cosBeamWidth, m_uvFactor;
 	ref<const Texture> m_texture;
 	ref<Shader> m_textureShader;
 };

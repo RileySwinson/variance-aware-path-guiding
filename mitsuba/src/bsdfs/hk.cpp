@@ -42,7 +42,7 @@ MTS_NAMESPACE_BEGIN
  *      single-scattering albedo. Note that only one of the parameter passing
  *      conventions can be used at a time (i.e. use either \code{sigmaS\&sigmaA}
  *      \emph{or} \code{sigmaT\&albedo})}
- *     \parameter{thickness}{\Float}{Denotes the thickness of the layer.
+ *     \parameter{thickness}{\float}{Denotes the thickness of the layer.
  *      (should be specified in inverse units of \code{sigmaA} and \code{sigmaS})\default{1}}
  *     \parameter{\Unnamed}{\Phase}{A nested phase function instance that represents
  *      the type of scattering interactions occurring within the layer}
@@ -127,7 +127,7 @@ public:
 			props.getSpectrum("sigmaA", sigmaA));
 
 		/* Slab thickness in inverse units of sigmaS and sigmaA */
-		m_thickness = props.getFloat("thickness", 1);
+		m_thickness = props.getfloat("thickness", 1);
 
 		if (props.hasProperty("sigmaT"))
 			m_sigmaT = new ConstantSpectrumTexture(
@@ -142,7 +142,7 @@ public:
 		m_phase = static_cast<PhaseFunction *>(manager->getInstance(stream));
 		m_sigmaS = static_cast<Texture *>(manager->getInstance(stream));
 		m_sigmaA = static_cast<Texture *>(manager->getInstance(stream));
-		m_thickness = stream->readFloat();
+		m_thickness = stream->readfloat();
 		configure();
 	}
 
@@ -167,7 +167,7 @@ public:
 		m_components.clear();
 		m_components.push_back(EGlossyReflection   | EFrontSide | EBackSide | EUsesSampler | extraFlags);
 
-		if (m_thickness != std::numeric_limits<Float>::infinity()) {
+		if (m_thickness != std::numeric_limits<float>::infinity()) {
 			m_components.push_back(EGlossyTransmission | EFrontSide | EBackSide | EUsesSampler | extraFlags);
 			m_components.push_back(EDeltaTransmission  | EFrontSide | EBackSide | EUsesSampler | extraFlags);
 		}
@@ -184,7 +184,7 @@ public:
 				 sigmaT = sigmaA + sigmaS,
 				 albedo;
 		for (int i = 0; i < SPECTRUM_SAMPLES; i++)
-			albedo[i] = sigmaT[i] > 0 ? (sigmaS[i]/sigmaT[i]) : (Float) 0;
+			albedo[i] = sigmaT[i] > 0 ? (sigmaS[i]/sigmaT[i]) : (float) 0;
 		return albedo; /* Very approximate .. */
 	}
 
@@ -213,9 +213,9 @@ public:
 
 			Spectrum albedo;
 			for (int i = 0; i < SPECTRUM_SAMPLES; i++)
-				albedo[i] = sigmaT[i] > 0 ? (sigmaS[i]/sigmaT[i]) : (Float) 0;
+				albedo[i] = sigmaT[i] > 0 ? (sigmaS[i]/sigmaT[i]) : (float) 0;
 
-			const Float cosThetaI = Frame::cosTheta(bRec.wi),
+			const float cosThetaI = Frame::cosTheta(bRec.wi),
 				        cosThetaO = Frame::cosTheta(bRec.wo),
 				        dp = cosThetaI*cosThetaO;
 
@@ -228,7 +228,7 @@ public:
 			if (hasGlossyReflection && reflection) {
 				MediumSamplingRecord dummy;
 				PhaseFunctionSamplingRecord pRec(dummy,bRec.wi,bRec.wo);
-				const Float phaseVal = m_phase->eval(pRec);
+				const float phaseVal = m_phase->eval(pRec);
 
 				result = albedo * (phaseVal*cosThetaI/(cosThetaI+cosThetaO)) *
 					(Spectrum(1.0f)-((-1.0f/std::abs(cosThetaI)-1.0f/std::abs(cosThetaO)) * tauD).exp());
@@ -239,10 +239,10 @@ public:
 			/* ==================================================================== */
 
 			if (hasGlossyTransmission && transmission
-					&& m_thickness < std::numeric_limits<Float>::infinity()) {
+					&& m_thickness < std::numeric_limits<float>::infinity()) {
 				MediumSamplingRecord dummy;
 				PhaseFunctionSamplingRecord pRec(dummy,bRec.wi,bRec.wo);
-				const Float phaseVal = m_phase->eval(pRec);
+				const float phaseVal = m_phase->eval(pRec);
 
 				/* Hanrahan etal 93 Single Scattering transmission term */
 				if (std::abs(cosThetaI + cosThetaO) < Epsilon) {
@@ -260,7 +260,7 @@ public:
 		return result;
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		bool hasSingleScattering = (bRec.typeMask & EGlossy)
 			&& (bRec.component == -1 || bRec.component == 0 || bRec.component == 1);
 		bool hasSpecularTransmission = (bRec.typeMask & EDeltaTransmission)
@@ -271,7 +271,7 @@ public:
 				 sigmaT = sigmaA + sigmaS,
 				 tauD = sigmaT * m_thickness;
 
-		Float probSpecularTransmission = (-tauD/std::abs(Frame::cosTheta(bRec.wi))).exp().average();
+		float probSpecularTransmission = (-tauD/std::abs(Frame::cosTheta(bRec.wi))).exp().average();
 
 		if (measure == EDiscrete) {
 			bool hasSpecularTransmission = (bRec.typeMask & EDeltaTransmission)
@@ -294,7 +294,7 @@ public:
 			/* Sampled according to the phase function lobe(s) */
 			MediumSamplingRecord dummy;
 			PhaseFunctionSamplingRecord pRec(dummy, bRec.wi, bRec.wo);
-			Float pdf = m_phase->pdf(pRec);
+			float pdf = m_phase->pdf(pRec);
 			if (hasSpecularTransmission)
 				pdf *= 1-probSpecularTransmission;
 			return pdf;
@@ -302,7 +302,7 @@ public:
 		return 0.0f;
 	}
 
-	inline Spectrum sample(BSDFSamplingRecord &bRec, Float &_pdf, const Point2 &_sample) const {
+	inline Spectrum sample(BSDFSamplingRecord &bRec, float &_pdf, const Point2 &_sample) const {
 		AssertEx(bRec.sampler != NULL, "The BSDFSamplingRecord needs to have a sampler!");
 
 		bool hasSpecularTransmission = (bRec.typeMask & EDeltaTransmission)
@@ -317,7 +317,7 @@ public:
 
 		/* Probability for a specular transmission is approximated by the average (per wavelength)
 		 * probability of a photon exiting without a scattering event or an absorption event */
-		Float probSpecularTransmission = (-tauD/std::abs(Frame::cosTheta(bRec.wi))).exp().average();
+		float probSpecularTransmission = (-tauD/std::abs(Frame::cosTheta(bRec.wi))).exp().average();
 
 		bool choseSpecularTransmission = hasSpecularTransmission;
 
@@ -374,7 +374,7 @@ public:
 	}
 
 	Spectrum sample(BSDFSamplingRecord &bRec, const Point2 &sample) const {
-		Float pdf;
+		float pdf;
 		return HanrahanKrueger::sample(bRec, pdf, sample);
 	}
 
@@ -384,7 +384,7 @@ public:
 		manager->serialize(stream, m_phase.get());
 		manager->serialize(stream, m_sigmaS.get());
 		manager->serialize(stream, m_sigmaA.get());
-		stream->writeFloat(m_thickness);
+		stream->writefloat(m_thickness);
 	}
 
 	void addChild(const std::string &name, ConfigurableObject *child) {
@@ -409,10 +409,10 @@ public:
 		}
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		/* For lack of a better value, treat this material as diffuse
 		   in Manifold Exploration */
-		return std::numeric_limits<Float>::infinity();
+		return std::numeric_limits<float>::infinity();
 	}
 
 	std::string toString() const {
@@ -434,7 +434,7 @@ private:
 	ref<PhaseFunction> m_phase;
 	ref<Texture> m_sigmaS;
 	ref<Texture> m_sigmaA;
-	Float m_thickness;
+	float m_thickness;
 	/* Temporary fields */
 	ref<Texture> m_sigmaT;
 	ref<Texture> m_albedo;

@@ -100,5 +100,5 @@ GL_ARB_internalformat_query2
 	GL_VIEW_CLASS_RGTC1_RED 0x82D0
 	GL_VIEW_CLASS_RGTC2_RG 0x82D1
 	GL_VIEW_CLASS_BPTC_UNORM 0x82D2
-	GL_VIEW_CLASS_BPTC_FLOAT 0x82D3
+	GL_VIEW_CLASS_BPTC_float 0x82D3
 	void glGetInternalformati64v (GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params)

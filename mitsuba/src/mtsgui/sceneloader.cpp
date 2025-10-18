@@ -53,12 +53,12 @@ void SceneLoader::run() {
 	try {
 		QSettings settings;
 		m_result->srgb = settings.value("preview_sRGB", true).toBool();
-		m_result->gamma = (Float) settings.value("preview_gamma", 2.2).toDouble();
-		m_result->reinhardKey = (Float) settings.value("preview_reinhardKey", 0.18).toDouble();
-		m_result->reinhardBurn = (Float) settings.value("preview_reinhardBurn", -10.0).toDouble();
-		m_result->exposure = (Float) settings.value("preview_exposure", 0).toDouble();
+		m_result->gamma = (float) settings.value("preview_gamma", 2.2).toDouble();
+		m_result->reinhardKey = (float) settings.value("preview_reinhardKey", 0.18).toDouble();
+		m_result->reinhardBurn = (float) settings.value("preview_reinhardBurn", -10.0).toDouble();
+		m_result->exposure = (float) settings.value("preview_exposure", 0).toDouble();
 		m_result->shadowMapResolution = settings.value("preview_shadowMapResolution", 256).toInt();
-		m_result->clamping = (Float) settings.value("preview_clamping", 0.1f).toDouble();
+		m_result->clamping = (float) settings.value("preview_clamping", 0.1f).toDouble();
 		m_result->previewMethod = (EPreviewMethod) settings.value("preview_method", EOpenGL).toInt();
 		if (m_result->previewMethod != EOpenGL && m_result->previewMethod != EDisabled)
 			m_result->previewMethod = EOpenGL;
@@ -84,7 +84,7 @@ void SceneLoader::run() {
 				bitmap = m_result->layers[m_result->currentLayer].second;
 			}
 
-			bitmap = bitmap->convert(Bitmap::ERGBA, Bitmap::EFloat32);
+			bitmap = bitmap->convert(Bitmap::ERGBA, Bitmap::Efloat32);
 
 			m_result->mode = ERender;
 			m_result->framebuffer = bitmap;
@@ -157,7 +157,7 @@ void SceneLoader::run() {
 			m_result->renderJob = NULL;
 			m_result->movementScale = scene->getBSphere().radius / 2000.0f;
 			m_result->mode = EPreview;
-			m_result->framebuffer = new Bitmap(Bitmap::ERGBA, Bitmap::EFloat32, size);
+			m_result->framebuffer = new Bitmap(Bitmap::ERGBA, Bitmap::Efloat32, size);
 			m_result->framebuffer->clear();
 			m_result->fileName = m_filename;
 			m_result->shortName = fileInfo.fileName();

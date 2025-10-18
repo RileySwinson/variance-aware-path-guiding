@@ -122,13 +122,13 @@ public:
 
 	/// Draw the background if there is an environment emitter
 	void drawBackground(const Sensor *sensor,
-			const Transform &projectionTransform, Float scaleFactor);
+			const Transform &projectionTransform, float scaleFactor);
 
 	/// Set the clamping distance
-	inline void setClamping(Float clamping) { m_clamping = clamping; }
+	inline void setClamping(float clamping) { m_clamping = clamping; }
 
 	/// Return the clamping distance
-	inline Float getClamping() const { return m_clamping; }
+	inline float getClamping() const { return m_clamping; }
 
 	/// Set the current shadow map resolution
 	inline void setShadowMapResolution(int resolution) { m_shadowMapResolution = resolution; }
@@ -386,13 +386,13 @@ private:
 	ref<GPUTexture> m_shadowMap2D;
 	GPUTexture *m_shadowMap;
 	Transform m_shadowMapTransform;
-	Float m_nearClip, m_farClip;
+	float m_nearClip, m_farClip;
 
 	/* Other rendering parameters */
 	bool m_diffuseSources, m_diffuseReceivers;
 	int m_shadowMapResolution;
 	uint32_t m_vplIndex;
-	Float m_clamping, m_alpha;
+	float m_clamping, m_alpha;
 };
 
 MTS_NAMESPACE_END

@@ -41,23 +41,23 @@ public:
 	 * \brief Create a new von Mises-Fisher distribution
 	 * with the given concentration parameter
 	 */
-	explicit inline VonMisesFisherDistr(Float kappa = 0) : m_kappa(kappa) { }
+	explicit inline VonMisesFisherDistr(float kappa = 0) : m_kappa(kappa) { }
 
 	/// Return the concentration parameter kappa
-	inline void setKappa(Float kappa) {
+	inline void setKappa(float kappa) {
 		m_kappa = kappa;
 	}
 
 	/// Return the concentration parameter kappa
-	inline Float getKappa() const {
+	inline float getKappa() const {
 		return m_kappa;
 	}
 
 	/// Return the mean cosine of the distribution
-	Float getMeanCosine() const;
+	float getMeanCosine() const;
 
 	/// Evaluate the distribution for a given value of cos(theta)
-	Float eval(Float cosTheta) const;
+	float eval(float cosTheta) const;
 
 	/**
 	 * \brief Generate a sample from this distribution
@@ -74,7 +74,7 @@ public:
 	 * \brief Compute an appropriate concentration parameter so that
 	 * the associated vMF distribution takes on the value \c x at its peak
 	 */
-	static Float forPeakValue(Float x);
+	static float forPeakValue(float x);
 
 	/**
 	 * \brief Estimate the vMF concentration parameter
@@ -83,13 +83,13 @@ public:
 	 *
 	 * This is an unbiased estimator [Banerjee et al. 05]
 	 */
-	static Float forMeanLength(Float length);
+	static float forMeanLength(float length);
 
 	/**
 	 * \brief Compute an appropriate concentration parameter so that
 	 * the associated vMF distribution has the mean cosine \c g.
 	 */
-	static Float forMeanCosine(Float g);
+	static float forMeanCosine(float g);
 
 	/**
 	 * \brief Compute an concentration parameter that approximately
@@ -97,9 +97,9 @@ public:
 	 *
 	 * For details, see "Directional Statistics" by Mardia and Jupp, p.44
 	 */
-	static Float convolve(Float kappa1, Float kappa2);
+	static float convolve(float kappa1, float kappa2);
 private:
-	Float m_kappa;
+	float m_kappa;
 };
 
 MTS_NAMESPACE_END

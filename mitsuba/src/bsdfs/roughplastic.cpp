@@ -48,16 +48,16 @@ MTS_NAMESPACE_BEGIN
  *              \vspace{-4mm}
  *       \end{enumerate}
  *     }
- *     \parameter{alpha}{\Float\Or\Texture}{
+ *     \parameter{alpha}{\float\Or\Texture}{
  *         Specifies the roughness of the unresolved surface micro-geometry.
  *         When the Beckmann distribution is used, this parameter is equal to the
  *         \emph{root mean square} (RMS) slope of the microfacets.
  *         \default{0.1}.
  *     }
  *
- *     \parameter{intIOR}{\Float\Or\String}{Interior index of refraction specified
+ *     \parameter{intIOR}{\float\Or\String}{Interior index of refraction specified
  *      numerically or using a known material name. \default{\texttt{polypropylene} / 1.49}}
- *     \parameter{extIOR}{\Float\Or\String}{Exterior index of refraction specified
+ *     \parameter{extIOR}{\float\Or\String}{Exterior index of refraction specified
  *      numerically or using a known material name. \default{\texttt{air} / 1.000277}}
  *     \parameter{sampleVisible}{\Boolean}{
  *	       Enables an improved importance sampling technique. Refer to
@@ -201,10 +201,10 @@ public:
 			props.getSpectrum("diffuseReflectance", Spectrum(0.5f)));
 
 		/* Specifies the internal index of refraction at the interface */
-		Float intIOR = lookupIOR(props, "intIOR", "polypropylene");
+		float intIOR = lookupIOR(props, "intIOR", "polypropylene");
 
 		/* Specifies the external index of refraction at the interface */
-		Float extIOR = lookupIOR(props, "extIOR", "air");
+		float extIOR = lookupIOR(props, "extIOR", "air");
 
 		if (intIOR < 0 || extIOR < 0 || intIOR == extIOR)
 			Log(EError, "The interior and exterior indices of "
@@ -222,7 +222,7 @@ public:
 			Log(EError, "The 'roughplastic' plugin currently does not support "
 				"anisotropic microfacet distributions!");
 
-		m_alpha = new ConstantFloatTexture(distr.getAlpha());
+		m_alpha = new ConstantfloatTexture(distr.getAlpha());
 
 		m_specularSamplingWeight = 0.0f;
 	}
@@ -234,7 +234,7 @@ public:
 		m_specularReflectance = static_cast<Texture *>(manager->getInstance(stream));
 		m_diffuseReflectance = static_cast<Texture *>(manager->getInstance(stream));
 		m_alpha = static_cast<Texture *>(manager->getInstance(stream));
-		m_eta = stream->readFloat();
+		m_eta = stream->readfloat();
 		m_nonlinear = stream->readBool();
 
 		configure();
@@ -248,7 +248,7 @@ public:
 		manager->serialize(stream, m_specularReflectance.get());
 		manager->serialize(stream, m_diffuseReflectance.get());
 		manager->serialize(stream, m_alpha.get());
-		stream->writeFloat(m_eta);
+		stream->writefloat(m_eta);
 		stream->writeBool(m_nonlinear);
 	}
 
@@ -272,7 +272,7 @@ public:
 
 		/* Compute weights that further steer samples towards
 		   the specular or diffuse components */
-		Float dAvg = m_diffuseReflectance->getAverage().getLuminance(),
+		float dAvg = m_diffuseReflectance->getAverage().getLuminance(),
 			  sAvg = m_specularReflectance->getAverage().getLuminance();
 		m_specularSamplingWeight = sAvg / (dAvg + sAvg);
 
@@ -308,8 +308,8 @@ public:
 
 	Spectrum getDiffuseReflectance(const Intersection &its) const {
 		/* Evaluate the roughness texture */
-		Float alpha = m_alpha->eval(its).average();
-		Float Ftr = m_externalRoughTransmittance->evalDiffuse(alpha);
+		float alpha = m_alpha->eval(its).average();
+		float Ftr = m_externalRoughTransmittance->evalDiffuse(alpha);
 
 		return m_diffuseReflectance->eval(its) * Ftr;
 	}
@@ -349,16 +349,16 @@ public:
 			const Vector H = normalize(bRec.wo+bRec.wi);
 
 			/* Evaluate the microfacet normal distribution */
-			const Float D = distr.eval(H);
+			const float D = distr.eval(H);
 
 			/* Fresnel term */
-			const Float F = fresnelDielectricExt(dot(bRec.wi, H), m_eta);
+			const float F = fresnelDielectricExt(dot(bRec.wi, H), m_eta);
 
 			/* Smith's shadow-masking function */
-			const Float G = distr.G(bRec.wi, bRec.wo, H);
+			const float G = distr.G(bRec.wi, bRec.wo, H);
 
 			/* Calculate the specular reflection component */
-			Float value = F * D * G /
+			float value = F * D * G /
 				(4.0f * Frame::cosTheta(bRec.wi));
 
 			result += m_specularReflectance->eval(bRec.its) * value;
@@ -366,9 +366,9 @@ public:
 
 		if (hasDiffuse) {
 			Spectrum diff = m_diffuseReflectance->eval(bRec.its);
-			Float T12 = m_externalRoughTransmittance->eval(Frame::cosTheta(bRec.wi), distr.getAlpha());
-			Float T21 = m_externalRoughTransmittance->eval(Frame::cosTheta(bRec.wo), distr.getAlpha());
-			Float Fdr = 1-m_internalRoughTransmittance->evalDiffuse(distr.getAlpha());
+			float T12 = m_externalRoughTransmittance->eval(Frame::cosTheta(bRec.wi), distr.getAlpha());
+			float T21 = m_externalRoughTransmittance->eval(Frame::cosTheta(bRec.wo), distr.getAlpha());
+			float Fdr = 1-m_internalRoughTransmittance->evalDiffuse(distr.getAlpha());
 
 			if (m_nonlinear)
 				diff /= Spectrum(1.0f) - diff * Fdr;
@@ -381,7 +381,7 @@ public:
 		return result;
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		bool hasSpecular = (bRec.typeMask & EGlossyReflection) &&
 			(bRec.component == -1 || bRec.component == 0);
 		bool hasDiffuse = (bRec.typeMask & EDiffuseReflection) &&
@@ -404,7 +404,7 @@ public:
 		/* Calculate the reflection half-vector */
 		const Vector H = normalize(bRec.wo+bRec.wi);
 
-		Float probDiffuse, probSpecular;
+		float probDiffuse, probSpecular;
 		if (hasSpecular && hasDiffuse) {
 			/* Find the probability of sampling the specular component */
 			probSpecular = 1-m_externalRoughTransmittance->eval(Frame::cosTheta(bRec.wi), distr.getAlpha());
@@ -419,13 +419,13 @@ public:
 			probDiffuse = probSpecular = 1.0f;
 		}
 
-		Float result = 0.0f;
+		float result = 0.0f;
 		if (hasSpecular) {
 			/* Jacobian of the half-direction mapping */
-			const Float dwh_dwo = 1.0f / (4.0f * dot(bRec.wo, H));
+			const float dwh_dwo = 1.0f / (4.0f * dot(bRec.wo, H));
 
 			/* Evaluate the microfacet model sampling density function */
-			const Float prob = distr.pdf(bRec.wi, H);
+			const float prob = distr.pdf(bRec.wi, H);
 
 			result = prob * dwh_dwo * probSpecular;
 		}
@@ -436,7 +436,7 @@ public:
 		return result;
 	}
 
-	inline Spectrum sample(BSDFSamplingRecord &bRec, Float &_pdf, const Point2 &_sample) const {
+	inline Spectrum sample(BSDFSamplingRecord &bRec, float &_pdf, const Point2 &_sample) const {
 		bool hasSpecular = (bRec.typeMask & EGlossyReflection) &&
 			(bRec.component == -1 || bRec.component == 0);
 		bool hasDiffuse = (bRec.typeMask & EDiffuseReflection) &&
@@ -456,7 +456,7 @@ public:
 			m_sampleVisible
 		);
 
-		Float probSpecular;
+		float probSpecular;
 		if (hasSpecular && hasDiffuse) {
 			/* Find the probability of sampling the specular component */
 			probSpecular = 1 - m_externalRoughTransmittance->eval(Frame::cosTheta(bRec.wi), distr.getAlpha());
@@ -501,7 +501,7 @@ public:
 	}
 
 	Spectrum sample(BSDFSamplingRecord &bRec, const Point2 &sample) const {
-		Float pdf;
+		float pdf;
 		return RoughPlastic::sample(bRec, pdf, sample);
 	}
 
@@ -520,13 +520,13 @@ public:
 		}
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		Assert(component == 0 || component == 1);
 
 		if (component == 0)
 			return m_alpha->eval(its).average();
 		else
-			return std::numeric_limits<Float>::infinity();
+			return std::numeric_limits<float>::infinity();
 	}
 
 	std::string toString() const {
@@ -556,8 +556,8 @@ private:
 	ref<Texture> m_diffuseReflectance;
 	ref<Texture> m_specularReflectance;
 	ref<Texture> m_alpha;
-	Float m_eta, m_invEta2;
-	Float m_specularSamplingWeight;
+	float m_eta, m_invEta2;
+	float m_specularSamplingWeight;
 	bool m_nonlinear;
 	bool m_sampleVisible;
 };
@@ -575,7 +575,7 @@ private:
 class RoughPlasticShader : public Shader {
 public:
 	RoughPlasticShader(Renderer *renderer, const Texture *specularReflectance,
-			const Texture *diffuseReflectance, const Texture *alpha, Float eta)
+			const Texture *diffuseReflectance, const Texture *alpha, float eta)
 		: Shader(renderer, EBSDFShader),
 			m_specularReflectance(specularReflectance),
 			m_diffuseReflectance(diffuseReflectance),
@@ -671,7 +671,7 @@ private:
 	ref<Shader> m_specularReflectanceShader;
 	ref<Shader> m_diffuseReflectanceShader;
 	ref<Shader> m_alphaShader;
-	Float m_R0;
+	float m_R0;
 };
 
 Shader *RoughPlastic::createShader(Renderer *renderer) const {

@@ -30,7 +30,7 @@ MTS_NAMESPACE_BEGIN
  * annotations supported by the ldrfilm and hdrfilm plugins
  */
 void annotate(const Scene *scene, const Properties &properties,
-		Bitmap *bitmap, Float renderTime, Float gamma) {
+		Bitmap *bitmap, float renderTime, float gamma) {
 	/* Attach the custom annotations */
 	Properties &metadata = bitmap->getMetadata();
 	std::vector<std::string> keys = properties.getPropertyNames();

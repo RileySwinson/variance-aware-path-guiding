@@ -241,7 +241,7 @@ bool Thread::setPriority(EThreadPriority priority) {
 		return true;
 
 #if defined(__LINUX__) || defined(__OSX__)
-	Float factor;
+	float factor;
 	switch (priority) {
 		case EIdlePriority: factor = 0.0f; break;
 		case ELowestPriority: factor = 0.2f; break;

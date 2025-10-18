@@ -26,13 +26,13 @@ ImageBlock::ImageBlock(Bitmap::EPixelFormat fmt, const Vector2i &size,
 	m_borderSize = filter ? filter->getBorderSize() : 0;
 
 	/* Allocate a small bitmap data structure for the block */
-	m_bitmap = new Bitmap(fmt, Bitmap::EFloat,
+	m_bitmap = new Bitmap(fmt, Bitmap::Efloat,
 		size + Vector2i(2 * m_borderSize), channels);
 
 	if (filter) {
 		/* Temporary buffers used in put() */
 		int tempBufferSize = (int) std::ceil(2*filter->getRadius()) + 1;
-		m_weightsX = new Float[2*tempBufferSize];
+		m_weightsX = new float[2*tempBufferSize];
 		m_weightsY = m_weightsX + tempBufferSize;
 	}
 }
@@ -45,8 +45,8 @@ ImageBlock::~ImageBlock() {
 void ImageBlock::load(Stream *stream) {
 	m_offset = Point2i(stream);
 	m_size = Vector2i(stream);
-	stream->readFloatArray(
-		m_bitmap->getFloatData(),
+	stream->readfloatArray(
+		m_bitmap->getfloatData(),
 		(size_t) m_bitmap->getSize().x *
 		(size_t) m_bitmap->getSize().y * m_bitmap->getChannelCount());
 }
@@ -54,8 +54,8 @@ void ImageBlock::load(Stream *stream) {
 void ImageBlock::save(Stream *stream) const {
 	m_offset.serialize(stream);
 	m_size.serialize(stream);
-	stream->writeFloatArray(
-		m_bitmap->getFloatData(),
+	stream->writefloatArray(
+		m_bitmap->getfloatData(),
 		(size_t) m_bitmap->getSize().x *
 		(size_t) m_bitmap->getSize().y * m_bitmap->getChannelCount());
 }

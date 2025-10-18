@@ -39,7 +39,7 @@ MTS_NAMESPACE_BEGIN
  *         by a hypothetical surface normal to the specified direction
  *         \default{1}
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -95,7 +95,7 @@ public:
 
 	void configure() {
 		Emitter::configure();
-		Float surfaceArea = M_PI * m_bsphere.radius * m_bsphere.radius;
+		float surfaceArea = M_PI * m_bsphere.radius * m_bsphere.radius;
 		m_invSurfaceArea = 1.0f / surfaceArea;
 		m_power = m_normalIrradiance * surfaceArea;
 	}
@@ -119,7 +119,7 @@ public:
 		return (pRec.measure == EArea) ? m_normalIrradiance : Spectrum(0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EArea) ? m_invSurfaceArea : 0.0f;
 	}
 
@@ -132,7 +132,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		return (dRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
@@ -145,7 +145,7 @@ public:
 	Spectrum sampleRay(Ray &ray,
 			const Point2 &spatialSample,
 			const Point2 &directionalSample,
-			Float time) const {
+			float time) const {
 		const Transform &trafo = m_worldTransform->eval(time);
 		Point2 p = warp::squareToUniformDiskConcentric(spatialSample);
 		Vector perpOffset = trafo(Vector(p.x, p.y, 0) * m_bsphere.radius);
@@ -161,7 +161,7 @@ public:
 		Vector d = trafo(Vector(0,0,1));
 		Point diskCenter = m_bsphere.center - d*m_bsphere.radius;
 
-		Float distance = dot(dRec.ref - diskCenter, d);
+		float distance = dot(dRec.ref - diskCenter, d);
 		if (distance < 0) {
 			/* This can happen when doing bidirectional renderings
 			   involving environment maps and directional sources. Just
@@ -179,7 +179,7 @@ public:
 		return m_normalIrradiance;
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return dRec.measure == EDiscrete ? 1.0f : 0.0f;
 	}
 
@@ -204,7 +204,7 @@ public:
 private:
 	Spectrum m_normalIrradiance, m_power;
 	BSphere m_bsphere;
-	Float m_invSurfaceArea;
+	float m_invSurfaceArea;
 };
 
 // ================ Hardware shader implementation ================

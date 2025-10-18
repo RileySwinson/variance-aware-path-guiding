@@ -43,8 +43,8 @@ public:
 		EShadingLanguage = 0,
 		ERenderToTexture,
 		EBufferBlit,
-		EFloatingPointBuffer,
-		EFloatingPointTextures,
+		EfloatingPointBuffer,
+		EfloatingPointTextures,
 		EMultisampleRenderToTexture,
 		EVertexBufferObjects,
 		EGeometryShaders,
@@ -141,7 +141,7 @@ public:
 	virtual void setCamera(const ProjectiveCamera *pCamera,
 		const Point2 &apertureSample = Point2(0.5f),
 		const Point2 &aaSample = Point2(0.5f),
-		Float timeSample = 0.5f) = 0;
+		float timeSample = 0.5f) = 0;
 
 	/// Configure the camera (manual)
 	virtual void setCamera(const Matrix4x4 &proj, const Matrix4x4 &view) = 0;
@@ -190,7 +190,7 @@ public:
 			const Font *font, const std::string &text) = 0;
 
 	/// Set the size of point primitives
-	virtual void setPointSize(Float size) = 0;
+	virtual void setPointSize(float size) = 0;
 
 	/// Draw a point
 	virtual void drawPoint(const Point &p) = 0;
@@ -242,13 +242,13 @@ public:
 	virtual void setDepthMask(bool value) = 0;
 
 	/// Set the current fixed-function pipeline color
-	virtual void setColor(const Color3 &color, Float alpha = 1.0f) = 0;
+	virtual void setColor(const Color3 &color, float alpha = 1.0f) = 0;
 
 	/// Set the current fixed-function pipeline color
-	virtual void setColor(const Spectrum &spec, Float alpha = 1.0f) = 0;
+	virtual void setColor(const Spectrum &spec, float alpha = 1.0f) = 0;
 
 	/// Set the depth value that is written by \ref clear()
-	virtual void setClearDepth(Float depth) = 0;
+	virtual void setClearDepth(float depth) = 0;
 
 	/// Set the color value that is written by \ref clear()
 	virtual void setClearColor(const Color3 &color) = 0;

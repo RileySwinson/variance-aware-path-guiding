@@ -3,7 +3,7 @@
 
     The image view widget was contributed by Stefan Ivanov and
     edited to display false-color visualizations of HDR images
-    by Thomas Müller.
+    by Thomas Mï¿½ller.
 
     NanoGUI was developed by Wenzel Jakob <wenzel.jakob@epfl.ch>.
     The widget drawing code is based on the NanoVG demo application

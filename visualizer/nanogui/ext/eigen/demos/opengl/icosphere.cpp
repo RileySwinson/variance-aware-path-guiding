@@ -105,8 +105,8 @@ void IcoSphere::draw(int level)
   {
     mListIds[level] = glGenLists(1);
     glNewList(mListIds[level], GL_COMPILE);
-      glVertexPointer(3, GL_FLOAT, 0, mVertices[0].data());
-      glNormalPointer(GL_FLOAT, 0, mVertices[0].data());
+      glVertexPointer(3, GL_float, 0, mVertices[0].data());
+      glNormalPointer(GL_float, 0, mVertices[0].data());
       glEnableClientState(GL_VERTEX_ARRAY);
       glEnableClientState(GL_NORMAL_ARRAY);
       glDrawElements(GL_TRIANGLES, mIndices[level]->size(), GL_UNSIGNED_INT, &(mIndices[level]->at(0)));

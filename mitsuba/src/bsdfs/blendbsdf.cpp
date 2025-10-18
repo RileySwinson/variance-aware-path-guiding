@@ -26,7 +26,7 @@ MTS_NAMESPACE_BEGIN
 /*! \plugin{blendbsdf}{Blended material}
  * \order{17}
  * \parameters{
- *     \parameter{weight}{\Float\Or\Texture}{A floating point value or texture
+ *     \parameter{weight}{\float\Or\Texture}{A floating point value or texture
  *      with values between zero and one. The extreme values zero and one activate the
  *      first and second nested BSDF respectively, and inbetween values
  *      interpolate accordingly. \default{0.5}}
@@ -71,7 +71,7 @@ class BlendBSDF : public BSDF {
 public:
 	BlendBSDF(const Properties &props)
 		: BSDF(props) {
-		m_weight = new ConstantFloatTexture(props.getFloat("weight", 0.5f));
+		m_weight = new ConstantfloatTexture(props.getfloat("weight", 0.5f));
 	}
 
 	BlendBSDF(Stream *stream, InstanceManager *manager)
@@ -133,7 +133,7 @@ public:
 	}
 
 	Spectrum eval(const BSDFSamplingRecord &bRec, EMeasure measure) const {
-		Float weight = std::min((Float) 1.0f, std::max((Float) 0.0f,
+		float weight = std::min((float) 1.0f, std::max((float) 0.0f,
 			m_weight->eval(bRec.its).average()));
 
 		if (bRec.component == -1) {
@@ -151,10 +151,10 @@ public:
 		}
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		Spectrum result;
 
-		Float weight = std::min((Float) 1.0f, std::max((Float) 0.0f,
+		float weight = std::min((float) 1.0f, std::max((float) 0.0f,
 			m_weight->eval(bRec.its).average()));
 
 		if (bRec.component == -1) {
@@ -175,8 +175,8 @@ public:
 	Spectrum sample(BSDFSamplingRecord &bRec, const Point2 &_sample) const {
 		Point2 sample(_sample);
 
-		Float weights[2];
-		weights[1] = std::min((Float) 1.0f, std::max((Float) 0.0f,
+		float weights[2];
+		weights[1] = std::min((float) 1.0f, std::max((float) 0.0f,
 			m_weight->eval(bRec.its).average()));
 		weights[0] = 1-weights[1];
 
@@ -188,7 +188,7 @@ public:
 				entry = 1; sample.x = (sample.x - weights[0]) / weights[1];
 			}
 
-			Float pdf;
+			float pdf;
 			Spectrum result = m_bsdfs[entry]->sample(bRec, pdf, sample);
 			if (result.isZero()) // sampling failed
 				return result;
@@ -218,11 +218,11 @@ public:
 		}
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &_sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &_sample) const {
 		Point2 sample(_sample);
 
-		Float weights[2];
-		weights[1] = std::min((Float) 1.0f, std::max((Float) 0.0f,
+		float weights[2];
+		weights[1] = std::min((float) 1.0f, std::max((float) 0.0f,
 			m_weight->eval(bRec.its).average()));
 		weights[0] = 1-weights[1];
 
@@ -263,7 +263,7 @@ public:
 		}
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		int bsdfIndex = m_indices[component].first;
 		component = m_indices[component].second;
 		return m_bsdfs[bsdfIndex]->getRoughness(its, component);

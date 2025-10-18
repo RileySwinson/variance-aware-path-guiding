@@ -31,8 +31,8 @@ void BlockedImageProcess::init(const Point2i &offset, const Vector2i &size, uint
 	m_blockSize = (int) blockSize;
 	m_direction = ERight;
 	m_numBlocks = Vector2i(
-		(int) std::ceil((Float) size.x / (Float) blockSize),
-		(int) std::ceil((Float) size.y / (Float) blockSize));
+		(int) std::ceil((float) size.x / (float) blockSize),
+		(int) std::ceil((float) size.y / (float) blockSize));
 	m_numBlocksTotal = m_numBlocks.x * m_numBlocks.y;
 	m_numBlocksGenerated = 0;
 	m_curBlock = Point2i(m_numBlocks / 2);

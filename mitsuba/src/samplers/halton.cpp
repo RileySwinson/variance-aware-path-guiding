@@ -340,7 +340,7 @@ public:
 		m_dimension1DArray = m_dimension2DArray = 0;
 	}
 
-	inline Float nextFloat(uint64_t idx) {
+	inline float nextfloat(uint64_t idx) {
 		uint32_t dim = m_dimension++;
 		if (m_permutations != NULL)
 			return scrambledRadicalInverseFast(dim, idx,
@@ -349,7 +349,7 @@ public:
 			return radicalInverseFast(dim, idx);
 	}
 
-	Float next1D() {
+	float next1D() {
 		/* Skip over dimensions that were reserved to arrays */
 		if (m_dimension >= m_arrayStartDim && m_dimension < m_arrayEndDim)
 			m_dimension = m_arrayEndDim;
@@ -358,7 +358,7 @@ public:
 				"You may have to reduce the 'maxDepth' parameter of your integrator.");
 
 		uint64_t index = m_offset + m_stride * m_sampleIndex;
-		return nextFloat(index);
+		return nextfloat(index);
 	}
 
 	Point2 next2D() {
@@ -371,13 +371,13 @@ public:
 
 		uint64_t index = m_offset + m_stride * m_sampleIndex;
 
-		Float value1, value2;
+		float value1, value2;
 		if (m_dimension == 0) {
-			value1 = nextFloat(index) * m_primePowers.x - m_pixelPosition.x;
-			value2 = nextFloat(index) * m_primePowers.y - m_pixelPosition.y;
+			value1 = nextfloat(index) * m_primePowers.x - m_pixelPosition.x;
+			value2 = nextfloat(index) * m_primePowers.y - m_pixelPosition.y;
 		} else {
-			value1 = nextFloat(index);
-			value2 = nextFloat(index);
+			value1 = nextfloat(index);
+			value2 = nextfloat(index);
 		}
 
 		return Point2(value1, value2);

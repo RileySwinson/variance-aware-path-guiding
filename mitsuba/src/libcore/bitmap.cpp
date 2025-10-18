@@ -41,7 +41,7 @@
 #include <ImfChannelList.h>
 #include <ImfStringAttribute.h>
 #include <ImfIntAttribute.h>
-#include <ImfFloatAttribute.h>
+#include <ImffloatAttribute.h>
 #include <ImfDoubleAttribute.h>
 #include <ImfVecAttribute.h>
 #include <ImfMatrixAttribute.h>
@@ -135,7 +135,7 @@ private:
 };
 
 inline bool chromaticitiesMatch(const Imf::Chromaticities &a, const Imf::Chromaticities &b) {
-	Float diff2 = (a.red-b.red).length2()
+	float diff2 = (a.red-b.red).length2()
 	+ (a.green-b.green).length2()
 	+ (a.blue-b.blue).length2()
 	+ (a.white-b.white).length2();
@@ -426,7 +426,7 @@ std::string Bitmap::getChannelName(int idx) const {
 			else if (idx == m_channelCount-2 && m_pixelFormat == ESpectrumAlphaWeight)
 				return "A";
 		case ESpectrum: {
-				std::pair<Float, Float> coverage = Spectrum::getBinCoverage(idx);
+				std::pair<float, float> coverage = Spectrum::getBinCoverage(idx);
 				return formatString("%.2f-%.2fnm", coverage.first, coverage.second);
 			}
 		default:
@@ -468,9 +468,9 @@ int Bitmap::getBitsPerComponent() const {
 		case EUInt8: return 8; break;
 		case EUInt16: return 16; break;
 		case EUInt32: return 32; break;
-		case EFloat16: return 16; break;
-		case EFloat32: return 32; break;
-		case EFloat64: return 64; break;
+		case Efloat16: return 16; break;
+		case Efloat32: return 32; break;
+		case Efloat64: return 64; break;
 		default:
 			Log(EError, "Unknown component format!");
 			return -1;
@@ -482,9 +482,9 @@ int Bitmap::getBytesPerComponent() const {
 		case EUInt8: return 1; break;
 		case EUInt16: return 2; break;
 		case EUInt32: return 4; break;
-		case EFloat16: return 2; break;
-		case EFloat32: return 4; break;
-		case EFloat64: return 8; break;
+		case Efloat16: return 2; break;
+		case Efloat32: return 4; break;
+		case Efloat64: return 8; break;
 		case EBitmask:
 			Log(EError, "Bitmask images have less than 1 byte per component!");
 			return -1;
@@ -681,17 +681,17 @@ void Bitmap::accumulate(const Bitmap *bitmap, Point2i sourceOffset,
 					((uint32_t *) target)[i] = std::min((uint32_t) 0xFFFFFFFFUL, ((uint32_t *) source)[i] + ((uint32_t *) target)[i]);
 				break;
 
-			case EFloat16:
+			case Efloat16:
 				for (size_t i = 0; i < columns; ++i)
 					((half *) target)[i] += ((half *) source)[i];
 				break;
 
-			case EFloat32:
+			case Efloat32:
 				for (size_t i = 0; i < columns; ++i)
 					((float *) target)[i] += ((float *) source)[i];
 				break;
 
-			case EFloat64:
+			case Efloat64:
 				for (size_t i = 0; i < columns; ++i)
 					((double *) target)[i] += ((double *) source)[i];
 				break;
@@ -706,36 +706,36 @@ void Bitmap::accumulate(const Bitmap *bitmap, Point2i sourceOffset,
 }
 
 Spectrum Bitmap::average() const {
-	if (m_gamma != 1 || (m_componentFormat != EFloat16 &&
-				m_componentFormat != EFloat32 && m_componentFormat != EFloat64))
+	if (m_gamma != 1 || (m_componentFormat != Efloat16 &&
+				m_componentFormat != Efloat32 && m_componentFormat != Efloat64))
 		Log(EError, "Bitmap::average() assumes a floating point image with linear gamma!");
 
 	size_t pixelCount = (size_t) m_size.x * (size_t) m_size.y;
-	Float *accum = new Float[m_channelCount];
-	memset(accum, 0, sizeof(Float) * m_channelCount);
+	float *accum = new float[m_channelCount];
+	memset(accum, 0, sizeof(float) * m_channelCount);
 
 	switch (m_componentFormat) {
-		case EFloat16: {
-				const half *ptr = getFloat16Data();
+		case Efloat16: {
+				const half *ptr = getfloat16Data();
 				for (size_t i=0; i<pixelCount; ++i)
 					for (int ch=0; ch<m_channelCount; ++ch)
-						accum[ch] += (Float) *ptr++;
+						accum[ch] += (float) *ptr++;
 			}
 			break;
 
-		case EFloat32: {
-				const float *ptr = getFloat32Data();
+		case Efloat32: {
+				const float *ptr = getfloat32Data();
 				for (size_t i=0; i<pixelCount; ++i)
 					for (int ch=0; ch<m_channelCount; ++ch)
-						accum[ch] += (Float) *ptr++;
+						accum[ch] += (float) *ptr++;
 			}
 			break;
 
-		case EFloat64: {
-				const double *ptr = getFloat64Data();
+		case Efloat64: {
+				const double *ptr = getfloat64Data();
 				for (size_t i=0; i<pixelCount; ++i)
 					for (int ch=0; ch<m_channelCount; ++ch)
-						accum[ch] += (Float) *ptr++;
+						accum[ch] += (float) *ptr++;
 			}
 			break;
 
@@ -747,7 +747,7 @@ Spectrum Bitmap::average() const {
 		accum[ch] /= pixelCount;
 
 	const FormatConverter *cvt = FormatConverter::getInstance(
-		std::make_pair(EFloat, EFloat)
+		std::make_pair(Efloat, Efloat)
 	);
 
 	Spectrum result;
@@ -771,7 +771,7 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 		Log(EError, "Bitmap::convolve(): kernel and bitmap have different channel counts!");
 	if (_kernel->getComponentFormat() != getComponentFormat())
 		Log(EError, "Bitmap::convolve(): kernel and bitmap have different component formats!");
-	if (m_componentFormat != EFloat16 && m_componentFormat != EFloat32 && m_componentFormat != EFloat64)
+	if (m_componentFormat != Efloat16 && m_componentFormat != Efloat32 && m_componentFormat != Efloat64)
 		Log(EError, "Bitmap::convolve(): unsupported component format! (must be float16/float32/float64)");
 
 	int channelCountKernel = _kernel->getChannelCount();
@@ -809,14 +809,14 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 	for (int ch=0; ch<m_channelCount; ++ch) {
 		memset(data, 0, sizeof(complex)*paddedSize);
 		switch (m_componentFormat) {
-			case EFloat16:
+			case Efloat16:
 				/* Copy and zero-pad the convolution kernel in a wraparound fashion */
 				if (ch < channelCountKernel) {
 					for (size_t y=0; y<kernelSize; ++y) {
 						ssize_t wrappedY = math::modulo(hKernelSize - (ssize_t) y, (ssize_t) paddedHeight);
 						for (size_t x=0; x<kernelSize; ++x) {
 							ssize_t wrappedX = math::modulo(hKernelSize - (ssize_t) x, (ssize_t) paddedWidth);
-							kernel[wrappedX+wrappedY*paddedWidth] = _kernel->getFloat16Data()[(x+y*kernelSize)*channelCountKernel+ch];
+							kernel[wrappedX+wrappedY*paddedWidth] = _kernel->getfloat16Data()[(x+y*kernelSize)*channelCountKernel+ch];
 						}
 					}
 				}
@@ -824,17 +824,17 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 				/* Copy and zero-pad the input data */
 				for (size_t y=0; y<height; ++y)
 					for (size_t x=0; x<width; ++x)
-						data[x+y*paddedWidth] = getFloat16Data()[(x+y*width)*m_channelCount + ch];
+						data[x+y*paddedWidth] = getfloat16Data()[(x+y*width)*m_channelCount + ch];
 				break;
 
-			case EFloat32:
+			case Efloat32:
 				/* Copy and zero-pad the convolution kernel in a wraparound fashion */
 				if (ch < channelCountKernel) {
 					for (size_t y=0; y<kernelSize; ++y) {
 						ssize_t wrappedY = math::modulo(hKernelSize - (ssize_t) y, (ssize_t) paddedHeight);
 						for (size_t x=0; x<kernelSize; ++x) {
 							ssize_t wrappedX = math::modulo(hKernelSize - (ssize_t) x, (ssize_t) paddedWidth);
-							kernel[wrappedX+wrappedY*paddedWidth] = _kernel->getFloat32Data()[(x+y*kernelSize)*channelCountKernel+ch];
+							kernel[wrappedX+wrappedY*paddedWidth] = _kernel->getfloat32Data()[(x+y*kernelSize)*channelCountKernel+ch];
 						}
 					}
 				}
@@ -842,17 +842,17 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 				/* Copy and zero-pad the input data */
 				for (size_t y=0; y<height; ++y)
 					for (size_t x=0; x<width; ++x)
-						data[x+y*paddedWidth] = getFloat32Data()[(x+y*width)*m_channelCount + ch];
+						data[x+y*paddedWidth] = getfloat32Data()[(x+y*width)*m_channelCount + ch];
 				break;
 
-			case EFloat64:
+			case Efloat64:
 				/* Copy and zero-pad the convolution kernel in a wraparound fashion */
 				if (ch < channelCountKernel) {
 					for (size_t y=0; y<kernelSize; ++y) {
 						ssize_t wrappedY = math::modulo(hKernelSize - (ssize_t) y, (ssize_t) paddedHeight);
 						for (size_t x=0; x<kernelSize; ++x) {
 							ssize_t wrappedX = math::modulo(hKernelSize - (ssize_t) x, (ssize_t) paddedWidth);
-							kernel[wrappedX+wrappedY*paddedWidth] = _kernel->getFloat64Data()[(x+y*kernelSize)*channelCountKernel+ch];
+							kernel[wrappedX+wrappedY*paddedWidth] = _kernel->getfloat64Data()[(x+y*kernelSize)*channelCountKernel+ch];
 						}
 					}
 				}
@@ -860,7 +860,7 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 				/* Copy and zero-pad the input data */
 				for (size_t y=0; y<height; ++y)
 					for (size_t x=0; x<width; ++x)
-						data[x+y*paddedWidth] = getFloat64Data()[(x+y*width)*m_channelCount + ch];
+						data[x+y*paddedWidth] = getfloat64Data()[(x+y*width)*m_channelCount + ch];
 				break;
 
 			default:
@@ -883,22 +883,22 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 		fftw_execute_dft(p, (fftw_complex *) dataS, (fftw_complex *) data);
 
 		switch (m_componentFormat) {
-			case EFloat16:
+			case Efloat16:
 				for (size_t y=0; y<height; ++y)
 					for (size_t x=0; x<width; ++x)
-						getFloat16Data()[(x+y*width)*m_channelCount+ch] = half((float) std::real(data[x+y*paddedWidth]));
+						getfloat16Data()[(x+y*width)*m_channelCount+ch] = half((float) std::real(data[x+y*paddedWidth]));
 				break;
 
-			case EFloat32:
+			case Efloat32:
 				for (size_t y=0; y<height; ++y)
 					for (size_t x=0; x<width; ++x)
-						getFloat32Data()[(x+y*width)*m_channelCount+ch] = (float) std::real(data[x+y*paddedWidth]);
+						getfloat32Data()[(x+y*width)*m_channelCount+ch] = (float) std::real(data[x+y*paddedWidth]);
 				break;
 
-			case EFloat64:
+			case Efloat64:
 				for (size_t y=0; y<height; ++y)
 					for (size_t x=0; x<width; ++x)
-						getFloat64Data()[(x+y*width)*m_channelCount+ch] = (double) std::real(data[x+y*paddedWidth]);
+						getfloat64Data()[(x+y*width)*m_channelCount+ch] = (double) std::real(data[x+y*paddedWidth]);
 				break;
 
 			default:
@@ -919,9 +919,9 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 		int chKernel = channelCountKernel > 1 ? ch : 0;
 
 		switch (m_componentFormat) {
-			case EFloat16: {
-					const half *input = getFloat16Data();
-					const half *kernel = _kernel->getFloat16Data();
+			case Efloat16: {
+					const half *input = getfloat16Data();
+					const half *kernel = _kernel->getfloat16Data();
 					half *output = (half *) output_;
 
 					for (size_t y=0; y<height; ++y) {
@@ -942,9 +942,9 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 				}
 				break;
 
-			case EFloat32: {
-					const float *input = getFloat32Data();
-					const float *kernel = _kernel->getFloat32Data();
+			case Efloat32: {
+					const float *input = getfloat32Data();
+					const float *kernel = _kernel->getfloat32Data();
 					float *output = (float *) output_;
 
 					for (size_t y=0; y<height; ++y) {
@@ -965,9 +965,9 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 				}
 				break;
 
-			case EFloat64: {
-					const double *input = getFloat64Data();
-					const double *kernel = _kernel->getFloat64Data();
+			case Efloat64: {
+					const double *input = getfloat64Data();
+					const double *kernel = _kernel->getfloat64Data();
 					double *output = (double *) output_;
 
 					for (size_t y=0; y<height; ++y) {
@@ -998,7 +998,7 @@ void Bitmap::convolve(const Bitmap *_kernel) {
 #endif
 }
 
-void Bitmap::scale(Float value) {
+void Bitmap::scale(float value) {
 	if (m_componentFormat == EBitmask)
 		Log(EError, "Bitmap::scale(): bitmasks are not supported!");
 
@@ -1010,8 +1010,8 @@ void Bitmap::scale(Float value) {
 					uint8_t *data = (uint8_t *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = (uint8_t) std::min((Float) 0xFF,
-								std::max((Float) 0, *data * value + (Float) 0.5f));
+							*data = (uint8_t) std::min((float) 0xFF,
+								std::max((float) 0, *data * value + (float) 0.5f));
 							++data;
 						}
 						++data;
@@ -1023,8 +1023,8 @@ void Bitmap::scale(Float value) {
 					uint16_t *data = (uint16_t *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = (uint16_t) std::min((Float) 0xFFFF,
-								std::max((Float) 0, *data * value + (Float) 0.5f));
+							*data = (uint16_t) std::min((float) 0xFFFF,
+								std::max((float) 0, *data * value + (float) 0.5f));
 							++data;
 						}
 						++data;
@@ -1036,8 +1036,8 @@ void Bitmap::scale(Float value) {
 					uint32_t *data = (uint32_t *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = (uint32_t) std::min((Float) 0xFFFFFFFFUL,
-								std::max((Float) 0, *data * value + (Float) 0.5f));
+							*data = (uint32_t) std::min((float) 0xFFFFFFFFUL,
+								std::max((float) 0, *data * value + (float) 0.5f));
 							++data;
 						}
 						++data;
@@ -1045,7 +1045,7 @@ void Bitmap::scale(Float value) {
 				}
 				break;
 
-			case EFloat16: {
+			case Efloat16: {
 					half *data = (half *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
@@ -1056,7 +1056,7 @@ void Bitmap::scale(Float value) {
 				}
 				break;
 
-			case EFloat32: {
+			case Efloat32: {
 					float *data = (float *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
@@ -1067,7 +1067,7 @@ void Bitmap::scale(Float value) {
 				}
 				break;
 
-			case EFloat64: {
+			case Efloat64: {
 					double *data = (double *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
@@ -1089,42 +1089,42 @@ void Bitmap::scale(Float value) {
 			case EUInt8: {
 					uint8_t *data = (uint8_t *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = (uint8_t) std::min((Float) 0xFF,
-							std::max((Float) 0, data[i] * value + (Float) 0.5f));
+						data[i] = (uint8_t) std::min((float) 0xFF,
+							std::max((float) 0, data[i] * value + (float) 0.5f));
 				}
 				break;
 
 			case EUInt16: {
 					uint16_t *data = (uint16_t *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = (uint16_t) std::min((Float) 0xFFFF,
-							std::max((Float) 0, data[i] * value + (Float) 0.5f));
+						data[i] = (uint16_t) std::min((float) 0xFFFF,
+							std::max((float) 0, data[i] * value + (float) 0.5f));
 				}
 				break;
 
 			case EUInt32: {
 					uint32_t *data = (uint32_t *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = (uint32_t) std::min((Float) 0xFFFFFFFFUL,
-							std::max((Float) 0, data[i] * value + (Float) 0.5f));
+						data[i] = (uint32_t) std::min((float) 0xFFFFFFFFUL,
+							std::max((float) 0, data[i] * value + (float) 0.5f));
 				}
 				break;
 
-			case EFloat16: {
+			case Efloat16: {
 					half *data = (half *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
 						data[i] = safe_cast<half> (data[i] * value);
 				}
 				break;
 
-			case EFloat32: {
+			case Efloat32: {
 					float *data = (float *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
 						data[i] = (float) (data[i] * value);
 				}
 				break;
 
-			case EFloat64: {
+			case Efloat64: {
 					double *data = (double *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
 						data[i] = (double) (data[i] * value);
@@ -1137,7 +1137,7 @@ void Bitmap::scale(Float value) {
 	}
 }
 
-void Bitmap::pow(Float value) {
+void Bitmap::pow(float value) {
 	if (m_componentFormat == EBitmask)
 		Log(EError, "Bitmap::pow(): bitmasks are not supported!");
 
@@ -1149,8 +1149,8 @@ void Bitmap::pow(Float value) {
 					uint8_t *data = (uint8_t *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = (uint8_t) std::min((Float) 0xFF,
-								std::max((Float) 0, std::pow((Float) *data, value) + (Float) 0.5f));
+							*data = (uint8_t) std::min((float) 0xFF,
+								std::max((float) 0, std::pow((float) *data, value) + (float) 0.5f));
 							++data;
 						}
 						++data;
@@ -1162,8 +1162,8 @@ void Bitmap::pow(Float value) {
 					uint16_t *data = (uint16_t *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = (uint16_t) std::min((Float) 0xFFFF,
-								std::max((Float) 0, std::pow((Float) *data, value) + (Float) 0.5f));
+							*data = (uint16_t) std::min((float) 0xFFFF,
+								std::max((float) 0, std::pow((float) *data, value) + (float) 0.5f));
 							++data;
 						}
 						++data;
@@ -1175,8 +1175,8 @@ void Bitmap::pow(Float value) {
 					uint32_t *data = (uint32_t *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = (uint32_t) std::min((Float) 0xFFFFFFFFUL,
-								std::max((Float) 0, std::pow((Float) *data, value) + (Float) 0.5f));
+							*data = (uint32_t) std::min((float) 0xFFFFFFFFUL,
+								std::max((float) 0, std::pow((float) *data, value) + (float) 0.5f));
 							++data;
 						}
 						++data;
@@ -1184,33 +1184,33 @@ void Bitmap::pow(Float value) {
 				}
 				break;
 
-			case EFloat16: {
+			case Efloat16: {
 					half *data = (half *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = safe_cast<half> (std::pow((Float) *data, value)); ++data;
+							*data = safe_cast<half> (std::pow((float) *data, value)); ++data;
 						}
 						++data;
 					}
 				}
 				break;
 
-			case EFloat32: {
+			case Efloat32: {
 					float *data = (float *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = (float) std::pow((Float) *data, value); ++data;
+							*data = (float) std::pow((float) *data, value); ++data;
 						}
 						++data;
 					}
 				}
 				break;
 
-			case EFloat64: {
+			case Efloat64: {
 					double *data = (double *) m_data;
 					for (size_t i=0; i<nPixels; ++i) {
 						for (size_t j=0; j<nChannels-1; ++j) {
-							*data = (double) std::pow((Float) *data, value); ++data;
+							*data = (double) std::pow((float) *data, value); ++data;
 						}
 						++data;
 					}
@@ -1228,45 +1228,45 @@ void Bitmap::pow(Float value) {
 			case EUInt8: {
 					uint8_t *data = (uint8_t *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = (uint8_t) std::min((Float) 0xFF,
-							std::max((Float) 0, std::pow((Float) data[i], value) + (Float) 0.5f));
+						data[i] = (uint8_t) std::min((float) 0xFF,
+							std::max((float) 0, std::pow((float) data[i], value) + (float) 0.5f));
 				}
 				break;
 
 			case EUInt16: {
 					uint16_t *data = (uint16_t *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = (uint16_t) std::min((Float) 0xFFFF,
-							std::max((Float) 0, std::pow((Float) data[i], value) + (Float) 0.5f));
+						data[i] = (uint16_t) std::min((float) 0xFFFF,
+							std::max((float) 0, std::pow((float) data[i], value) + (float) 0.5f));
 				}
 				break;
 
 			case EUInt32: {
 					uint32_t *data = (uint32_t *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = (uint32_t) std::min((Float) 0xFFFFFFFFUL,
-							std::max((Float) 0, std::pow((Float) data[i], value) + (Float) 0.5f));
+						data[i] = (uint32_t) std::min((float) 0xFFFFFFFFUL,
+							std::max((float) 0, std::pow((float) data[i], value) + (float) 0.5f));
 				}
 				break;
 
-			case EFloat16: {
+			case Efloat16: {
 					half *data = (half *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = safe_cast<half> (std::pow((Float) data[i], value));
+						data[i] = safe_cast<half> (std::pow((float) data[i], value));
 				}
 				break;
 
-			case EFloat32: {
+			case Efloat32: {
 					float *data = (float *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = (float) std::pow((Float) data[i], value);
+						data[i] = (float) std::pow((float) data[i], value);
 				}
 				break;
 
-			case EFloat64: {
+			case Efloat64: {
 					double *data = (double *) m_data;
 					for (size_t i=0; i<nEntries; ++i)
-						data[i] = (double) std::pow((Float) data[i], value);
+						data[i] = (double) std::pow((float) data[i], value);
 				}
 				break;
 
@@ -1295,16 +1295,16 @@ ref<Bitmap> Bitmap::arithmeticOperation(Bitmap::EArithmeticOperation operation, 
 		bitmap1 = bitmap1->resample(NULL,
 				ReconstructionFilter::EClamp,
 				ReconstructionFilter::EClamp, size,
-				-std::numeric_limits<Float>::infinity(),
-				std::numeric_limits<Float>::infinity());
+				-std::numeric_limits<float>::infinity(),
+				std::numeric_limits<float>::infinity());
 	}
 
 	if (bitmap2->getSize() != size) {
 		bitmap2 = bitmap2->resample(NULL,
 				ReconstructionFilter::EClamp,
 				ReconstructionFilter::EClamp, size,
-				-std::numeric_limits<Float>::infinity(),
-				std::numeric_limits<Float>::infinity());
+				-std::numeric_limits<float>::infinity(),
+				std::numeric_limits<float>::infinity());
 	}
 
 	/* Convert the image format appropriately (no-op, if the format already matches) */
@@ -1347,26 +1347,26 @@ ref<Bitmap> Bitmap::arithmeticOperation(Bitmap::EArithmeticOperation operation, 
 			}
 			break;
 
-		case EFloat16: {
-				const half *src1 = bitmap1->getFloat16Data();
-				const half *src2 = bitmap2->getFloat16Data();
-				half *dst = output->getFloat16Data();
+		case Efloat16: {
+				const half *src1 = bitmap1->getfloat16Data();
+				const half *src2 = bitmap2->getfloat16Data();
+				half *dst = output->getfloat16Data();
 				IMPLEMENT_OPS();
 			}
 			break;
 
-		case EFloat32: {
-				const float *src1 = bitmap1->getFloat32Data();
-				const float *src2 = bitmap2->getFloat32Data();
-				float *dst = output->getFloat32Data();
+		case Efloat32: {
+				const float *src1 = bitmap1->getfloat32Data();
+				const float *src2 = bitmap2->getfloat32Data();
+				float *dst = output->getfloat32Data();
 				IMPLEMENT_OPS();
 			}
 			break;
 
-		case EFloat64: {
-				const double *src1 = bitmap1->getFloat64Data();
-				const double *src2 = bitmap2->getFloat64Data();
-				double *dst = output->getFloat64Data();
+		case Efloat64: {
+				const double *src1 = bitmap1->getfloat64Data();
+				const double *src2 = bitmap2->getfloat64Data();
+				double *dst = output->getfloat64Data();
 				IMPLEMENT_OPS();
 			}
 			break;
@@ -1380,15 +1380,15 @@ ref<Bitmap> Bitmap::arithmeticOperation(Bitmap::EArithmeticOperation operation, 
 	return output;
 }
 
-void Bitmap::colorBalance(Float r, Float g, Float b) {
+void Bitmap::colorBalance(float r, float g, float b) {
 	if (m_pixelFormat != ERGB && m_pixelFormat != ERGBA)
 		Log(EError, "colorBalance(): expected a RGB or RGBA image!");
 	int stride = m_pixelFormat == ERGB ? 3 : 4;
 	size_t pixelCount = (size_t) m_size.x * (size_t) m_size.y;
 
 	switch (m_componentFormat) {
-		case EFloat16: {
-				half *ptr = getFloat16Data();
+		case Efloat16: {
+				half *ptr = getfloat16Data();
 				for (size_t i=0; i<pixelCount; ++i) {
 					ptr[0] = half((float) ptr[0] * (float) r);
 					ptr[1] = half((float) ptr[1] * (float) g);
@@ -1397,8 +1397,8 @@ void Bitmap::colorBalance(Float r, Float g, Float b) {
 				}
 			}
 			break;
-		case EFloat32: {
-				float *ptr = getFloat32Data();
+		case Efloat32: {
+				float *ptr = getfloat32Data();
 				for (size_t i=0; i<pixelCount; ++i) {
 					ptr[0] = (float) (ptr[0] * r);
 					ptr[1] = (float) (ptr[1] * g);
@@ -1407,8 +1407,8 @@ void Bitmap::colorBalance(Float r, Float g, Float b) {
 				}
 			}
 			break;
-		case EFloat64: {
-				double *ptr = getFloat64Data();
+		case Efloat64: {
+				double *ptr = getfloat64Data();
 				for (size_t i=0; i<pixelCount; ++i) {
 					ptr[0] *= (double) r;
 					ptr[1] *= (double) g;
@@ -1429,7 +1429,7 @@ void Bitmap::setPixel(const Point2i &pos, const Spectrum &value) {
 	size_t offset = ((size_t) pos.x + m_size.x * (size_t) pos.y) * getBytesPerPixel();
 
 	const FormatConverter *cvt = FormatConverter::getInstance(
-		std::make_pair(EFloat, m_componentFormat)
+		std::make_pair(Efloat, m_componentFormat)
 	);
 
 	cvt->convert(ESpectrum, 1.0f, &value,
@@ -1442,7 +1442,7 @@ void Bitmap::drawHLine(int y, int x1, int x2, const Spectrum &value) {
 	x1 = std::max(x1, 0); x2 = std::min(x2, m_size.x-1);
 
 	const FormatConverter *cvt = FormatConverter::getInstance(
-		std::make_pair(EFloat, m_componentFormat)
+		std::make_pair(Efloat, m_componentFormat)
 	);
 	size_t pixelStride = getBytesPerPixel();
 	uint8_t *source = (uint8_t *) alloca(pixelStride);
@@ -1463,7 +1463,7 @@ void Bitmap::drawVLine(int x, int y1, int y2, const Spectrum &value) {
 	y1 = std::max(y1, 0); y2 = std::min(y2, m_size.y-1);
 
 	const FormatConverter *cvt = FormatConverter::getInstance(
-		std::make_pair(EFloat, m_componentFormat)
+		std::make_pair(Efloat, m_componentFormat)
 	);
 	size_t pixelStride = getBytesPerPixel(),
 	       rowStride = pixelStride * m_size.x;
@@ -1494,7 +1494,7 @@ void Bitmap::fillRect(Point2i offset, Vector2i size, const Spectrum &value) {
 	size.y -= std::max(0, offset.y + size.y - m_size.y);
 
 	const FormatConverter *cvt = FormatConverter::getInstance(
-		std::make_pair(EFloat, m_componentFormat)
+		std::make_pair(Efloat, m_componentFormat)
 	);
 	size_t pixelStride = getBytesPerPixel(),
 	       rowStride = pixelStride * m_size.x;
@@ -1522,7 +1522,7 @@ Spectrum Bitmap::getPixel(const Point2i &pos) const {
 	size_t offset = ((size_t) pos.x + m_size.x * (size_t) pos.y) * getBytesPerPixel();
 
 	const FormatConverter *cvt = FormatConverter::getInstance(
-		std::make_pair(m_componentFormat, EFloat)
+		std::make_pair(m_componentFormat, Efloat)
 	);
 
 	Spectrum result;
@@ -1532,7 +1532,7 @@ Spectrum Bitmap::getPixel(const Point2i &pos) const {
 	return result;
 }
 
-void Bitmap::convert(Bitmap *target, Float multiplier, Spectrum::EConversionIntent intent) const {
+void Bitmap::convert(Bitmap *target, float multiplier, Spectrum::EConversionIntent intent) const {
 	if (m_componentFormat == EBitmask || target->getComponentFormat() == EBitmask)
 		Log(EError, "Conversions involving bitmasks are currently not supported!");
 	if (m_size != target->getSize())
@@ -1559,7 +1559,7 @@ void Bitmap::convert(Bitmap *target, Float multiplier, Spectrum::EConversionInte
 }
 
 ref<Bitmap> Bitmap::convert(EPixelFormat pixelFormat,
-		EComponentFormat componentFormat, Float gamma, Float multiplier,
+		EComponentFormat componentFormat, float gamma, float multiplier,
 		Spectrum::EConversionIntent intent) {
 	if (m_componentFormat == EBitmask || componentFormat == EBitmask)
 		Log(EError, "Conversions involving bitmasks are currently not supported!");
@@ -1609,20 +1609,20 @@ void Bitmap::convertMultiSpectrumAlphaWeight(const Bitmap *source,
 		const uint8_t *sourcePtr, const Bitmap *target, uint8_t *targetPtr,
 		const std::vector<EPixelFormat> &pixelFormats,
 		EComponentFormat componentFormat, size_t count) {
-	if (source->getComponentFormat() != EFloat && source->getPixelFormat() != EMultiSpectrumAlphaWeight)
+	if (source->getComponentFormat() != Efloat && source->getPixelFormat() != EMultiSpectrumAlphaWeight)
 		Log(EError, "convertMultiSpectrumAlphaWeight(): unsupported!");
 
-	Float *temp = new Float[count * target->getChannelCount()], *dst = temp;
+	float *temp = new float[count * target->getChannelCount()], *dst = temp;
 
 	for (size_t k = 0; k<count; ++k) {
-		const Float *srcData = (const Float *) sourcePtr + k * source->getChannelCount();
-		Float weight = srcData[source->getChannelCount()-1],
-			  invWeight = weight == 0 ? 0 : (Float) 1 / weight;
-		Float alpha = srcData[source->getChannelCount()-2] * invWeight;
+		const float *srcData = (const float *) sourcePtr + k * source->getChannelCount();
+		float weight = srcData[source->getChannelCount()-1],
+			  invWeight = weight == 0 ? 0 : (float) 1 / weight;
+		float alpha = srcData[source->getChannelCount()-2] * invWeight;
 
 		for (size_t i=0; i<pixelFormats.size(); ++i) {
 			Spectrum value = ((Spectrum *) srcData)[i] * invWeight;
-			Float tmp0, tmp1, tmp2;
+			float tmp0, tmp1, tmp2;
 			switch (pixelFormats[i]) {
 				case Bitmap::ELuminance:
 					*dst++ = value.getLuminance();
@@ -1673,7 +1673,7 @@ void Bitmap::convertMultiSpectrumAlphaWeight(const Bitmap *source,
 	}
 
 	const FormatConverter *cvt = FormatConverter::getInstance(
-		std::make_pair(EFloat, target->getComponentFormat())
+		std::make_pair(Efloat, target->getComponentFormat())
 	);
 
 	cvt->convert(Bitmap::EMultiChannel, 1.0f, temp, Bitmap::EMultiChannel, 1.0f, targetPtr,
@@ -1683,7 +1683,7 @@ void Bitmap::convertMultiSpectrumAlphaWeight(const Bitmap *source,
 }
 
 void Bitmap::convert(void *target, EPixelFormat pixelFormat,
-		EComponentFormat componentFormat, Float gamma, Float multiplier,
+		EComponentFormat componentFormat, float gamma, float multiplier,
 		Spectrum::EConversionIntent intent) const {
 	if (m_componentFormat == EBitmask || componentFormat == EBitmask)
 		Log(EError, "Conversions involving bitmasks are currently not supported!");
@@ -1709,7 +1709,7 @@ void Bitmap::convert(void *target, EPixelFormat pixelFormat,
 }
 
 template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixelFormat fmt,
-		Float &logAvgLuminance, Float &maxLuminance, Float key, Float burn) {
+		float &logAvgLuminance, float &maxLuminance, float key, float burn) {
 	int channels = 0;
 
 	switch (fmt) {
@@ -1741,7 +1741,7 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 		if (fmt == Bitmap::ERGB || fmt == Bitmap::ERGBA) {
 			/* RGB[A] version */
 			for (size_t i=0; i < pixels; ++i) {
-				Float luminance = (Float) (ptr[0] * (Float) 0.212671 + ptr[1] * (Float) 0.715160 + ptr[2] * (Float) 0.072169);
+				float luminance = (float) (ptr[0] * (float) 0.212671 + ptr[1] * (float) 0.715160 + ptr[2] * (float) 0.072169);
 				if (luminance == 1024) // ignore the "rendered by mitsuba banner.."
 					maxLuminance = 0.0f;
 				maxLuminance = std::max(maxLuminance, luminance);
@@ -1750,7 +1750,7 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 			}
 		} else if (fmt == Bitmap::EXYZ || fmt == Bitmap::EXYZA) {
 			for (size_t i=0; i < pixels; ++i) {
-				Float luminance = (Float) ptr[1];
+				float luminance = (float) ptr[1];
 				if (luminance == 1024) // ignore the "rendered by mitsuba banner.."
 					maxLuminance = 0.0f;
 				maxLuminance = std::max(maxLuminance, luminance);
@@ -1760,7 +1760,7 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 		} else {
 			/* Monochrome version */
 			for (size_t i=0; i < pixels; ++i) {
-				Float luminance = (Float) *ptr;
+				float luminance = (float) *ptr;
 				if (luminance == 1024) // ignore the "rendered by mitsuba banner.."
 					maxLuminance = 0.0f;
 				maxLuminance = std::max(maxLuminance, luminance);
@@ -1775,24 +1775,24 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 	if (maxLuminance == 0) /* This is a black image -- stop now */
 		return;
 
-	burn = std::min((Float) 1, std::max((Float) 1e-8f, 1-burn));
+	burn = std::min((float) 1, std::max((float) 1e-8f, 1-burn));
 
-	Float scale = key / logAvgLuminance,
+	float scale = key / logAvgLuminance,
 		  Lwhite = maxLuminance * scale;
 
 	/* Having the 'burn' parameter scale as 1/b^4 provides a nicely behaved knob */
-	Float invWp2 = 1 / (Lwhite * Lwhite * std::pow(burn, (Float) 4));
+	float invWp2 = 1 / (Lwhite * Lwhite * std::pow(burn, (float) 4));
 
 	if (fmt == Bitmap::ERGB || fmt == Bitmap::ERGBA) {
 		/* RGB[A] version */
 		for (size_t i=0; i < pixels; ++i) {
 			/* Convert ITU-R Rec. BT.709 linear RGB to XYZ tristimulus values */
-			Float X = static_cast<Float>(data[0] * 0.412453f + data[1] * 0.357580f + data[2] * 0.180423f);
-			Float Y = static_cast<Float>(data[0] * 0.212671f + data[1] * 0.715160f + data[2] * 0.072169f);
-			Float Z = static_cast<Float>(data[0] * 0.019334f + data[1] * 0.119193f + data[2] * 0.950227f);
+			float X = static_cast<float>(data[0] * 0.412453f + data[1] * 0.357580f + data[2] * 0.180423f);
+			float Y = static_cast<float>(data[0] * 0.212671f + data[1] * 0.715160f + data[2] * 0.072169f);
+			float Z = static_cast<float>(data[0] * 0.019334f + data[1] * 0.119193f + data[2] * 0.950227f);
 
 			/* Convert to xyY */
-			Float normalization = 1 / (X + Y + Z),
+			float normalization = 1 / (X + Y + Z),
 				x  = X * normalization,
 				y  = Y * normalization,
 				Lp = Y * scale;
@@ -1801,9 +1801,9 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 			Y = Lp * (1.0f + Lp*invWp2) / (1.0f + Lp);
 
 			/* Convert back to XYZ */
-			Float ratio = Y/y;
+			float ratio = Y/y;
 			X = ratio * x;
-			Z = ratio * ((Float) 1.0f - x - y);
+			Z = ratio * ((float) 1.0f - x - y);
 
 			/* Convert from XYZ tristimulus values to ITU-R Rec. BT.709 linear RGB */
 			data[0] = safe_cast<T>(  3.240479f * X + -1.537150f * Y + -0.498535f * Z);
@@ -1815,12 +1815,12 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 	} else if (fmt == Bitmap::EXYZ || fmt == Bitmap::EXYZA) {
 		/* XYZ[A] version */
 		for (size_t i=0; i < pixels; ++i) {
-			Float X = static_cast<Float>(data[0]),
-			      Y = static_cast<Float>(data[1]),
-			      Z = static_cast<Float>(data[2]);
+			float X = static_cast<float>(data[0]),
+			      Y = static_cast<float>(data[1]),
+			      Z = static_cast<float>(data[2]);
 
 			/* Convert to xyY */
-			Float normalization = 1 / (X + Y + Z),
+			float normalization = 1 / (X + Y + Z),
 				x  = X * normalization,
 				y  = Y * normalization,
 				Lp = Y * scale;
@@ -1829,9 +1829,9 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 			Y = Lp * (1.0f + Lp*invWp2) / (1.0f + Lp);
 
 			/* Convert back to XYZ */
-			Float ratio = Y/y;
+			float ratio = Y/y;
 			X = ratio * x;
-			Z = ratio * ((Float) 1.0f - x - y);
+			Z = ratio * ((float) 1.0f - x - y);
 
 			data[0] = safe_cast<T>(X);
 			data[1] = safe_cast<T>(Y);
@@ -1843,7 +1843,7 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 	} else {
 		/* Monochrome version */
 		for (size_t i=0; i < pixels; ++i) {
-			Float Lp = (Float) *data * scale;
+			float Lp = (float) *data * scale;
 
 			/* Apply the tonemapping transformation */
 			*data = safe_cast<T> (Lp * (1.0f + Lp*invWp2) / (1.0f + Lp));
@@ -1853,7 +1853,7 @@ template <typename T> void tonemapReinhard(T *data, size_t pixels, Bitmap::EPixe
 	}
 }
 
-void Bitmap::tonemapReinhard(Float &logAvgLuminance, Float &maxLuminance, Float key, Float burn) {
+void Bitmap::tonemapReinhard(float &logAvgLuminance, float &maxLuminance, float key, float burn) {
 	Assert(m_pixelFormat == ERGB || m_pixelFormat == ERGBA ||
 	       m_pixelFormat == ELuminance || m_pixelFormat == ELuminanceAlpha);
 	Assert(m_gamma == 1);
@@ -1861,14 +1861,14 @@ void Bitmap::tonemapReinhard(Float &logAvgLuminance, Float &maxLuminance, Float 
 	size_t pixels = (size_t) m_size.x * (size_t) m_size.y;
 
 	switch (m_componentFormat) {
-		case EFloat16:
-			mitsuba::tonemapReinhard(getFloat16Data(), pixels, m_pixelFormat, logAvgLuminance, maxLuminance, key, burn);
+		case Efloat16:
+			mitsuba::tonemapReinhard(getfloat16Data(), pixels, m_pixelFormat, logAvgLuminance, maxLuminance, key, burn);
 			break;
-		case EFloat32:
-			mitsuba::tonemapReinhard(getFloat32Data(), pixels, m_pixelFormat, logAvgLuminance, maxLuminance, key, burn);
+		case Efloat32:
+			mitsuba::tonemapReinhard(getfloat32Data(), pixels, m_pixelFormat, logAvgLuminance, maxLuminance, key, burn);
 			break;
-		case EFloat64:
-			mitsuba::tonemapReinhard(getFloat64Data(), pixels, m_pixelFormat, logAvgLuminance, maxLuminance, key, burn);
+		case Efloat64:
+			mitsuba::tonemapReinhard(getfloat64Data(), pixels, m_pixelFormat, logAvgLuminance, maxLuminance, key, burn);
 			break;
 		default:
 			Log(EError, "Bitmap::tonemapReinhard(): Unsupported component format!");
@@ -2154,7 +2154,7 @@ ref<Bitmap> Bitmap::crop(const Point2i &offset, const Vector2i &size) const {
 	return result;
 }
 
-void Bitmap::applyMatrix(Float matrix_[3][3]) {
+void Bitmap::applyMatrix(float matrix_[3][3]) {
 	int stride = 0;
 
 	if (m_pixelFormat == ERGB || m_pixelFormat == EXYZ)
@@ -2167,9 +2167,9 @@ void Bitmap::applyMatrix(Float matrix_[3][3]) {
 	size_t pixels = (size_t) m_size.x * (size_t) m_size.y;
 
 	switch (m_componentFormat) {
-		case EFloat16: {
+		case Efloat16: {
 			float matrix[3][3];
-			half *data = getFloat16Data();
+			half *data = getfloat16Data();
 			for (int i=0; i<3; ++i)
 				for (int j=0; j<3; ++j)
 					matrix[i][j] = (float) matrix_[i][j];
@@ -2186,8 +2186,8 @@ void Bitmap::applyMatrix(Float matrix_[3][3]) {
 		}
 		break;
 
-		case EFloat32: {
-			float matrix[3][3], *data = getFloat32Data();
+		case Efloat32: {
+			float matrix[3][3], *data = getfloat32Data();
 			for (int i=0; i<3; ++i)
 				for (int j=0; j<3; ++j)
 					matrix[i][j] = (float) matrix_[i][j];
@@ -2204,8 +2204,8 @@ void Bitmap::applyMatrix(Float matrix_[3][3]) {
 		}
 		break;
 
-		case EFloat64: {
-			double matrix[3][3], *data = getFloat64Data();
+		case Efloat64: {
+			double matrix[3][3], *data = getfloat64Data();
 			for (int i=0; i<3; ++i)
 				for (int j=0; j<3; ++j)
 					matrix[i][j] = (double) matrix_[i][j];
@@ -2230,8 +2230,8 @@ void Bitmap::applyMatrix(Float matrix_[3][3]) {
 template <typename Scalar> static void resample(ref<const ReconstructionFilter> rfilter,
 	ReconstructionFilter::EBoundaryCondition bch,
 	ReconstructionFilter::EBoundaryCondition bcv,
-	const Bitmap *source, Bitmap *target, ref<Bitmap> temp, Float minValue,
-	Float maxValue, bool filter) {
+	const Bitmap *source, Bitmap *target, ref<Bitmap> temp, float minValue,
+	float maxValue, bool filter) {
 
 	if (!rfilter) {
 		/* Resample using a 2-lobed Lanczos reconstruction filter */
@@ -2252,8 +2252,8 @@ template <typename Scalar> static void resample(ref<const ReconstructionFilter> 
 
 	int channels = source->getChannelCount();
 	bool clamp =
-		minValue != -std::numeric_limits<Float>::infinity() ||
-		maxValue !=  std::numeric_limits<Float>::infinity();
+		minValue != -std::numeric_limits<float>::infinity() ||
+		maxValue !=  std::numeric_limits<float>::infinity();
 
 	if (source->getWidth() != target->getWidth() || filter) {
 		/* Re-sample along the X direction */
@@ -2331,7 +2331,7 @@ template <typename Scalar> static void resample(ref<const ReconstructionFilter> 
 void Bitmap::resample(const ReconstructionFilter *rfilter,
 		ReconstructionFilter::EBoundaryCondition bch,
 		ReconstructionFilter::EBoundaryCondition bcv,
-		Bitmap *target, Bitmap *temp, Float minValue, Float maxValue) const {
+		Bitmap *target, Bitmap *temp, float minValue, float maxValue) const {
 
 	Assert(getPixelFormat() == target->getPixelFormat() &&
 		getComponentFormat() == target->getComponentFormat() &&
@@ -2340,13 +2340,13 @@ void Bitmap::resample(const ReconstructionFilter *rfilter,
 
 
 	switch (m_componentFormat) {
-		case EFloat16:
+		case Efloat16:
 			mitsuba::resample<half>(rfilter, bch, bcv, this, target, temp, minValue, maxValue, false);
 			break;
-		case EFloat32:
+		case Efloat32:
 			mitsuba::resample<float>(rfilter, bch, bcv, this, target, temp, minValue, maxValue, false);
 			break;
-		case EFloat64:
+		case Efloat64:
 			mitsuba::resample<double>(rfilter, bch, bcv, this, target, temp, minValue, maxValue, false);
 			break;
 		default:
@@ -2357,7 +2357,7 @@ void Bitmap::resample(const ReconstructionFilter *rfilter,
 void Bitmap::filter(const ReconstructionFilter *rfilter,
 		ReconstructionFilter::EBoundaryCondition bch,
 		ReconstructionFilter::EBoundaryCondition bcv,
-		Bitmap *target, Bitmap *temp, Float minValue, Float maxValue) const {
+		Bitmap *target, Bitmap *temp, float minValue, float maxValue) const {
 
 	Assert(getPixelFormat() == target->getPixelFormat() &&
 		getComponentFormat() == target->getComponentFormat() &&
@@ -2366,13 +2366,13 @@ void Bitmap::filter(const ReconstructionFilter *rfilter,
 		(!temp || temp->getSize() == getSize()));
 
 	switch (m_componentFormat) {
-		case EFloat16:
+		case Efloat16:
 			mitsuba::resample<half>(rfilter, bch, bcv, this, target, temp, minValue, maxValue, true);
 			break;
-		case EFloat32:
+		case Efloat32:
 			mitsuba::resample<float>(rfilter, bch, bcv, this, target, temp, minValue, maxValue, true);
 			break;
-		case EFloat64:
+		case Efloat64:
 			mitsuba::resample<double>(rfilter, bch, bcv, this, target, temp, minValue, maxValue, true);
 			break;
 		default:
@@ -2383,7 +2383,7 @@ void Bitmap::filter(const ReconstructionFilter *rfilter,
 ref<Bitmap> Bitmap::resample(const ReconstructionFilter *rfilter,
 		ReconstructionFilter::EBoundaryCondition bch,
 		ReconstructionFilter::EBoundaryCondition bcv,
-		const Vector2i &size, Float minValue, Float maxValue) const {
+		const Vector2i &size, float minValue, float maxValue) const {
 	ref<Bitmap> result = new Bitmap(m_pixelFormat, m_componentFormat, size);
 	result->m_metadata = m_metadata;
 	result->m_gamma = m_gamma;
@@ -2395,7 +2395,7 @@ ref<Bitmap> Bitmap::resample(const ReconstructionFilter *rfilter,
 ref<Bitmap> Bitmap::filter(const ReconstructionFilter *rfilter,
 		ReconstructionFilter::EBoundaryCondition bch,
 		ReconstructionFilter::EBoundaryCondition bcv,
-		Float minValue, Float maxValue) const {
+		float minValue, float maxValue) const {
 	ref<Bitmap> result = new Bitmap(m_pixelFormat, m_componentFormat, getSize());
 	result->m_metadata = m_metadata;
 	result->m_gamma = m_gamma;
@@ -2535,7 +2535,7 @@ void Bitmap::readPNG(Stream *stream) {
 	if (png_get_sRGB(png_ptr, info_ptr, &intent)) {
 		m_gamma = -1;
 	} else if (png_get_gAMA(png_ptr, info_ptr, &gamma)) {
-		m_gamma = (Float) 1 / (Float) gamma;
+		m_gamma = (float) 1 / (float) gamma;
 	} else {
 		m_gamma = -1; // assume sRGB by default
 	}
@@ -2828,7 +2828,7 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 			bool isSpectralChannel = false;
 			#if SPECTRUM_SAMPLES != 3
 				for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-					std::pair<Float, Float> coverage = Spectrum::getBinCoverage(i);
+					std::pair<float, float> coverage = Spectrum::getBinCoverage(i);
 					if (!ch_spec[i] && boost::ends_with(name, formatString("%.2f-%.2fnm", coverage.first, coverage.second))) {
 						isSpectralChannel = true;
 						ch_spec[i] = it.name();
@@ -2932,7 +2932,7 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 		std::string name = it.name(), typeName = it.attribute().typeName();
 		const Imf::StringAttribute *sattr;
 		const Imf::IntAttribute *iattr;
-		const Imf::FloatAttribute *fattr;
+		const Imf::floatAttribute *fattr;
 		const Imf::DoubleAttribute *dattr;
 		const Imf::V3fAttribute *vattr;
 		const Imf::M44fAttribute *mattr;
@@ -2944,11 +2944,11 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 			(iattr = header.findTypedAttribute<Imf::IntAttribute>(name.c_str())))
 			m_metadata.setInteger(name, iattr->value());
 		else if (typeName == "float" &&
-			(fattr = header.findTypedAttribute<Imf::FloatAttribute>(name.c_str())))
-			m_metadata.setFloat(name, (Float) fattr->value());
+			(fattr = header.findTypedAttribute<Imf::floatAttribute>(name.c_str())))
+			m_metadata.setfloat(name, (float) fattr->value());
 		else if (typeName == "double" &&
 			(dattr = header.findTypedAttribute<Imf::DoubleAttribute>(name.c_str())))
-			m_metadata.setFloat(name, (Float) dattr->value());
+			m_metadata.setfloat(name, (float) dattr->value());
 		else if (typeName == "v3f" &&
 			(vattr = header.findTypedAttribute<Imf::V3fAttribute>(name.c_str()))) {
 			Imath::V3f vec = vattr->value();
@@ -2972,11 +2972,11 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 	size_t compSize;
 	std::string encodingString;
 	if (pxType == Imf::HALF) {
-		m_componentFormat = EFloat16;
+		m_componentFormat = Efloat16;
 		compSize = sizeof(half);
 		encodingString = "float16";
-	} else if (pxType == Imf::FLOAT) {
-		m_componentFormat = EFloat32;
+	} else if (pxType == Imf::float) {
+		m_componentFormat = Efloat32;
 		compSize = sizeof(float);
 		encodingString = "float32";
 	} else if (pxType == Imf::UINT) {
@@ -3062,7 +3062,7 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 
 		resampleBuffers[i] = resampleBuffers[i]->resample(rfilter,
 			ReconstructionFilter::EClamp, ReconstructionFilter::EClamp,
-			m_size, -std::numeric_limits<Float>::max(), std::numeric_limits<Float>::max());
+			m_size, -std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
 
 		size_t pixelCount = (size_t) m_size.x * (size_t) m_size.y;
 		uint8_t *dst = m_data + compSize * i;
@@ -3082,7 +3082,7 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 
 		size_t pixelCount = (size_t) m_size.x * (size_t) m_size.y;
 		switch (m_componentFormat) {
-			case EFloat16: {
+			case Efloat16: {
 					half *data = (half *) m_data;
 					for (size_t j=0; j<pixelCount; ++j) {
 						float ry = data[0], Y  = data[1], by = data[2],
@@ -3094,7 +3094,7 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 				}
 				break;
 
-			case EFloat32: {
+			case Efloat32: {
 					float *data = (float *) m_data;
 					for (size_t j=0; j<pixelCount; ++j) {
 						float ry = data[0], Y  = data[1], by = data[2],
@@ -3135,7 +3135,7 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 
 		size_t pixelCount = (size_t) m_size.x * (size_t) m_size.y;
 		switch (m_componentFormat) {
-			case EFloat16: {
+			case Efloat16: {
 					half *data = (half *) m_data;
 					for (size_t j=0; j<pixelCount; ++j) {
 						Imath::V3f rgb = Imath::V3f(data[0], data[1], data[2]) * M;
@@ -3147,7 +3147,7 @@ void Bitmap::readOpenEXR(Stream *stream, const std::string &_prefix) {
 				}
 				break;
 
-			case EFloat32: {
+			case Efloat32: {
 					float *data = (float *) m_data;
 					for (size_t j=0; j<pixelCount; ++j) {
 						Imath::V3f rgb = Imath::V3f(data[0], data[1], data[2]) * M;
@@ -3205,8 +3205,8 @@ void Bitmap::writeOpenEXR(Stream *stream) const {
 			case Properties::EInteger:
 				header.insert(it->c_str(), Imf::IntAttribute(metadata.getInteger(*it)));
 				break;
-			case Properties::EFloat:
-				header.insert(it->c_str(), Imf::FloatAttribute((float) metadata.getFloat(*it)));
+			case Properties::Efloat:
+				header.insert(it->c_str(), Imf::floatAttribute((float) metadata.getfloat(*it)));
 				break;
 			case Properties::EPoint: {
 					Point val = metadata.getPoint(*it);
@@ -3241,11 +3241,11 @@ void Bitmap::writeOpenEXR(Stream *stream) const {
 
 	Imf::PixelType compType;
 	size_t compStride;
-	if (m_componentFormat == EFloat16) {
+	if (m_componentFormat == Efloat16) {
 		compType = Imf::HALF;
 		compStride = 2;
-	} else if (m_componentFormat == EFloat32) {
-		compType = Imf::FLOAT;
+	} else if (m_componentFormat == Efloat32) {
+		compType = Imf::float;
 		compStride = 4;
 	} else if (m_componentFormat == EUInt32) {
 		compType = Imf::UINT;
@@ -3275,7 +3275,7 @@ void Bitmap::writeOpenEXR(Stream *stream) const {
 		channels.insert("B", Imf::Channel(compType));
 	} else if (pixelFormat == ESpectrum || pixelFormat == ESpectrumAlpha) {
 		for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-			std::pair<Float, Float> coverage = Spectrum::getBinCoverage(i);
+			std::pair<float, float> coverage = Spectrum::getBinCoverage(i);
 			std::string name = formatString("%.2f-%.2fnm", coverage.first, coverage.second);
 			channels.insert(name.c_str(), Imf::Channel(compType));
 		}
@@ -3310,7 +3310,7 @@ void Bitmap::writeOpenEXR(Stream *stream) const {
 		frameBuffer.insert("B", Imf::Slice(compType, ptr, pixelStride, rowStride)); ptr += compStride;
 	} else if (pixelFormat == ESpectrum || pixelFormat == ESpectrumAlpha) {
 		for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-			std::pair<Float, Float> coverage = Spectrum::getBinCoverage(i);
+			std::pair<float, float> coverage = Spectrum::getBinCoverage(i);
 			std::string name = formatString("%.2f-%.2fnm", coverage.first, coverage.second);
 			frameBuffer.insert(name.c_str(), Imf::Slice(compType, ptr, pixelStride, rowStride)); ptr += compStride;
 		}
@@ -3501,9 +3501,9 @@ void Bitmap::readBMP(Stream *stream) {
 
 /* The following is based on code by Bruce Walter */
 namespace detail {
-	static inline void RGBE_FromFloat(float *data, uint8_t rgbe[4]) {
+	static inline void RGBE_Fromfloat(float *data, uint8_t rgbe[4]) {
 		/* Find the largest contribution */
-		Float max = std::max(std::max(data[0], data[1]), data[2]);
+		float max = std::max(std::max(data[0], data[1]), data[2]);
 		if (max < 1e-32) {
 			rgbe[0] = rgbe[1] = rgbe[2] = rgbe[3] = 0;
 		} else {
@@ -3511,7 +3511,7 @@ namespace detail {
 			/* Extract exponent and convert the fractional part into
 			   the [0..255] range. Afterwards, divide by max so that
 			   any color component multiplied by the result will be in [0,255] */
-			max = std::frexp(max, &e) * (Float) 256 / max;
+			max = std::frexp(max, &e) * (float) 256 / max;
 			rgbe[0] = (uint8_t) (data[0] * max);
 			rgbe[1] = (uint8_t) (data[1] * max);
 			rgbe[2] = (uint8_t) (data[2] * max);
@@ -3519,7 +3519,7 @@ namespace detail {
 		}
 	}
 
-	static inline void RGBE_ToFloat(uint8_t rgbe[4], float *data) {
+	static inline void RGBE_Tofloat(uint8_t rgbe[4], float *data) {
 		if (rgbe[3]) { /* nonzero pixel */
 			float f = std::ldexp(1.0f, (int) rgbe[3] - (128+8));
 			for (int i=0; i<3; ++i)
@@ -3581,7 +3581,7 @@ namespace detail {
 		while (numpixels-- > 0) {
 			uint8_t rgbe[4];
 			stream->read(rgbe, 4);
-			RGBE_ToFloat(rgbe, data);
+			RGBE_Tofloat(rgbe, data);
 			data += 3;
 		}
 	}
@@ -3609,7 +3609,7 @@ void Bitmap::readRGBE(Stream *stream) {
 		Log(EError, "readRGBE(): invalid format!");
 
 	m_pixelFormat = ERGB;
-	m_componentFormat = EFloat32;
+	m_componentFormat = Efloat32;
 	m_channelCount = 3;
 	m_gamma = 1.0f;
 	m_data = static_cast<uint8_t *>(allocAligned(getBufferSize()));
@@ -3632,7 +3632,7 @@ void Bitmap::readRGBE(Stream *stream) {
 
 			if (rgbe[0] != 2 || rgbe[1] != 2 || rgbe[2] & 0x80) {
 				/* this file is not run length encoded */
-				detail::RGBE_ToFloat(rgbe, data);
+				detail::RGBE_Tofloat(rgbe, data);
 				detail::RGBE_ReadPixels(stream, data + 3, (size_t) m_size.x * (size_t) m_size.y - 1);
 				return;
 			}
@@ -3676,7 +3676,7 @@ void Bitmap::readRGBE(Stream *stream) {
 				rgbe[1] = buffer[m_size.x+i];
 				rgbe[2] = buffer[2*m_size.x+i];
 				rgbe[3] = buffer[3*m_size.x+i];
-				detail::RGBE_ToFloat(rgbe, data);
+				detail::RGBE_Tofloat(rgbe, data);
 				data += 3;
 			}
 		}
@@ -3689,8 +3689,8 @@ void Bitmap::readRGBE(Stream *stream) {
 }
 
 void Bitmap::writeRGBE(Stream *stream) const {
-	if (m_componentFormat != EFloat32)
-		Log(EError, "writeRGBE(): component format must be EFloat32!");
+	if (m_componentFormat != Efloat32)
+		Log(EError, "writeRGBE(): component format must be Efloat32!");
 	if (m_pixelFormat != ERGB && m_pixelFormat != ERGBA)
 		Log(EError, "writeRGBE(): pixel format must be ERGB or ERGBA!");
 
@@ -3713,7 +3713,7 @@ void Bitmap::writeRGBE(Stream *stream) const {
 		/* Run length encoding is not allowed so write flat*/
 		uint8_t rgbe[4];
 		for (size_t i=0; i<(size_t) m_size.x * (size_t) m_size.y; ++i) {
-			detail::RGBE_FromFloat(data, rgbe);
+			detail::RGBE_Fromfloat(data, rgbe);
 			data += (m_pixelFormat == ERGB) ? 3 : 4;
 			stream->write(rgbe, 4);
 		}
@@ -3728,7 +3728,7 @@ void Bitmap::writeRGBE(Stream *stream) const {
 		stream->write(rgbe, 4);
 
 		for (int x=0; x<m_size.x; x++) {
-			detail::RGBE_FromFloat(data, rgbe);
+			detail::RGBE_Fromfloat(data, rgbe);
 
 			buffer[x]            = rgbe[0];
 			buffer[m_size.x+x]   = rgbe[1];
@@ -3769,7 +3769,7 @@ void Bitmap::readPFM(Stream *stream) {
 
 	bool color = (header[1] == 'F');
 	m_pixelFormat = color ? ERGB : ELuminance;
-	m_componentFormat = EFloat32;
+	m_componentFormat = Efloat32;
 	m_channelCount = color ? 3 : 1;
 	m_gamma = 1.0f;
 
@@ -3814,8 +3814,8 @@ void Bitmap::readPFM(Stream *stream) {
 }
 
 void Bitmap::writePFM(Stream *stream) const {
-	if (m_componentFormat != EFloat32)
-		Log(EError, "writePFM(): component format must be EFloat32!");
+	if (m_componentFormat != Efloat32)
+		Log(EError, "writePFM(): component format must be Efloat32!");
 	if (m_pixelFormat != ERGB && m_pixelFormat != ERGBA && m_pixelFormat != ELuminance)
 		Log(EError, "writePFM(): pixel format must be ERGB, ERGBA, ELuminance, or ELuminanceAlpha!");
 
@@ -4023,9 +4023,9 @@ std::ostream &operator<<(std::ostream &os, const Bitmap::EComponentFormat &value
 		case Bitmap::EUInt8: os << "uint8"; break;
 		case Bitmap::EUInt16: os << "uint16"; break;
 		case Bitmap::EUInt32: os << "uint32"; break;
-		case Bitmap::EFloat16: os << "float16"; break;
-		case Bitmap::EFloat32: os << "float32"; break;
-		case Bitmap::EFloat64: os << "float64"; break;
+		case Bitmap::Efloat16: os << "float16"; break;
+		case Bitmap::Efloat32: os << "float32"; break;
+		case Bitmap::Efloat64: os << "float64"; break;
 		default: os << "invalid"; break;
 	}
 	return os;

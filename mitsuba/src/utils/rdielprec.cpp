@@ -37,7 +37,7 @@
 
 MTS_NAMESPACE_BEGIN
 
-void transmittanceIntegrand(const BSDF *bsdf, const Vector &wi, size_t nPts, const Float *in, Float *out) {
+void transmittanceIntegrand(const BSDF *bsdf, const Vector &wi, size_t nPts, const float *in, float *out) {
 	Intersection its;
 
 	#pragma omp parallel for
@@ -55,52 +55,52 @@ void transmittanceIntegrand(const BSDF *bsdf, const Vector &wi, size_t nPts, con
 	}
 }
 
-void diffTransmittanceIntegrand(Float *data, size_t resolution, size_t nPts, const Float *in, Float *out) {
+void diffTransmittanceIntegrand(float *data, size_t resolution, size_t nPts, const float *in, float *out) {
 	#pragma omp parallel for
 	for (int i=0; i<(int) nPts; ++i)
-		out[i] = 2 * in[i] * interpCubic1D(std::pow(in[i], (Float) 0.25f), data, 0, 1, resolution);
+		out[i] = 2 * in[i] * interpCubic1D(std::pow(in[i], (float) 0.25f), data, 0, 1, resolution);
 }
 
 class PrecomputeTransmittance : public Utility {
 public:
-	Float *computeTransmittance(const char *name, Float ior, Float alpha,
-			size_t resolution, Float &diffTrans, int inverted) {
+	float *computeTransmittance(const char *name, float ior, float alpha,
+			size_t resolution, float &diffTrans, int inverted) {
 		Properties bsdfProps(alpha == 0 ? "dielectric" : "roughdielectric");
 		if (inverted) {
-			bsdfProps.setFloat("intIOR", 1.00);
-			bsdfProps.setFloat("extIOR", ior);
+			bsdfProps.setfloat("intIOR", 1.00);
+			bsdfProps.setfloat("extIOR", ior);
 		} else {
-			bsdfProps.setFloat("extIOR", 1.00);
-			bsdfProps.setFloat("intIOR", ior);
+			bsdfProps.setfloat("extIOR", 1.00);
+			bsdfProps.setfloat("intIOR", ior);
 		}
-		bsdfProps.setFloat("alpha", alpha);
+		bsdfProps.setfloat("alpha", alpha);
 		bsdfProps.setString("distribution", name);
 		ref<BSDF> bsdf = static_cast<BSDF *>(
 				PluginManager::getInstance()->createObject(bsdfProps));
 
-		Float stepSize = 1.0f / (resolution-1);
-		Float error;
+		float stepSize = 1.0f / (resolution-1);
+		float error;
 
 		NDIntegrator intTransmittance(1, 2, 50000, 0, 1e-6f);
 		NDIntegrator intDiffTransmittance(1, 1, 50000, 0, 1e-6f);
-		Float *transmittances = new Float[resolution];
+		float *transmittances = new float[resolution];
 
 		for (size_t i=0; i<resolution; ++i) {
-			Float t = i * stepSize;
+			float t = i * stepSize;
 			if (i == 0) /* Don't go all the way to zero */
 				t = stepSize/10;
 
-			Float cosTheta = std::pow(t, (Float) 4.0f);
+			float cosTheta = std::pow(t, (float) 4.0f);
 
 			Vector wi(math::safe_sqrt(1-cosTheta*cosTheta), 0, cosTheta);
 
-			Float min[2] = {0, 0}, max[2] = {1, 1};
+			float min[2] = {0, 0}, max[2] = {1, 1};
 			intTransmittance.integrateVectorized(
 				boost::bind(&transmittanceIntegrand, bsdf, wi, _1, _2, _3),
 				min, max, &transmittances[i], &error, NULL);
 		}
 
-		Float min[1] = { 0 }, max[1] = { 1 };
+		float min[1] = { 0 }, max[1] = { 1 };
 		intDiffTransmittance.integrateVectorized(
 			boost::bind(&diffTransmittanceIntegrand, transmittances, resolution, _1, _2, _3),
 			min, max, &diffTrans, &error, NULL);
@@ -116,7 +116,7 @@ public:
 			   resolutionAlpha = RESOLUTION_ROUGHNESS,
 			   resolutionTheta = RESOLUTION_THETA;
 
-		Float alphaStart = ROUGHNESS_START,
+		float alphaStart = ROUGHNESS_START,
 			  alphaEnd   = ROUGHNESS_END,
 			  iorStart   = IOR_START,
 			  iorEnd     = IOR_END;
@@ -149,20 +149,20 @@ public:
 			fstream->writeSingle(alphaEnd);
 		}
 
-		Float iorStepSize   = 1.0f / (resolutionIOR-1),
+		float iorStepSize   = 1.0f / (resolutionIOR-1),
 			  alphaStepSize = 1.0f / (resolutionAlpha-1);
 
 		for (size_t i=0; i<resolutionIOR; ++i) {
-			Float t = i * iorStepSize;
-			Float ior = iorStart + (iorEnd-iorStart) * std::pow(t, (Float) 4.0f);
+			float t = i * iorStepSize;
+			float ior = iorStart + (iorEnd-iorStart) * std::pow(t, (float) 4.0f);
 			cout << "ior = " << ior << endl;
 			os << "\t{" << endl;
 			for (size_t j=0; j<resolutionAlpha; ++j) {
-				Float t = j * alphaStepSize;
-				Float alpha = alphaStart + (alphaEnd-alphaStart) * std::pow(t, (Float) 4.0f);
+				float t = j * alphaStepSize;
+				float alpha = alphaStart + (alphaEnd-alphaStart) * std::pow(t, (float) 4.0f);
 				cout << "alpha = " << alpha << endl;
-				Float diffTrans;
-				Float *transmittance = computeTransmittance(name,
+				float diffTrans;
+				float *transmittance = computeTransmittance(name,
 						ior, alpha, resolutionTheta, diffTrans, inverted);
 				os << "\t\t{";
 				for (size_t k=0; k<resolutionTheta; ++k) {

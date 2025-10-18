@@ -121,16 +121,16 @@ public:
 			return Spectrum(0.0f);
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		bool sampleTransmission = bRec.typeMask & ENull
 			&& (bRec.component == -1 || bRec.component == getComponentCount()-1);
 		bool sampleNested = bRec.component == -1 || bRec.component < getComponentCount()-1;
 
-		Float prob = m_opacity->eval(bRec.its).getLuminance();
+		float prob = m_opacity->eval(bRec.its).getLuminance();
 		if (measure == ESolidAngle) {
 			if (!sampleNested)
 				return 0.0f;
-			Float result = m_nestedBSDF->pdf(bRec, ESolidAngle);
+			float result = m_nestedBSDF->pdf(bRec, ESolidAngle);
 			if (sampleTransmission)
 				result *= prob;
 			return result;
@@ -149,7 +149,7 @@ public:
 	Spectrum sample(BSDFSamplingRecord &bRec, const Point2 &_sample) const {
 		Point2 sample(_sample);
 		Spectrum opacity = m_opacity->eval(bRec.its);
-		Float prob = opacity.getLuminance();
+		float prob = opacity.getLuminance();
 
 		bool sampleTransmission = bRec.typeMask & ENull
 			&& (bRec.component == -1 || bRec.component == getComponentCount()-1);
@@ -157,7 +157,7 @@ public:
 
 		if (sampleTransmission && sampleNested) {
 			if (sample.x < prob) {
-				Float invProb = 1.0f / prob;
+				float invProb = 1.0f / prob;
 				sample.x *= invProb;
 				return m_nestedBSDF->sample(bRec, sample) * opacity * invProb;
 			} else {
@@ -180,12 +180,12 @@ public:
 		}
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &_sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &_sample) const {
 		Point2 sample(_sample);
 		Spectrum result(0.0f);
 
 		Spectrum opacity = m_opacity->eval(bRec.its);
-		Float prob = opacity.getLuminance();
+		float prob = opacity.getLuminance();
 
 		bool sampleTransmission = bRec.typeMask & ENull
 			&& (bRec.component == -1 || bRec.component == getComponentCount()-1);
@@ -218,7 +218,7 @@ public:
 		return result;
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return m_nestedBSDF->getRoughness(its, component);
 	}
 

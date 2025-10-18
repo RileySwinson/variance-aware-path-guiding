@@ -36,7 +36,7 @@ static unsigned int bsdf_getType_2(const BSDF *bsdf, int index) {
 }
 
 static bp::tuple bsdf_sample(const BSDF *bsdf, BSDFSamplingRecord &bRec, const Point2 &sample) {
-	Float pdf;
+	float pdf;
 	Spectrum result = bsdf->sample(bRec, pdf, sample);
 	return bp::make_tuple(result, pdf);
 }
@@ -81,9 +81,9 @@ static ShapeKDTree* shape_getKDTree(const Shape *shape) {
 	return const_cast<ShapeKDTree *>(static_cast<const ShapeKDTree *>(shape->getKDTree()));
 }
 
-static bp::object shape_rayIntersect(const Shape *shape, const Ray &ray, Float mint, Float maxt) {
+static bp::object shape_rayIntersect(const Shape *shape, const Ray &ray, float mint, float maxt) {
 	uint8_t temp[MTS_KD_INTERSECTION_TEMP];
-	Float t;
+	float t;
 
 	if (!shape->rayIntersect(ray, mint, maxt, t, temp))
 		return bp::object();
@@ -115,7 +115,7 @@ static bp::object scene_rayIntersectAll(const Scene *scene, const Ray &ray) {
 }
 
 static bp::tuple shape_getCurvature(const Shape *shape, const Intersection &its, bool shadingFrame) {
-	Float H, K;
+	float H, K;
 	shape->getCurvature(its, H, K, shadingFrame);
 	return bp::make_tuple(H, K);
 }
@@ -287,13 +287,13 @@ static void renderJob_cancel(RenderJob *job) {
 	job->cancel();
 }
 
-bp::tuple Sensor_sampleRay(Sensor *sensor, const Point2 &samplePosition, const Point2 &apertureSample, Float timeSample) {
+bp::tuple Sensor_sampleRay(Sensor *sensor, const Point2 &samplePosition, const Point2 &apertureSample, float timeSample) {
 	Ray ray;
 	Spectrum result = sensor->sampleRay(ray, samplePosition, apertureSample, timeSample);
 	return bp::make_tuple(result, ray);
 }
 
-bp::tuple Sensor_sampleRayDifferential(Sensor *sensor, const Point2 &samplePosition, const Point2 &apertureSample, Float timeSample) {
+bp::tuple Sensor_sampleRayDifferential(Sensor *sensor, const Point2 &samplePosition, const Point2 &apertureSample, float timeSample) {
 	RayDifferential ray;
 	Spectrum result = sensor->sampleRay(ray, samplePosition, apertureSample, timeSample);
 	return bp::make_tuple(result, ray);
@@ -483,7 +483,7 @@ void export_render() {
 		.def("__repr__", &TangentSpace::toString);
 
 	BP_STRUCT(PositionSamplingRecord, bp::init<>())
-		.def(bp::init<Float>())
+		.def(bp::init<float>())
 		.def(bp::init<Intersection, EMeasure>())
 		.def_readwrite("p", &PositionSamplingRecord::p)
 		.def_readwrite("time", &PositionSamplingRecord::time)
@@ -503,7 +503,7 @@ void export_render() {
 		.def("__repr__", &DirectionSamplingRecord::toString);
 
 	BP_SUBSTRUCT(DirectSamplingRecord, PositionSamplingRecord, bp::init<>())
-		.def(bp::init<Point, Float>())
+		.def(bp::init<Point, float>())
 		.def(bp::init<Intersection>())
 		.def(bp::init<MediumSamplingRecord>())
 		.def_readwrite("ref", &DirectSamplingRecord::ref)
@@ -654,7 +654,7 @@ void export_render() {
 		.export_values();
 	BP_SETSCOPE(renderModule);
 
-	void (Film::*film_develop1)(const Scene *scene, Float renderTime) = &Film::develop;
+	void (Film::*film_develop1)(const Scene *scene, float renderTime) = &Film::develop;
 	bool (Film::*film_develop2)(const Point2i &offset, const Vector2i &size,
 		const Point2i &targetOffset, Bitmap *target) const = &Film::develop;
 	ReconstructionFilter *(Film::*film_getreconstructionfilter)() = &Film::getReconstructionFilter;
@@ -676,7 +676,7 @@ void export_render() {
 
 	void (ProjectiveCamera::*projectiveCamera_setWorldTransform1)(const Transform &) = &ProjectiveCamera::setWorldTransform;
 	void (ProjectiveCamera::*projectiveCamera_setWorldTransform2)(AnimatedTransform *) = &ProjectiveCamera::setWorldTransform;
-	const Transform (ProjectiveCamera::*projectiveCamera_getWorldTransform1)(Float t) const = &ProjectiveCamera::getWorldTransform;
+	const Transform (ProjectiveCamera::*projectiveCamera_getWorldTransform1)(float t) const = &ProjectiveCamera::getWorldTransform;
 	const AnimatedTransform *(ProjectiveCamera::*projectiveCamera_getWorldTransform2)(void) const = &ProjectiveCamera::getWorldTransform;
 
 	BP_CLASS(ProjectiveCamera, Sensor, bp::no_init)
@@ -788,7 +788,7 @@ void export_render() {
 		.def("fbm", &Noise::fbm);
 
 	void (ImageBlock::*imageBlock_put1)(const ImageBlock *) = &ImageBlock::put;
-	bool (ImageBlock::*imageBlock_put2)(const Point2 &, const Spectrum &, Float) = &ImageBlock::put;
+	bool (ImageBlock::*imageBlock_put2)(const Point2 &, const Spectrum &, float) = &ImageBlock::put;
 	Bitmap *(ImageBlock::*imageBlock_getBitmap)() = &ImageBlock::getBitmap;
 
 	BP_CLASS(ImageBlock, WorkResult, (bp::init<Bitmap::EPixelFormat, const Vector2i &, bp::optional<const ReconstructionFilter *, int, bool> >()))

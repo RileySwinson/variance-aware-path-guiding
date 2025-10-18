@@ -172,28 +172,28 @@ public:
 		m_storage->put(block);
 	}
 
-	void setBitmap(const Bitmap *bitmap, Float multiplier) {
+	void setBitmap(const Bitmap *bitmap, float multiplier) {
 		bitmap->convert(m_storage->getBitmap(), multiplier);
 	}
 
-	void addBitmap(const Bitmap *bitmap, Float multiplier) {
+	void addBitmap(const Bitmap *bitmap, float multiplier) {
 		/* Currently, only accumulating spectrum-valued floating point images
 		   is supported. This function basically just exists to support the
 		   somewhat peculiar film updates done by BDPT */
 
 		Vector2i size = bitmap->getSize();
 		if (bitmap->getPixelFormat() != Bitmap::ESpectrum ||
-			bitmap->getComponentFormat() != Bitmap::EFloat ||
+			bitmap->getComponentFormat() != Bitmap::Efloat ||
 			bitmap->getGamma() != 1.0f ||
 			size != m_storage->getSize()) {
 			Log(EError, "addBitmap(): Unsupported bitmap format!");
 		}
 
 		size_t nPixels = (size_t) size.x * (size_t) size.y;
-		const Float *source = bitmap->getFloatData();
-		Float *target = m_storage->getBitmap()->getFloatData();
+		const float *source = bitmap->getfloatData();
+		float *target = m_storage->getBitmap()->getfloatData();
 		for (size_t i=0; i<nPixels; ++i) {
-			Float weight = target[SPECTRUM_SAMPLES + 1];
+			float weight = target[SPECTRUM_SAMPLES + 1];
 			if (weight == 0)
 				weight = target[SPECTRUM_SAMPLES + 1] = 1;
 			weight *= multiplier;
@@ -207,7 +207,7 @@ public:
 			const Point2i &targetOffset, Bitmap *target) const {
 		const Bitmap *source = m_storage->getBitmap();
 		const FormatConverter *cvt = FormatConverter::getInstance(
-			std::make_pair(Bitmap::EFloat, target->getComponentFormat())
+			std::make_pair(Bitmap::Efloat, target->getComponentFormat())
 		);
 
 		size_t sourceBpp = source->getBytesPerPixel();
@@ -242,7 +242,7 @@ public:
 		m_destFile = destFile;
 	}
 
-	void develop(const Scene *scene, Float renderTime) {
+	void develop(const Scene *scene, float renderTime) {
 		if (m_destFile.empty())
 			return;
 
@@ -262,7 +262,7 @@ public:
 			filename.replace_extension(expectedExtension);
 
 		ref<Bitmap> bitmap = m_storage->getBitmap()->convert(
-			m_pixelFormat, Bitmap::EFloat);
+			m_pixelFormat, Bitmap::Efloat);
 
 		Log(EInfo, "Writing image to \"%s\" ..", filename.filename().string().c_str());
 
@@ -290,7 +290,7 @@ public:
 							os << m_variable << " = Transpose[{{{";
 					}
 				}
-				Float *ptr = bitmap->getFloatData();
+				float *ptr = bitmap->getfloatData();
 				ptr += ch;
 
 				for (int y=0; y < bitmap->getHeight(); y++) {
@@ -343,7 +343,7 @@ public:
 			if (bitmap->getChannelCount() == 1)
 				N = 2;
 
-			const Float *data = bitmap->getFloatData();
+			const float *data = bitmap->getfloatData();
 			cnpy::npy_save(filename.string(), data, shape_ptr, N, "w");
 		}
 	}

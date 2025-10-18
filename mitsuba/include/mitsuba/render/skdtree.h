@@ -153,7 +153,7 @@ public:
 	 *
 	 * \return \c true if an intersection was found
 	 */
-	bool rayIntersect(const Ray &ray, Float &t, ConstShapePtr &shape,
+	bool rayIntersect(const Ray &ray, float &t, ConstShapePtr &shape,
 		Normal &n, Point2 &uv) const;
 
 	/**
@@ -237,7 +237,7 @@ protected:
 	struct IntersectionCache {
 		SizeType shapeIndex;
 		SizeType primIndex;
-		Float u, v;
+		float u, v;
 	};
 
 	/**
@@ -245,8 +245,8 @@ protected:
 	 * temporary space is supplied to store data that can later
 	 * be used to create a detailed intersection record.
 	 */
-	FINLINE bool intersect(const Ray &ray, IndexType idx, Float mint,
-		Float maxt, Float &t, void *temp) const {
+	FINLINE bool intersect(const Ray &ray, IndexType idx, float mint,
+		float maxt, float &t, void *temp) const {
 		IntersectionCache *cache =
 			static_cast<IntersectionCache *>(temp);
 
@@ -256,7 +256,7 @@ protected:
 			const TriMesh *mesh =
 				static_cast<const TriMesh *>(m_shapes[shapeIdx]);
 			const Triangle &tri = mesh->getTriangles()[idx];
-			Float tempU, tempV, tempT;
+			float tempU, tempV, tempT;
 			if (tri.rayIntersect(mesh->getVertexPositions(), ray,
 						tempU, tempV, tempT)) {
 				if (tempT < mint || tempT > maxt)
@@ -280,7 +280,7 @@ protected:
 #else
 		const TriAccel &ta = m_triAccel[idx];
 		if (EXPECT_TAKEN(m_triAccel[idx].k != KNoTriangleFlag)) {
-			Float tempU, tempV, tempT;
+			float tempU, tempV, tempT;
 			if (ta.rayIntersect(ray, mint, maxt, tempU, tempV, tempT)) {
 				t = tempT;
 				cache->shapeIndex = ta.shapeIndex;
@@ -308,14 +308,14 @@ protected:
 	 * version is used for shadow rays, hence no temporary space is supplied.
 	 */
 	FINLINE bool intersect(const Ray &ray, IndexType idx,
-			Float mint, Float maxt) const {
+			float mint, float maxt) const {
 #if defined(MTS_KD_CONSERVE_MEMORY)
 		IndexType shapeIdx = findShape(idx);
 		if (EXPECT_TAKEN(m_triangleFlag[shapeIdx])) {
 			const TriMesh *mesh =
 				static_cast<const TriMesh *>(m_shapes[shapeIdx]);
 			const Triangle &tri = mesh->getTriangles()[idx];
-			Float tempU, tempV, tempT;
+			float tempU, tempV, tempT;
 			if (tri.rayIntersect(mesh->getVertexPositions(), ray, tempU, tempV, tempT))
 				return tempT >= mint && tempT <= maxt;
 			return false;
@@ -328,7 +328,7 @@ protected:
 		uint32_t shapeIndex = ta.shapeIndex;
 		const Shape *shape = m_shapes[shapeIndex];
 		if (EXPECT_TAKEN(m_triAccel[idx].k != KNoTriangleFlag)) {
-			Float tempU, tempV, tempT;
+			float tempU, tempV, tempT;
 			return ta.rayIntersect(ray, mint, maxt, tempU, tempV, tempT);
 		} else {
 			return shape->rayIntersect(ray, mint, maxt);
@@ -366,7 +366,7 @@ protected:
 
 			Vector side1(p1-p0), side2(p2-p0);
 			Normal faceNormal(cross(side1, side2));
-			Float length = faceNormal.length();
+			float length = faceNormal.length();
 			if (!faceNormal.isZero())
 				faceNormal /= length;
 
@@ -428,8 +428,8 @@ protected:
 	}
 
 	/// Plain shadow ray query (used by the 'instance' plugin)
-	inline bool rayIntersect(const Ray &ray, Float _mint, Float _maxt) const {
-		Float mint, maxt, tempT = std::numeric_limits<Float>::infinity();
+	inline bool rayIntersect(const Ray &ray, float _mint, float _maxt) const {
+		float mint, maxt, tempT = std::numeric_limits<float>::infinity();
 		if (m_aabb.rayIntersect(ray, mint, maxt)) {
 			if (_mint > mint) mint = _mint;
 			if (_maxt < maxt) maxt = _maxt;
@@ -441,8 +441,8 @@ protected:
 	}
 
 	/// Plain intersection query (used by the 'instance' plugin)
-	inline bool rayIntersect(const Ray &ray, Float _mint, Float _maxt, Float &t, void *temp) const {
-		Float mint, maxt, tempT = std::numeric_limits<Float>::infinity();
+	inline bool rayIntersect(const Ray &ray, float _mint, float _maxt, float &t, void *temp) const {
+		float mint, maxt, tempT = std::numeric_limits<float>::infinity();
 		if (m_aabb.rayIntersect(ray, mint, maxt)) {
 			if (_mint > mint) mint = _mint;
 			if (_maxt < maxt) maxt = _maxt;

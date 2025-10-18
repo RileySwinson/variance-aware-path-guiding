@@ -200,7 +200,7 @@ void GLProgram::setParameter(int id, bool value) {
 	glUniform1i(id, value ? 1 : 0);
 }
 
-void GLProgram::setParameter(int id, Float value) {
+void GLProgram::setParameter(int id, float value) {
 	if (id == -1)
 		return;
 	glUniform1f(id, (GLfloat) value);
@@ -347,7 +347,7 @@ void GLProgram::setParameter(int id, const Spectrum &value) {
 	if (id == -1)
 		return;
 
-	Float r, g, b;
+	float r, g, b;
 	value.toLinearRGB(r, g, b);
 	glUniform3f(id, (float) r, (float) g, (float) b);
 }

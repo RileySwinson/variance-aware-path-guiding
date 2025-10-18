@@ -26,7 +26,7 @@ MTS_NAMESPACE_BEGIN
 
 struct IOREntry {
 	const char *name;
-	Float value;
+	float value;
 };
 
 /**
@@ -66,7 +66,7 @@ static IOREntry iorData[] = {
 	{ NULL,                    0.0f      }
 };
 
-static Float lookupIOR(const std::string &name) {
+static float lookupIOR(const std::string &name) {
 	std::string lowerCase = boost::to_lower_copy(name);
 	IOREntry *ior = iorData;
 
@@ -92,17 +92,17 @@ static Float lookupIOR(const std::string &name) {
 	return 0.0f;
 }
 
-inline Float lookupIOR(const Properties &props, const std::string &paramName, const std::string &defaultValue) {
-	if (props.hasProperty(paramName) && props.getType(paramName) == Properties::EFloat)
-		return props.getFloat(paramName);
+inline float lookupIOR(const Properties &props, const std::string &paramName, const std::string &defaultValue) {
+	if (props.hasProperty(paramName) && props.getType(paramName) == Properties::Efloat)
+		return props.getfloat(paramName);
 	else
 		return lookupIOR(props.getString(paramName, defaultValue));
 }
 
-inline Float lookupIOR(const Properties &props, const std::string &paramName, Float defaultValue) {
+inline float lookupIOR(const Properties &props, const std::string &paramName, float defaultValue) {
 	if (props.hasProperty(paramName)) {
-		if (props.getType(paramName) == Properties::EFloat)
-			return props.getFloat(paramName);
+		if (props.getType(paramName) == Properties::Efloat)
+			return props.getfloat(paramName);
 		else
 			return lookupIOR(props.getString(paramName));
 	} else {

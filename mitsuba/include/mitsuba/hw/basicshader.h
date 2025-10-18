@@ -94,13 +94,13 @@ protected:
  * Includes a \ref Shader implementation for hardware rendering
  * \ingroup libhw
  */
-class MTS_EXPORT_HW ConstantFloatTexture : public Texture {
+class MTS_EXPORT_HW ConstantfloatTexture : public Texture {
 public:
-	inline ConstantFloatTexture(const Float &value)
+	inline ConstantfloatTexture(const float &value)
 		: Texture(Properties()), m_value(value) {
 	}
 
-	ConstantFloatTexture(Stream *stream, InstanceManager *manager);
+	ConstantfloatTexture(Stream *stream, InstanceManager *manager);
 
 	inline Spectrum eval(const Intersection &its, bool /* unused */) const {
 		return Spectrum(m_value);
@@ -144,7 +144,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 protected:
-	Float m_value;
+	float m_value;
 };
 
 /**

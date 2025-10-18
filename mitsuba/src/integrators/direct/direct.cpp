@@ -129,10 +129,10 @@ public:
 		SamplingIntegrator::configure();
 
 		size_t sum = m_emitterSamples + m_bsdfSamples;
-		m_weightBSDF = 1 / (Float) m_bsdfSamples;
-		m_weightLum = 1 / (Float) m_emitterSamples;
-		m_fracBSDF = m_bsdfSamples / (Float) sum;
-		m_fracLum = m_emitterSamples / (Float) sum;
+		m_weightBSDF = 1 / (float) m_bsdfSamples;
+		m_weightLum = 1 / (float) m_emitterSamples;
+		m_fracBSDF = m_bsdfSamples / (float) sum;
+		m_fracLum = m_emitterSamples / (float) sum;
 	}
 
 	void configureSampler(const Scene *scene, Sampler *sampler) {
@@ -196,7 +196,7 @@ public:
 		Point2 *sampleArray;
 		size_t numDirectSamples = m_emitterSamples,
 			   numBSDFSamples = m_bsdfSamples;
-		Float fracLum = m_fracLum, fracBSDF = m_fracBSDF,
+		float fracLum = m_fracLum, fracBSDF = m_fracBSDF,
 		      weightLum = m_weightLum, weightBSDF = m_weightBSDF;
 
 		if (rRec.depth > 1 || adaptiveQuery) {
@@ -232,10 +232,10 @@ public:
 					if (!bsdfVal.isZero() && (!m_strictNormals
 							|| dot(its.geoFrame.n, dRec.d) * Frame::cosTheta(bRec.wo) > 0)) {
 						/* Calculate prob. of sampling that direction using BSDF sampling */
-						Float bsdfPdf = emitter->isOnSurface() ? bsdf->pdf(bRec) : 0;
+						float bsdfPdf = emitter->isOnSurface() ? bsdf->pdf(bRec) : 0;
 
 						/* Weight using the power heuristic */
-						const Float weight = miWeight(dRec.pdf * fracLum,
+						const float weight = miWeight(dRec.pdf * fracLum,
 								bsdfPdf * fracBSDF) * weightLum;
 
 						Li += value * bsdfVal * weight;
@@ -257,7 +257,7 @@ public:
 		Intersection bsdfIts;
 		for (size_t i=0; i<numBSDFSamples; ++i) {
 			/* Sample BSDF * cos(theta) and also request the local density */
-			Float bsdfPdf;
+			float bsdfPdf;
 
 			BSDFSamplingRecord bRec(its, rRec.sampler, ERadiance);
 			Spectrum bsdfVal = bsdf->sample(bRec, bsdfPdf, sampleArray[i]);
@@ -266,7 +266,7 @@ public:
 
 			/* Prevent light leaks due to the use of shading normals */
 			const Vector wo = its.toWorld(bRec.wo);
-			Float woDotGeoN = dot(its.geoFrame.n, wo);
+			float woDotGeoN = dot(its.geoFrame.n, wo);
 			if (m_strictNormals && woDotGeoN * Frame::cosTheta(bRec.wo) <= 0)
 				continue;
 
@@ -295,11 +295,11 @@ public:
 
 			/* Compute the prob. of generating that direction using the
 			   implemented direct illumination sampling technique */
-			const Float lumPdf = (!(bRec.sampledType & BSDF::EDelta)) ?
+			const float lumPdf = (!(bRec.sampledType & BSDF::EDelta)) ?
 				scene->pdfEmitterDirect(dRec) : 0;
 
 			/* Weight using the power heuristic */
-			const Float weight = miWeight(bsdfPdf * fracBSDF,
+			const float weight = miWeight(bsdfPdf * fracBSDF,
 				lumPdf * fracLum) * weightBSDF;
 
 			Li += value * bsdfVal * weight;
@@ -308,7 +308,7 @@ public:
 		return Li;
 	}
 
-	inline Float miWeight(Float pdfA, Float pdfB) const {
+	inline float miWeight(float pdfA, float pdfB) const {
 		pdfA *= pdfA; pdfB *= pdfB;
 		return pdfA / (pdfA + pdfB);
 	}
@@ -327,8 +327,8 @@ public:
 private:
 	size_t m_emitterSamples;
 	size_t m_bsdfSamples;
-	Float m_fracBSDF, m_fracLum;
-	Float m_weightBSDF, m_weightLum;
+	float m_fracBSDF, m_fracLum;
+	float m_weightBSDF, m_weightLum;
 	bool m_strictNormals;
 	bool m_hideEmitters;
 };

@@ -71,7 +71,7 @@ bool PathEdge::sampleNext(const Scene *scene, Sampler *sampler,
 }
 
 bool PathEdge::perturbDirection(const Scene *scene,
-		const PathVertex *pred, const Ray &ray, Float dist,
+		const PathVertex *pred, const Ray &ray, float dist,
 		PathVertex::EVertexType desiredType, PathVertex *succ,
 		ETransportMode mode) {
 	/* First, check if there is a surface in the sampled direction */
@@ -140,12 +140,12 @@ Spectrum PathEdge::evalTransmittance(const PathVertex *pred, const PathVertex *s
 		  b = succ->getPosition();
 	Vector d(b-a);
 
-	Float length = d.length();
+	float length = d.length();
 	return medium->evalTransmittance(
 		Ray(a, d/length, 0, length, pred->getTime()));
 }
 
-Float PathEdge::evalPdf(const PathVertex *pred,
+float PathEdge::evalPdf(const PathVertex *pred,
 		const PathVertex *succ) const {
 	if (succ->isSupernode())
 		return 0.0f;
@@ -156,7 +156,7 @@ Float PathEdge::evalPdf(const PathVertex *pred,
 		  b = succ->getPosition();
 	Vector d(b-a);
 
-	Float length = d.length();
+	float length = d.length();
 	Ray ray(a, d/length, 0, length, pred->getTime());
 
 	MediumSamplingRecord mRec;
@@ -181,7 +181,7 @@ Spectrum PathEdge::evalCached(const PathVertex *pred, const PathVertex *succ,
 			result *= succ->weight[ERadiance] * succ->pdf[ERadiance];
 	} else {
 		if (what & EValueImp) {
-			Float tmp = pred->pdf[EImportance];
+			float tmp = pred->pdf[EImportance];
 			if (pred->isConnectable()) {
 				tmp *= length * length;
 				if (succ->isOnSurface())
@@ -195,7 +195,7 @@ Spectrum PathEdge::evalCached(const PathVertex *pred, const PathVertex *succ,
 		}
 
 		if (what & EValueRad) {
-			Float tmp = succ->pdf[ERadiance];
+			float tmp = succ->pdf[ERadiance];
 			if (succ->isConnectable()) {
 				tmp *= length * length;
 				if (pred->isOnSurface())
@@ -223,7 +223,7 @@ bool PathEdge::connect(const Scene *scene,
 			const PathVertex *vt, const PathEdge *succEdge) {
 
 	if (vs->isEmitterSupernode() || vt->isSensorSupernode()) {
-		Float radianceTransport   = vt->isSensorSupernode() ? 1.0f : 0.0f,
+		float radianceTransport   = vt->isSensorSupernode() ? 1.0f : 0.0f,
 		      importanceTransport = 1-radianceTransport;
 
 		medium = NULL;
@@ -292,7 +292,7 @@ bool PathEdge::pathConnect(const Scene *scene, const PathEdge *predEdge,
 	BDAssert(result.edgeCount() == 0 && result.vertexCount() == 0);
 
 	if (vs->isEmitterSupernode() || vt->isSensorSupernode()) {
-		Float radianceTransport   = vt->isSensorSupernode() ? 1.0f : 0.0f,
+		float radianceTransport   = vt->isSensorSupernode() ? 1.0f : 0.0f,
 		      importanceTransport = 1-radianceTransport;
 		PathEdge *edge = pool.allocEdge();
 		edge->medium = NULL;
@@ -306,7 +306,7 @@ bool PathEdge::pathConnect(const Scene *scene, const PathEdge *predEdge,
 	} else {
 		Point vsp = vs->getPosition(), vtp = vt->getPosition();
 		Vector d(vsp-vtp);
-		Float remaining = d.length();
+		float remaining = d.length();
 		d /= remaining;
 		if (remaining == 0) {
 			#if defined(MTS_BD_DEBUG)
@@ -316,7 +316,7 @@ bool PathEdge::pathConnect(const Scene *scene, const PathEdge *predEdge,
 			return false;
 		}
 
-		Float lengthFactor = vs->isOnSurface() ? (1-ShadowEpsilon) : 1;
+		float lengthFactor = vs->isOnSurface() ? (1-ShadowEpsilon) : 1;
 		Ray ray(vtp, d, vt->isOnSurface() ? Epsilon : 0,
 				remaining * lengthFactor, vs->getTime());
 		const Medium *medium = vt->getTargetMedium(succEdge,  d);
@@ -378,7 +378,7 @@ bool PathEdge::pathConnect(const Scene *scene, const PathEdge *predEdge,
 			Vector wo = its.toLocal(ray.d);
 			BSDFSamplingRecord bRec(its, -wo, wo, ERadiance);
 			bRec.component = BSDF::ENull;
-			Float nullPdf = bsdf->pdf(bRec, EDiscrete);
+			float nullPdf = bsdf->pdf(bRec, EDiscrete);
 			if (nullPdf == 0) {
 				result.release(pool);
 				return false;
@@ -443,7 +443,7 @@ bool PathEdge::pathConnectAndCollapse(const Scene *scene, const PathEdge *predEd
 		const PathVertex *vs, const PathVertex *vt,
 		const PathEdge *succEdge, int &interactions) {
 	if (vs->isEmitterSupernode() || vt->isSensorSupernode()) {
-		Float radianceTransport   = vt->isSensorSupernode() ? 1.0f : 0.0f,
+		float radianceTransport   = vt->isSensorSupernode() ? 1.0f : 0.0f,
 		      importanceTransport = 1-radianceTransport;
 		medium = NULL;
 		length = 0.0f;
@@ -469,7 +469,7 @@ bool PathEdge::pathConnectAndCollapse(const Scene *scene, const PathEdge *predEd
 		}
 
 		d /= length;
-		Float lengthFactor = vs->isOnSurface() ? (1-ShadowEpsilon) : 1;
+		float lengthFactor = vs->isOnSurface() ? (1-ShadowEpsilon) : 1;
 		Ray ray(vtp, d, vt->isOnSurface() ? Epsilon : 0, length * lengthFactor, vs->getTime());
 
 		weight[ERadiance] = Spectrum(1.0f);
@@ -478,7 +478,7 @@ bool PathEdge::pathConnectAndCollapse(const Scene *scene, const PathEdge *predEd
 		pdf[EImportance] = 1.0f;
 
 		Intersection its;
-		Float remaining = length;
+		float remaining = length;
 		medium = vt->getTargetMedium(succEdge, d);
 
 		while (true) {
@@ -491,13 +491,13 @@ bool PathEdge::pathConnectAndCollapse(const Scene *scene, const PathEdge *predEd
 			}
 
 			if (medium) {
-				Float segmentLength = std::min(its.t, remaining);
+				float segmentLength = std::min(its.t, remaining);
 				MediumSamplingRecord mRec;
 				medium->eval(Ray(ray, 0, segmentLength), mRec);
 
-				Float pdfRadiance = (surface || !vs->isMediumInteraction())
+				float pdfRadiance = (surface || !vs->isMediumInteraction())
 					? mRec.pdfFailure : mRec.pdfSuccess;
-				Float pdfImportance = (interactions > 0 || !vt->isMediumInteraction())
+				float pdfImportance = (interactions > 0 || !vt->isMediumInteraction())
 					? mRec.pdfFailure : mRec.pdfSuccessRev;
 
 				if (pdfRadiance == 0 || pdfImportance == 0 || mRec.transmittance.isZero()) {
@@ -525,7 +525,7 @@ bool PathEdge::pathConnectAndCollapse(const Scene *scene, const PathEdge *predEd
 			Vector wo = its.toLocal(ray.d);
 			BSDFSamplingRecord bRec(its, -wo, wo, ERadiance);
 			bRec.component = BSDF::ENull;
-			Float nullPdf = bsdf->pdf(bRec, EDiscrete);
+			float nullPdf = bsdf->pdf(bRec, EDiscrete);
 			if (nullPdf == 0)
 				return false;
 

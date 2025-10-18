@@ -27,7 +27,7 @@ MTS_NAMESPACE_BEGIN
  *         shading samples that should be computed per primary ray
  *         \default{1}}
  *
- *     \parameter{rayLength}{\Float}{Specifies the world-space length of the
+ *     \parameter{rayLength}{\float}{Specifies the world-space length of the
  *     	   ambient occlusion rays that will be cast. \default{\code{-1}, i.e. automatic}}.
  * }
  * \renderings{
@@ -45,21 +45,21 @@ class AmbientOcclusionIntegrator : public SamplingIntegrator {
 public:
 	AmbientOcclusionIntegrator(const Properties &props) : SamplingIntegrator(props) {
 		m_shadingSamples = props.getSize("shadingSamples", 1);
-		m_rayLength = props.getFloat("rayLength", -1);
+		m_rayLength = props.getfloat("rayLength", -1);
 	}
 
 	/// Unserialize from a binary data stream
 	AmbientOcclusionIntegrator(Stream *stream, InstanceManager *manager)
 	 : SamplingIntegrator(stream, manager) {
 		m_shadingSamples = stream->readSize();
-		m_rayLength = stream->readFloat();
+		m_rayLength = stream->readfloat();
 		configure();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		SamplingIntegrator::serialize(stream, manager);
 		stream->writeSize(m_shadingSamples);
-		stream->writeFloat(m_rayLength);
+		stream->writefloat(m_rayLength);
 	}
 
 	void configureSampler(const Scene *scene, Sampler *sampler) {
@@ -119,7 +119,7 @@ public:
 				Li += Spectrum(1.0f);
 		}
 
-		Li /= static_cast<Float>(numShadingSamples);
+		Li /= static_cast<float>(numShadingSamples);
 
 		return Li;
 	}
@@ -136,7 +136,7 @@ public:
 	MTS_DECLARE_CLASS()
 private:
 	size_t m_shadingSamples;
-	Float m_rayLength;
+	float m_rayLength;
 };
 
 MTS_IMPLEMENT_CLASS_S(AmbientOcclusionIntegrator, false, SamplingIntegrator)

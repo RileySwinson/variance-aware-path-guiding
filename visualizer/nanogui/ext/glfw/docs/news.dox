@@ -142,10 +142,10 @@ for people building multi-monitor installations, where you need windows to stay
 in full screen despite losing input focus.
 
 
-@subsection news_31_floating Floating windows
+@subsection news_31_floating floating windows
 
 GLFW now supports floating windows, also called topmost or always on top, for
-easier debugging with the [GLFW_FLOATING](@ref window_hints_wnd) window hint.
+easier debugging with the [GLFW_floatING](@ref window_hints_wnd) window hint.
 
 
 @subsection news_31_focused Initially unfocused windows

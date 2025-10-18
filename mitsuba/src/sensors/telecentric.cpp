@@ -31,20 +31,20 @@ MTS_NAMESPACE_BEGIN
  *	      Specifies an optional sensor-to-world transformation.
  *        \default{none (i.e. camera space $=$ world space)}
  *     }
- *     \parameter{apertureRadius}{\Float}{
+ *     \parameter{apertureRadius}{\float}{
  *         Denotes the radius of the camera's aperture in scene units.
  *         \default{\code{0}}
  *     }
- *     \parameter{focusDistance}{\Float}{
+ *     \parameter{focusDistance}{\float}{
  *         Denotes the world-space distance from the camera's aperture to the
  *         focal plane. \default{\code{0}}
  *     }
- *     \parameter{shutterOpen, shutterClose}{\Float}{
+ *     \parameter{shutterOpen, shutterClose}{\float}{
  *         Specifies the time interval of the measurement---this
  *         is only relevant when the scene is in motion.
  *         \default{0}
  *     }
- *     \parameter{nearClip, farClip}{\Float}{
+ *     \parameter{nearClip, farClip}{\float}{
  *         Distance to the near/far clip
  *         planes.\default{\code{near\code}-\code{Clip=1e-2} (i.e.
  *         \code{0.01}) and {\code{farClip=1e4} (i.e. \code{10000})}}
@@ -78,18 +78,18 @@ public:
 			| EPositionSampleMapsToPixels;
 
 		/* World-space aperture radius */
-		m_apertureRadius = props.getFloat("apertureRadius", 0.0f);
+		m_apertureRadius = props.getfloat("apertureRadius", 0.0f);
 	}
 
 	TelecentricLensCamera(Stream *stream, InstanceManager *manager)
 			: ProjectiveCamera(stream, manager) {
-		m_apertureRadius = stream->readFloat();
+		m_apertureRadius = stream->readfloat();
 		configure();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		ProjectiveCamera::serialize(stream, manager);
-		stream->writeFloat(m_apertureRadius);
+		stream->writefloat(m_apertureRadius);
 	}
 
 	void configure() {
@@ -99,10 +99,10 @@ public:
 		const Vector2i &cropSize   = m_film->getCropSize();
 		const Point2i  &cropOffset = m_film->getCropOffset();
 
-		Vector2 relSize((Float) cropSize.x / (Float) filmSize.x,
-			(Float) cropSize.y / (Float) filmSize.y);
-		Point2 relOffset((Float) cropOffset.x / (Float) filmSize.x,
-			(Float) cropOffset.y / (Float) filmSize.y);
+		Vector2 relSize((float) cropSize.x / (float) filmSize.x,
+			(float) cropSize.y / (float) filmSize.y);
+		Point2 relOffset((float) cropOffset.x / (float) filmSize.x,
+			(float) cropOffset.y / (float) filmSize.y);
 
 		/**
 		 * These do the following (in reverse order):
@@ -167,9 +167,9 @@ public:
 	 *    Total width and height of the rectangular region
 	 * \author Wenzel Jakob
 	 */
-	Float convolve(const Point2 &center, Float radius, const Vector2 &size) const {
+	float convolve(const Point2 &center, float radius, const Vector2 &size) const {
 		/* Coordinates of the lower right rectangle corner in the disc frame */
-		Float invRadius = 1.0f / radius,
+		float invRadius = 1.0f / radius,
 		      x = (0.5f * size.x - std::abs(center.x)) * invRadius,
 		      y = (0.5f * size.y - std::abs(center.y)) * invRadius;
 
@@ -182,18 +182,18 @@ public:
 			return INV_PI * (x * std::sqrt(1-x*x) + y * std::sqrt(1-y*y) + std::asin(x) + std::asin(y));
 		} else if (x*x + y*y <= 1) {
 			/* There are two intersections (case 1): area = 1 circular segment + 1 triangle. */
-			Float yt = -std::sqrt(1-x*x), xt = -std::sqrt(1-y*y),
+			float yt = -std::sqrt(1-x*x), xt = -std::sqrt(1-y*y),
 			      ct = x*xt + y*yt;
 			return INV_TWOPI * ((x-xt) * (y-yt) + math::safe_acos(ct) - math::safe_sqrt(1-ct*ct));
 		} else {
 			/* There are two intersections (case 2): area = 1 circular segment only */
-			Float h = std::min(x, y);
+			float h = std::min(x, y);
 			return INV_PI * (std::acos(-h) + h*std::sqrt(1-h*h));
 		}
 	}
 
 	Spectrum sampleRay(Ray &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		Point2 diskSample = warp::squareToUniformDiskConcentric(otherSample)
 			* (m_apertureRadius / m_scale.x);
 		ray.time = sampleTime(timeSample);
@@ -222,7 +222,7 @@ public:
 	}
 
 	Spectrum sampleRayDifferential(RayDifferential &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		Point2 diskSample = warp::squareToUniformDiskConcentric(otherSample)
 			* (m_apertureRadius / m_scale.x);
 		ray.time = sampleTime(timeSample);
@@ -313,7 +313,7 @@ public:
 		return Spectrum((pRec.measure == EArea) ? m_aperturePdf : 0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		Log(EError, "The telecentric lens camera is currently incompatible "
 			"with bidirectional rendering algorithms!");
 		return (pRec.measure == EArea) ? m_aperturePdf : 0.0f;
@@ -340,7 +340,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	inline Float pdfDirection(const DirectionSamplingRecord &dRec,
+	inline float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		Log(EError, "The telecentric lens camera is currently incompatible "
 			"with bidirectional rendering algorithms!");
@@ -366,19 +366,19 @@ public:
 		Transform trafo    = m_worldTransform->eval(dRec.time),
 				  invTrafo = trafo.inverse();
 
-		Float f = m_focusDistance / m_scale.z,
+		float f = m_focusDistance / m_scale.z,
 			  apertureRadius = m_apertureRadius / m_scale.x;
 
 		Point localP = invTrafo.transformAffine(dRec.ref);
 
-		Float dist = localP.z * m_scale.z;
+		float dist = localP.z * m_scale.z;
 		if (dist < m_nearClip || dist > m_farClip) {
 			dRec.pdf = 0.0f;
 			return Spectrum(0.0f);
 		}
 
 		/* Circle of confusion */
-		Float radius = std::abs(localP.z - f) * apertureRadius/f;
+		float radius = std::abs(localP.z - f) * apertureRadius/f;
 		radius += apertureRadius;
 
 		/* Sample the ray origin */
@@ -410,7 +410,7 @@ public:
 		return Spectrum(m_normalization);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return 0.0f;
 	}
 
@@ -420,8 +420,8 @@ public:
 			2.0f * m_invResolution.x * (aaSample.x-.5f),
 			2.0f * m_invResolution.y * (aaSample.y-.5f));
 
-		Float angle1 = (apertureSample.x-.5f)*m_maxRotation;
-		Float angle2 = (apertureSample.y-.5f)*m_maxRotation;
+		float angle1 = (apertureSample.x-.5f)*m_maxRotation;
+		float angle2 = (apertureSample.y-.5f)*m_maxRotation;
 
 		return m_clipTransform *
 			Transform::translate(Vector(offset.x, offset.y, 0.0f)) *
@@ -464,11 +464,11 @@ private:
 	Transform m_cameraToSample;
 	Transform m_sampleToCamera;
 	Transform m_clipTransform;
-	Float m_apertureRadius;
-	Float m_aperturePdf;
-	Float m_normalization;
+	float m_apertureRadius;
+	float m_aperturePdf;
+	float m_normalization;
 	Vector m_scale;
-	Float m_maxRotation;
+	float m_maxRotation;
 	Vector m_dx, m_dy;
 };
 

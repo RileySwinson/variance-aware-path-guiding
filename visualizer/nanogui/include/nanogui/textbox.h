@@ -237,7 +237,7 @@ public:
 };
 
 /**
- * \class FloatBox textbox.h nanogui/textbox.h
+ * \class floatBox textbox.h nanogui/textbox.h
  *
  * \brief A specialization of TextBox representing floating point values.
 
@@ -245,9 +245,9 @@ public:
  * ``float64_t``, etc.
  */
 template <typename Scalar>
-class FloatBox : public TextBox {
+class floatBox : public TextBox {
 public:
-    FloatBox(Widget *parent, Scalar value = (Scalar) 0.f) : TextBox(parent) {
+    floatBox(Widget *parent, Scalar value = (Scalar) 0.f) : TextBox(parent) {
         mNumberFormat = sizeof(Scalar) == sizeof(float) ? "%.4g" : "%.7g";
         setDefaultValue("0");
         setFormat("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?");

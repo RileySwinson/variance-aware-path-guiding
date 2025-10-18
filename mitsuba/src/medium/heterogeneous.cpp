@@ -76,7 +76,7 @@ static StatsCounter earlyExits("Heterogeneous volume",
  *         Optional: volumetric data source that supplies the
  *         local particle orientations throughout the medium
  *     }
- *     \parameter{scale}{\Float}{
+ *     \parameter{scale}{\float}{
  *         Optional scale factor that will be applied to the \code{density} parameter.
  *         Provided for convenience when accomodating data based on different units,
  *         or to simply tweak the density of the medium. \default{1}
@@ -182,8 +182,8 @@ public:
 
 	HeterogeneousMedium(const Properties &props)
 		: Medium(props) {
-		m_stepSize = props.getFloat("stepSize", 0);
-		m_scale = props.getFloat("scale", 1);
+		m_stepSize = props.getfloat("stepSize", 0);
+		m_scale = props.getfloat("scale", 1);
 		if (props.hasProperty("sigmaS") || props.hasProperty("sigmaA"))
 			Log(EError, "The 'sigmaS' and 'sigmaA' properties are only supported by "
 				"homogeneous media. Please use nested volume instances to supply "
@@ -205,11 +205,11 @@ public:
 	HeterogeneousMedium(Stream *stream, InstanceManager *manager)
 		: Medium(stream, manager) {
 		m_method = (EIntegrationMethod) stream->readInt();
-		m_scale = stream->readFloat();
+		m_scale = stream->readfloat();
 		m_density = static_cast<VolumeDataSource *>(manager->getInstance(stream));
 		m_albedo = static_cast<VolumeDataSource *>(manager->getInstance(stream));
 		m_orientation = static_cast<VolumeDataSource *>(manager->getInstance(stream));
-		m_stepSize = stream->readFloat();
+		m_stepSize = stream->readfloat();
 		configure();
 	}
 
@@ -217,11 +217,11 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Medium::serialize(stream, manager);
 		stream->writeInt(m_method);
-		stream->writeFloat(m_scale);
+		stream->writefloat(m_scale);
 		manager->serialize(stream, m_density.get());
 		manager->serialize(stream, m_albedo.get());
 		manager->serialize(stream, m_orientation.get());
-		stream->writeFloat(m_stepSize);
+		stream->writefloat(m_stepSize);
 	}
 
 	void configure() {
@@ -236,7 +236,7 @@ public:
 
 		/* Assumes that the density medium does not
 		   contain values greater than one! */
-		m_maxDensity = m_scale * m_density->getMaximumFloatValue();
+		m_maxDensity = m_scale * m_density->getMaximumfloatValue();
 		if (m_anisotropicMedium)
 			m_maxDensity *= m_phaseFunction->sigmaDirMax();
 		m_invMaxDensity = 1.0f/m_maxDensity;
@@ -248,7 +248,7 @@ public:
 				m_stepSize = std::min(m_stepSize,
 					m_orientation->getStepSize());
 
-			if (m_stepSize == std::numeric_limits<Float>::infinity())
+			if (m_stepSize == std::numeric_limits<float>::infinity())
 				Log(EError, "Unable to infer a suitable step size for deterministic "
 						"integration, please specify one manually using the 'stepSize' "
 						"parameter.");
@@ -267,7 +267,7 @@ public:
 				Assert(volume->supportsSpectrumLookups());
 				m_albedo = volume;
 			} else if (name == "density") {
-				Assert(volume->supportsFloatLookups());
+				Assert(volume->supportsfloatLookups());
 				m_density = volume;
 			} else if (name == "orientation") {
 				Assert(volume->supportsVectorLookups());
@@ -298,16 +298,16 @@ public:
 	 * \return
 	 *    The integrated density
 	 */
-	Float integrateDensity(const Ray &ray) const {
+	float integrateDensity(const Ray &ray) const {
 		/* Determine the ray segment, along which the
 		   density integration should take place */
-		Float mint, maxt;
+		float mint, maxt;
 		if (!m_densityAABB.rayIntersect(ray, mint, maxt))
 			return 0.0f;
 
 		mint = std::max(mint, ray.mint);
 		maxt = std::min(maxt, ray.maxt);
-		Float length = maxt-mint, maxComp = 0;
+		float length = maxt-mint, maxComp = 0;
 
 		Point p = ray(mint), pLast = ray(maxt);
 
@@ -321,7 +321,7 @@ public:
 		/* Compute a suitable step size */
 		uint32_t nSteps = (uint32_t) std::ceil(length / m_stepSize);
 		nSteps += nSteps % 2;
-		const Float stepSize = length/nSteps;
+		const float stepSize = length/nSteps;
 		const Vector increment = ray.d * stepSize;
 
 		#if defined(HETVOL_STATISTICS)
@@ -330,18 +330,18 @@ public:
 		#endif
 
 		/* Perform lookups at the first and last node */
-		Float integratedDensity = lookupDensity(p, ray.d)
+		float integratedDensity = lookupDensity(p, ray.d)
 			+ lookupDensity(pLast, ray.d);
 
 		#if defined(HETVOL_EARLY_EXIT)
-			const Float stopAfterDensity = -math::fastlog(Epsilon);
-			const Float stopValue = stopAfterDensity*3.0f/(stepSize
+			const float stopAfterDensity = -math::fastlog(Epsilon);
+			const float stopValue = stopAfterDensity*3.0f/(stepSize
 					* m_scale);
 		#endif
 
 		p += increment;
 
-		Float m = 4;
+		float m = 4;
 		for (uint32_t i=1; i<nSteps; ++i) {
 			integratedDensity += m * lookupDensity(p, ray.d);
 			m = 6 - m;
@@ -356,7 +356,7 @@ public:
 					#if defined(HETVOL_STATISTICS)
 						++earlyExits;
 					#endif
-					return std::numeric_limits<Float>::infinity();
+					return std::numeric_limits<float>::infinity();
 				}
 			#endif
 
@@ -417,19 +417,19 @@ public:
 	 *    When no solution can be found in [ray.mint, ray.maxt] the
 	 *    function returns \c false.
 	 */
-	bool invertDensityIntegral(const Ray &ray, Float desiredDensity,
-			Float &integratedDensity, Float &t, Float &densityAtMinT,
-			Float &densityAtT) const {
+	bool invertDensityIntegral(const Ray &ray, float desiredDensity,
+			float &integratedDensity, float &t, float &densityAtMinT,
+			float &densityAtT) const {
 		integratedDensity = densityAtMinT = densityAtT = 0.0f;
 
 		/* Determine the ray segment, along which the
 		   density integration should take place */
-		Float mint, maxt;
+		float mint, maxt;
 		if (!m_densityAABB.rayIntersect(ray, mint, maxt))
 			return false;
 		mint = std::max(mint, ray.mint);
 		maxt = std::min(maxt, ray.maxt);
-		Float length = maxt - mint, maxComp = 0;
+		float length = maxt - mint, maxComp = 0;
 		Point p = ray(mint), pLast = ray(maxt);
 
 		/* Ignore degenerate path segments */
@@ -442,13 +442,13 @@ public:
 		/* Compute a suitable step size (this routine samples the integrand
 		   between steps, hence the factor of 2) */
 		uint32_t nSteps = (uint32_t) std::ceil(length / (2*m_stepSize));
-		Float stepSize = length / nSteps,
+		float stepSize = length / nSteps,
 			  multiplier = (1.0f / 6.0f) * stepSize
 				  * m_scale;
 		Vector fullStep = ray.d * stepSize,
 			   halfStep = fullStep * .5f;
 
-		Float node1 = lookupDensity(p, ray.d);
+		float node1 = lookupDensity(p, ray.d);
 
 		if (ray.mint == mint)
 			densityAtMinT = node1 * m_scale;
@@ -460,7 +460,7 @@ public:
 		#endif
 
 		for (uint32_t i=0; i<nSteps; ++i) {
-			Float node2 = lookupDensity(p + halfStep, ray.d),
+			float node2 = lookupDensity(p + halfStep, ray.d),
 				  node3 = lookupDensity(p + fullStep, ray.d),
 				  newDensity = integratedDensity + multiplier *
 						(node1+node2*4+node3);
@@ -475,7 +475,7 @@ public:
 				   this point; instead, the density are modeled based on a
 				   quadratic polynomial that is fit to the last three lookups */
 
-				Float a = 0, b = stepSize, x = a,
+				float a = 0, b = stepSize, x = a,
 					  fx = integratedDensity - desiredDensity,
 					  stepSizeSqr = stepSize * stepSize,
 					  temp = m_scale / stepSizeSqr;
@@ -489,7 +489,7 @@ public:
 						++avgNewtonIterations;
 					#endif
 					/* Lagrange polynomial from the Simpson quadrature */
-					Float dfx = temp * (node1 * stepSizeSqr
+					float dfx = temp * (node1 * stepSizeSqr
 						- (3*node1 - 4*node2 + node3)*stepSize*x
 						+ 2*(node1 - 2*node2 + node3)*x*x);
 					#if 0
@@ -503,7 +503,7 @@ public:
 						x = 0.5f * (b + a);
 
 					/* Integrated version of the above Lagrange polynomial */
-					Float intval = integratedDensity + temp * (1.0f / 6.0f) * (x *
+					float intval = integratedDensity + temp * (1.0f / 6.0f) * (x *
 						(6*node1*stepSizeSqr - 3*(3*node1 - 4*node2 + node3)*stepSize*x
 						+ 4*(node1 - 2*node2 + node3)*x*x));
 					fx = intval-desiredDensity;
@@ -550,7 +550,7 @@ public:
 			/* When Woodcock tracking is selected as the sampling method,
 			   we can use this method to get a noisy (but unbiased) estimate
 			   of the transmittance */
-			Float mint, maxt;
+			float mint, maxt;
 			if (!m_densityAABB.rayIntersect(ray, mint, maxt))
 				return Spectrum(1.0f);
 			mint = std::max(mint, ray.mint);
@@ -560,10 +560,10 @@ public:
 				avgRayMarchingStepsTransmittance.incrementBase();
 			#endif
 			int nSamples = 2; /// XXX make configurable
-			Float result = 0;
+			float result = 0;
 
 			for (int i=0; i<nSamples; ++i) {
-				Float t = mint;
+				float t = mint;
 				while (true) {
 					t -= math::fastlog(1-sampler->next1D()) * m_invMaxDensity;
 					if (t >= maxt) {
@@ -572,7 +572,7 @@ public:
 					}
 
 					Point p = ray(t);
-					Float density = lookupDensity(p, ray.d) * m_scale;
+					float density = lookupDensity(p, ray.d) * m_scale;
 
 					#if defined(HETVOL_STATISTICS)
 						++avgRayMarchingStepsTransmittance;
@@ -588,11 +588,11 @@ public:
 
 	bool sampleDistance(const Ray &ray, MediumSamplingRecord &mRec,
 			Sampler *sampler) const {
-		Float integratedDensity, densityAtMinT, densityAtT;
+		float integratedDensity, densityAtMinT, densityAtT;
 		bool success = false;
 
 		if (m_method == ESimpsonQuadrature) {
-			Float desiredDensity = -math::fastlog(1-sampler->next1D());
+			float desiredDensity = -math::fastlog(1-sampler->next1D());
 			if (invertDensityIntegral(ray, desiredDensity, integratedDensity,
 					mRec.t, densityAtMinT, densityAtT)) {
 				mRec.p = ray(mRec.t);
@@ -604,7 +604,7 @@ public:
 					? m_orientation->lookupVector(mRec.p) : Vector(0.0f);
 			}
 
-			Float expVal = math::fastexp(-integratedDensity);
+			float expVal = math::fastexp(-integratedDensity);
 			mRec.pdfFailure = expVal;
 			mRec.pdfSuccess = expVal * densityAtT;
 			mRec.pdfSuccessRev = expVal * densityAtMinT;
@@ -623,13 +623,13 @@ public:
 				avgRayMarchingStepsSampling.incrementBase();
 			#endif
 
-			Float mint, maxt;
+			float mint, maxt;
 			if (!m_densityAABB.rayIntersect(ray, mint, maxt))
 				return false;
 			mint = std::max(mint, ray.mint);
 			maxt = std::min(maxt, ray.maxt);
 
-			Float t = mint, densityAtT = 0;
+			float t = mint, densityAtT = 0;
 			while (true) {
 				t -= math::fastlog(1-sampler->next1D()) * m_invMaxDensity;
 				if (t >= maxt)
@@ -664,11 +664,11 @@ public:
 
 	void eval(const Ray &ray, MediumSamplingRecord &mRec) const {
 		if (m_method == ESimpsonQuadrature) {
-			Float expVal = math::fastexp(-integrateDensity(ray));
-			Float mintDensity = lookupDensity(ray(ray.mint), ray.d) * m_scale;
-			Float maxtDensity = 0.0f;
+			float expVal = math::fastexp(-integrateDensity(ray));
+			float mintDensity = lookupDensity(ray(ray.mint), ray.d) * m_scale;
+			float maxtDensity = 0.0f;
 			Spectrum maxtAlbedo(0.0f);
-			if (ray.maxt < std::numeric_limits<Float>::infinity()) {
+			if (ray.maxt < std::numeric_limits<float>::infinity()) {
 				Point p = ray(ray.maxt);
 				maxtDensity = lookupDensity(p, ray.d) * m_scale;
 				maxtAlbedo = m_albedo->lookupSpectrum(p);
@@ -704,8 +704,8 @@ public:
 
 	MTS_DECLARE_CLASS()
 protected:
-	inline Float lookupDensity(const Point &p, const Vector &d) const {
-		Float density = m_density->lookupFloat(p);
+	inline float lookupDensity(const Point &p, const Vector &d) const {
+		float density = m_density->lookupfloat(p);
 		if (m_anisotropicMedium && density != 0) {
 			Vector orientation = m_orientation->lookupVector(p);
 			if (!orientation.isZero())
@@ -720,12 +720,12 @@ protected:
 	ref<VolumeDataSource> m_density;
 	ref<VolumeDataSource> m_albedo;
 	ref<VolumeDataSource> m_orientation;
-	Float m_scale;
+	float m_scale;
 	bool m_anisotropicMedium;
-	Float m_stepSize;
+	float m_stepSize;
 	AABB m_densityAABB;
-	Float m_maxDensity;
-	Float m_invMaxDensity;
+	float m_maxDensity;
+	float m_invMaxDensity;
 };
 
 MTS_IMPLEMENT_CLASS_S(HeterogeneousMedium, false, Medium)

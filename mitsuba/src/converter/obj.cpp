@@ -93,7 +93,7 @@ void addMaterial(GeometryConverter *cvt, std::ostream &os, const std::string &mt
 	}
 
 	if (diffuseMap == "") {
-		Float r, g, b;
+		float r, g, b;
 		diffuseValue.toLinearRGB(r, g, b);
 		os << indent << "\t\t<rgb name=\"reflectance\" value=\""
 			<< r << " " << g << " " << b << "\"/>" << endl;
@@ -129,7 +129,7 @@ void parseMaterials(GeometryConverter *cvt, std::ostream &os, const fs::path &te
 			diffuseMap = "";
 			maskMap = "";
 		} else if (buf == "Kd") {
-			Float r, g, b;
+			float r, g, b;
 			is >> r >> g >> b;
 			if (cvt->m_srgb)
 				diffuse.fromSRGB(r, g, b);

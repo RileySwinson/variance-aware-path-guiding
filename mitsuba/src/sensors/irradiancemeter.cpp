@@ -26,7 +26,7 @@ MTS_NAMESPACE_BEGIN
 /*!\plugin{irradiancemeter}{Irradiance meter}
  * \order{6}
  * \parameters{
- *     \parameter{shutterOpen, shutterClose}{\Float}{
+ *     \parameter{shutterOpen, shutterClose}{\float}{
  *         Specifies the time interval of the measurement---this
  *         is only relevant when the scene is in motion.
  *         \default{0}
@@ -103,10 +103,10 @@ public:
 	}
 
 	Spectrum sampleRay(Ray &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 		ray.mint = Epsilon;
-		ray.maxt = std::numeric_limits<Float>::infinity();
+		ray.maxt = std::numeric_limits<float>::infinity();
 
 		PositionSamplingRecord pRec(ray.time);
 			m_shape->samplePosition(pRec, Point2(
@@ -142,7 +142,7 @@ public:
 		return Spectrum(M_PI / m_shape->getSurfaceArea());
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return m_shape->pdfPosition(pRec);
 	}
 
@@ -158,7 +158,7 @@ public:
 
 	Spectrum evalDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
-		Float dp = dot(dRec.d, pRec.n);
+		float dp = dot(dRec.d, pRec.n);
 
 		if (dRec.measure != ESolidAngle || dp < 0)
 			dp = 0.0f;
@@ -166,9 +166,9 @@ public:
 		return Spectrum(INV_PI * dp);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
-		Float dp = dot(dRec.d, pRec.n);
+		float dp = dot(dRec.d, pRec.n);
 
 		if (dRec.measure != ESolidAngle || dp < 0)
 			dp = 0.0f;
@@ -197,7 +197,7 @@ public:
 		}
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		/* Check that the sensor and reference position are oriented correctly
 		   with respect to each other. */
 		if (dot(dRec.d, dRec.refN) >= 0 && dot(dRec.d, dRec.n) < 0) {

@@ -446,11 +446,11 @@ inline SSEVector4i roundToInt(const SSEVector4f& a) {
 }
 
 /// Reinterprets \c a as a \c SSEVector4f
-inline SSEVector4f castAsFloat(const SSEVector4i& a) {
+inline SSEVector4f castAsfloat(const SSEVector4i& a) {
 	return _mm_castsi128_ps(a);
 }
 /// Convert \c a to floating point
-inline SSEVector4f toFloat(const SSEVector4i& a) {
+inline SSEVector4f tofloat(const SSEVector4i& a) {
 	return _mm_cvtepi32_ps(a);
 }
 

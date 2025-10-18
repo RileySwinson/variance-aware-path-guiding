@@ -51,10 +51,10 @@ MTS_NAMESPACE_BEGIN
  *     // Sample a (optionally weighted) direction. A non-unity weight
  *     // in the return value is needed when the sampling distribution
  *     // doesn't exactly match the implementation in pdf()
- *     boost::tuple<Vector, Float, EMeasure> generateSample() const;
+ *     boost::tuple<Vector, float, EMeasure> generateSample() const;
  *
  *     /// Compute the probability density for the specified direction and measure
- *     Float pdf(const Vector &direction, EMeasure) const;
+ *     float pdf(const Vector &direction, EMeasure) const;
  * };
  * \endcode
  *
@@ -132,7 +132,7 @@ public:
 	 * immediately rejecting the null hypothesis. This parameter
 	 * sets this threshold. The default value is \c number-of-samples*1e-4f
 	 */
-	inline void setTolerance(Float tolerance) { m_tolerance = tolerance; }
+	inline void setTolerance(float tolerance) { m_tolerance = tolerance; }
 
 	/**
 	 * \brief Fill the actual and reference bin counts
@@ -141,8 +141,8 @@ public:
 	 * on how to invoke this function
 	 */
 	void fill(
-		const boost::function<boost::tuple<Vector, Float, EMeasure>()> &sampleFn,
-		const boost::function<Float (const Vector &, EMeasure)> &pdfFn);
+		const boost::function<boost::tuple<Vector, float, EMeasure>()> &sampleFn,
+		const boost::function<float (const Vector &, EMeasure)> &pdfFn);
 
 	/**
 	 * \brief Dump the bin counts to a file using MATLAB format
@@ -159,7 +159,7 @@ public:
 	 *
 	 * \return A status value of type \ref ETestResult
 	 */
-	ETestResult runTest(Float pvalThresh = 0.01f);
+	ETestResult runTest(float pvalThresh = 0.01f);
 
 	MTS_DECLARE_CLASS()
 protected:
@@ -168,8 +168,8 @@ protected:
 
 	/// Functor to evaluate the pdf values in parallel using OpenMP
 	static void integrand(
-		const boost::function<Float (const Vector &, EMeasure)> &pdfFn,
-			size_t nPts, const Float *in, Float *out) {
+		const boost::function<float (const Vector &, EMeasure)> &pdfFn,
+			size_t nPts, const float *in, float *out) {
 		#if defined(MTS_OPENMP)
 		#pragma omp parallel for
 		#endif
@@ -179,12 +179,12 @@ protected:
 	}
 private:
 	ELogLevel m_logLevel;
-	Float m_tolerance;
+	float m_tolerance;
 	int m_thetaBins, m_phiBins;
 	int m_numTests;
 	size_t m_sampleCount;
-	Float *m_table;
-	Float *m_refTable;
+	float *m_table;
+	float *m_refTable;
 };
 
 MTS_NAMESPACE_END

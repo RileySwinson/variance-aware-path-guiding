@@ -81,7 +81,7 @@ inline double sampleDouble(
 }
 
 // Call sampleSingle or sampleDouble depending on the compilation options
-inline mitsuba::Float sample(
+inline mitsuba::float sample(
 	const uint64_t index,
 	const uint32_t dimension,
 	const uint64_t scramble = 0ULL)

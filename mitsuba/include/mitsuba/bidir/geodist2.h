@@ -54,8 +54,8 @@ MTS_NAMESPACE_BEGIN
 struct TwoTailedGeoDistr {
 public:
 	/// Create a new two-tailed distribution for the given base constant
-	TwoTailedGeoDistr(Float base) : m_base(base) {
-		m_baseNormalization = 1.0f / (Float) (base+1);
+	TwoTailedGeoDistr(float base) : m_base(base) {
+		m_baseNormalization = 1.0f / (float) (base+1);
 		m_invLogBase = 1.0f / std::log(base);
 	}
 
@@ -69,7 +69,7 @@ public:
 	}
 
 	/// Evaluate the probability mass function at position \c i
-	inline Float pmf(int i) const {
+	inline float pmf(int i) const {
 		i -= m_center;
 
 		if (i < m_start || i > m_end)
@@ -79,7 +79,7 @@ public:
 	}
 
 	/// Evaluate the cumulative distribution function at position \c i
-	inline Float cdf(int i) const {
+	inline float cdf(int i) const {
 		i -= m_center;
 
 		if (i < m_start)
@@ -91,26 +91,26 @@ public:
 	}
 
 	/// Draw a position according to the probability mass function
-	inline int sample(Float xi) const {
+	inline int sample(float xi) const {
 		return std::max(m_start,
 			Rinv(xi * m_normalization + m_offset)) + m_center;
 	}
 
 protected:
-	inline Float r(int i) const {
+	inline float r(int i) const {
 		return (m_base-1) * m_baseNormalization
-			* std::pow(m_base, - (Float) std::abs(i));
+			* std::pow(m_base, - (float) std::abs(i));
 	}
 
-	inline Float R(int i) const {
+	inline float R(int i) const {
 		if (i <= 0)
-			return std::pow(m_base, (Float) (i+1)) * m_baseNormalization;
+			return std::pow(m_base, (float) (i+1)) * m_baseNormalization;
 		else
-			return 1-std::pow(m_base, - (Float) i) * m_baseNormalization;
+			return 1-std::pow(m_base, - (float) i) * m_baseNormalization;
 	}
 
-	inline int Rinv(Float x) const {
-		Float result;
+	inline int Rinv(float x) const {
+		float result;
 		if (x < m_base * m_baseNormalization)
 			result = std::log((1+m_base) * x) * m_invLogBase - 1;
 		else
@@ -118,8 +118,8 @@ protected:
 		return (int) std::ceil(result);
 	}
 private:
-	Float m_base, m_invLogBase, m_baseNormalization;
-	Float m_normalization, m_offset;
+	float m_base, m_invLogBase, m_baseNormalization;
+	float m_normalization, m_offset;
 	int m_center, m_start, m_end;
 };
 

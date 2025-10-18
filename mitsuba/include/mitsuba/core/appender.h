@@ -46,7 +46,7 @@ public:
 	 *    will usually contain a pointer to the associated \c RenderJob.
 	 * \remark The \c ptr argument is missing in the Python bindings
 	 */
-	virtual void logProgress(Float progress, const std::string &name,
+	virtual void logProgress(float progress, const std::string &name,
 		const std::string &formatted, const std::string &eta,
 		const void *ptr) = 0;
 
@@ -77,7 +77,7 @@ public:
 	void append(ELogLevel level, const std::string &pText);
 
 	/// Process a progress message
-	void logProgress(Float progress, const std::string &name,
+	void logProgress(float progress, const std::string &name,
 		const std::string &formatted, const std::string &eta,
 		const void *ptr);
 
@@ -115,7 +115,7 @@ public:
 	void append(ELogLevel level, const std::string &pText);
 
 	/// Process a progress message
-	void logProgress(Float progress, const std::string &name,
+	void logProgress(float progress, const std::string &name,
 		const std::string &formatted, const std::string &eta,
 		const void *ptr);
 

@@ -72,8 +72,8 @@ public:
 		Log(EInfo, "Loading hierarchical grid dictionary \"%s\"", filename.c_str());
 		ref<FileStream> stream = new FileStream(resolved, FileStream::EReadOnly);
 		stream->setByteOrder(Stream::ELittleEndian);
-		Float xmin = stream->readSingle(), ymin = stream->readSingle(), zmin = stream->readSingle();
-		Float xmax = stream->readSingle(), ymax = stream->readSingle(), zmax = stream->readSingle();
+		float xmin = stream->readSingle(), ymin = stream->readSingle(), zmin = stream->readSingle();
+		float xmax = stream->readSingle(), ymax = stream->readSingle(), zmax = stream->readSingle();
 		AABB aabb = AABB(Point(xmin, ymin, zmin), Point(xmax, ymax, zmax));
 		m_res = Vector3i(stream);
 		m_filename = filename;
@@ -88,10 +88,10 @@ public:
 				(m_res[2]) / extents[2])
 			) * Transform::translate(-Vector(aabb.min)) * m_worldToVolume;
 
-		m_supportsFloatLookups = true;
+		m_supportsfloatLookups = true;
 		m_supportsVectorLookups = true;
 		m_supportsSpectrumLookups = true;
-		m_stepSize = std::numeric_limits<Float>::infinity();
+		m_stepSize = std::numeric_limits<float>::infinity();
 
 		int numBlocks = 0;
 		while (!stream->isEOF()) {
@@ -108,11 +108,11 @@ public:
 					createObject(MTS_CLASS(VolumeDataSource), props));
 			content->configure();
 
-			m_maxFloatValue = content->getMaximumFloatValue();
+			m_maxfloatValue = content->getMaximumfloatValue();
 			m_blocks[(m_res.y * block.z + block.y) * m_res.x + block.x] = content;
 			m_stepSize = std::min(m_stepSize, content->getStepSize());
 			m_supportsVectorLookups = m_supportsVectorLookups && content->supportsVectorLookups();
-			m_supportsFloatLookups = m_supportsFloatLookups && content->supportsFloatLookups();
+			m_supportsfloatLookups = m_supportsfloatLookups && content->supportsfloatLookups();
 			m_supportsSpectrumLookups = m_supportsSpectrumLookups && content->supportsSpectrumLookups();
 			content->incRef();
 			++numBlocks;
@@ -125,8 +125,8 @@ public:
 			m_aabb.expandBy(m_volumeToWorld(aabb.getCorner(i)));
 	}
 
-	bool supportsFloatLookups() const {
-		return m_supportsFloatLookups;
+	bool supportsfloatLookups() const {
+		return m_supportsfloatLookups;
 	}
 
 	bool supportsSpectrumLookups() const {
@@ -137,11 +137,11 @@ public:
 		return m_supportsVectorLookups;
 	}
 
-	Float getStepSize() const {
+	float getStepSize() const {
 		return m_stepSize;
 	}
 
-	Float lookupFloat(const Point &_p) const {
+	float lookupfloat(const Point &_p) const {
 		const Point p = m_worldToGrid.transformAffine(_p);
 		const int x = math::floorToInt(p.x),
 			  y = math::floorToInt(p.y),
@@ -155,7 +155,7 @@ public:
 		if (block == NULL)
 			return 0.0f;
 		else
-			return block->lookupFloat(_p);
+			return block->lookupfloat(_p);
 	}
 
 	Spectrum lookupSpectrum(const Point &_p) const {
@@ -192,8 +192,8 @@ public:
 			return block->lookupVector(_p);
 	}
 
-	Float getMaximumFloatValue() const {
-		return m_maxFloatValue;
+	float getMaximumfloatValue() const {
+		return m_maxfloatValue;
 	}
 
 	MTS_DECLARE_CLASS()
@@ -205,10 +205,10 @@ protected:
 	VolumeDataSource **m_blocks;
 	Vector3i m_res;
 	size_t m_count;
-	bool m_supportsFloatLookups;
+	bool m_supportsfloatLookups;
 	bool m_supportsSpectrumLookups;
 	bool m_supportsVectorLookups;
-	Float m_stepSize, m_maxFloatValue;
+	float m_stepSize, m_maxfloatValue;
 };
 
 MTS_IMPLEMENT_CLASS_S(HierarchicalGridDataSource, false, VolumeDataSource);

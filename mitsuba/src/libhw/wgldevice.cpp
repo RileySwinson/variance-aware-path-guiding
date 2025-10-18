@@ -51,7 +51,7 @@
 #define WGL_FULL_ACCELERATION_ARB                               0x2027
 
 typedef BOOL (APIENTRY * wglChoosePixelFormatARBProc) (HDC hdc, const int *piAttribIList,
-		const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+		const float *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
 #endif
 
 MTS_NAMESPACE_BEGIN

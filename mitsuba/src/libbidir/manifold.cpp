@@ -109,10 +109,10 @@ bool SpecularManifold::init(const Path &path, int start, int end) {
 			shape->getNormalDerivative(its, v.dndu, v.dndv);
 
 			/* Turn into an orthonormal parameterization at 'p' */
-			Float invLen = 1 / v.dpdu.length();
+			float invLen = 1 / v.dpdu.length();
 			v.dpdu *= invLen;
 			v.dndu *= invLen;
-			Float dp = dot(v.dpdu, v.dpdv);
+			float dp = dot(v.dpdu, v.dpdv);
 			Vector dpdv = v.dpdv - dp * v.dpdu;
 			Vector dndv = v.dndv - dp * v.dndu;
 			invLen = 1 / dpdv.length();
@@ -133,7 +133,7 @@ bool SpecularManifold::init(const Path &path, int start, int end) {
 			const MediumSamplingRecord &mRec = vertex->getMediumSamplingRecord();
 
 			Vector wi = pred->getPosition() - mRec.p;
-			Float invLength = 1.0f / wi.length();
+			float invLength = 1.0f / wi.length();
 			wi *= invLength;
 
 			v.p = mRec.p;
@@ -183,7 +183,7 @@ bool SpecularManifold::computeTangents() {
 		SimpleVertex *v = &m_vertices[i];
 
 		Vector wo = v[1].p - v[0].p;
-		Float ilo = wo.length();
+		float ilo = wo.length();
 
 		if (ilo == 0)
 			return false;
@@ -214,7 +214,7 @@ bool SpecularManifold::computeTangents() {
 		}
 
 		Vector wi = v[-1].p - v[0].p;
-		Float ili = wi.length();
+		float ili = wi.length();
 
 		if (ili == 0)
 			return false;
@@ -222,12 +222,12 @@ bool SpecularManifold::computeTangents() {
 		ili = 1/ili; wi *= ili;
 
 		if (v[0].type == EReflection || v[0].type == ERefraction) {
-			Float eta = v[0].eta;
+			float eta = v[0].eta;
 			bool normalizeH = !(v[0].type == ERefraction && eta == 1);
 
 			/* Compute the half vector and a few useful projections */
 			Vector H;
-			Float ilh;
+			float ilh;
 			if (normalizeH) {
 				/* Generally compute derivatives with respect to the normalized
 				   half-vector. When given an index-matched refraction event,
@@ -248,7 +248,7 @@ bool SpecularManifold::computeTangents() {
 			/* Orient the half-vector so that it points in the same
 			   hemisphere as the geometric surface normal */
 
-			Float dot_H_n    = dot(v[0].n, H),
+			float dot_H_n    = dot(v[0].n, H),
 			      dot_H_dndu = dot(v[0].dndu, H),
 			      dot_H_dndv = dot(v[0].dndv, H),
 			      dot_u_n    = dot(v[0].dpdu, v[0].n),
@@ -320,7 +320,7 @@ bool SpecularManifold::computeTangents() {
 
 			/* Compute the local frame and derivatives thereof */
 			if (std::abs(wi.x) > std::abs(wi.y)) {
-				Float tl = 1.0f / std::sqrt(wi.x * wi.x + wi.z * wi.z);
+				float tl = 1.0f / std::sqrt(wi.x * wi.x + wi.z * wi.z);
 				t = Vector(wi.z * tl, 0.0f, -wi.x * tl);
 
 				dt_dpred_u = Vector(dwi_dpred_u.z*tl, 0.0f, -dwi_dpred_u.x*tl);
@@ -328,7 +328,7 @@ bool SpecularManifold::computeTangents() {
 				dt_dcur_u  = Vector(dwi_dcur_u.z*tl,  0.0f, -dwi_dcur_u.x*tl);
 				dt_dcur_v  = Vector(dwi_dcur_v.z*tl,  0.0f, -dwi_dcur_v.x*tl);
 			} else {
-				Float tl = 1.0f / std::sqrt(wi.y * wi.y + wi.z * wi.z);
+				float tl = 1.0f / std::sqrt(wi.y * wi.y + wi.z * wi.z);
 				t = Vector(0.0f, wi.z * tl, -wi.y * tl);
 
 				dt_dpred_u = Vector(0.0f, dwi_dpred_u.z*tl, -dwi_dpred_u.y*tl);
@@ -401,7 +401,7 @@ bool SpecularManifold::computeTangents() {
 
 bool SpecularManifold::project(const Vector &d) {
 	const SimpleVertex &last = m_vertices[m_vertices.size()-1];
-	Float du = dot(d, last.dpdu), dv = dot(d, last.dpdv);
+	float du = dot(d, last.dpdu), dv = dot(d, last.dpdv);
 
 	Ray ray(Point(0.0f), Vector(1.0f), 0); // make gcc happy
 	Intersection its;
@@ -419,11 +419,11 @@ bool SpecularManifold::project(const Vector &d) {
 			vertex.p = ray.o;
 			continue;
 		} else if (vertex.type == EMovable) {
-			Float dp = dot(ray.d, vertex.n);
+			float dp = dot(ray.d, vertex.n);
 			if (std::abs(dp) < Epsilon)
 				return false;
 
-			Float t = dot(vertex.p - ray.o, vertex.n) / dp;
+			float t = dot(vertex.p - ray.o, vertex.n) / dp;
 			vertex.p = ray(t);
 			break;
 		} else if (vertex.type == EReflection) {
@@ -457,7 +457,7 @@ bool SpecularManifold::project(const Vector &d) {
 			ray.setOrigin(its.p);
 			ray.setDirection(refracted);
 		} else if (vertex.type == EMedium) {
-			Float length = (m_vertices[i].p - m_vertices[i-1].p).length(),
+			float length = (m_vertices[i].p - m_vertices[i-1].p).length(),
 				  invLength = 1.0f / length;
 
 			/* Check for occlusion */
@@ -496,9 +496,9 @@ bool SpecularManifold::project(const Vector &d) {
 				vertex.dndu, vertex.dndv);
 
 			/* Turn into an orthonormal parameterization at 'p' */
-			Float invLen = 1 / vertex.dpdu.length();
+			float invLen = 1 / vertex.dpdu.length();
 			vertex.dpdu *= invLen; vertex.dndu *= invLen;
-			Float dp = dot(vertex.dpdu, vertex.dpdv);
+			float dp = dot(vertex.dpdu, vertex.dpdv);
 			Vector dpdv = vertex.dpdv - dp * vertex.dpdu;
 			Vector dndv = vertex.dndv - dp * vertex.dndu;
 			invLen = 1 / dpdv.length();
@@ -536,9 +536,9 @@ bool SpecularManifold::move(const Point &target, const Normal &n) {
 
 	statsSuccessfulWalks.incrementBase();
 
-	Float invScale = 1.0f / std::max(std::max(std::abs(target.x),
+	float invScale = 1.0f / std::max(std::max(std::abs(target.x),
 			std::abs(target.y)), std::abs(target.z));
-	Float stepSize = 1;
+	float stepSize = 1;
 
 	BDAssert(last.type == EMovable);
 	coordinateSystem(n, last.dpdu, last.dpdv);
@@ -549,7 +549,7 @@ bool SpecularManifold::move(const Point &target, const Normal &n) {
 	statsAvgIterations.incrementBase();
 	while (m_iterations < m_maxIterations) {
 		Vector rel = target - m_vertices[m_vertices.size()-1].p;
-		Float dist = rel.length(), newDist;
+		float dist = rel.length(), newDist;
 		if (dist * invScale < MTS_MANIFOLD_EPSILON) {
 			/* Check for an annoying corner-case where the last
 			   two vertices converge to the same point (this can
@@ -589,7 +589,7 @@ bool SpecularManifold::move(const Point &target, const Normal &n) {
 		   back on the manifold */
 		#if MTS_MANIFOLD_DEBUG == 1
 			const SimpleVertex &last = m_vertices[m_vertices.size()-1];
-			Float du = dot(rel, last.dpdu), dv = dot(rel, last.dpdv);
+			float du = dot(rel, last.dpdu), dv = dot(rel, last.dpdv);
 			cout << "project(du=" << du << ", dv=" << dv << ", stepSize=" << stepSize << ")" << endl;
 		#endif
 
@@ -621,7 +621,7 @@ bool SpecularManifold::move(const Point &target, const Normal &n) {
 		m_proposal.swap(m_vertices);
 
 		/* Increase the step size */
-		stepSize = std::min((Float) 1.0f, stepSize * 2.0f);
+		stepSize = std::min((float) 1.0f, stepSize * 2.0f);
 		continue;
 	failure:
 		/* Reduce the step size */
@@ -663,7 +663,7 @@ bool SpecularManifold::update(Path &path, int start, int end) {
 		         *succEdge = path.edge(predEdgeIdx + step);
 
 		Vector d = vn.p - v.p;
-		Float length = d.length();
+		float length = d.length();
 		d /= length;
 		PathVertex::EVertexType desiredType = vn.type == EMedium ?
 			PathVertex::EMediumInteraction : PathVertex::ESurfaceInteraction;
@@ -710,7 +710,7 @@ bool SpecularManifold::update(Path &path, int start, int end) {
 				return false;
 			}
 
-			Float relerr = (vn.p - succ->getPosition()).length() /
+			float relerr = (vn.p - succ->getPosition()).length() /
 				std::max(std::max(std::abs(vn.p.x),
 					std::abs(vn.p.y)), std::abs(vn.p.z));
 
@@ -739,7 +739,7 @@ bool SpecularManifold::update(Path &path, int start, int end) {
 				return false;
 			}
 
-			Float relerr = (vn.p - succ->getPosition()).length() /
+			float relerr = (vn.p - succ->getPosition()).length() /
 				std::max(std::max(std::abs(vn.p.x),
 					std::abs(vn.p.y)), std::abs(vn.p.z));
 			if (relerr > 1e-3f) {
@@ -756,7 +756,7 @@ bool SpecularManifold::update(Path &path, int start, int end) {
 	return true;
 }
 
-Float SpecularManifold::det(const Path &path, int a, int b, int c) {
+float SpecularManifold::det(const Path &path, int a, int b, int c) {
 	int k = path.length();
 
 	if (a == 0 || a == k)
@@ -806,7 +806,7 @@ Float SpecularManifold::det(const Path &path, int a, int b, int c) {
 
 		Matrix2x2 Di(0.0f), D = m_vertices[1].b;
 
-		Float det = D.det();
+		float det = D.det();
 		for (size_t i=2; i<m_vertices.size()-1; ++i) {
 			if (!D.invert(Di)) {
 				Log(EWarn, "Could not invert matrix!");
@@ -825,7 +825,7 @@ Float SpecularManifold::det(const Path &path, int a, int b, int c) {
 		   terrible (lots of dynamic memory allocation), but it works and
 		   this case happens rarely enough .. */
 
-		Eigen::Matrix<Float, Eigen::Dynamic, Eigen::Dynamic> A(2*(nGlossy + nSpecular), 2*(nGlossy + nSpecular));
+		Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> A(2*(nGlossy + nSpecular), 2*(nGlossy + nSpecular));
 		A.setZero();
 
 		for (int j=0, i=0; j<nGlossy+nSpecular; ++j) {
@@ -850,7 +850,7 @@ Float SpecularManifold::det(const Path &path, int a, int b, int c) {
 		}
 
 		/* Compute the inverse and "cross out" irrelevant columns and rows */
-		Eigen::Matrix<Float, Eigen::Dynamic, Eigen::Dynamic> Ai = A.inverse();
+		Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> Ai = A.inverse();
 
 		for (int i=0; i<nGlossy+nSpecular; ++i) {
 			if (!m_vertices[i+1].degenerate)
@@ -868,7 +868,7 @@ Float SpecularManifold::det(const Path &path, int a, int b, int c) {
 	}
 }
 
-Float SpecularManifold::multiG(const Path &path, int a, int b) {
+float SpecularManifold::multiG(const Path &path, int a, int b) {
 	if (a == 0)
 		++a;
 	else if (a == path.length())
@@ -884,7 +884,7 @@ Float SpecularManifold::multiG(const Path &path, int a, int b) {
 	while (!path.vertex(a)->isConnectable())
 		a += step;
 
-	Float result = 1;
+	float result = 1;
 
 	BDAssert(path.vertex(a)->isConnectable() && path.vertex(b)->isConnectable());
 	for (int i = a + step, start = a; i != b + step; i += step) {
@@ -897,7 +897,7 @@ Float SpecularManifold::multiG(const Path &path, int a, int b) {
 	return result;
 }
 
-Float SpecularManifold::G(const Path &path, int a, int b) {
+float SpecularManifold::G(const Path &path, int a, int b) {
 	if (std::abs(a-b) == 1) {
 		if (a > b)
 			std::swap(a, b);
@@ -928,12 +928,12 @@ Float SpecularManifold::G(const Path &path, int a, int b) {
 		return 0;
 	}
 
-	Float result;
+	float result;
 	if (m_vertices[0].type == EPinnedDirection) {
 		result = cross(m_vertices[0].map(1, 0), m_vertices[0].map(0, 1)).length();
 	} else if (m_vertices[0].type == EPinnedPosition) {
 		Vector d = m_vertices[1].p - m_vertices[0].p;
-		Float lengthSqr = d.lengthSquared(), invLength = 1/std::sqrt(lengthSqr);
+		float lengthSqr = d.lengthSquared(), invLength = 1/std::sqrt(lengthSqr);
 
 		result = cross(m_vertices[1].map(1, 0), m_vertices[1].map(0, 1)).length() / lengthSqr;
 

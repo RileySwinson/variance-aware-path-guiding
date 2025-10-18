@@ -68,7 +68,7 @@ public:
 	Transform operator*(const Transform &t) const;
 
 	/// Return the determinant of the upper left 3x3 submatrix
-	inline Float det3x3() const {
+	inline float det3x3() const {
 		return m_transform.det3x3();
 	}
 
@@ -76,7 +76,7 @@ public:
 	inline bool hasScale() const {
 		for (int i=0; i<3; ++i) {
 			for (int j=i; j<3; ++j) {
-				Float sum = 0;
+				float sum = 0;
 				for (int k=0; k<3; ++k)
 					sum += m_transform.m[i][k] * m_transform.m[j][k];
 
@@ -106,13 +106,13 @@ public:
 	 * the multiplication operator (\c __mul__).
 	 */
 	inline Point operator()(const Point &p) const {
-		Float x = m_transform.m[0][0] * p.x + m_transform.m[0][1] * p.y
+		float x = m_transform.m[0][0] * p.x + m_transform.m[0][1] * p.y
 		        + m_transform.m[0][2] * p.z + m_transform.m[0][3];
-		Float y = m_transform.m[1][0] * p.x + m_transform.m[1][1] * p.y
+		float y = m_transform.m[1][0] * p.x + m_transform.m[1][1] * p.y
 		        + m_transform.m[1][2] * p.z + m_transform.m[1][3];
-		Float z = m_transform.m[2][0] * p.x + m_transform.m[2][1] * p.y
+		float z = m_transform.m[2][0] * p.x + m_transform.m[2][1] * p.y
 		        + m_transform.m[2][2] * p.z + m_transform.m[2][3];
-		Float w = m_transform.m[3][0] * p.x + m_transform.m[3][1] * p.y
+		float w = m_transform.m[3][0] * p.x + m_transform.m[3][1] * p.y
 		        + m_transform.m[3][2] * p.z + m_transform.m[3][3];
 #ifdef MTS_DEBUG
 		if (w == 0)
@@ -126,11 +126,11 @@ public:
 
 	/// Transform a point by an affine / non-projective matrix
 	inline Point transformAffine(const Point &p) const {
-		Float x = m_transform.m[0][0] * p.x + m_transform.m[0][1] * p.y
+		float x = m_transform.m[0][0] * p.x + m_transform.m[0][1] * p.y
 		        + m_transform.m[0][2] * p.z + m_transform.m[0][3];
-		Float y = m_transform.m[1][0] * p.x + m_transform.m[1][1] * p.y
+		float y = m_transform.m[1][0] * p.x + m_transform.m[1][1] * p.y
 		        + m_transform.m[1][2] * p.z + m_transform.m[1][3];
-		Float z = m_transform.m[2][0] * p.x + m_transform.m[2][1] * p.y
+		float z = m_transform.m[2][0] * p.x + m_transform.m[2][1] * p.y
 		        + m_transform.m[2][2] * p.z + m_transform.m[2][3];
 		return Point(x,y,z);
 	}
@@ -156,7 +156,7 @@ public:
 		       + m_transform.m[1][2] * p.z + m_transform.m[1][3];
 		dest.z = m_transform.m[2][0] * p.x + m_transform.m[2][1] * p.y
 		       + m_transform.m[2][2] * p.z + m_transform.m[2][3];
-		Float w = m_transform.m[3][0] * p.x + m_transform.m[3][1] * p.y
+		float w = m_transform.m[3][0] * p.x + m_transform.m[3][1] * p.y
 		        + m_transform.m[3][2] * p.z + m_transform.m[3][3];
 
 #ifdef MTS_DEBUG
@@ -173,11 +173,11 @@ public:
 	 * the multiplication operator (\c __mul__).
 	 */
     inline Vector operator()(const Vector &v) const {
-		Float x = m_transform.m[0][0] * v.x + m_transform.m[0][1] * v.y
+		float x = m_transform.m[0][0] * v.x + m_transform.m[0][1] * v.y
 		        + m_transform.m[0][2] * v.z;
-		Float y = m_transform.m[1][0] * v.x + m_transform.m[1][1] * v.y
+		float y = m_transform.m[1][0] * v.x + m_transform.m[1][1] * v.y
 		        + m_transform.m[1][2] * v.z;
-		Float z = m_transform.m[2][0] * v.x + m_transform.m[2][1] * v.y
+		float z = m_transform.m[2][0] * v.x + m_transform.m[2][1] * v.y
 		        + m_transform.m[2][2] * v.z;
 		return Vector(x, y, z);
 	}
@@ -201,11 +201,11 @@ public:
 	 * the multiplication operator (\c __mul__).
 	 */
     inline Normal operator()(const Normal &v) const {
-		Float x = m_invTransform.m[0][0] * v.x + m_invTransform.m[1][0] * v.y
+		float x = m_invTransform.m[0][0] * v.x + m_invTransform.m[1][0] * v.y
 		        + m_invTransform.m[2][0] * v.z;
-		Float y = m_invTransform.m[0][1] * v.x + m_invTransform.m[1][1] * v.y
+		float y = m_invTransform.m[0][1] * v.x + m_invTransform.m[1][1] * v.y
 		        + m_invTransform.m[2][1] * v.z;
-		Float z = m_invTransform.m[0][2] * v.x + m_invTransform.m[1][2] * v.y
+		float z = m_invTransform.m[0][2] * v.x + m_invTransform.m[1][2] * v.y
 		        + m_invTransform.m[2][2] * v.z;
 		return Normal(x, y, z);
 	}
@@ -229,13 +229,13 @@ public:
 	 * the multiplication operator (\c __mul__).
 	 */
 	inline Vector4 operator()(const Vector4 &v) const {
-		Float x = m_transform.m[0][0] * v.x + m_transform.m[0][1] * v.y
+		float x = m_transform.m[0][0] * v.x + m_transform.m[0][1] * v.y
 		        + m_transform.m[0][2] * v.z + m_transform.m[0][3] * v.w;
-		Float y = m_transform.m[1][0] * v.x + m_transform.m[1][1] * v.y
+		float y = m_transform.m[1][0] * v.x + m_transform.m[1][1] * v.y
 		        + m_transform.m[1][2] * v.z + m_transform.m[1][3] * v.w;
-		Float z = m_transform.m[2][0] * v.x + m_transform.m[2][1] * v.y
+		float z = m_transform.m[2][0] * v.x + m_transform.m[2][1] * v.y
 		        + m_transform.m[2][2] * v.z + m_transform.m[2][3] * v.w;
-		Float w = m_transform.m[3][0] * v.x + m_transform.m[3][1] * v.y
+		float w = m_transform.m[3][0] * v.x + m_transform.m[3][1] * v.y
 		        + m_transform.m[3][2] * v.z + m_transform.m[3][3] * v.w;
 		return Vector4(x,y,z,w);
 	}
@@ -323,7 +323,7 @@ public:
 	static Transform translate(const Vector &v);
 
 	/// Create a rotation transformation around an arbitrary axis. The angle is specified in degrees
-	static Transform rotate(const Vector &axis, Float angle);
+	static Transform rotate(const Vector &axis, float angle);
 
 	/// Create a scale transformation
 	static Transform scale(const Vector &v);
@@ -334,7 +334,7 @@ public:
 	 * \param clipNear Near clipping plane
 	 * \param clipFar Far clipping plane
 	 */
-	static Transform perspective(Float fov, Float clipNear, Float clipFar);
+	static Transform perspective(float fov, float clipNear, float clipFar);
 
 	/** \brief Create a perspective transformation for OpenGL.
 	 *   (Maps [-near, -far] to [-1, 1])
@@ -342,7 +342,7 @@ public:
 	 * \param clipNear Near clipping plane distance
 	 * \param clipFar Far clipping plane distance
 	 */
-	static Transform glPerspective(Float fov, Float clipNear, Float clipFar);
+	static Transform glPerspective(float fov, float clipNear, float clipFar);
 
 	/** \brief Create a perspective transformation for OpenGL.
 	 * \param left Left clipping plane coordinate
@@ -352,28 +352,28 @@ public:
 	 * \param nearVal Near clipping plane distance
 	 * \param farVal Far clipping plane distance
 	 */
-	static Transform glFrustum(Float left, Float right, Float bottom, Float top, Float nearVal, Float farVal);
+	static Transform glFrustum(float left, float right, float bottom, float top, float nearVal, float farVal);
 
 	/** \brief Create an orthographic transformation, which maps Z to [0,1]
 	 * and leaves the X and Y coordinates untouched.
 	 * \param clipNear Near clipping plane
 	 * \param clipFar Far clipping plane
 	 */
-	static Transform orthographic(Float clipNear, Float clipFar);
+	static Transform orthographic(float clipNear, float clipFar);
 
 	/** \brief Create an orthographic transformation for OpenGL
 	 * \param clipNear Near clipping plane
 	 * \param clipFar Far clipping plane
 	 */
-	static Transform glOrthographic(Float clipNear, Float clipFar);
+	static Transform glOrthographic(float clipNear, float clipFar);
 
 	/** \brief Create an orthographic transformation for OpenGL
 	 *
 	 * Slightly extended variant which also handles non-unity clipping
 	 * planes on the X and Y axes and matches the 'glOrtho' spec.
 	 */
-	static Transform glOrthographic(Float clipLeft, Float clipRight,
-		Float clipBottom, Float clipTop, Float clipNear, Float clipFar);
+	static Transform glOrthographic(float clipLeft, float clipRight,
+		float clipBottom, float clipTop, float clipNear, float clipFar);
 
 	/** \brief Create a look-at camera transformation
 	 * \param p Camera position

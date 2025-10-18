@@ -64,7 +64,7 @@ struct MTS_EXPORT_BIDIR PathEdge {
 	 * Note that edges adjacent to supernodes have length zero to
 	 * mark them as such.
 	 */
-	Float length;
+	float length;
 
 	/**
 	 * \brief Measurement contribution weight
@@ -92,7 +92,7 @@ struct MTS_EXPORT_BIDIR PathEdge {
 	 * they are medium interactions, this eintries either store a density per
 	 * unit length or a discrete probability.
 	 */
-	Float pdf[ETransportModes];
+	float pdf[ETransportModes];
 
 	//! @}
 	/* ==================================================================== */
@@ -158,7 +158,7 @@ struct MTS_EXPORT_BIDIR PathEdge {
 	 * \return \c true on success
 	 */
 	bool perturbDirection(const Scene *scene, const PathVertex *pred,
-			const Ray &ray, Float dist, PathVertex::EVertexType desiredType,
+			const Ray &ray, float dist, PathVertex::EVertexType desiredType,
 			PathVertex *next, ETransportMode mode);
 
 	//! @}
@@ -226,7 +226,7 @@ struct MTS_EXPORT_BIDIR PathEdge {
 	 *
 	 * \return The computed probability density
 	 */
-	Float evalPdf(const PathVertex *pred, const PathVertex *succ) const;
+	float evalPdf(const PathVertex *pred, const PathVertex *succ) const;
 
 	/**
 	 * \brief Compute the transmittance between an arbitrary
@@ -260,7 +260,7 @@ struct MTS_EXPORT_BIDIR PathEdge {
 	 * \brief Evaluate the one of the cosine factors associated with the geometric
 	 * term over an edge
 	 */
-	Float evalCosine(const PathVertex *pred, const PathVertex *succ, const PathVertex *base) const;
+	float evalCosine(const PathVertex *pred, const PathVertex *succ, const PathVertex *base) const;
 
 
 	//! @}

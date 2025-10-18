@@ -132,21 +132,21 @@ public:
 		 *
 		 * Default gamma value: linear (1.0)
 		 */
-		EFloat16,
+		Efloat16,
 
 		/**
 		 * \brief 32-bit floating point (\c float) HDR component encoding
 		 *
 		 * Default gamma value: linear (1.0)
 		 */
-		EFloat32,
+		Efloat32,
 
 		/**
 		 * \brief 64-bit floating point (\c double) HDR component encoding
 		 *
 		 * Default gamma value: linear (1.0)
 		 */
-		EFloat64,
+		Efloat64,
 
 		/**
 		 * \brief Invalid component format (used to report error conditions)
@@ -154,15 +154,15 @@ public:
 		EInvalid,
 
 		/**
-		 * \brief Floating point (\c float or \c double depending on the
+		 * \brief floating point (\c float or \c double depending on the
 		 * compilation settings) HDR component encoding
 		 *
 		 * Default gamma value: linear (1.0)
 		 */
 #if defined(SINGLE_PRECISION)
-		EFloat = EFloat32
+		Efloat = Efloat32
 #else
-		EFloat = EFloat64
+		Efloat = Efloat64
 #endif
 	};
 
@@ -187,7 +187,7 @@ public:
 		 *
 		 * The following is supported:
 		 * <ul>
-		 *   <li>Loading and saving of \ref Eloat16 / \ref EFloat32/ \ref
+		 *   <li>Loading and saving of \ref Eloat16 / \ref Efloat32/ \ref
 		 *   EUInt32 bitmaps with all supported RGB/Luminance/Alpha combinations</li>
 		 *   <li>Loading and saving of spectral bitmaps</tt>
 		 *   <li>Loading and saving of XYZ tristimulus bitmaps</tt>
@@ -208,17 +208,17 @@ public:
 		 *
 		 * The following is supported
 		 * <ul>
-		 *   <li>Loading and saving of \ref EFloat32 - based RGB bitmaps</li>
+		 *   <li>Loading and saving of \ref Efloat32 - based RGB bitmaps</li>
 		 * </ul>
 		 */
 		ERGBE,
 
 		/**
-		 * \brief PFM (Portable Float Map) image format
+		 * \brief PFM (Portable float Map) image format
 		 *
 		 * The following is supported
 		 * <ul>
-		 *   <li>Loading and saving of \ref EFloat32 - based Luminance or RGB bitmaps</li>
+		 *   <li>Loading and saving of \ref Efloat32 - based Luminance or RGB bitmaps</li>
 		 * </ul>
 		 */
 		EPFM,
@@ -628,7 +628,7 @@ public:
 	 *      specifies how ambiguities in this highly under-constrained problem
 	 *      should be resolved.
 	 */
-	void convert(Bitmap *target, Float multiplier = 1.0f,
+	void convert(Bitmap *target, float multiplier = 1.0f,
 		Spectrum::EConversionIntent intent = Spectrum::EReflectance) const;
 
 	/**
@@ -683,7 +683,7 @@ public:
 	 *      should be resolved.
 	 */
 	ref<Bitmap> convert(EPixelFormat pixelFormat, EComponentFormat componentFormat,
-			Float gamma = 1.0f, Float multiplier = 1.0f,
+			float gamma = 1.0f, float multiplier = 1.0f,
 			Spectrum::EConversionIntent intent = Spectrum::EReflectance);
 
 	/**
@@ -739,7 +739,7 @@ public:
 	 */
 	void convert(void *target,
 			EPixelFormat pixelFormat, EComponentFormat componentFormat,
-			Float gamma = 1.0f, Float multiplier = 1.0f,
+			float gamma = 1.0f, float multiplier = 1.0f,
 			Spectrum::EConversionIntent intent = Spectrum::EReflectance) const;
 
 	/**
@@ -795,15 +795,15 @@ public:
 	 * Peter Shirley, and James Fewerda, in ACM Transactions on Graphics 2002, Vol. 21, 3
 	 *
 	 * \remark The implementation assumes that the image has a RGB(A), XYZ(A), or Luminance(Alpha)
-	 * pixel format, that <tt>gamma=1</tt>, and that it uses a EFloat16/EFloat32/EFloat64
+	 * pixel format, that <tt>gamma=1</tt>, and that it uses a Efloat16/Efloat32/Efloat64
 	 * component format. The conversion process is destructive in the sense that it overwrites
 	 * the original image.
 	 *
 	 * \remark In the Python bindings, the signature of this function is:
 	 * <tt>(logAvgLuminance, maxLuminance) = tonemapReinhard(logAvgLuminance, maxLuminance, key, burn)</tt>
 	 */
-	void tonemapReinhard(Float &logAvgLuminance, Float &maxLuminance,
-			Float key, Float burn);
+	void tonemapReinhard(float &logAvgLuminance, float &maxLuminance,
+			float key, float burn);
 
 	/**
 	 * \brief Expand bitmask images
@@ -886,7 +886,7 @@ public:
 	 * a fixed point representation and a pixel value overflows during the
 	 * scale operation, it is clamped to the representable range.
 	 */
-	void scale(Float value);
+	void scale(float value);
 
 	/**
 	 * \brief Raise the entire image to a certain value
@@ -895,16 +895,16 @@ public:
 	 * a fixed point representation and a pixel value overflows during the
 	 * scale operation, it is clamped to the representable range.
 	 */
-	void pow(Float value);
+	void pow(float value);
 
 	/**
 	 * \brief Color balancing: apply the given scale factors to the
 	 * red, green, and blue channels of the image
 	 *
-	 * When the image is not an \c EFloat16, \c EFloat32, or
-	 * \c EFloat64-based RGB/RGBA image, the function throws an exception
+	 * When the image is not an \c Efloat16, \c Efloat32, or
+	 * \c Efloat64-based RGB/RGBA image, the function throws an exception
 	 */
-	void colorBalance(Float r, Float g, Float b);
+	void colorBalance(float r, float g, float b);
 
 	/**
 	 * Apply a color transformation matrix to the contents of the bitmap
@@ -913,7 +913,7 @@ public:
 	 * RGB, RGBA, XYZ, or XYZA pixel format and a floating point
 	 * component format.
 	 */
-	void applyMatrix(Float matrix[3][3]);
+	void applyMatrix(float matrix[3][3]);
 
 	/**
 	 * \brief Copy the contents of another bitmap into the
@@ -1067,7 +1067,7 @@ public:
 		ReconstructionFilter::EBoundaryCondition bch,
 		ReconstructionFilter::EBoundaryCondition bcv,
 		Bitmap *target, Bitmap *temp = NULL,
-		Float minValue = 0.0f, Float maxValue = 1.0f) const;
+		float minValue = 0.0f, float maxValue = 1.0f) const;
 
 	/**
 	 * \brief Up- or down-sample this image to a different resolution
@@ -1084,8 +1084,8 @@ public:
 	ref<Bitmap> resample(const ReconstructionFilter *rfilter,
 		ReconstructionFilter::EBoundaryCondition bch,
 		ReconstructionFilter::EBoundaryCondition bcv,
-		const Vector2i &size, Float minValue = 0.0f,
-		Float maxValue = 1.0f) const;
+		const Vector2i &size, float minValue = 0.0f,
+		float maxValue = 1.0f) const;
 
 	/**
 	 * \brief Apply a separable convolution filter to the image
@@ -1107,7 +1107,7 @@ public:
 		ReconstructionFilter::EBoundaryCondition bch,
 		ReconstructionFilter::EBoundaryCondition bcv,
 		Bitmap *target, Bitmap *temp = NULL,
-		Float minValue = 0.0f, Float maxValue = 1.0f) const;
+		float minValue = 0.0f, float maxValue = 1.0f) const;
 
 	/**
 	 * \brief Apply a separable convolution filter to the image
@@ -1127,7 +1127,7 @@ public:
 	ref<Bitmap> filter(const ReconstructionFilter *rfilter,
 		ReconstructionFilter::EBoundaryCondition bch,
 		ReconstructionFilter::EBoundaryCondition bcv,
-		Float minValue = 0.0f, Float maxValue = 1.0f) const;
+		float minValue = 0.0f, float maxValue = 1.0f) const;
 
 	//! @}
 	// ======================================================================
@@ -1137,10 +1137,10 @@ public:
 	// ======================================================================
 
 	/// Return the bitmap's gamma identifier (-1: sRGB)
-	inline Float getGamma() const { return m_gamma; }
+	inline float getGamma() const { return m_gamma; }
 
 	/// Set the bitmap's gamma identifier (-1: sRGB)
-	inline void setGamma(Float gamma) { m_gamma = gamma; }
+	inline void setGamma(float gamma) { m_gamma = gamma; }
 
 	/// Set a string-valued metadata field
 	inline void setMetadataString(const std::string &key, const std::string &value) {
@@ -1207,28 +1207,28 @@ public:
 	inline const uint32_t *getUInt32Data() const { return (const uint32_t *) m_data; }
 
 	/// Access the underlying raster data (for float16 bitmaps)
-	inline half *getFloat16Data() { return (half *) m_data; }
+	inline half *getfloat16Data() { return (half *) m_data; }
 
 	/// Access the underlying raster data (for float16 bitmaps, const version)
-	inline const half *getFloat16Data() const { return (const half *) m_data; }
+	inline const half *getfloat16Data() const { return (const half *) m_data; }
 
 	/// Access the underlying raster data (for float32 bitmaps)
-	inline float *getFloat32Data() { return (float *) m_data; }
+	inline float *getfloat32Data() { return (float *) m_data; }
 
 	/// Access the underlying raster data (for float32 bitmaps, const version)
-	inline const float *getFloat32Data() const { return (const float *) m_data; }
+	inline const float *getfloat32Data() const { return (const float *) m_data; }
 
 	/// Access the underlying raster data (for float64 bitmaps)
-	inline double *getFloat64Data() { return (double *) m_data; }
+	inline double *getfloat64Data() { return (double *) m_data; }
 
 	/// Access the underlying raster data (for float64 bitmaps, const version)
-	inline const double *getFloat64Data() const { return (const double *) m_data; }
+	inline const double *getfloat64Data() const { return (const double *) m_data; }
 
 	/// Access the underlying raster data (for float32/float64 bitmaps)
-	inline Float *getFloatData() { return (Float *) m_data; }
+	inline float *getfloatData() { return (float *) m_data; }
 
 	/// Access the underlying raster data (for float/float64 bitmaps, const version)
-	inline const Float *getFloatData() const { return (const Float *) m_data; }
+	inline const float *getfloatData() const { return (const float *) m_data; }
 
 	//! @}
 	// ======================================================================
@@ -1299,7 +1299,7 @@ protected:
 	EComponentFormat m_componentFormat;
 	Vector2i m_size;
 	uint8_t *m_data;
-	Float m_gamma;
+	float m_gamma;
 	uint8_t m_channelCount;
 	bool m_ownsData;
 	Properties m_metadata;
@@ -1315,7 +1315,7 @@ protected:
  *
  * \code
  * FormatConverter *cvt = FormatConverter::getInstance(
- *     std::make_pair(Bitmap::EUInt8, Bitmap::EFloat)
+ *     std::make_pair(Bitmap::EUInt8, Bitmap::Efloat)
  * );
  *
  * cvt->convert(...);
@@ -1331,7 +1331,7 @@ protected:
  * as xyY or CIELab). If this and smarter gamut remapping are needed,
  * a library such as lcms2 will be more appropriate.
  *
- * \sa Bitmap::convert(EComponentFormat, Float);
+ * \sa Bitmap::convert(EComponentFormat, float);
  * \sa Bitmap::convert(Spectrum *);
  * \ingroup libcore
  */
@@ -1381,9 +1381,9 @@ public:
 	 * \sa getConversion()
 	 */
 	virtual void convert(
-			Bitmap::EPixelFormat sourceFormat, Float sourceGamma, const void *_source,
-			Bitmap::EPixelFormat destFormat, Float destGamma, void *_dest,
-			size_t count, Float multiplier = 1.0f,
+			Bitmap::EPixelFormat sourceFormat, float sourceGamma, const void *_source,
+			Bitmap::EPixelFormat destFormat, float destGamma, void *_dest,
+			size_t count, float multiplier = 1.0f,
 			Spectrum::EConversionIntent intent = Spectrum::EReflectance,
 			int channelCount = -1) const= 0;
 
@@ -1420,9 +1420,9 @@ namespace detail {
 	template <> inline Bitmap::EComponentFormat cfmt<uint8_t>() { return Bitmap::EUInt8; }
 	template <> inline Bitmap::EComponentFormat cfmt<uint16_t>() { return Bitmap::EUInt16; }
 	template <> inline Bitmap::EComponentFormat cfmt<uint32_t>() { return Bitmap::EUInt32; }
-	template <> inline Bitmap::EComponentFormat cfmt<half>() { return Bitmap::EFloat16; }
-	template <> inline Bitmap::EComponentFormat cfmt<float>() { return Bitmap::EFloat32; }
-	template <> inline Bitmap::EComponentFormat cfmt<double>() { return Bitmap::EFloat64; }
+	template <> inline Bitmap::EComponentFormat cfmt<half>() { return Bitmap::Efloat16; }
+	template <> inline Bitmap::EComponentFormat cfmt<float>() { return Bitmap::Efloat32; }
+	template <> inline Bitmap::EComponentFormat cfmt<double>() { return Bitmap::Efloat64; }
 };
 
 template <typename T> inline Bitmap::EComponentFormat Bitmap::componentFormat() {

@@ -74,7 +74,7 @@ Font::Font(EFont font) {
 	dscStream->read(m_kerningMatrix, 256*256);
 }
 
-void Font::convert(Bitmap::EPixelFormat pixelFormat, Bitmap::EComponentFormat componentFormat, Float gamma) {
+void Font::convert(Bitmap::EPixelFormat pixelFormat, Bitmap::EComponentFormat componentFormat, float gamma) {
 	m_bitmap = m_bitmap->convert(pixelFormat, componentFormat, gamma);
 }
 

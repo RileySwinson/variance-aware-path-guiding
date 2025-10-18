@@ -42,7 +42,7 @@ MTS_NAMESPACE_BEGIN
  *       Filename of the radiance-valued input image to be loaded;
  *       must be in latitude-longitude format.
  *     }
- *     \parameter{scale}{\Float}{
+ *     \parameter{scale}{\float}{
  *         A scale factor that is applied to the
  *         radiance values stored in the input image. \default{1}
  *     }
@@ -50,7 +50,7 @@ MTS_NAMESPACE_BEGIN
  *	      Specifies an optional linear emitter-to-world space rotation.
  *        \default{none (i.e. emitter space $=$ world space)}
  *     }
- *     \parameter{gamma}{\Float}{
+ *     \parameter{gamma}{\float}{
  *       Optional parameter to override the gamma value of the source bitmap,
  *       where 1 indicates a linear color space and the special value -1
  *       corresponds to sRGB. \default{automatically detect based on the
@@ -61,7 +61,7 @@ MTS_NAMESPACE_BEGIN
  *        \emph{filename}\code{.mip} to be created.
  *        \default{automatic---use caching for images larger than 1M pixels.}
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -134,12 +134,12 @@ public:
 		}
 
 		/* Gamma override */
-		m_gamma = props.getFloat("gamma", 0);
+		m_gamma = props.getfloat("gamma", 0);
 
 		/* These are reasonable MIP map defaults for environment maps, I don't
 		   think there is a need to expose them through plugin parameters */
 		EMIPFilterType filterType = EEWA;
-		Float maxAnisotropy = 10.0f;
+		float maxAnisotropy = 10.0f;
 
 		if (tryReuseCache && MIPMap::validateCacheFile(cacheFile, timestamp,
 				ENVMAP_PIXELFORMAT, ReconstructionFilter::ERepeat,
@@ -175,25 +175,25 @@ public:
 			bool createCache = !cacheFile.empty() && props.getBoolean("cache",
 				bitmap->getSize().x * bitmap->getSize().y > 1024*1024);
 
-			m_mipmap = new MIPMap(bitmap, ENVMAP_PIXELFORMAT, Bitmap::EFloat,
+			m_mipmap = new MIPMap(bitmap, ENVMAP_PIXELFORMAT, Bitmap::Efloat,
 				rfilter, ReconstructionFilter::ERepeat, ReconstructionFilter::EClamp,
 				filterType, maxAnisotropy, createCache ? cacheFile : fs::path(), timestamp,
-				std::numeric_limits<Float>::infinity(), Spectrum::EIlluminant);
+				std::numeric_limits<float>::infinity(), Spectrum::EIlluminant);
 		}
 
 		if (props.hasProperty("intensityScale"))
 			Log(EError, "The 'intensityScale' parameter has been deprecated and is now called scale.");
 
 		/* Scale factor */
-		m_scale = props.getFloat("scale", 1.0f);
+		m_scale = props.getfloat("scale", 1.0f);
 	}
 
 	EnvironmentMap(Stream *stream, InstanceManager *manager) : Emitter(stream, manager),
 			m_mipmap(NULL), m_cdfRows(NULL), m_cdfCols(NULL), m_rowWeights(NULL) {
 		m_filename = stream->readString();
 		Log(EDebug, "Unserializing texture \"%s\"", m_filename.filename().string().c_str());
-		m_gamma = stream->readFloat();
-		m_scale = stream->readFloat();
+		m_gamma = stream->readfloat();
+		m_scale = stream->readfloat();
 		m_sceneBSphere = BSphere(stream);
 		m_geoBSphere = BSphere(stream);
 
@@ -213,9 +213,9 @@ public:
 			MTS_CLASS(ReconstructionFilter), rfilterProps));
 		rfilter->configure();
 
-		m_mipmap = new MIPMap(bitmap, ENVMAP_PIXELFORMAT, Bitmap::EFloat, rfilter,
+		m_mipmap = new MIPMap(bitmap, ENVMAP_PIXELFORMAT, Bitmap::Efloat, rfilter,
 			ReconstructionFilter::ERepeat, ReconstructionFilter::EClamp, EEWA, 10.0f,
-			fs::path(), 0, std::numeric_limits<Float>::infinity(), Spectrum::EIlluminant);
+			fs::path(), 0, std::numeric_limits<float>::infinity(), Spectrum::EIlluminant);
 
 		configure();
 	}
@@ -234,8 +234,8 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Emitter::serialize(stream, manager);
 		stream->writeString(m_filename.string());
-		stream->writeFloat(m_gamma);
-		stream->writeFloat(m_scale);
+		stream->writefloat(m_gamma);
+		stream->writefloat(m_scale);
 		m_sceneBSphere.serialize(stream);
 		m_geoBSphere.serialize(stream);
 
@@ -274,16 +274,16 @@ public:
 			ref<Timer> timer = new Timer();
 			m_cdfCols = new float[nEntries];
 			m_cdfRows = new float[m_size.y + 1];
-			m_rowWeights = new Float[m_size.y];
+			m_rowWeights = new float[m_size.y];
 
 			size_t colPos = 0, rowPos = 0;
-			Float rowSum = 0.0f;
+			float rowSum = 0.0f;
 
 			/* Build a marginal & conditional cumulative distribution
 			   function over luminances weighted by sin(theta) */
 			m_cdfRows[rowPos++] = 0;
 			for (int y=0; y<m_size.y; ++y) {
-				Float colSum = 0;
+				float colSum = 0;
 
 				m_cdfCols[colPos++] = 0;
 				for (int x=0; x<m_size.x; ++x) {
@@ -298,7 +298,7 @@ public:
 					m_cdfCols[colPos-x-1] *= normalization;
 				m_cdfCols[colPos-1] = 1.0f;
 
-				Float weight = std::sin((y + 0.5f) * M_PI / m_size.y);
+				float weight = std::sin((y + 0.5f) * M_PI / m_size.y);
 				m_rowWeights[y] = weight;
 				rowSum += colSum * weight;
 				m_cdfRows[rowPos++] = (float) rowSum;
@@ -323,7 +323,7 @@ public:
 
 			Log(EInfo, "Done (took %i ms)", timer->getMilliseconds());
 		}
-		Float surfaceArea = 4 * M_PI * m_sceneBSphere.radius * m_sceneBSphere.radius;
+		float surfaceArea = 4 * M_PI * m_sceneBSphere.radius * m_sceneBSphere.radius;
 		m_invSurfaceArea = 1 / surfaceArea;
 		m_power = surfaceArea * m_scale / m_normalization;
 	}
@@ -356,7 +356,7 @@ public:
 	}
 
 	bool fillDirectSamplingRecord(DirectSamplingRecord &dRec, const Ray &ray) const {
-		Float nearT, farT;
+		float nearT, farT;
 
 		if (!m_sceneBSphere.rayIntersect(ray, nearT, farT) || nearT > 0 || farT < 0) {
 			Log(EWarn, "fillDirectSamplingRecord(): internal error!");
@@ -396,7 +396,7 @@ public:
 			Vector dvdx = trafo.inverse()(ray.rxDirection) - v,
 			       dvdy = trafo.inverse()(ray.ryDirection) - v;
 
-			Float t1 = INV_TWOPI / (v.x*v.x+v.z*v.z),
+			float t1 = INV_TWOPI / (v.x*v.x+v.z*v.z),
 			      t2 = -INV_PI / std::max(math::safe_sqrt(1.0f-v.y*v.y), Epsilon);
 
 			Vector2 dudx(t1 * (dvdx.z*v.x - dvdx.x*v.z), t2 * dvdx.y),
@@ -425,7 +425,7 @@ public:
 		return Spectrum(m_power * m_invSurfaceArea);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return m_invSurfaceArea;
 	}
 
@@ -459,7 +459,7 @@ public:
 		const Transform &trafo = m_worldTransform->eval(pRec.time);
 
 		/* Sample a direction from the environment map */
-		Spectrum value; Vector d; Float pdf;
+		Spectrum value; Vector d; float pdf;
 		internalSampleDirection(sample, d, value, pdf);
 
 		dRec.measure = ESolidAngle;
@@ -473,7 +473,7 @@ public:
 			return (value * m_normalization) / (pdf * m_scale);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		const Transform &trafo = m_worldTransform->eval(pRec.time);
 		return internalPdfDirection(-trafo.inverse()(dRec.d));
@@ -498,9 +498,9 @@ public:
 	Spectrum sampleRay(Ray &ray,
 			const Point2 &spatialSample,
 			const Point2 &directionalSample,
-			Float time) const {
+			float time) const {
 		const Transform &trafo = m_worldTransform->eval(time);
-		Vector d; Spectrum value; Float pdf;
+		Vector d; Spectrum value; float pdf;
 		internalSampleDirection(directionalSample, d, value, pdf);
 		d = -trafo(d);
 		Point2 offset = warp::squareToUniformDiskConcentric(spatialSample);
@@ -517,7 +517,7 @@ public:
 		const Transform &trafo = m_worldTransform->eval(dRec.time);
 
 		/* Sample a direction from the environment map */
-		Spectrum value; Vector d; Float pdf;
+		Spectrum value; Vector d; float pdf;
 		internalSampleDirection(sample, d, value, pdf);
 
 		/* Intersect against the scene's bounding sphere. This may
@@ -525,7 +525,7 @@ public:
 		   integrators that expect all the different sampling methods in
 		   this class to be consistent with respect to each other. */
 		Ray ray(dRec.ref, trafo(d), 0);
-		Float nearT, farT;
+		float nearT, farT;
 		if (value.isZero() || pdf == 0 || !m_sceneBSphere.rayIntersect(ray, nearT, farT)
 			|| nearT >= 0 || farT <= 0) {
 			dRec.pdf = 0.0f;
@@ -542,9 +542,9 @@ public:
 		return value / pdf;
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		const Transform &trafo = m_worldTransform->eval(dRec.time);
-		Float pdfSA = internalPdfDirection(trafo.inverse()(dRec.d));
+		float pdfSA = internalPdfDirection(trafo.inverse()(dRec.d));
 
 		if (dRec.measure == ESolidAngle)
 			return pdfSA;
@@ -564,7 +564,7 @@ public:
 	}
 
 	/// Helper function that samples a direction from the environment map
-	void internalSampleDirection(Point2 sample, Vector &d, Spectrum &value, Float &pdf) const {
+	void internalSampleDirection(Point2 sample, Vector &d, Spectrum &value, float &pdf) const {
 		/* Sample a discrete pixel position */
 		uint32_t row = sampleReuse(m_cdfRows, m_size.y, sample.y),
 		         col = sampleReuse(m_cdfCols + row * (m_size.x+1), m_size.x, sample.x);
@@ -572,11 +572,11 @@ public:
 		/* Using the remaining bits of precision to shift the sample by an offset
 		   drawn from a tent function. This effectively creates a sampling strategy
 		   for a linearly interpolated environment map */
-		Point2 pos = Point2((Float) col, (Float) row) + warp::squareToTent(sample);
+		Point2 pos = Point2((float) col, (float) row) + warp::squareToTent(sample);
 
 		/* Bilinearly interpolate colors from the adjacent four neighbors */
 		int xPos = math::floorToInt(pos.x), yPos = math::floorToInt(pos.y);
-		Float dx1 = pos.x - xPos, dx2 = 1.0f - dx1,
+		float dx1 = pos.x - xPos, dx2 = 1.0f - dx1,
 		      dy1 = pos.y - yPos, dy2 = 1.0f - dy1;
 
 		Spectrum value1 = m_mipmap->evalTexel(0, xPos, yPos) * dx2 * dy2
@@ -591,7 +591,7 @@ public:
 		       value2.getLuminance() * m_rowWeights[math::clamp(yPos+1, 0, m_size.y-1)]) * m_normalization;
 
 		/* Turn into a proper direction on the sphere */
-		Float sinPhi, cosPhi, sinTheta, cosTheta;
+		float sinPhi, cosPhi, sinTheta, cosTheta;
 		math::sincos(m_pixelSize.x * (pos.x + 0.5f), &sinPhi, &cosPhi);
 		math::sincos(m_pixelSize.y * (pos.y + 0.5f), &sinTheta, &cosTheta);
 
@@ -600,7 +600,7 @@ public:
 	}
 
 	/// Helper function that computes the solid angle density of \ref internalSampleDirection()
-	Float internalPdfDirection(const Vector &d) const {
+	float internalPdfDirection(const Vector &d) const {
 		/* Convert to latitude-longitude texture coordinates */
 		Point2 uv(
 			std::atan2(d.x, -d.z) * INV_TWOPI,
@@ -613,11 +613,11 @@ public:
 		}
 
 		/* Convert to fractional pixel coordinates on the specified level */
-		Float u = uv.x * m_size.x - 0.5f, v = uv.y * m_size.y - 0.5f;
+		float u = uv.x * m_size.x - 0.5f, v = uv.y * m_size.y - 0.5f;
 
 		/* Bilinearly interpolate colors from the adjacent four neighbors */
 		int xPos = math::floorToInt(u), yPos = math::floorToInt(v);
-		Float dx1 = u - xPos, dx2 = 1.0f - dx1,
+		float dx1 = u - xPos, dx2 = 1.0f - dx1,
 		      dy1 = v - yPos, dy2 = 1.0f - dy1;
 
 		Spectrum value1 = m_mipmap->evalTexel(0, xPos, yPos) * dx2 * dy2
@@ -626,7 +626,7 @@ public:
 		                + m_mipmap->evalTexel(0, xPos + 1, yPos + 1) * dx1 * dy1;
 		stats::filteredLookups.incrementBase();
 
-		Float sinTheta = math::safe_sqrt(1-d.y*d.y);
+		float sinTheta = math::safe_sqrt(1-d.y*d.y);
 		return (value1.getLuminance() * m_rowWeights[math::clamp(yPos,   0, m_size.y-1)] +
 		        value2.getLuminance() * m_rowWeights[math::clamp(yPos+1, 0, m_size.y-1)])
 			* m_normalization / std::max(std::abs(sinTheta), Epsilon);
@@ -654,21 +654,21 @@ public:
 	MTS_DECLARE_CLASS()
 private:
 	/// Sample from an array using the inversion method
-	inline uint32_t sampleReuse(float *cdf, uint32_t size, Float &sample) const {
+	inline uint32_t sampleReuse(float *cdf, uint32_t size, float &sample) const {
 		float *entry = std::lower_bound(cdf, cdf+size+1, (float) sample);
 		uint32_t index = std::min((uint32_t) std::max((ptrdiff_t) 0, entry - cdf - 1), size-1);
-		sample = (sample - (Float) cdf[index]) / (Float) (cdf[index+1] - cdf[index]);
+		sample = (sample - (float) cdf[index]) / (float) (cdf[index+1] - cdf[index]);
 		return index;
 	}
 private:
 	MIPMap *m_mipmap;
 	float *m_cdfRows, *m_cdfCols;
-	Float *m_rowWeights;
+	float *m_rowWeights;
 	fs::path m_filename;
-	Float m_gamma, m_scale;
-	Float m_normalization;
-	Float m_power;
-	Float m_invSurfaceArea;
+	float m_gamma, m_scale;
+	float m_normalization;
+	float m_power;
+	float m_invSurfaceArea;
 	BSphere m_geoBSphere;
 	BSphere m_sceneBSphere;
 	Vector2i m_size;
@@ -680,7 +680,7 @@ private:
 class EnvironmentMapShader : public Shader {
 public:
 	EnvironmentMapShader(Renderer *renderer, const fs::path &filename, ref<Bitmap> bitmap,
-			const Transform &worldToEmitter, Float scale) : Shader(renderer, EEmitterShader) {
+			const Transform &worldToEmitter, float scale) : Shader(renderer, EEmitterShader) {
 		std::string name = filename.filename().string();
 		if (name.empty())
 			name = "Environment map";
@@ -754,7 +754,7 @@ private:
 	ref<GPUTexture> m_gpuTexture;
 	bool m_useCustomTextureFiltering;
 	Transform m_worldToEmitter;
-	Float m_scale;
+	float m_scale;
 };
 
 Shader *EnvironmentMap::createShader(Renderer *renderer) const {

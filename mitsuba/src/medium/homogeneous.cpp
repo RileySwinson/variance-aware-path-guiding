@@ -40,7 +40,7 @@ MTS_NAMESPACE_BEGIN
  *         These parameters are mutually exclusive with \code{sigmaA} and \code{sigmaS}
  *         \default{configured based on \code{material}}
  *     }
- *     \parameter{\footnotesize{scale}}{\Float}{
+ *     \parameter{\footnotesize{scale}}{\float}{
  *         Optional scale factor that will be applied to the \code{sigma*} parameters.
  *         It is provided for convenience when accomodating data based on different units,
  *         or to simply tweak the density of the medium. \default{1}
@@ -165,11 +165,11 @@ public:
 		 *    sigma_t(t) * tau(0 <-> t)
 		 * See the separate writeup for more details.
 		 */
-		m_mediumSamplingWeight = props.getFloat("mediumSamplingWeight", -1);
+		m_mediumSamplingWeight = props.getfloat("mediumSamplingWeight", -1);
 		if (m_mediumSamplingWeight == -1) {
 			for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
 				/// Record the highest albedo values across channels
-				Float albedo = m_sigmaS[i] / m_sigmaT[i];
+				float albedo = m_sigmaS[i] / m_sigmaT[i];
 				if (albedo > m_mediumSamplingWeight && m_sigmaT[i] != 0)
 					m_mediumSamplingWeight = albedo;
 			}
@@ -179,7 +179,7 @@ public:
 				   of spatially varying noise where one pixel has a
 				   medium interaction and the neighbors don't */
 				m_mediumSamplingWeight = std::max(m_mediumSamplingWeight,
-					(Float) 0.5f);
+					(float) 0.5f);
 			}
 		}
 
@@ -191,7 +191,7 @@ public:
 			/* By default, choose the lowest-variance channel
 			   (the one with the smallest sigma_t, that is) */
 			int channel = 0;
-			Float smallest = std::numeric_limits<Float>::infinity();
+			float smallest = std::numeric_limits<float>::infinity();
 			for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
 				if (m_sigmaT[i] < smallest) {
 					smallest = m_sigmaT[i];
@@ -214,13 +214,13 @@ public:
 			}
 		} else if (strategy == "maximum") {
 			m_strategy = EMaximum;
-			std::vector<Float> coeffs(SPECTRUM_SAMPLES);
+			std::vector<float> coeffs(SPECTRUM_SAMPLES);
 			for (int i=0; i<SPECTRUM_SAMPLES; ++i)
 				coeffs[i] = m_sigmaT[i];
 			m_maxExpDist = new MaxExpDist(coeffs);
 		} else if (strategy == "manual") {
 			m_strategy = EManual;
-			m_samplingDensity = props.getFloat("samplingDensity");
+			m_samplingDensity = props.getfloat("samplingDensity");
 		} else {
 			Log(EError, "Specified an unknown sampling strategy");
 		}
@@ -229,11 +229,11 @@ public:
 	HomogeneousMedium(Stream *stream, InstanceManager *manager)
 		: Medium(stream, manager), m_maxExpDist(NULL) {
 		m_strategy = (ESamplingStrategy) stream->readInt();
-		m_samplingDensity = stream->readFloat();
-		m_mediumSamplingWeight = stream->readFloat();
+		m_samplingDensity = stream->readfloat();
+		m_mediumSamplingWeight = stream->readfloat();
 
 		if (m_strategy == EMaximum) {
-			std::vector<Float> coeffs(SPECTRUM_SAMPLES);
+			std::vector<float> coeffs(SPECTRUM_SAMPLES);
 			for (int i=0; i<SPECTRUM_SAMPLES; ++i)
 				coeffs[i] = m_sigmaT[i];
 			m_maxExpDist = new MaxExpDist(coeffs);
@@ -259,23 +259,23 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Medium::serialize(stream, manager);
 		stream->writeInt(m_strategy);
-		stream->writeFloat(m_samplingDensity);
-		stream->writeFloat(m_mediumSamplingWeight);
+		stream->writefloat(m_samplingDensity);
+		stream->writefloat(m_mediumSamplingWeight);
 	}
 
 	Spectrum evalTransmittance(const Ray &ray, Sampler *) const {
-		Float negLength = ray.mint - ray.maxt;
+		float negLength = ray.mint - ray.maxt;
 		Spectrum transmittance;
 		for (int i=0; i<SPECTRUM_SAMPLES; ++i)
 			transmittance[i] = m_sigmaT[i] != 0
-				? math::fastexp(m_sigmaT[i] * negLength) : (Float) 1.0f;
+				? math::fastexp(m_sigmaT[i] * negLength) : (float) 1.0f;
 		return transmittance;
 	}
 
 	bool sampleDistance(const Ray &ray, MediumSamplingRecord &mRec,
 			Sampler *sampler) const {
-		Float rand = sampler->next1D(), sampledDistance;
-		Float samplingDensity = m_samplingDensity;
+		float rand = sampler->next1D(), sampledDistance;
+		float samplingDensity = m_samplingDensity;
 
 		if (rand < m_mediumSamplingWeight) {
 			rand /= m_mediumSamplingWeight;
@@ -292,9 +292,9 @@ public:
 			}
 		} else {
 			/* Don't generate a medium interaction */
-			sampledDistance = std::numeric_limits<Float>::infinity();
+			sampledDistance = std::numeric_limits<float>::infinity();
 		}
-		Float distSurf = ray.maxt - ray.mint;
+		float distSurf = ray.maxt - ray.mint;
 		bool success = true;
 
 		if (sampledDistance < distSurf) {
@@ -323,7 +323,7 @@ public:
 				mRec.pdfFailure = 0;
 				mRec.pdfSuccess = 0;
 				for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-					Float tmp = math::fastexp(-m_sigmaT[i] * sampledDistance);
+					float tmp = math::fastexp(-m_sigmaT[i] * sampledDistance);
 					mRec.pdfFailure += tmp;
 					mRec.pdfSuccess += m_sigmaT[i] * tmp;
 				}
@@ -352,11 +352,11 @@ public:
 	}
 
 	void eval(const Ray &ray, MediumSamplingRecord &mRec) const {
-		Float distance = ray.maxt - ray.mint;
+		float distance = ray.maxt - ray.mint;
 		switch (m_strategy) {
 			case EManual:
 			case ESingle: {
-					Float temp = math::fastexp(-m_samplingDensity * distance);
+					float temp = math::fastexp(-m_samplingDensity * distance);
 					mRec.pdfSuccess = m_samplingDensity * temp;
 					mRec.pdfFailure = temp;
 				}
@@ -366,7 +366,7 @@ public:
 					mRec.pdfSuccess = 0;
 					mRec.pdfFailure = 0;
 					for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-						Float temp = math::fastexp(-m_sigmaT[i] * distance);
+						float temp = math::fastexp(-m_sigmaT[i] * distance);
 						mRec.pdfSuccess += m_sigmaT[i] * temp;
 						mRec.pdfFailure += temp;
 					}
@@ -423,10 +423,10 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	Float m_samplingDensity, m_mediumSamplingWeight;
+	float m_samplingDensity, m_mediumSamplingWeight;
 	ESamplingStrategy m_strategy;
 	MaxExpDist *m_maxExpDist;
-	Float m_albedo;
+	float m_albedo;
 };
 
 MTS_IMPLEMENT_CLASS_S(HomogeneousMedium, false, Medium)

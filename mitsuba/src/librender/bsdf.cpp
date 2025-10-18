@@ -59,7 +59,7 @@ void BSDF::configure() {
 		m_combinedType |= m_components[i];
 }
 
-Float BSDF::getEta() const {
+float BSDF::getEta() const {
 	return 1.0f;
 }
 
@@ -75,7 +75,7 @@ void BSDF::getFrameDerivative(const Intersection &its, Frame &du, Frame &dv) con
 	computeShadingFrameDerivative(its.shFrame.n, its.dpdu, dndu, dndv, du, dv);
 }
 
-Float BSDF::getRoughness(const Intersection &its, int component) const {
+float BSDF::getRoughness(const Intersection &its, int component) const {
 	NotImplementedError("getRoughness");
 }
 
@@ -86,14 +86,14 @@ Spectrum BSDF::getDiffuseReflectance(const Intersection &its) const {
 }
 
 Texture *BSDF::ensureEnergyConservation(Texture *texture,
-		const std::string &paramName, Float max) const {
+		const std::string &paramName, float max) const {
 	if (!m_ensureEnergyConservation)
 		return texture;
 
-	Float actualMax = texture->getMaximum().max();
+	float actualMax = texture->getMaximum().max();
 	if (actualMax > max) {
 		std::ostringstream oss;
-		Float scale = 0.99f * (max / actualMax);
+		float scale = 0.99f * (max / actualMax);
 		oss << "The BSDF" << endl << toString() << endl
 			<< "violates energy conservation! The parameter \"" << paramName << "\" "
 			<< "has a component-wise maximum of "<< actualMax << " (which is > " << max << "!) "
@@ -102,7 +102,7 @@ Texture *BSDF::ensureEnergyConservation(Texture *texture,
 			<< "to the BSDF to prevent this from happening.";
 		Log(EWarn, "%s", oss.str().c_str());
 		Properties props("scale");
-		props.setFloat("scale", scale);
+		props.setfloat("scale", scale);
 		Texture *scaleTexture = static_cast<Texture *> (PluginManager::getInstance()->
 				createObject(MTS_CLASS(Texture), props));
 		scaleTexture->addChild(texture);
@@ -114,13 +114,13 @@ Texture *BSDF::ensureEnergyConservation(Texture *texture,
 
 std::pair<Texture *, Texture *> BSDF::ensureEnergyConservation(
 		Texture *tex1, Texture *tex2, const std::string &paramName1,
-		const std::string &paramName2, Float max) const {
+		const std::string &paramName2, float max) const {
 	if (!m_ensureEnergyConservation)
 		return std::make_pair(tex1, tex2);
-	Float actualMax = (tex1->getMaximum() + tex2->getMaximum()).max();
+	float actualMax = (tex1->getMaximum() + tex2->getMaximum()).max();
 	if (actualMax > max) {
 		std::ostringstream oss;
-		Float scale = 0.99f * (max / actualMax);
+		float scale = 0.99f * (max / actualMax);
 		oss << "The BSDF" << endl << toString() << endl
 			<< "violates energy conservation! The parameters \"" << paramName1 << "\" "
 			<< "and \"" << paramName2 << "\" sum to a component-wise maximum of "
@@ -130,7 +130,7 @@ std::pair<Texture *, Texture *> BSDF::ensureEnergyConservation(
 			<< "happening.";
 		Log(EWarn, "%s", oss.str().c_str());
 		Properties props("scale");
-		props.setFloat("scale", scale);
+		props.setfloat("scale", scale);
 		Texture *scaleTexture1 = static_cast<Texture *> (PluginManager::getInstance()->
 				createObject(MTS_CLASS(Texture), props));
 		Texture *scaleTexture2 = static_cast<Texture *> (PluginManager::getInstance()->

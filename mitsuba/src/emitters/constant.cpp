@@ -31,7 +31,7 @@ MTS_NAMESPACE_BEGIN
  *         Specifies the emitted radiance in units of
  *         power per unit area per unit steradian.
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -93,7 +93,7 @@ public:
 
 	void configure() {
 		Emitter::configure();
-		Float surfaceArea = 4 * M_PI *
+		float surfaceArea = 4 * M_PI *
 			m_sceneBSphere.radius * m_sceneBSphere.radius;
 		m_invSurfaceArea = 1 / surfaceArea;
 		m_power = m_radiance * surfaceArea * M_PI;
@@ -122,7 +122,7 @@ public:
 		return m_radiance * M_PI;
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return m_invSurfaceArea;
 	}
 
@@ -138,7 +138,7 @@ public:
 
 	Spectrum evalDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
-		Float dp = dot(dRec.d, pRec.n);
+		float dp = dot(dRec.d, pRec.n);
 
 		if (dRec.measure != ESolidAngle || dp < 0)
 			dp = 0.0f;
@@ -146,9 +146,9 @@ public:
 		return Spectrum(INV_PI * dp);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
-		Float dp = dot(dRec.d, pRec.n);
+		float dp = dot(dRec.d, pRec.n);
 
 		if (dRec.measure != ESolidAngle || dp < 0)
 			dp = 0.0f;
@@ -159,7 +159,7 @@ public:
 	Spectrum sampleRay(Ray &ray,
 			const Point2 &spatialSample,
 			const Point2 &directionalSample,
-			Float time) const {
+			float time) const {
 		Vector v0 = warp::squareToUniformSphere(spatialSample);
 		Vector v1 = warp::squareToCosineHemisphere(directionalSample);
 
@@ -173,7 +173,7 @@ public:
 	Spectrum sampleDirect(DirectSamplingRecord &dRec,
 			const Point2 &sample) const {
 		Vector d;
-		Float pdf;
+		float pdf;
 
 		if (!dRec.refN.isZero()) {
 			d = warp::squareToCosineHemisphere(sample);
@@ -191,7 +191,7 @@ public:
 		   sampling techniques in this class. */
 
 		Ray ray(dRec.ref, d, 0);
-		Float nearT, farT;
+		float nearT, farT;
 		dRec.pdf = 0.0f;
 		if (!m_sceneBSphere.rayIntersect(ray, nearT, farT))
 			return Spectrum(0.0f);
@@ -214,11 +214,11 @@ public:
 		return m_radiance / pdf;
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
-		Float pdfSA;
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
+		float pdfSA;
 
 		if (!dRec.refN.isZero())
-			pdfSA = INV_PI * std::max((Float) 0.0f, dot(dRec.d, dRec.refN));
+			pdfSA = INV_PI * std::max((float) 0.0f, dot(dRec.d, dRec.refN));
 		else
 			pdfSA = warp::squareToUniformSpherePdf();
 
@@ -244,7 +244,7 @@ public:
 	}
 
 	bool fillDirectSamplingRecord(DirectSamplingRecord &dRec, const Ray &ray) const {
-		Float nearT, farT;
+		float nearT, farT;
 
 		if (!m_sceneBSphere.rayIntersect(ray, nearT, farT) || nearT > 0 || farT < 0) {
 			Log(EWarn, "fillDirectSamplingRecord(): internal error!");
@@ -282,7 +282,7 @@ public:
 protected:
 	Spectrum m_radiance, m_power;
 	BSphere m_geoBSphere, m_sceneBSphere;
-	Float m_invSurfaceArea;
+	float m_invSurfaceArea;
 };
 
 // ================ Hardware shader implementation ================

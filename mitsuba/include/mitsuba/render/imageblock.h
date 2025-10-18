@@ -124,8 +124,8 @@ public:
 	 * \return \c false if one of the sample values was \a invalid, e.g.
 	 *    NaN or negative. A warning is also printed in this case
 	 */
-	FINLINE bool put(const Point2 &pos, const Spectrum &spec, Float alpha) {
-		Float temp[SPECTRUM_SAMPLES + 2];
+	FINLINE bool put(const Point2 &pos, const Spectrum &spec, float alpha) {
+		float temp[SPECTRUM_SAMPLES + 2];
 		for (int i=0; i<SPECTRUM_SAMPLES; ++i)
 			temp[i] = spec[i];
 		temp[SPECTRUM_SAMPLES] = alpha;
@@ -144,7 +144,7 @@ public:
 	 * \return \c false if one of the sample values was \a invalid, e.g.
 	 *    NaN or negative. A warning is also printed in this case
 	 */
-	FINLINE bool put(const Point2 &_pos, const Float *value) {
+	FINLINE bool put(const Point2 &_pos, const float *value) {
 		const int channels = m_bitmap->getChannelCount();
 
 		/* Check if all sample values are valid */
@@ -154,7 +154,7 @@ public:
 		}
 
 		{
-			const Float filterRadius = m_filter->getRadius();
+			const float filterRadius = m_filter->getRadius();
 			const Vector2i &size = m_bitmap->getSize();
 
 			/* Convert to pixel coordinates within the image block */
@@ -176,12 +176,12 @@ public:
 
 			/* Rasterize the filtered sample into the framebuffer */
 			for (int y=min.y, yr=0; y<=max.y; ++y, ++yr) {
-				const Float weightY = m_weightsY[yr];
-				Float *dest = m_bitmap->getFloatData()
+				const float weightY = m_weightsY[yr];
+				float *dest = m_bitmap->getfloatData()
 					+ (y * (size_t) size.x + min.x) * channels;
 
 				for (int x=min.x, xr=0; x<=max.x; ++x, ++xr) {
-					const Float weight = m_weightsX[xr] * weightY;
+					const float weight = m_weightsX[xr] * weightY;
 
 					for (int k=0; k<channels; ++k)
 						*dest++ += weight * value[k];
@@ -243,7 +243,7 @@ protected:
 	Vector2i m_size;
 	int m_borderSize;
 	const ReconstructionFilter *m_filter;
-	Float *m_weightsX, *m_weightsY;
+	float *m_weightsX, *m_weightsY;
 	bool m_warn;
 };
 

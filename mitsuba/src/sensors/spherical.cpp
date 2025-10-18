@@ -29,7 +29,7 @@ MTS_NAMESPACE_BEGIN
  *	      Specifies an optional camera-to-world transformation.
  *        \default{none (i.e. camera space $=$ world space)}
  *     }
- *     \parameter{shutterOpen, shutterClose}{\Float}{
+ *     \parameter{shutterOpen, shutterClose}{\float}{
  *         Specifies the time interval of the measurement---this
  *         is only relevant when the scene is in motion.
  *         \default{0}
@@ -65,14 +65,14 @@ public:
 	}
 
 	Spectrum sampleRay(Ray &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 		ray.mint = Epsilon;
-		ray.maxt = std::numeric_limits<Float>::infinity();
+		ray.maxt = std::numeric_limits<float>::infinity();
 
 		const Transform &trafo = m_worldTransform->eval(ray.time);
 
-		Float sinPhi, cosPhi, sinTheta, cosTheta;
+		float sinPhi, cosPhi, sinTheta, cosTheta;
 		math::sincos(pixelSample.x * m_invResolution.x * 2 * M_PI, &sinPhi, &cosPhi);
 		math::sincos(pixelSample.y * m_invResolution.y * M_PI, &sinTheta, &cosTheta);
 
@@ -97,7 +97,7 @@ public:
 		return Spectrum((pRec.measure == EDiscrete) ? 1.0f : 0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -117,7 +117,7 @@ public:
 		pRec.uv = Point2(samplePos.x * m_resolution.x,
 			samplePos.y * m_resolution.y);
 
-		Float sinPhi, cosPhi, sinTheta, cosTheta;
+		float sinPhi, cosPhi, sinTheta, cosTheta;
 		math::sincos(samplePos.x * 2 * M_PI, &sinPhi, &cosPhi);
 		math::sincos(samplePos.y * M_PI, &sinTheta, &cosTheta);
 
@@ -128,13 +128,13 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		if (dRec.measure != ESolidAngle)
 			return 0.0f;
 
 		Vector d = m_worldTransform->eval(pRec.time).inverse()(dRec.d);
-		Float sinTheta = math::safe_sqrt(1-d.y*d.y);
+		float sinTheta = math::safe_sqrt(1-d.y*d.y);
 
 		return 1 / (2 * M_PI * M_PI * std::max(sinTheta, Epsilon));
 	}
@@ -145,7 +145,7 @@ public:
 			return Spectrum(0.0f);
 
 		Vector d = m_worldTransform->eval(pRec.time).inverse()(dRec.d);
-		Float sinTheta = math::safe_sqrt(1-d.y*d.y);
+		float sinTheta = math::safe_sqrt(1-d.y*d.y);
 
 		return Spectrum(1 / (2 * M_PI * M_PI * std::max(sinTheta, Epsilon)));
 	}
@@ -155,7 +155,7 @@ public:
 		Vector d = normalize(m_worldTransform->eval(pRec.time).inverse()(dRec.d));
 
 		samplePosition = Point2(
-			math::modulo(std::atan2(d.x, -d.z) * INV_TWOPI, (Float) 1) * m_resolution.x,
+			math::modulo(std::atan2(d.x, -d.z) * INV_TWOPI, (float) 1) * m_resolution.x,
 			math::safe_acos(d.y) * INV_PI * m_resolution.y
 		);
 
@@ -168,16 +168,16 @@ public:
 		/* Transform the reference point into the local coordinate system */
 		Point refP = trafo.inverse().transformAffine(dRec.ref);
 		Vector d(refP);
-		Float dist = d.length(),
+		float dist = d.length(),
 			  invDist = 1.0f / dist;
 		d *= invDist;
 
 		dRec.uv = Point2(
-			math::modulo(std::atan2(d.x, -d.z) * INV_TWOPI, (Float) 1) * m_resolution.x,
+			math::modulo(std::atan2(d.x, -d.z) * INV_TWOPI, (float) 1) * m_resolution.x,
 			math::safe_acos(d.y) * INV_PI * m_resolution.y
 		);
 
-		Float sinTheta = math::safe_sqrt(1-d.y*d.y);
+		float sinTheta = math::safe_sqrt(1-d.y*d.y);
 
 		dRec.p = trafo.transformAffine(Point(0.0f));
 		dRec.d = (dRec.p - dRec.ref) * invDist;
@@ -190,7 +190,7 @@ public:
 			(1/(2 * M_PI * M_PI * std::max(sinTheta, Epsilon))) * invDist * invDist);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return (dRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 

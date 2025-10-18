@@ -34,7 +34,7 @@ MTS_NAMESPACE_BEGIN
  *         Specifies the amount of power radiated along the beam
  *         \default{1}
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -89,7 +89,7 @@ public:
 		return (pRec.measure == EDiscrete) ? m_power : Spectrum(0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -102,7 +102,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		return (dRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
@@ -115,7 +115,7 @@ public:
 	Spectrum sampleRay(Ray &ray,
 			const Point2 &spatialSample,
 			const Point2 &directionalSample,
-			Float time) const {
+			float time) const {
 		const Transform &trafo = m_worldTransform->eval(time);
 		ray.setTime(time);
 		ray.setOrigin(trafo.transformAffine(Point(0.0f)));
@@ -129,7 +129,7 @@ public:
 		return Spectrum(0.0f);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return 0.0f;
 	}
 

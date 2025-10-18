@@ -250,12 +250,12 @@ public:
 
 	/// Result data type for k-nn queries
 	struct SearchResult {
-		Float distSquared;
+		float distSquared;
 		IndexType index;
 
 		inline SearchResult() {}
 
-		inline SearchResult(Float distSquared, IndexType index)
+		inline SearchResult(float distSquared, IndexType index)
 			: distSquared(distSquared), index(index) { }
 
 		std::string toString() const {
@@ -394,14 +394,14 @@ public:
 	 *      (one extra entry is needed for shuffling data around)
 	 * \return The number of search results (equal to \c k or less)
 	 */
-	size_t nnSearch(const PointType &p, Float &_sqrSearchRadius,
+	size_t nnSearch(const PointType &p, float &_sqrSearchRadius,
 			size_t k, SearchResult *results) const {
 		if (m_nodes.size() == 0)
 			return 0;
 
 		IndexType *stack = (IndexType *) alloca((m_depth+1) * sizeof(IndexType));
 		IndexType index = 0, stackPos = 1;
-		Float sqrSearchRadius = _sqrSearchRadius;
+		float sqrSearchRadius = _sqrSearchRadius;
 		size_t resultCount = 0;
 		bool isHeap = false;
 		stack[0] = 0;
@@ -412,7 +412,7 @@ public:
 
 			/* Recurse on inner nodes */
 			if (!node.isLeaf()) {
-				Float distToPlane = p[node.getAxis()] - node.getPosition()[node.getAxis()];
+				float distToPlane = p[node.getAxis()] - node.getPosition()[node.getAxis()];
 
 				bool searchBoth = distToPlane*distToPlane <= sqrSearchRadius;
 
@@ -441,7 +441,7 @@ public:
 			}
 
 			/* Check if the current point is within the query's search radius */
-			const Float pointDistSquared = (node.getPosition() - p).lengthSquared();
+			const float pointDistSquared = (node.getPosition() - p).lengthSquared();
 
 			if (pointDistSquared < sqrSearchRadius) {
 				/* Switch to a max-heap when the available search
@@ -492,7 +492,7 @@ public:
 	 *      extra entry is needed for shuffling data around)
 	 * \return The number of used traversal steps
 	 */
-	size_t nnSearchCollectStatistics(const PointType &p, Float &sqrSearchRadius,
+	size_t nnSearchCollectStatistics(const PointType &p, float &sqrSearchRadius,
 			size_t k, SearchResult *results, size_t &traversalSteps) const {
 		traversalSteps = 0;
 
@@ -512,7 +512,7 @@ public:
 
 			/* Recurse on inner nodes */
 			if (!node.isLeaf()) {
-				Float distToPlane = p[node.getAxis()] - node.getPosition()[node.getAxis()];
+				float distToPlane = p[node.getAxis()] - node.getPosition()[node.getAxis()];
 
 				bool searchBoth = distToPlane*distToPlane <= sqrSearchRadius;
 
@@ -541,7 +541,7 @@ public:
 			}
 
 			/* Check if the current point is within the query's search radius */
-			const Float pointDistSquared = (node.getPosition() - p).lengthSquared();
+			const float pointDistSquared = (node.getPosition() - p).lengthSquared();
 
 			if (pointDistSquared < sqrSearchRadius) {
 				/* Switch to a max-heap when the available search
@@ -587,7 +587,7 @@ public:
 
 	inline size_t nnSearch(const PointType &p, size_t k,
 			SearchResult *results) const {
-		Float searchRadiusSqr = std::numeric_limits<Float>::infinity();
+		float searchRadiusSqr = std::numeric_limits<float>::infinity();
 		return nnSearch(p, searchRadiusSqr, k, results);
 	}
 
@@ -604,13 +604,13 @@ public:
 	 * \return The number of functor invocations
 	 */
 	template <typename Functor> size_t executeModifier(const PointType &p,
-			Float searchRadius, Functor &functor) {
+			float searchRadius, Functor &functor) {
 		if (m_nodes.size() == 0)
 			return 0;
 
 		IndexType *stack = (IndexType *) alloca((m_depth+1) * sizeof(IndexType));
 		size_t index = 0, stackPos = 1, found = 0;
-		Float distSquared = searchRadius*searchRadius;
+		float distSquared = searchRadius*searchRadius;
 		stack[0] = 0;
 
 		while (stackPos > 0) {
@@ -619,7 +619,7 @@ public:
 
 			/* Recurse on inner nodes */
 			if (!node.isLeaf()) {
-				Float distToPlane = p[node.getAxis()]
+				float distToPlane = p[node.getAxis()]
 					- node.getPosition()[node.getAxis()];
 
 				bool searchBoth = distToPlane*distToPlane <= distSquared;
@@ -649,7 +649,7 @@ public:
 			}
 
 			/* Check if the current point is within the query's search radius */
-			const Float pointDistSquared = (node.getPosition() - p).lengthSquared();
+			const float pointDistSquared = (node.getPosition() - p).lengthSquared();
 
 			if (pointDistSquared < distSquared) {
 				functor(node);
@@ -673,13 +673,13 @@ public:
 	 * \return The number of functor invocations
 	 */
 	template <typename Functor> size_t executeQuery(const PointType &p,
-			Float searchRadius, Functor &functor) const {
+			float searchRadius, Functor &functor) const {
 		if (m_nodes.size() == 0)
 			return 0;
 
 		IndexType *stack = (IndexType *) alloca((m_depth+1) * sizeof(IndexType));
 		IndexType index = 0, stackPos = 1, found = 0;
-		Float distSquared = searchRadius*searchRadius;
+		float distSquared = searchRadius*searchRadius;
 		stack[0] = 0;
 
 		while (stackPos > 0) {
@@ -688,7 +688,7 @@ public:
 
 			/* Recurse on inner nodes */
 			if (!node.isLeaf()) {
-				Float distToPlane = p[node.getAxis()]
+				float distToPlane = p[node.getAxis()]
 					- node.getPosition()[node.getAxis()];
 
 				bool searchBoth = distToPlane*distToPlane <= distSquared;
@@ -718,7 +718,7 @@ public:
 			}
 
 			/* Check if the current point is within the query's search radius */
-			const Float pointDistSquared = (node.getPosition() - p).lengthSquared();
+			const float pointDistSquared = (node.getPosition() - p).lengthSquared();
 
 			if (pointDistSquared < distSquared) {
 				++found;
@@ -739,13 +739,13 @@ public:
 	 * \param searchRadius  Search radius
 	 * \return The number of functor invocations
 	 */
-	size_t search(const PointType &p, Float searchRadius, std::vector<IndexType> &results) const {
+	size_t search(const PointType &p, float searchRadius, std::vector<IndexType> &results) const {
 		if (m_nodes.size() == 0)
 			return 0;
 
 		IndexType *stack = (IndexType *) alloca((m_depth+1) * sizeof(IndexType));
 		IndexType index = 0, stackPos = 1, found = 0;
-		Float distSquared = searchRadius*searchRadius;
+		float distSquared = searchRadius*searchRadius;
 		stack[0] = 0;
 
 		while (stackPos > 0) {
@@ -754,7 +754,7 @@ public:
 
 			/* Recurse on inner nodes */
 			if (!node.isLeaf()) {
-				Float distToPlane = p[node.getAxis()]
+				float distToPlane = p[node.getAxis()]
 					- node.getPosition()[node.getAxis()];
 
 				bool searchBoth = distToPlane*distToPlane <= distSquared;
@@ -784,7 +784,7 @@ public:
 			}
 
 			/* Check if the current point is within the query's search radius */
-			const Float pointDistSquared = (node.getPosition() - p).lengthSquared();
+			const float pointDistSquared = (node.getPosition() - p).lengthSquared();
 
 			if (pointDistSquared < distSquared) {
 				++found;
@@ -977,7 +977,7 @@ protected:
 				break;
 
 			case EVoxelVolume: {
-					Float bestCost = std::numeric_limits<Float>::infinity();
+					float bestCost = std::numeric_limits<float>::infinity();
 
 					for (int dim=0; dim<PointType::dim; ++dim) {
 						std::sort(rangeStart, rangeEnd,
@@ -985,14 +985,14 @@ protected:
 
 						size_t numLeft = 1, numRight = count-2;
 						AABBType leftAABB(m_aabb), rightAABB(m_aabb);
-						Float invVolume = 1.0f / m_aabb.getVolume();
+						float invVolume = 1.0f / m_aabb.getVolume();
 						for (typename std::vector<IndexType>::iterator it = rangeStart+1;
 								it != rangeEnd; ++it) {
 							++numLeft; --numRight;
-							Float pos = m_nodes[*it].getPosition()[dim];
+							float pos = m_nodes[*it].getPosition()[dim];
 							leftAABB.max[dim] = rightAABB.min[dim] = pos;
 
-							Float cost = (numLeft * leftAABB.getVolume()
+							float cost = (numLeft * leftAABB.getVolume()
 								+ numRight * rightAABB.getVolume()) * invVolume;
 							if (cost < bestCost) {
 								bestCost = cost;

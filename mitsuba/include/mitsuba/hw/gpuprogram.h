@@ -98,7 +98,7 @@ public:
 	}
 
 	/// Set a float parameter by name
-	inline void setParameter(const std::string &name, Float value,
+	inline void setParameter(const std::string &name, float value,
 		bool failIfMissing = true) {
 		setParameter(getParameterID(name, failIfMissing), value);
 	}
@@ -210,7 +210,7 @@ public:
 	virtual void setParameter(int id, bool value) = 0;
 
 	/// Set a float parameter
-	virtual void setParameter(int id, Float value) = 0;
+	virtual void setParameter(int id, float value) = 0;
 
 	/// Set a int parameter
 	virtual void setParameter(int id, int value) = 0;

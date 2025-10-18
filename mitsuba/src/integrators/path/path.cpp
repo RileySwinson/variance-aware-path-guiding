@@ -130,7 +130,7 @@ public:
 		ray.mint = Epsilon;
 
 		Spectrum throughput(1.0f);
-		Float eta = 1.0f;
+		float eta = 1.0f;
 
 		while (rRec.depth <= m_maxDepth || m_maxDepth < 0) {
 			if (!its.isValid()) {
@@ -189,11 +189,11 @@ public:
 
 						/* Calculate prob. of having generated that direction
 						   using BSDF sampling */
-						Float bsdfPdf = (emitter->isOnSurface() && dRec.measure == ESolidAngle)
+						float bsdfPdf = (emitter->isOnSurface() && dRec.measure == ESolidAngle)
 							? bsdf->pdf(bRec) : 0;
 
 						/* Weight using the power heuristic */
-						Float weight = miWeight(dRec.pdf, bsdfPdf);
+						float weight = miWeight(dRec.pdf, bsdfPdf);
 						Li += throughput * value * bsdfVal * weight;
 					}
 				}
@@ -204,7 +204,7 @@ public:
 			/* ==================================================================== */
 
 			/* Sample BSDF * cos(theta) */
-			Float bsdfPdf;
+			float bsdfPdf;
 			BSDFSamplingRecord bRec(its, rRec.sampler, ERadiance);
 			Spectrum bsdfWeight = bsdf->sample(bRec, bsdfPdf, rRec.nextSample2D());
 			if (bsdfWeight.isZero())
@@ -214,7 +214,7 @@ public:
 
 			/* Prevent light leaks due to the use of shading normals */
 			const Vector wo = its.toWorld(bRec.wo);
-			Float woDotGeoN = dot(its.geoFrame.n, wo);
+			float woDotGeoN = dot(its.geoFrame.n, wo);
 			if (m_strictNormals && woDotGeoN * Frame::cosTheta(bRec.wo) <= 0)
 				break;
 
@@ -258,7 +258,7 @@ public:
 				(rRec.type & RadianceQueryRecord::EDirectSurfaceRadiance)) {
 				/* Compute the prob. of generating that direction using the
 				   implemented direct illumination sampling technique */
-				const Float lumPdf = (!(bRec.sampledType & BSDF::EDelta)) ?
+				const float lumPdf = (!(bRec.sampledType & BSDF::EDelta)) ?
 					scene->pdfEmitterDirect(dRec) : 0;
 				Li += throughput * value * miWeight(bsdfPdf, lumPdf);
 			}
@@ -279,7 +279,7 @@ public:
 				   index boundaries. Stop with at least some probability to avoid
 				   getting stuck (e.g. due to total internal reflection) */
 
-				Float q = std::min(throughput.max() * eta * eta, (Float) 0.95f);
+				float q = std::min(throughput.max() * eta * eta, (float) 0.95f);
 				if (rRec.nextSample1D() >= q)
 					break;
 				throughput /= q;
@@ -293,7 +293,7 @@ public:
 		return Li;
 	}
 
-	inline Float miWeight(Float pdfA, Float pdfB) const {
+	inline float miWeight(float pdfA, float pdfB) const {
 		pdfA *= pdfA;
 		pdfB *= pdfB;
 		return pdfA / (pdfA + pdfB);

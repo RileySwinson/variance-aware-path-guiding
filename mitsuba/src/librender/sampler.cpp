@@ -71,7 +71,7 @@ void Sampler::setSampleIndex(size_t sampleIndex) {
 
 void Sampler::request1DArray(size_t size) {
 	m_req1D.push_back(size);
-	m_sampleArrays1D.push_back(new Float[m_sampleCount * size]);
+	m_sampleArrays1D.push_back(new float[m_sampleCount * size]);
 }
 
 void Sampler::request2DArray(size_t size) {
@@ -91,7 +91,7 @@ Point2 *Sampler::next2DArray(size_t size) {
 	}
 }
 
-Float *Sampler::next1DArray(size_t size) {
+float *Sampler::next1DArray(size_t size) {
 	Assert(m_sampleIndex < m_sampleCount);
 	if (m_dimension1DArray < m_req1D.size()) {
 		Assert(m_req1D[m_dimension1DArray] == size);

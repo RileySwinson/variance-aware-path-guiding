@@ -175,14 +175,14 @@ template <typename T>
 struct rnd_traits;
 
 template <>
-struct rnd_traits<Float> {
-	static Float rnd(ref<Random> & rnd) {
-		return rnd->nextFloat();
+struct rnd_traits<float> {
+	static float rnd(ref<Random> & rnd) {
+		return rnd->nextfloat();
 	}
 
 	const static bool fixedRange = true;
-	static Float min() { return static_cast<Float>(0); }
-	static Float max() { return static_cast<Float>(1); }
+	static float min() { return static_cast<float>(0); }
+	static float max() { return static_cast<float>(1); }
 };
 
 template <>
@@ -516,10 +516,10 @@ void TestRandom::test01_mean()
 	double sum = 0.0;
 	const int N = 1000000;
 	for (int i = 0; i < N; ++i) {
-		sum += rnd->nextFloat();
+		sum += rnd->nextfloat();
 	}
 	sum /= N;
-	assertEqualsEpsilon(static_cast<Float>(sum), 0.5f, 1e-3f);
+	assertEqualsEpsilon(static_cast<float>(sum), 0.5f, 1e-3f);
 }
 
 
@@ -540,7 +540,7 @@ void TestRandom::test02_range()
 
 	ref<Random> rnd = new Random;
 	for (int i = 0; i < N*N; ++i) {
-		test02_helper<Float>(rnd);
+		test02_helper<float>(rnd);
 		test02_helper<uint32_t>(rnd);
 		test02_helper<uint64_t>(rnd);
 	}
@@ -567,13 +567,13 @@ void TestRandom::test03_circle()
 	const int N = 10000000;
 
 	for (int i = 0; i < N; ++i) {
-		const Float dx = rnd->nextFloat() - 0.5f;
-		const Float dy = rnd->nextFloat() - 0.5f;
+		const float dx = rnd->nextfloat() - 0.5f;
+		const float dy = rnd->nextfloat() - 0.5f;
 		if (dx*dx + dy*dy <= 0.25f) {
 			++hit;
 		}
 	}
-	const Float area = static_cast<Float>(hit) / N;
+	const float area = static_cast<float>(hit) / N;
 	assertEqualsEpsilon(area, 0.25f * M_PI, 1e-4f);
 }
 
@@ -706,9 +706,9 @@ void TestRandom::test06_relative_primes()
 			++relative_primes;
 		}
 	}
-	const Float ratio = static_cast<Float>(relative_primes) / N;
+	const float ratio = static_cast<float>(relative_primes) / N;
 	Log(EDebug, "  Relative primes ratio %g", ratio);
-	assertEqualsEpsilon(ratio, static_cast<Float>(0.6079271018540266), 1e-3f);
+	assertEqualsEpsilon(ratio, static_cast<float>(0.6079271018540266), 1e-3f);
 }
 
 
@@ -739,9 +739,9 @@ void TestRandom::test07_uniform_distribution_ks()
 double TestRandom::uniform_distribution_ks_instance(ref<Random> & rnd,
 	const double alpha, const int numSamples)
 {
-	std::vector<Float> values(numSamples);
+	std::vector<float> values(numSamples);
 	for (int i = 0; i != numSamples; ++i) {
-		values[i] = rnd->nextFloat();
+		values[i] = rnd->nextfloat();
 	}
 	const double pval = ks_pval(values.begin(), values.end(), UniformCDF());
 	Log(EDebug, "  KS pval: %g", pval);
@@ -822,15 +822,15 @@ void TestRandom::benchmark()
 {
 	const int N1 = 1000;
 	const int N2 = 1000000;
-	const Float epsilon = static_cast<Float>(1e-4);
-	Float estimate = 0;
-	Float current  = 0;
+	const float epsilon = static_cast<float>(1e-4);
+	float estimate = 0;
+	float current  = 0;
 
 	ref<Random> rnd = new Random;
 
 	// Warm-up
 	for (int i = 0; i < N2; ++i) {
-		current += rnd->nextFloat();
+		current += rnd->nextfloat();
 	}
 	estimate += current / N2;
 
@@ -839,17 +839,17 @@ void TestRandom::benchmark()
 	for (int i = 0; i < N1; ++i) {
 		current = 0;
 		for (int j = 0; j < N2; ++j) {
-			current += rnd->nextFloat();
+			current += rnd->nextfloat();
 		}
 		estimate += current / N2;
 	}
-	const Float seconds = timer->getSeconds();
+	const float seconds = timer->getSeconds();
 
 	const int N = N1 * N2;
 	Log(EInfo, "Generated %.1fM random numbers in %.2f s (%.3f M-random/s)",
 		1e-6 * N, seconds, 1e-6 * N / seconds);
 	estimate /= (N1+1);
-	assertEqualsEpsilon(estimate, static_cast<Float>(0.5), epsilon);
+	assertEqualsEpsilon(estimate, static_cast<float>(0.5), epsilon);
 }
 
 

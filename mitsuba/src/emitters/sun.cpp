@@ -39,16 +39,16 @@ MTS_NAMESPACE_BEGIN
  * \icon{emitter_sun}
  * \order{7}
  * \parameters{
- *     \parameter{turbidity}{\Float}{
+ *     \parameter{turbidity}{\float}{
  *         This parameter determines the amount of aerosol present in the atmosphere.
  *         Valid range: 2-10. \default{3, corresponding to a clear sky in a temperate climate}
  *     }
  *     \parameter{year, month, day}{\Integer}{Denote the date of the
  *      observation \default{2010, 07, 10}}
- *     \parameter{hour,minute,\showbreak second}{\Float}{Local time
+ *     \parameter{hour,minute,\showbreak second}{\float}{Local time
  *       at the location of the observer in 24-hour format\default{15, 00, 00,
  *       i.e. 3PM}}
- *     \parameter{latitude, longitude, timezone}{\Float}{
+ *     \parameter{latitude, longitude, timezone}{\float}{
  *       These three parameters specify the oberver's latitude and longitude
  *       in degrees, and the local timezone offset in hours, which are required
  *       to compute the sun's position. \default{35.6894, 139.6917, 9 --- Tokyo, Japan}
@@ -61,15 +61,15 @@ MTS_NAMESPACE_BEGIN
  *     }
  *     \parameter{resolution}{\Integer}{Specifies the horizontal resolution of the precomputed
  *         image that is used to represent the sun environment map \default{512, i.e. 512$\times$256}}
- *     \parameter{scale}{\Float}{
+ *     \parameter{scale}{\float}{
  *         This parameter can be used to scale the amount of illumination
  *         emitted by the sun emitter. \default{1}
  *     }
- *     \parameter{sunRadiusScale}{\Float}{
+ *     \parameter{sunRadiusScale}{\float}{
  *         Scale factor to adjust the radius of the sun, while preserving its power.
  *         Set to \code{0} to turn it into a directional light source.
  *     }
- *     \parameter{samplingWeight}{\Float}{
+ *     \parameter{samplingWeight}{\float}{
  *         Specifies the relative amount of samples
  *         allocated to this emitter. \default{1}
  *     }
@@ -104,19 +104,19 @@ class SunEmitter : public Emitter {
 public:
 	SunEmitter(const Properties &props)
 			: Emitter(props) {
-		m_scale = props.getFloat("scale", 1.0f);
+		m_scale = props.getfloat("scale", 1.0f);
 		m_resolution = props.getInteger("resolution", 512);
 		m_sun = computeSunCoordinates(props);
-		m_sunRadiusScale = props.getFloat("sunRadiusScale", 1.0f);
-		m_turbidity = props.getFloat("turbidity", 3.0f);
-		m_stretch = props.getFloat("stretch", 1.0f);
+		m_sunRadiusScale = props.getfloat("sunRadiusScale", 1.0f);
+		m_turbidity = props.getfloat("turbidity", 3.0f);
+		m_stretch = props.getfloat("stretch", 1.0f);
 	}
 
 	SunEmitter(Stream *stream, InstanceManager *manager)
 		    : Emitter(stream, manager) {
-		m_scale = stream->readFloat();
-		m_sunRadiusScale = stream->readFloat();
-		m_turbidity = stream->readFloat();
+		m_scale = stream->readfloat();
+		m_sunRadiusScale = stream->readfloat();
+		m_turbidity = stream->readfloat();
 		m_resolution = stream->readInt();
 		m_sun = SphericalCoordinates(stream);
 		configure();
@@ -124,9 +124,9 @@ public:
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Emitter::serialize(stream, manager);
-		stream->writeFloat(m_scale);
-		stream->writeFloat(m_sunRadiusScale);
-		stream->writeFloat(m_turbidity);
+		stream->writefloat(m_scale);
+		stream->writefloat(m_sunRadiusScale);
+		stream->writefloat(m_turbidity);
 		stream->writeInt(m_resolution);
 		m_sun.serialize(stream);
 	}
@@ -154,7 +154,7 @@ public:
 			Properties props("directional");
 			const Transform &trafo = m_worldTransform->eval(0);
 			props.setVector("direction", -trafo(m_sunDir));
-			props.setFloat("samplingWeight", m_samplingWeight);
+			props.setfloat("samplingWeight", m_samplingWeight);
 
 			props.setSpectrum("irradiance", m_radiance * m_solidAngle);
 
@@ -177,17 +177,17 @@ public:
 		   pixel in the output environment map will be covered
 		   by the sun */
 		size_t pixelCount = m_resolution*m_resolution/2;
-		Float cosTheta = std::cos(m_theta * m_sunRadiusScale);
+		float cosTheta = std::cos(m_theta * m_sunRadiusScale);
 
 		/* Ratio of the sphere that is covered by the sun */
-		Float coveredPortion = 0.5f * (1 - cosTheta);
+		float coveredPortion = 0.5f * (1 - cosTheta);
 
 		/* Approx. number of samples that need to be generated,
 		   be very conservative */
-		size_t nSamples = (size_t) std::max((Float) 100,
+		size_t nSamples = (size_t) std::max((float) 100,
 			(pixelCount * coveredPortion * 1000));
 
-		ref<Bitmap> bitmap = new Bitmap(SUN_PIXELFORMAT, Bitmap::EFloat,
+		ref<Bitmap> bitmap = new Bitmap(SUN_PIXELFORMAT, Bitmap::Efloat,
 			Vector2i(m_resolution, m_resolution/2));
 		bitmap->clear();
 		Frame frame(m_sunDir);
@@ -195,24 +195,24 @@ public:
 		Point2 factor(bitmap->getWidth() / (2*M_PI),
 			bitmap->getHeight() / M_PI);
 
-		Spectrum *target = (Spectrum *) bitmap->getFloatData();
+		Spectrum *target = (Spectrum *) bitmap->getfloatData();
 		Spectrum value =
 			m_radiance * (2 * M_PI * (1-std::cos(m_theta))) *
-			static_cast<Float>(bitmap->getWidth() * bitmap->getHeight())
+			static_cast<float>(bitmap->getWidth() * bitmap->getHeight())
 			/ (2 * M_PI * M_PI * nSamples);
 
 		for (size_t i=0; i<nSamples; ++i) {
 			Vector dir = frame.toWorld(
 				warp::squareToUniformCone(cosTheta, sample02(i)));
 
-			Float sinTheta = math::safe_sqrt(1-dir.y*dir.y);
+			float sinTheta = math::safe_sqrt(1-dir.y*dir.y);
 			SphericalCoordinates sphCoords = fromSphere(dir);
 
 			Point2i pos(
 				std::min(std::max(0, (int) (sphCoords.azimuth * factor.x)), bitmap->getWidth()-1),
 				std::min(std::max(0, (int) (sphCoords.elevation * factor.y)), bitmap->getHeight()-1));
 
-			target[pos.x + pos.y * bitmap->getWidth()] += value / std::max((Float) 1e-3f, sinTheta);
+			target[pos.x + pos.y * bitmap->getWidth()] += value / std::max((float) 1e-3f, sinTheta);
 		}
 
 		/* Instantiate a nested envmap plugin */
@@ -222,7 +222,7 @@ public:
 		bitmapData.size = sizeof(Bitmap);
 		props.setData("bitmap", bitmapData);
 		props.setAnimatedTransform("toWorld", m_worldTransform);
-		props.setFloat("samplingWeight", m_samplingWeight);
+		props.setfloat("samplingWeight", m_samplingWeight);
 		Emitter *emitter = static_cast<Emitter *>(
 			PluginManager::getInstance()->createObject(
 			MTS_CLASS(Emitter), props));
@@ -250,23 +250,23 @@ protected:
 	/// Environment map resolution
 	int m_resolution;
 	/// Constant scale factor applied to the model
-	Float m_scale;
+	float m_scale;
 	/// Scale factor that can be applied to the sun radius
-	Float m_sunRadiusScale;
+	float m_sunRadiusScale;
 	/// Angle cutoff for the sun disk (w/o scaling)
-	Float m_theta;
+	float m_theta;
 	/// Solid angle covered by the sun (w/o scaling)
-	Float m_solidAngle;
+	float m_solidAngle;
 	/// Position of the sun in spherical coordinates
 	SphericalCoordinates m_sun;
 	/// Direction of the sun (untransformed)
 	Vector m_sunDir;
 	/// Turbidity of the atmosphere
-	Float m_turbidity;
+	float m_turbidity;
 	/// Radiance arriving from the sun disk
 	Spectrum m_radiance;
 	/// Stretch factor to extend to the bottom hemisphere
-	Float m_stretch;
+	float m_stretch;
 };
 
 MTS_IMPLEMENT_CLASS_S(SunEmitter, false, Emitter)

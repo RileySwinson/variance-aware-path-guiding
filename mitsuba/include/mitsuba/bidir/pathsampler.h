@@ -45,7 +45,7 @@ public:
 	 * of steps from the emitter, \c is the number of steps from the sensor,
 	 * and \c weight contains the importance weight associated with the sample.
 	 */
-	typedef boost::function<void (int, int, Float, Path &)> PathCallback;
+	typedef boost::function<void (int, int, float, Path &)> PathCallback;
 
 	/// Specifies the sampling algorithm that is internally used
 	enum ETechnique {
@@ -164,7 +164,7 @@ public:
 	 *     A vector of resulting MLT seeds
 	 * \return The average luminance over the image plane
 	 */
-	Float generateSeeds(size_t sampleCount, size_t seedCount,
+	float generateSeeds(size_t sampleCount, size_t seedCount,
 			bool fineGrained, const Bitmap *importanceMap,
 			std::vector<PathSeed> &seeds);
 
@@ -173,7 +173,7 @@ public:
 	 * \param sampleCount
 	 *     The number of luminance samples that will be taken
 	 */
-	Float computeAverageLuminance(size_t sampleCount);
+	float computeAverageLuminance(size_t sampleCount);
 
 	/**
 	 * \brief Reconstruct a path from a \ref PathSeed record
@@ -220,25 +220,25 @@ protected:
  */
 struct PathSeed {
 	size_t sampleIndex; ///< Index into a rewindable random number stream
-	Float luminance;    ///< Luminance value of the path (for sanity checks)
+	float luminance;    ///< Luminance value of the path (for sanity checks)
 	int s;              ///< Number of steps from the luminaire
 	int t;              ///< Number of steps from the eye
 
 	inline PathSeed() { }
 
-	inline PathSeed(size_t sampleIndex, Float luminance, int s = 0, int t = 0)
+	inline PathSeed(size_t sampleIndex, float luminance, int s = 0, int t = 0)
 		: sampleIndex(sampleIndex), luminance(luminance), s(s), t(t) { }
 
 	inline PathSeed(Stream *stream) {
 		sampleIndex = stream->readSize();
-		luminance = stream->readFloat();
+		luminance = stream->readfloat();
 		s = stream->readInt();
 		t = stream->readInt();
 	}
 
 	void serialize(Stream *stream) const {
 		stream->writeSize(sampleIndex);
-		stream->writeFloat(luminance);
+		stream->writefloat(luminance);
 		stream->writeInt(s);
 		stream->writeInt(t);
 	}
@@ -313,7 +313,7 @@ struct MTS_EXPORT_BIDIR SplatList {
 	/// A series of splats associated with the current sample
 	std::vector<Splat> splats;
 	/// Combined luminance of all splats in this sample
-	Float luminance;
+	float luminance;
 	/// Total number of samples in the splat list
 	int nSamples;
 

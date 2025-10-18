@@ -30,10 +30,10 @@ MTS_NAMESPACE_BEGIN
 namespace math {
 
 /// Cross-platform implementation of the error function
-extern MTS_EXPORT_CORE Float erf(Float x);
+extern MTS_EXPORT_CORE float erf(float x);
 
 /// Cross-platform implementation of the inverse error function
-extern MTS_EXPORT_CORE Float erfinv(Float x);
+extern MTS_EXPORT_CORE float erfinv(float x);
 
 /// sqrt(a^2 + b^2) without range issues (like 'hypot' on compilers that support C99, single precision)
 extern MTS_EXPORT_CORE float hypot2(float a, float b);
@@ -267,9 +267,9 @@ inline size_t roundToPowerOfTwo(size_t value) {
 	}
 
 	/// Simple signum function -- note that it returns the FP sign of the input (and never zero)
-	inline Float signum(Float value) {
+	inline float signum(float value) {
 		#if defined(__WINDOWS__)
-			return (Float) _copysign(1.0, value);
+			return (float) _copysign(1.0, value);
 		#elif defined(SINGLE_PRECISION)
 			return copysignf((float) 1.0, value);
 		#elif defined(DOUBLE_PRECISION)

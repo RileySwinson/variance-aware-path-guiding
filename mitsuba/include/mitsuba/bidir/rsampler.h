@@ -59,7 +59,7 @@ public:
 	virtual void setSampleIndex(size_t sampleIndex);
 
 	/// Retrieve the next component value from the current sample
-	virtual Float next1D();
+	virtual float next1D();
 
 	/// Retrieve the next two component values from the current sample
 	virtual Point2 next2D();

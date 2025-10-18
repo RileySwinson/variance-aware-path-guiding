@@ -33,24 +33,24 @@ void ConstantSpectrumTexture::serialize(Stream *stream, InstanceManager *manager
 }
 
 ref<Bitmap> ConstantSpectrumTexture::getBitmap(const Vector2i &sizeHint) const {
-	ref<Bitmap> result = new Bitmap(Bitmap::ESpectrum, Bitmap::EFloat, Vector2i(1, 1));
-	*((Spectrum *) result->getFloatData()) = m_value;
+	ref<Bitmap> result = new Bitmap(Bitmap::ESpectrum, Bitmap::Efloat, Vector2i(1, 1));
+	*((Spectrum *) result->getfloatData()) = m_value;
 	return result;
 }
 
-ConstantFloatTexture::ConstantFloatTexture(Stream *stream, InstanceManager *manager)
+ConstantfloatTexture::ConstantfloatTexture(Stream *stream, InstanceManager *manager)
  : Texture(stream, manager) {
-	m_value = stream->readFloat();
+	m_value = stream->readfloat();
 }
 
-void ConstantFloatTexture::serialize(Stream *stream, InstanceManager *manager) const {
+void ConstantfloatTexture::serialize(Stream *stream, InstanceManager *manager) const {
 	Texture::serialize(stream, manager);
-	stream->writeFloat(m_value);
+	stream->writefloat(m_value);
 }
 
-ref<Bitmap> ConstantFloatTexture::getBitmap(const Vector2i &sizeHint) const {
-	ref<Bitmap> result = new Bitmap(Bitmap::ELuminance, Bitmap::EFloat, Vector2i(1, 1));
-	*result->getFloatData() = m_value;
+ref<Bitmap> ConstantfloatTexture::getBitmap(const Vector2i &sizeHint) const {
+	ref<Bitmap> result = new Bitmap(Bitmap::ELuminance, Bitmap::Efloat, Vector2i(1, 1));
+	*result->getfloatData() = m_value;
 	return result;
 }
 
@@ -137,9 +137,9 @@ private:
 	Spectrum m_value;
 };
 
-class ConstantFloatTextureShader : public Shader {
+class ConstantfloatTextureShader : public Shader {
 public:
-	ConstantFloatTextureShader(Renderer *renderer, const Float &value)
+	ConstantfloatTextureShader(Renderer *renderer, const float &value)
 		: Shader(renderer, ETextureShader), m_value(value) {
 	}
 
@@ -163,7 +163,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	Float m_value;
+	float m_value;
 };
 
 class SpectrumProductTextureShader : public Shader {
@@ -278,8 +278,8 @@ Shader *ConstantSpectrumTexture::createShader(Renderer *renderer) const {
 	return new ConstantSpectrumTextureShader(renderer, m_value);
 }
 
-Shader *ConstantFloatTexture::createShader(Renderer *renderer) const {
-	return new ConstantFloatTextureShader(renderer, m_value);
+Shader *ConstantfloatTexture::createShader(Renderer *renderer) const {
+	return new ConstantfloatTextureShader(renderer, m_value);
 }
 
 Shader *SpectrumProductTexture::createShader(Renderer *renderer) const {
@@ -296,8 +296,8 @@ Shader *SpectrumSubtractionTexture::createShader(Renderer *renderer) const {
 
 MTS_IMPLEMENT_CLASS_S(ConstantSpectrumTexture, false, Texture)
 MTS_IMPLEMENT_CLASS(ConstantSpectrumTextureShader, false, Shader)
-MTS_IMPLEMENT_CLASS_S(ConstantFloatTexture, false, Texture)
-MTS_IMPLEMENT_CLASS(ConstantFloatTextureShader, false, Shader)
+MTS_IMPLEMENT_CLASS_S(ConstantfloatTexture, false, Texture)
+MTS_IMPLEMENT_CLASS(ConstantfloatTextureShader, false, Shader)
 MTS_IMPLEMENT_CLASS_S(SpectrumProductTexture, false, Texture)
 MTS_IMPLEMENT_CLASS(SpectrumProductTextureShader, false, Shader)
 MTS_IMPLEMENT_CLASS_S(SpectrumAdditionTexture, false, Texture)

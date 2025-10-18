@@ -97,7 +97,7 @@ public:
 	 */
 	Spectrum estimateIrradiance(
 		const Point &p, const Normal &n,
-		Float searchRadius, int maxDepth,
+		float searchRadius, int maxDepth,
 		size_t maxPhotons) const;
 
 	/**
@@ -115,7 +115,7 @@ public:
 	 * 		How many photon should (at most) be used in the estimate?
 	 */
 	Spectrum estimateRadiance(const Intersection &its,
-		Float searchRadius, size_t maxPhotons) const;
+		float searchRadius, size_t maxPhotons) const;
 
 	/**
 	 * \brief Compute scattered contributions from all photons within
@@ -127,10 +127,10 @@ public:
 	 * This function is meant to be used with progressive photon mapping.
 	 */
 	size_t estimateRadianceRaw(const Intersection &its,
-		Float searchRadius, Spectrum &result, int maxDepth) const;
+		float searchRadius, Spectrum &result, int maxDepth) const;
 
 	/// Perform a nearest-neighbor query, see \ref PointKDTree for details
-	inline size_t nnSearch(const Point &p, Float &sqrSearchRadius,
+	inline size_t nnSearch(const Point &p, float &sqrSearchRadius,
 		size_t k, SearchResult *results) const {
 		return m_kdtree.nnSearch(p, sqrSearchRadius, k, results);
 	}
@@ -159,10 +159,10 @@ public:
 	}
 
 	/// Scale all photon power values contained in this photon map
-	inline void setScaleFactor(Float value) { m_scale = value; }
+	inline void setScaleFactor(float value) { m_scale = value; }
 
 	/// Return the power scale factor of this photon map
-	inline Float getScaleFactor() const { return m_scale; }
+	inline float getScaleFactor() const { return m_scale; }
 
 	/**
 	 * \brief Build a photon map over the supplied photons.
@@ -195,7 +195,7 @@ protected:
 	virtual ~PhotonMap();
 protected:
 	PhotonTree m_kdtree;
-	Float m_scale;
+	float m_scale;
 };
 
 MTS_NAMESPACE_END

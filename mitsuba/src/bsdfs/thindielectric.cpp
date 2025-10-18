@@ -25,9 +25,9 @@ MTS_NAMESPACE_BEGIN
 /*!\plugin{thindielectric}{Thin dielectric material}
  * \order{4}
  * \parameters{
- *     \parameter{intIOR}{\Float\Or\String}{Interior index of refraction specified
+ *     \parameter{intIOR}{\float\Or\String}{Interior index of refraction specified
  *      numerically or using a known material name. \default{\texttt{bk7} / 1.5046}}
- *     \parameter{extIOR}{\Float\Or\String}{Exterior index of refraction specified
+ *     \parameter{extIOR}{\float\Or\String}{Exterior index of refraction specified
  *      numerically or using a known material name. \default{\texttt{air} / 1.000277}}
  *     \parameter{specular\showbreak Reflectance}{\Spectrum\Or\Texture}{Optional
  *         factor that can be used to modulate the specular reflection component. Note
@@ -72,10 +72,10 @@ class ThinDielectric : public BSDF {
 public:
 	ThinDielectric(const Properties &props) : BSDF(props) {
 		/* Specifies the internal index of refraction at the interface */
-		Float intIOR = lookupIOR(props, "intIOR", "bk7");
+		float intIOR = lookupIOR(props, "intIOR", "bk7");
 
 		/* Specifies the external index of refraction at the interface */
-		Float extIOR = lookupIOR(props, "extIOR", "air");
+		float extIOR = lookupIOR(props, "extIOR", "air");
 
 		if (intIOR < 0 || extIOR < 0)
 			Log(EError, "The interior and exterior indices of "
@@ -91,7 +91,7 @@ public:
 
 	ThinDielectric(Stream *stream, InstanceManager *manager)
 			: BSDF(stream, manager) {
-		m_eta = stream->readFloat();
+		m_eta = stream->readfloat();
 		m_specularReflectance = static_cast<Texture *>(manager->getInstance(stream));
 		m_specularTransmittance = static_cast<Texture *>(manager->getInstance(stream));
 		configure();
@@ -100,7 +100,7 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		BSDF::serialize(stream, manager);
 
-		stream->writeFloat(m_eta);
+		stream->writefloat(m_eta);
 		manager->serialize(stream, m_specularReflectance.get());
 		manager->serialize(stream, m_specularTransmittance.get());
 	}
@@ -156,7 +156,7 @@ public:
 		bool sampleTransmission = (bRec.typeMask & ENull)
 				&& (bRec.component == -1 || bRec.component == 1) && measure == EDiscrete;
 
-		Float R = fresnelDielectricExt(std::abs(Frame::cosTheta(bRec.wi)), m_eta), T = 1-R;
+		float R = fresnelDielectricExt(std::abs(Frame::cosTheta(bRec.wi)), m_eta), T = 1-R;
 
 		// Account for internal reflections: R' = R + TRT + TR^3T + ..
 		if (R < 1)
@@ -175,13 +175,13 @@ public:
 		}
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		bool sampleReflection   = (bRec.typeMask & EDeltaReflection)
 				&& (bRec.component == -1 || bRec.component == 0) && measure == EDiscrete;
 		bool sampleTransmission = (bRec.typeMask & ENull)
 				&& (bRec.component == -1 || bRec.component == 1) && measure == EDiscrete;
 
-		Float R = fresnelDielectricExt(std::abs(Frame::cosTheta(bRec.wi)), m_eta), T = 1-R;
+		float R = fresnelDielectricExt(std::abs(Frame::cosTheta(bRec.wi)), m_eta), T = 1-R;
 
 		// Account for internal reflections: R' = R + TRT + TR^3T + ..
 		if (R < 1)
@@ -200,13 +200,13 @@ public:
 		}
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		bool sampleReflection   = (bRec.typeMask & EDeltaReflection)
 				&& (bRec.component == -1 || bRec.component == 0);
 		bool sampleTransmission = (bRec.typeMask & ENull)
 				&& (bRec.component == -1 || bRec.component == 1);
 
-		Float R = fresnelDielectricExt(std::abs(Frame::cosTheta(bRec.wi)), m_eta), T = 1-R;
+		float R = fresnelDielectricExt(std::abs(Frame::cosTheta(bRec.wi)), m_eta), T = 1-R;
 
 		// Account for internal reflections: R' = R + TRT + TR^3T + ..
 		if (R < 1)
@@ -257,7 +257,7 @@ public:
 		bool sampleTransmission = (bRec.typeMask & ENull)
 				&& (bRec.component == -1 || bRec.component == 1);
 
-		Float R = fresnelDielectricExt(Frame::cosTheta(bRec.wi), m_eta), T = 1-R;
+		float R = fresnelDielectricExt(Frame::cosTheta(bRec.wi), m_eta), T = 1-R;
 
 		// Account for internal reflections: R' = R + TRT + TR^3T + ..
 		if (R < 1)
@@ -298,13 +298,13 @@ public:
 		return Spectrum(0.0f);
 	}
 
-	Float getEta() const {
+	float getEta() const {
 		/* The rrelative IOR across this interface is 1, since the internal
 		   material is thin: it begins and ends here. */
 		return 1.0f;
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return 0.0f;
 	}
 
@@ -323,7 +323,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	Float m_eta;
+	float m_eta;
 	ref<Texture> m_specularTransmittance;
 	ref<Texture> m_specularReflectance;
 };
@@ -338,7 +338,7 @@ public:
 		m_flags = ETransparent;
 	}
 
-	Float getAlpha() const {
+	float getAlpha() const {
 		return 0.3f;
 	}
 

@@ -40,7 +40,7 @@ MTS_NAMESPACE_BEGIN
  *            \item \code{primIndex}: Integer shape primitive index
  *        \end{itemize}
  *     }
- *     \parameter{undefined}{\Spectrum\Or\Float}{Value that should be returned when
+ *     \parameter{undefined}{\Spectrum\Or\float}{Value that should be returned when
  *                           there is no intersection \default{0}}
  * }
  *
@@ -94,8 +94,8 @@ public:
 		}
 
 		if (props.hasProperty("undefined")) {
-			if (props.getType("undefined") == Properties::EFloat)
-				m_undefined = Spectrum(props.getFloat("undefined"));
+			if (props.getType("undefined") == Properties::Efloat)
+				m_undefined = Spectrum(props.getfloat("undefined"));
 			else
 				m_undefined = props.getSpectrum("undefined", Spectrum(0.0f));
 		}
@@ -155,17 +155,17 @@ public:
 				break;
 			case EShapeIndex: {
 					const ref_vector<Shape> &shapes = rRec.scene->getShapes();
-					result = Spectrum((Float) -1);
+					result = Spectrum((float) -1);
 					for (size_t i=0; i<shapes.size(); ++i) {
 						if (shapes[i] == its.shape) {
-							result = Spectrum((Float) i);
+							result = Spectrum((float) i);
 							break;
 						}
 					}
 				}
 				break;
 			case EPrimIndex:
-				result = Spectrum((Float) its.primIndex);
+				result = Spectrum((float) its.primIndex);
 				break;
 			default:
 				Log(EError, "Internal error!");

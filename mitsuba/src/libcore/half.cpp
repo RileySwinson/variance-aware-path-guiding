@@ -70,7 +70,7 @@ half::overflow ()
 
 
 //-----------------------------------------------------
-// Float-to-half conversion -- general case, including
+// float-to-half conversion -- general case, including
 // zeroes, denormalized numbers and exponent overflows.
 //-----------------------------------------------------
 
@@ -305,7 +305,7 @@ printBits (char c[35], float f)
 // Lookup tables for half-to-float and float-to-half conversion
 //-------------------------------------------------------------
 
-half::uif half::_toFloat[1 << 16] =
+half::uif half::_tofloat[1 << 16] =
 {
     {0x00000000}, {0x33800000}, {0x34000000}, {0x34400000}, 
     {0x34800000}, {0x34a00000}, {0x34c00000}, {0x34e00000}, 

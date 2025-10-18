@@ -39,10 +39,10 @@ public:
 		SHVector vec1(bands);
 		for (int l=0; l<bands; ++l)
 			for (int m=-l; m<=l; ++m)
-				vec1(l, m) = random->nextFloat();
+				vec1(l, m) = random->nextfloat();
 
-		Vector axis(warp::squareToUniformSphere(Point2(random->nextFloat(), random->nextFloat())));
-		Transform trafo = Transform::rotate(axis, random->nextFloat()*360);
+		Vector axis(warp::squareToUniformSphere(Point2(random->nextfloat(), random->nextfloat())));
+		Transform trafo = Transform::rotate(axis, random->nextfloat()*360);
 		SHRotation rot(vec1.getBands());
 
 		SHVector::rotation(trafo, rot);
@@ -51,11 +51,11 @@ public:
 		rot(vec1, vec2);
 
 		for (int i=0; i<100; ++i) {
-			Vector dir1(warp::squareToUniformSphere(Point2(random->nextFloat(), random->nextFloat()))), dir2;
+			Vector dir1(warp::squareToUniformSphere(Point2(random->nextfloat(), random->nextfloat()))), dir2;
 			trafo(dir1, dir2);
 
-			Float value1 = vec1.eval(dir2);
-			Float value2 = vec2.eval(dir1);
+			float value1 = vec1.eval(dir2);
+			float value2 = vec2.eval(dir1);
 			assertEqualsEpsilon(value1, value2, Epsilon);
 		}
 	}
@@ -63,7 +63,7 @@ public:
 	struct ClampedCos {
 		Vector axis;
 		ClampedCos(Vector axis) : axis(axis) { }
-		Float operator()(const Vector &w) const { return std::max((Float) 0, dot(w, axis)); }
+		float operator()(const Vector &w) const { return std::max((float) 0, dot(w, axis)); }
 	};
 
 	void test02_shSampler() {
@@ -75,20 +75,20 @@ public:
 		ref<Random> random = new Random();
 		SHVector clampedCos = SHVector(bands);
 		clampedCos.project(ClampedCos(v), numSamples);
-		//Float clampedCosError = clampedCos.l2Error(ClampedCos(v), numSamples);
+		//float clampedCosError = clampedCos.l2Error(ClampedCos(v), numSamples);
 		clampedCos.normalize();
 
 		//cout << "Projection error = " << clampedCosError << endl;
 		//cout << "Precomputing mip-maps" << endl;
 		ref<SHSampler> sampler = new SHSampler(bands, depth);
 		//cout << "Done: "<< sampler->toString() << endl;
-		Float accum = 0;
+		float accum = 0;
 		int nsamples = 100, nInAvg = 0;
 		for (int i=0; i<=nsamples; ++i) {
-			Point2 sample(random->nextFloat(), random->nextFloat());
-			Float pdf1 = sampler->warp(clampedCos, sample);
-			Float pdf2 = dot(v, sphericalDirection(sample.x, sample.y))/M_PI;
-			Float relerr = std::abs(pdf1-pdf2)/pdf2;
+			Point2 sample(random->nextfloat(), random->nextfloat());
+			float pdf1 = sampler->warp(clampedCos, sample);
+			float pdf2 = dot(v, sphericalDirection(sample.x, sample.y))/M_PI;
+			float relerr = std::abs(pdf1-pdf2)/pdf2;
 			if (pdf2 > 0.01) {
 				accum += relerr; ++nInAvg;
 				assertTrue(relerr < 0.08);

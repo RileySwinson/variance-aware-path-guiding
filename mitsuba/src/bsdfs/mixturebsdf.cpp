@@ -75,7 +75,7 @@ public:
 
 		char *end_ptr = NULL;
 		for (size_t i=0; i<weights.size(); ++i) {
-			Float weight = (Float) strtod(weights[i].c_str(), &end_ptr);
+			float weight = (float) strtod(weights[i].c_str(), &end_ptr);
 			if (*end_ptr != '\0')
 				SLog(EError, "Could not parse the BSDF weights!");
 			if (weight < 0)
@@ -89,7 +89,7 @@ public:
 		size_t bsdfCount = stream->readSize();
 		m_weights.resize(bsdfCount);
 		for (size_t i=0; i<bsdfCount; ++i) {
-			m_weights[i] = stream->readFloat();
+			m_weights[i] = stream->readfloat();
 			BSDF *bsdf = static_cast<BSDF *>(manager->getInstance(stream));
 			bsdf->incRef();
 			m_bsdfs.push_back(bsdf);
@@ -107,7 +107,7 @@ public:
 
 		stream->writeSize(m_bsdfs.size());
 		for (size_t i=0; i<m_bsdfs.size(); ++i) {
-			stream->writeFloat(m_weights[i]);
+			stream->writefloat(m_weights[i]);
 			manager->serialize(stream, m_bsdfs[i]);
 		}
 	}
@@ -120,7 +120,7 @@ public:
 			Log(EError, "BSDF count mismatch: " SIZE_T_FMT " bsdfs, but specified " SIZE_T_FMT " weights",
 				m_bsdfs.size(), m_bsdfs.size());
 
-		Float totalWeight = 0;
+		float totalWeight = 0;
 		for (size_t i=0; i<m_weights.size(); ++i)
 			totalWeight += m_weights[i];
 
@@ -129,7 +129,7 @@ public:
 
 		if (m_ensureEnergyConservation && totalWeight > 1) {
 			std::ostringstream oss;
-			Float scale = 1.0f / totalWeight;
+			float scale = 1.0f / totalWeight;
 			oss << "The BSDF" << endl << toString() << endl
 				<< "potentially violates energy conservation, since the weights "
 				<< "sum to " << totalWeight << ", which is greater than one! "
@@ -188,8 +188,8 @@ public:
 		return result;
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
-		Float result = 0.0f;
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+		float result = 0.0f;
 
 		if (bRec.component == -1) {
 			for (size_t i=0; i<m_bsdfs.size(); ++i)
@@ -211,7 +211,7 @@ public:
 			/* Choose a component based on the normalized weights */
 			size_t entry = m_pdf.sampleReuse(sample.x);
 
-			Float pdf;
+			float pdf;
 			Spectrum result = m_bsdfs[entry]->sample(bRec, pdf, sample);
 			if (result.isZero()) // sampling failed
 				return result;
@@ -241,7 +241,7 @@ public:
 		}
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &_sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &_sample) const {
 		Point2 sample(_sample);
 		if (bRec.component == -1) {
 			/* Choose a component based on the normalized weights */
@@ -286,7 +286,7 @@ public:
 		}
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		int bsdfIndex = m_indices[component].first;
 		component = m_indices[component].second;
 		return m_bsdfs[bsdfIndex]->getRoughness(its, component);
@@ -315,7 +315,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	std::vector<Float> m_weights;
+	std::vector<float> m_weights;
 	std::vector<std::pair<int, int> > m_indices;
 	std::vector<int> m_offsets;
 	std::vector<BSDF *> m_bsdfs;
@@ -326,7 +326,7 @@ private:
 
 class MixtureBSDFShader : public Shader {
 public:
-	MixtureBSDFShader(Renderer *renderer, const std::vector<BSDF *> &bsdfs, const std::vector<Float> &weights)
+	MixtureBSDFShader(Renderer *renderer, const std::vector<BSDF *> &bsdfs, const std::vector<float> &weights)
 		: Shader(renderer, EBSDFShader), m_bsdfs(bsdfs), m_weights(weights), m_complete(false) {
 		m_bsdfShader.resize(bsdfs.size());
 		for (size_t i=0; i<bsdfs.size(); ++i) {
@@ -428,7 +428,7 @@ public:
 private:
 	std::vector<Shader *> m_bsdfShader;
 	const std::vector<BSDF *> &m_bsdfs;
-	const std::vector<Float> &m_weights;
+	const std::vector<float> &m_weights;
 	bool m_complete;
 };
 

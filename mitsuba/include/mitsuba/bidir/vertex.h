@@ -194,10 +194,10 @@ struct MTS_EXPORT_BIDIR PathVertex {
 	 * recovered by computing the product of \c pdf and \ref PathEdge::pdf
 	 * of the associated transport edge.
 	 */
-	Float pdf[ETransportModes];
+	float pdf[ETransportModes];
 
 	/// \brief Termination weight due to russian roulette (used by BDPT)
-	Float rrWeight;
+	float rrWeight;
 
 	/**
 	 * \brief Auxilary node-depependent data associated with each vertex
@@ -232,7 +232,7 @@ struct MTS_EXPORT_BIDIR PathVertex {
 	 *     Denotes the time value that will be associated with this
 	 *     endpoint and any paths generated starting from there.
 	 */
-	void makeEndpoint(const Scene *scene, Float time, ETransportMode mode);
+	void makeEndpoint(const Scene *scene, float time, ETransportMode mode);
 
 	/**
 	 * \brief Sample the next vertex in a random walk using the default
@@ -387,13 +387,13 @@ struct MTS_EXPORT_BIDIR PathVertex {
 	 */
 	bool perturbDirection(const Scene *scene, const PathVertex *pred,
 		const PathEdge *predEdge, PathEdge *succEdge, PathVertex *succ,
-		const Vector &d, Float dist, EVertexType desiredType, ETransportMode mode);
+		const Vector &d, float dist, EVertexType desiredType, ETransportMode mode);
 
 	/**
 	 *
 	 */
-	bool perturbPosition(const Scene *scene, Sampler *sampler, Float stddev);
-	Float perturbPositionPdf(const PathVertex *target, Float stddev) const;
+	bool perturbPosition(const Scene *scene, Sampler *sampler, float stddev);
+	float perturbPositionPdf(const PathVertex *target, float stddev) const;
 
 	/**
 	 * \brief Propagate a perturbation through an ideally specular interaction
@@ -440,7 +440,7 @@ struct MTS_EXPORT_BIDIR PathVertex {
 	 */
 	bool propagatePerturbation(const Scene *scene, const PathVertex *pred,
 		const PathEdge *predEdge, PathEdge *succEdge, PathVertex *succ,
-		unsigned int componentType, Float dist, EVertexType desiredType,
+		unsigned int componentType, float dist, EVertexType desiredType,
 		ETransportMode mode);
 
 	//! @}
@@ -504,7 +504,7 @@ struct MTS_EXPORT_BIDIR PathVertex {
 	 *     defined on spaces with different measures.
 	 * \return The computed probability density
 	 */
-	Float evalPdf(const Scene *scene, const PathVertex *pred,
+	float evalPdf(const Scene *scene, const PathVertex *pred,
 		const PathVertex *succ, ETransportMode mode, EMeasure measure = EArea) const;
 
 	/**
@@ -527,7 +527,7 @@ struct MTS_EXPORT_BIDIR PathVertex {
 	 *     defined on spaces with different measures.
 	 * \return The density of \c sample conditioned on this vertex.
 	 */
-	Float evalPdfDirect(const Scene *scene, const PathVertex *sample,
+	float evalPdfDirect(const Scene *scene, const PathVertex *sample,
 		ETransportMode mode, EMeasure measure = EArea) const;
 
 	/**
@@ -640,7 +640,7 @@ struct MTS_EXPORT_BIDIR PathVertex {
 	Normal getShadingNormal() const;
 
 	/// Return the time value associated with this node
-	Float getTime() const;
+	float getTime() const;
 
 	/// Is this vertex a supernode?
 	inline bool isSupernode() const { return type & ESupernode; }

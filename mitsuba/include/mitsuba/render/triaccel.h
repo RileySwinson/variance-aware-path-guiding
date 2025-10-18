@@ -36,17 +36,17 @@ static const uint32_t KNoTriangleFlag = 0xFFFFFFFF;
  */
 struct TriAccel {
 	uint32_t k;
-	Float n_u;
-	Float n_v;
-	Float n_d;
+	float n_u;
+	float n_v;
+	float n_d;
 
-	Float a_u;
-	Float a_v;
-	Float b_nu;
-	Float b_nv;
+	float a_u;
+	float a_v;
+	float b_nu;
+	float b_nv;
 
-	Float c_nu;
-	Float c_nv;
+	float c_nu;
+	float c_nv;
 	uint32_t shapeIndex;
 	uint32_t primIndex;
 
@@ -54,8 +54,8 @@ struct TriAccel {
 	inline int load(const Point &A, const Point &B, const Point &C);
 
 	/// Fast ray-triangle intersection test
-	FINLINE bool rayIntersect(const Ray &ray, Float mint, Float maxt,
-		Float &u, Float &v, Float &t) const;
+	FINLINE bool rayIntersect(const Ray &ray, float mint, float maxt,
+		float &u, float &v, float &t) const;
 };
 
 inline int TriAccel::load(const Point &A, const Point &B, const Point &C) {
@@ -72,7 +72,7 @@ inline int TriAccel::load(const Point &A, const Point &B, const Point &C) {
 
 	uint32_t u = waldModulo[k],
 		v = waldModulo[k+1];
-	const Float n_k = N[k],
+	const float n_k = N[k],
 		denom = b[u]*c[v] - b[v]*c[u];
 
 	if (denom == 0) {
@@ -93,17 +93,17 @@ inline int TriAccel::load(const Point &A, const Point &B, const Point &C) {
 	return 0;
 }
 
-FINLINE bool TriAccel::rayIntersect(const Ray &ray, Float mint, Float maxt,
-	Float &u, Float &v, Float &t) const {
+FINLINE bool TriAccel::rayIntersect(const Ray &ray, float mint, float maxt,
+	float &u, float &v, float &t) const {
 
 #if 0
 	static const MM_ALIGN16 int waldModulo[4] = { 1, 2, 0, 1 };
 	const int ku = waldModulo[k], kv = waldModulo[k+1];
 	/* Get the u and v components */
-	const Float o_u = ray.o[ku], o_v = ray.o[kv], o_k = ray.o[k],
+	const float o_u = ray.o[ku], o_v = ray.o[kv], o_k = ray.o[k],
 				d_u = ray.d[ku], d_v = ray.d[kv], d_k = ray.d[k];
 #else
-	Float o_u, o_v, o_k, d_u, d_v, d_k;
+	float o_u, o_v, o_k, d_u, d_v, d_k;
 	switch (k) {
 		case 0:
 			o_u = ray.o[1];
@@ -148,8 +148,8 @@ FINLINE bool TriAccel::rayIntersect(const Ray &ray, Float mint, Float maxt,
 		return false;
 
 	/* Calculate the projected plane intersection point */
-	const Float hu = o_u + t * d_u - a_u;
-	const Float hv = o_v + t * d_v - a_v;
+	const float hu = o_u + t * d_u - a_u;
+	const float hv = o_v + t * d_v - a_v;
 
 	/* In barycentric coordinates */
 	u = hv * b_nu + hu * b_nv;

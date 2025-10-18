@@ -95,7 +95,7 @@ public:
 	// =============================================================
 
 	/// Return the total surface area
-	Float getSurfaceArea() const;
+	float getSurfaceArea() const;
 
 	/// Return a bounding box containing the mesh
 	AABB getAABB() const;
@@ -195,7 +195,7 @@ public:
 	 *     position, as well as auxilary information about the sample.
 	 */
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const;
+	float pdfPosition(const PositionSamplingRecord &pRec) const;
 
 	//! @}
 	// =============================================================
@@ -237,7 +237,7 @@ public:
 	 * It will never try to merge vertices with equal positions but
 	 * different UV coordinates or vertex colors.
 	 */
-	void rebuildTopology(Float maxAngle);
+	void rebuildTopology(float maxAngle);
 
 	/// Serialize to a file/network stream
 	void serialize(Stream *stream, InstanceManager *manager) const;
@@ -367,8 +367,8 @@ protected:
 
 	/* Surface and distribution -- generated on demand */
 	DiscreteDistribution m_areaDistr;
-	Float m_surfaceArea;
-	Float m_invSurfaceArea;
+	float m_surfaceArea;
+	float m_invSurfaceArea;
 	ref<Mutex> m_mutex;
 };
 

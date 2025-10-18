@@ -25,10 +25,10 @@ MTS_NAMESPACE_BEGIN
 
 struct MaterialEntry {
 	const char *name;
-	Float sigmaS[3];
-	Float sigmaA[3];
-	Float g[3];
-	Float eta;
+	float sigmaS[3];
+	float sigmaA[3];
+	float g[3];
+	float eta;
 };
 
 static MaterialEntry materialData[] = {
@@ -87,7 +87,7 @@ static MaterialEntry materialData[] = {
 	{ NULL,                          { 0.0f,  0.0f,   0.0f   }, { 0.0f,   0.0f,   0.0f   }, { 0.0f,   0.0f,  0.0f   }, 0.0f  }
 };
 
-static void lookupMaterial(const Properties &props, Spectrum &sigmaS, Spectrum &sigmaA, Spectrum &g, Float *eta = NULL) {
+static void lookupMaterial(const Properties &props, Spectrum &sigmaS, Spectrum &sigmaA, Spectrum &g, float *eta = NULL) {
 	bool hasSigmaAS = props.hasProperty("sigmaS") || props.hasProperty("sigmaA"),
 		hasSigmaTAlbedo = props.hasProperty("sigmaT") || props.hasProperty("albedo"),
 		hasIOR = props.hasProperty("intIOR") || props.hasProperty("extIOR"),
@@ -166,7 +166,7 @@ static void lookupMaterial(const Properties &props, Spectrum &sigmaS, Spectrum &
 		if (props.getType("g") == Properties::ESpectrum)
 			g = props.getSpectrum("g");
 		else
-			g = Spectrum(props.getFloat("g"));
+			g = Spectrum(props.getfloat("g"));
 	}
 
 	if (g.min() <= -1 || g.max() >= 1)
@@ -174,10 +174,10 @@ static void lookupMaterial(const Properties &props, Spectrum &sigmaS, Spectrum &
 
 	if (eta && hasIOR) {
 		/* Specifies the internal index of refraction at the interface */
-		Float intIOR = lookupIOR(props, "intIOR", "bk7");
+		float intIOR = lookupIOR(props, "intIOR", "bk7");
 
 		/* Specifies the external index of refraction at the interface */
-		Float extIOR = lookupIOR(props, "extIOR", "air");
+		float extIOR = lookupIOR(props, "extIOR", "air");
 
 		if (intIOR < 0 || extIOR < 0)
 			SLog(EError, "The interior and exterior indices of "
@@ -186,7 +186,7 @@ static void lookupMaterial(const Properties &props, Spectrum &sigmaS, Spectrum &
 		*eta = intIOR / extIOR;
 	}
 
-	Float scale = props.getFloat("scale", 1.0f);
+	float scale = props.getfloat("scale", 1.0f);
 	sigmaS *= scale;
 	sigmaA *= scale;
 

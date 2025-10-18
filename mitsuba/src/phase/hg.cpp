@@ -26,7 +26,7 @@ MTS_NAMESPACE_BEGIN
 /*!\plugin{hg}{Henyey-Greenstein phase function}
  * \order{2}
  * \parameters{
- *     \parameter{g}{\Float}{
+ *     \parameter{g}{\float}{
  *       This parameter must be somewhere in the range $-1$ to $1$
  *       (but not equal to $-1$ or $1$). It denotes the \emph{mean cosine}
  *       of scattering interactions. A value greater than zero indicates that
@@ -47,14 +47,14 @@ public:
 		: PhaseFunction(props) {
 		/* Asymmetry parameter: must lie in [-1, 1] where >0 is
 		   forward scattering and <0 is backward scattering. */
-		m_g = props.getFloat("g", 0.8f);
+		m_g = props.getfloat("g", 0.8f);
 		if (m_g >= 1 || m_g <= -1)
 			Log(EError, "The asymmetry parameter must lie in the interval (-1, 1)!");
 	}
 
 	HGPhaseFunction(Stream *stream, InstanceManager *manager)
 		: PhaseFunction(stream, manager) {
-		m_g = stream->readFloat();
+		m_g = stream->readfloat();
 		configure();
 	}
 
@@ -63,7 +63,7 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		PhaseFunction::serialize(stream, manager);
 
-		stream->writeFloat(m_g);
+		stream->writefloat(m_g);
 	}
 
 	void configure() {
@@ -71,19 +71,19 @@ public:
 		m_type = EAngleDependence;
 	}
 
-	inline Float sample(PhaseFunctionSamplingRecord &pRec,
+	inline float sample(PhaseFunctionSamplingRecord &pRec,
 			Sampler *sampler) const {
 		Point2 sample(sampler->next2D());
 
-		Float cosTheta;
+		float cosTheta;
 		if (std::abs(m_g) < Epsilon) {
 			cosTheta = 1 - 2*sample.x;
 		} else {
-			Float sqrTerm = (1 - m_g * m_g) / (1 - m_g + 2 * m_g * sample.x);
+			float sqrTerm = (1 - m_g * m_g) / (1 - m_g + 2 * m_g * sample.x);
 			cosTheta = (1 + m_g * m_g - sqrTerm * sqrTerm) / (2 * m_g);
 		}
 
-		Float sinTheta = math::safe_sqrt(1.0f-cosTheta*cosTheta),
+		float sinTheta = math::safe_sqrt(1.0f-cosTheta*cosTheta),
 			  sinPhi, cosPhi;
 
 		math::sincos(2*M_PI*sample.y, &sinPhi, &cosPhi);
@@ -97,19 +97,19 @@ public:
 		return 1.0f;
 	}
 
-	Float sample(PhaseFunctionSamplingRecord &pRec,
-			Float &pdf, Sampler *sampler) const {
+	float sample(PhaseFunctionSamplingRecord &pRec,
+			float &pdf, Sampler *sampler) const {
 		HGPhaseFunction::sample(pRec, sampler);
 		pdf = HGPhaseFunction::eval(pRec);
 		return 1.0f;
 	}
 
-	Float eval(const PhaseFunctionSamplingRecord &pRec) const {
-		Float temp = 1.0f + m_g*m_g + 2.0f * m_g * dot(pRec.wi, pRec.wo);
+	float eval(const PhaseFunctionSamplingRecord &pRec) const {
+		float temp = 1.0f + m_g*m_g + 2.0f * m_g * dot(pRec.wi, pRec.wo);
 		return INV_FOURPI * (1 - m_g*m_g) / (temp * std::sqrt(temp));
 	}
 
-	Float getMeanCosine() const {
+	float getMeanCosine() const {
 		return m_g;
 	}
 
@@ -121,7 +121,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	Float m_g;
+	float m_g;
 };
 
 MTS_IMPLEMENT_CLASS_S(HGPhaseFunction, false, PhaseFunction)

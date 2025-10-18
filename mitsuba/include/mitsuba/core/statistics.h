@@ -314,7 +314,7 @@ public:
 	static inline bool isEnabled() { return m_enabled; }
 private:
 	/// Convert a time value to a human-readable format
-	void printTime(Float time, std::ostream &os) const;
+	void printTime(float time, std::ostream &os) const;
 private:
 	static bool m_enabled;
 	std::string m_title;

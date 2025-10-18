@@ -78,7 +78,7 @@ public:
 	 *     Reference to a memory pool that will be used to release
 	 *     and allocate edges and vertices.
 	 */
-	void initialize(const Scene *scene, Float time,
+	void initialize(const Scene *scene, float time,
 		ETransportMode mode, MemoryPool &pool);
 
 	/**
@@ -374,7 +374,7 @@ public:
 			* m_vertices[k-1]->weight[ERadiance]
 			* m_edges[k-1]->weight[ERadiance];
 
-		Float lum = weight.getLuminance();
+		float lum = weight.getLuminance();
 		return lum != 0.0f ? (weight / lum) : Spectrum(0.0f);
 	}
 
@@ -413,7 +413,7 @@ public:
 	 *    (specifically, those with <tt>t==0</tt> or <tt>t==1</tt>) are included
 	 *    in the rendering process.
 	 */
-	static Float miWeight(const Scene *scene,
+	static float miWeight(const Scene *scene,
 			const Path &emitterSubpath,
 			const PathEdge *connectionEdge,
 			const Path &sensorSubpath, int s, int t,

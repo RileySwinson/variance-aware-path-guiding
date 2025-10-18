@@ -86,13 +86,13 @@ struct Frame {
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the squared cosine of the angle between the normal and v */
-	inline static Float cosTheta2(const Vector &v) {
+	inline static float cosTheta2(const Vector &v) {
 		return v.z * v.z;
 	}
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the cosine of the angle between the normal and v */
-	inline static Float cosTheta(const Vector &v) {
+	inline static float cosTheta(const Vector &v) {
 		return v.z;
 	}
 
@@ -104,14 +104,14 @@ struct Frame {
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the squared sine of the angle between the normal and v */
-	inline static Float sinTheta2(const Vector &v) {
+	inline static float sinTheta2(const Vector &v) {
 		return 1.0f - v.z * v.z;
 	}
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the sine of the angle between the normal and v */
-	inline static Float sinTheta(const Vector &v) {
-		Float temp = sinTheta2(v);
+	inline static float sinTheta(const Vector &v) {
+		float temp = sinTheta2(v);
 		if (temp <= 0.0f)
 			return 0.0f;
 		return std::sqrt(temp);
@@ -119,8 +119,8 @@ struct Frame {
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the tangent of the angle between the normal and v */
-	inline static Float tanTheta(const Vector &v) {
-		Float temp = 1 - v.z*v.z;
+	inline static float tanTheta(const Vector &v) {
+		float temp = 1 - v.z*v.z;
 		if (temp <= 0.0f)
 			return 0.0f;
 		return std::sqrt(temp) / v.z;
@@ -128,8 +128,8 @@ struct Frame {
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the squared tangent of the angle between the normal and v */
-	inline static Float tanTheta2(const Vector &v) {
-		Float temp = 1 - v.z*v.z;
+	inline static float tanTheta2(const Vector &v) {
+		float temp = 1 - v.z*v.z;
 		if (temp <= 0.0f)
 			return 0.0f;
 		return temp / (v.z * v.z);
@@ -137,34 +137,34 @@ struct Frame {
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the sine of the phi parameter in spherical coordinates */
-	inline static Float sinPhi(const Vector &v) {
-		Float sinTheta = Frame::sinTheta(v);
+	inline static float sinPhi(const Vector &v) {
+		float sinTheta = Frame::sinTheta(v);
 		if (sinTheta == 0.0f)
 			return 1.0f;
-		return math::clamp(v.y / sinTheta, (Float) -1.0f, (Float) 1.0f);
+		return math::clamp(v.y / sinTheta, (float) -1.0f, (float) 1.0f);
 	}
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the cosine of the phi parameter in spherical coordinates */
-	inline static Float cosPhi(const Vector &v) {
-		Float sinTheta = Frame::sinTheta(v);
+	inline static float cosPhi(const Vector &v) {
+		float sinTheta = Frame::sinTheta(v);
 		if (sinTheta == 0.0f)
 			return 1.0f;
-		return math::clamp(v.x / sinTheta, (Float) -1.0f, (Float) 1.0f);
+		return math::clamp(v.x / sinTheta, (float) -1.0f, (float) 1.0f);
 	}
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the squared sine of the phi parameter in  spherical
 	 * coordinates */
-	inline static Float sinPhi2(const Vector &v) {
-		return math::clamp(v.y * v.y / sinTheta2(v), (Float) 0.0f, (Float) 1.0f);
+	inline static float sinPhi2(const Vector &v) {
+		return math::clamp(v.y * v.y / sinTheta2(v), (float) 0.0f, (float) 1.0f);
 	}
 
 	/** \brief Assuming that the given direction is in the local coordinate
 	 * system, return the squared cosine of the phi parameter in  spherical
 	 * coordinates */
-	inline static Float cosPhi2(const Vector &v) {
-		return math::clamp(v.x * v.x / sinTheta2(v), (Float) 0.0f, (Float) 1.0f);
+	inline static float cosPhi2(const Vector &v) {
+		return math::clamp(v.x * v.x / sinTheta2(v), (float) 0.0f, (float) 1.0f);
 	}
 
 	/// Equality test

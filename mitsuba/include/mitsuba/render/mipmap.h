@@ -159,10 +159,10 @@ public:
 			EBoundaryCondition bcu = ReconstructionFilter::ERepeat,
 			EBoundaryCondition bcv = ReconstructionFilter::ERepeat,
 			EMIPFilterType filterType = EEWA,
-			Float maxAnisotropy = 20.0f,
+			float maxAnisotropy = 20.0f,
 			fs::path cacheFilename = fs::path(),
 			uint64_t timestamp = 0,
-			Float maxValue = 1.0f,
+			float maxValue = 1.0f,
 			Spectrum::EConversionIntent intent = Spectrum::EReflectance)
 		: m_pixelFormat(pixelFormat), m_bcu(bcu), m_bcv(bcv), m_filterType(filterType),
 		  m_weightLut(NULL), m_maxAnisotropy(maxAnisotropy) {
@@ -262,8 +262,8 @@ public:
 				m_pyramid[m_levels].cleanup();
 				m_pyramid[m_levels].init((Value *) bitmap->getData());
 				m_sizeRatio[m_levels] = Vector2(
-					(Float) size.x / (Float) m_pyramid[0].getWidth(),
-					(Float) size.y / (Float) m_pyramid[0].getHeight());
+					(float) size.x / (float) m_pyramid[0].getWidth(),
+					(float) size.y / (float) m_pyramid[0].getHeight());
 
 				++m_levels;
 			}
@@ -294,9 +294,9 @@ public:
 			getBufferSize()).c_str(), timer->getMilliseconds());
 
 		if (m_filterType == EEWA) {
-			m_weightLut = static_cast<Float *>(allocAligned(sizeof(Float) * MTS_MIPMAP_LUT_SIZE));
+			m_weightLut = static_cast<float *>(allocAligned(sizeof(float) * MTS_MIPMAP_LUT_SIZE));
 			for (int i=0; i<MTS_MIPMAP_LUT_SIZE; ++i) {
-				Float r2 = (Float) i / (Float) (MTS_MIPMAP_LUT_SIZE-1);
+				float r2 = (float) i / (float) (MTS_MIPMAP_LUT_SIZE-1);
 				m_weightLut[i] = math::fastexp(-2.0f * r2) - math::fastexp(-2.0f);
 			}
 		}
@@ -316,7 +316,7 @@ public:
 	 *    cost of filtered lookups. This parameter is independent of the
 	 *    cache file that was previously created.
 	 */
-	TMIPMap(fs::path cacheFilename, Float maxAnisotropy = 20.0f)
+	TMIPMap(fs::path cacheFilename, float maxAnisotropy = 20.0f)
 			: m_weightLut(NULL), m_maxAnisotropy(maxAnisotropy) {
 		m_mmap = new MemoryMappedFile(cacheFilename);
 		uint8_t *mmapPtr = (uint8_t *) m_mmap->getData();
@@ -361,17 +361,17 @@ public:
 				size.y = std::max(1, (size.y + 1) / 2);
 				m_pyramid[level].map(mmapPtr, size);
 				m_sizeRatio[level] = Vector2(
-					(Float) size.x / (Float) m_pyramid[0].getWidth(),
-					(Float) size.y / (Float) m_pyramid[0].getHeight());
+					(float) size.x / (float) m_pyramid[0].getWidth(),
+					(float) size.y / (float) m_pyramid[0].getHeight());
 				mmapPtr += m_pyramid[level++].getBufferSize();
 			}
 			Assert(level == m_levels);
 		}
 
 		if (m_filterType == EEWA) {
-			m_weightLut = static_cast<Float *>(allocAligned(sizeof(Float) * MTS_MIPMAP_LUT_SIZE));
+			m_weightLut = static_cast<float *>(allocAligned(sizeof(float) * MTS_MIPMAP_LUT_SIZE));
 			for (int i=0; i<MTS_MIPMAP_LUT_SIZE; ++i) {
-				Float r2 = (Float) i / (Float) (MTS_MIPMAP_LUT_SIZE-1);
+				float r2 = (float) i / (float) (MTS_MIPMAP_LUT_SIZE-1);
 				m_weightLut[i] = math::fastexp(-2.0f * r2) - math::fastexp(-2.0f);
 			}
 		}
@@ -404,7 +404,7 @@ public:
 	 */
 	static bool validateCacheFile(const fs::path &path, uint64_t timestamp,
 			Bitmap::EPixelFormat pixelFormat, EBoundaryCondition bcu,
-			EBoundaryCondition bcv, EMIPFilterType filterType, Float gamma) {
+			EBoundaryCondition bcv, EMIPFilterType filterType, float gamma) {
 		fs::ifstream is(path);
 		if (!is.good())
 			return false;
@@ -583,10 +583,10 @@ public:
 
 		/* Convert to fractional pixel coordinates on the specified level */
 		const Vector2i &size = m_pyramid[level].getSize();
-		Float u = uv.x * size.x - 0.5f, v = uv.y * size.y - 0.5f;
+		float u = uv.x * size.x - 0.5f, v = uv.y * size.y - 0.5f;
 
 		int xPos = math::floorToInt(u), yPos = math::floorToInt(v);
-		Float dx1 = u - xPos, dx2 = 1.0f - dx1,
+		float dx1 = u - xPos, dx2 = 1.0f - dx1,
 		      dy1 = v - yPos, dy2 = 1.0f - dy1;
 
 		return evalTexel(level, xPos, yPos) * dx2 * dy2
@@ -610,10 +610,10 @@ public:
 
 		/* Convert to fractional pixel coordinates on the specified level */
 		const Vector2i &size = m_pyramid[level].getSize();
-		Float u = uv.x * size.x - 0.5f, v = uv.y * size.y - 0.5f;
+		float u = uv.x * size.x - 0.5f, v = uv.y * size.y - 0.5f;
 
 		int xPos = math::floorToInt(u), yPos = math::floorToInt(v);
-		Float dx = u - xPos, dy = v - yPos;
+		float dx = u - xPos, dy = v - yPos;
 
 		const Value p00 = evalTexel(level, xPos,   yPos);
 		const Value p10 = evalTexel(level, xPos+1, yPos);
@@ -621,8 +621,8 @@ public:
 		const Value p11 = evalTexel(level, xPos+1, yPos+1);
 		Value tmp = p01 + p10 - p11;
 
-		gradient[0] = (p10 + p00*(dy-1) - tmp*dy) * static_cast<Float> (size.x);
-		gradient[1] = (p01 + p00*(dx-1) - tmp*dx) * static_cast<Float> (size.y);
+		gradient[0] = (p10 + p00*(dy-1) - tmp*dy) * static_cast<float> (size.x);
+		gradient[1] = (p01 + p00*(dx-1) - tmp*dx) * static_cast<float> (size.y);
 	}
 
 	/// \brief Perform a filtered texture lookup using the configured method
@@ -634,18 +634,18 @@ public:
 
 		/* Convert into texel coordinates */
 		const Vector2i &size = m_pyramid[0].getSize();
-		Float du0 = d0.x * size.x, dv0 = d0.y * size.y,
+		float du0 = d0.x * size.x, dv0 = d0.y * size.y,
 			  du1 = d1.x * size.x, dv1 = d1.y * size.y;
 
 		/* Turn the texture-space Jacobian into the coefficients of an
 		   implicitly defined ellipse. */
-		Float A = dv0*dv0 + dv1*dv1,
+		float A = dv0*dv0 + dv1*dv1,
 		      B = -2.0f * (du0*dv0 + du1*dv1),
 		      C = du0*du0 + du1*du1,
 		      F = A*C - B*B*0.25f;
 
 		/* Compute the major and minor radii */
-		Float root = math::hypot2(A-C, B),
+		float root = math::hypot2(A-C, B),
 		      Aprime = 0.5f * (A + C - root),
 		      Cprime = 0.5f * (A + C + root),
 		      majorRadius = Aprime != 0 ? std::sqrt(F / Aprime) : 0,
@@ -654,7 +654,7 @@ public:
 		if (m_filterType == ETrilinear || !(minorRadius > 0) || !(majorRadius > 0) || F < 0) {
 			/* Determine a suitable mip map level, while preferring
 			   blurring over aliasing */
-			Float level = math::log2(std::max(majorRadius, Epsilon));
+			float level = math::log2(std::max(majorRadius, Epsilon));
 			int ilevel = math::floorToInt(level);
 
 			if (ilevel < 0) {
@@ -662,7 +662,7 @@ public:
 				return evalBilinear(0, uv);
 			} else {
 				/* Trilinear interpolation between two mipmap levels */
-				Float a = level - ilevel;
+				float a = level - ilevel;
 				return evalBilinear(ilevel,   uv) * (1.0f - a)
 				     + evalBilinear(ilevel+1, uv) * a;
 			}
@@ -677,10 +677,10 @@ public:
 				   unfortunately involves expensive trig and arctrig functions.
 				   Fortunately, this is somewhat of a corner case and won't
 				   happen overly often in practice. */
-				Float theta = 0.5f * std::atan(B / (A-C)), sinTheta, cosTheta;
+				float theta = 0.5f * std::atan(B / (A-C)), sinTheta, cosTheta;
 				math::sincos(theta, &sinTheta, &cosTheta);
 
-				Float a2 = majorRadius*majorRadius,
+				float a2 = majorRadius*majorRadius,
 				      b2 = minorRadius*minorRadius,
 				      sinTheta2 = sinTheta*sinTheta,
 				      cosTheta2 = cosTheta*cosTheta,
@@ -696,14 +696,14 @@ public:
 			stats::clampedAnisotropy.incrementBase();
 
 			/* Switch to normalized coefficients */
-			Float scale = 1.0f / F;
+			float scale = 1.0f / F;
 			A *= scale; B *= scale; C *= scale;
 
 			/* Determine a suitable MIP map level, such that the filter
 			   covers a reasonable amount of pixels */
-			Float level = std::max((Float) 0.0f, math::log2(minorRadius));
+			float level = std::max((float) 0.0f, math::log2(minorRadius));
 			int ilevel = (int) level;
-			Float a = level - ilevel;
+			float a = level - ilevel;
 
 			/* Switch to bilinear interpolation, be wary of round-off errors */
 			if (majorRadius < 1 || !(A > 0 && C > 0))
@@ -761,7 +761,7 @@ protected:
 
 
 	/// Calculate the elliptically weighted average of a sample and associated Jacobian
-	Value evalEWA(int level, const Point2 &uv, Float A, Float B, Float C) const {
+	Value evalEWA(int level, const Point2 &uv, float A, float B, float C) const {
 		Assert(A > 0);
 		if (EXPECT_NOT_TAKEN(!std::isfinite(A+B+C+uv.x+uv.y))) {
 			Log(EWarn, "evalEWA(): encountered a NaN!");
@@ -773,8 +773,8 @@ protected:
 
 		/* Convert to fractional pixel coordinates on the specified level */
 		const Vector2i &size = m_pyramid[level].getSize();
-		Float u = uv.x * size.x - 0.5f;
-		Float v = uv.y * size.y - 0.5f;
+		float u = uv.x * size.x - 0.5f;
+		float v = uv.y * size.y - 0.5f;
 
 		/* Do the same to the ellipse coefficients */
 		const Vector2 &ratio = m_sizeRatio[level];
@@ -783,33 +783,33 @@ protected:
 		C /= ratio.y * ratio.y;
 
 		/* Compute the ellipse's bounding box in texture space */
-		Float invDet = 1.0f / (-B*B + 4.0f*A*C),
+		float invDet = 1.0f / (-B*B + 4.0f*A*C),
 		      deltaU = 2.0f * std::sqrt(C * invDet),
 		      deltaV = 2.0f * std::sqrt(A * invDet);
 		int u0 = math::ceilToInt(u - deltaU), u1 = math::floorToInt(u + deltaU);
 		int v0 = math::ceilToInt(v - deltaV), v1 = math::floorToInt(v + deltaV);
 
 		/* Scale the coefficients by the size of the Gaussian lookup table */
-		Float As = A * MTS_MIPMAP_LUT_SIZE,
+		float As = A * MTS_MIPMAP_LUT_SIZE,
 		      Bs = B * MTS_MIPMAP_LUT_SIZE,
 		      Cs = C * MTS_MIPMAP_LUT_SIZE;
 
 		Value result(0.0f);
-		Float denominator = 0.0f;
-		Float ddq = 2*As, uu0 = (Float) u0 - u;
+		float denominator = 0.0f;
+		float ddq = 2*As, uu0 = (float) u0 - u;
 		int nSamples = 0;
 
 		for (int vt = v0; vt <= v1; ++vt) {
-			const Float vv = (Float) vt - v;
+			const float vv = (float) vt - v;
 
-			Float q  = As*uu0*uu0 + (Bs*uu0 + Cs*vv)*vv;
-			Float dq = As*(2*uu0 + 1) + Bs*vv;
+			float q  = As*uu0*uu0 + (Bs*uu0 + Cs*vv)*vv;
+			float dq = As*(2*uu0 + 1) + Bs*vv;
 
 			for (int ut = u0; ut <= u1; ++ut) {
-				if (q < (Float) MTS_MIPMAP_LUT_SIZE) {
+				if (q < (float) MTS_MIPMAP_LUT_SIZE) {
 					uint32_t qi = (uint32_t) q;
 					if (qi < MTS_MIPMAP_LUT_SIZE) {
-						const Float weight = m_weightLut[(int) q];
+						const float weight = m_weightLut[(int) q];
 						result += evalTexel(level, ut, vt) * weight;
 						denominator += weight;
 						++nSamples;
@@ -837,8 +837,8 @@ private:
 	Bitmap::EPixelFormat m_pixelFormat;
 	EBoundaryCondition m_bcu, m_bcv;
 	EMIPFilterType m_filterType;
-	Float *m_weightLut;
-	Float m_maxAnisotropy;
+	float *m_weightLut;
+	float m_maxAnisotropy;
 	Vector2 *m_sizeRatio;
 	Array2DType *m_pyramid;
 	int m_levels;

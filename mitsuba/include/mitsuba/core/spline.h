@@ -41,7 +41,7 @@ MTS_NAMESPACE_BEGIN
  * \param x
  *      Evaluation point
  * \param values
- *      Floating point array containing \c size regularly spaced evaluations
+ *      floating point array containing \c size regularly spaced evaluations
  *      in the range [\c min,\c max] of the function to be approximated.
  * \param size
  *      Denotes the size of the \c values array
@@ -55,8 +55,8 @@ MTS_NAMESPACE_BEGIN
  *      The interpolated value or zero when <tt>extrapolate=false</tt>tt>
  *      and \c x lies outside of [\c min, \c max]
  */
-extern MTS_EXPORT_CORE Float evalCubicInterp1D(Float x, const Float *values,
-		size_t size, Float min, Float max, bool extrapolate = false);
+extern MTS_EXPORT_CORE float evalCubicInterp1D(float x, const float *values,
+		size_t size, float min, float max, bool extrapolate = false);
 
 /**
  * \brief Evaluate a cubic spline interpolant of a \a nonuniformly sampled 1D function
@@ -68,11 +68,11 @@ extern MTS_EXPORT_CORE Float evalCubicInterp1D(Float x, const Float *values,
  * \param x
  *      Evaluation point
  * \param nodes
- *      Floating point array containing \c size nonuniformly spaced values
+ *      floating point array containing \c size nonuniformly spaced values
  *      denoting positions the where the function to be interpolated was evaluated.
  *      They must be provided in \a increasing order.
  * \param values
- *      Floating point array containing function evaluations matched to
+ *      floating point array containing function evaluations matched to
  *      the entries of \c nodes.
  * \param size
  *      Denotes the size of the \c values array
@@ -82,8 +82,8 @@ extern MTS_EXPORT_CORE Float evalCubicInterp1D(Float x, const Float *values,
  *      The interpolated value or zero when <tt>extrapolate=false</tt>tt>
  *      and \c x lies outside of \a [\c min, \c max]
  */
-extern MTS_EXPORT_CORE Float evalCubicInterp1DN(Float x, const Float *nodes,
-		const Float *values, size_t size, bool extrapolate = false);
+extern MTS_EXPORT_CORE float evalCubicInterp1DN(float x, const float *nodes,
+		const float *values, size_t size, bool extrapolate = false);
 
 /**
  * \brief Computes the definite integral over a segment of a uniformly
@@ -95,7 +95,7 @@ extern MTS_EXPORT_CORE Float evalCubicInterp1DN(Float x, const Float *nodes,
  * \param idx
  *      Denotes the desires spline segment (must be between 0 and size-2)
   * \param values
- *      Floating point array containing \c size regularly spaced evaluations
+ *      floating point array containing \c size regularly spaced evaluations
  *      in the range [\c min,\c max] of the function to be approximated.
  * \param size
  *      Denotes the size of the \c values array
@@ -106,8 +106,8 @@ extern MTS_EXPORT_CORE Float evalCubicInterp1DN(Float x, const Float *nodes,
  * \return
  *      The definite integral over the specified segment
  */
-extern MTS_EXPORT_CORE Float integrateCubicInterp1D(size_t idx,
-		const Float *values, size_t size, Float min, Float max);
+extern MTS_EXPORT_CORE float integrateCubicInterp1D(size_t idx,
+		const float *values, size_t size, float min, float max);
 
 /**
  * \brief Computes the definite integral over a segment of a \a nonuniformly
@@ -119,19 +119,19 @@ extern MTS_EXPORT_CORE Float integrateCubicInterp1D(size_t idx,
  * \param idx
  *      Denotes the desires spline segment (must be between 0 and size-2)
  * \param nodes
- *      Floating point array containing \c size nonuniformly spaced values
+ *      floating point array containing \c size nonuniformly spaced values
  *      denoting positions the where the function to be interpolated was evaluated.
  *      They must be provided in \a increasing order.
  * \param values
- *      Floating point array containing function evaluations matched to
+ *      floating point array containing function evaluations matched to
  *      the entries of \c nodes.
  * \param size
  *      Denotes the size of the \c values array
  * \return
  *      The definite integral over the specified segment
  */
-extern MTS_EXPORT_CORE Float integrateCubicInterp1DN(size_t idx,
-		const Float *nodes, const Float *values, size_t size);
+extern MTS_EXPORT_CORE float integrateCubicInterp1DN(size_t idx,
+		const float *nodes, const float *values, size_t size);
 
 /**
  * \brief Importance sample a segment of a uniformly sampled 1D Catmull-Rom
@@ -140,7 +140,7 @@ extern MTS_EXPORT_CORE Float integrateCubicInterp1DN(size_t idx,
  * \param idx
  *      Denotes the desires spline segment (must be between 0 and size-2)
   * \param values
- *      Floating point array containing \c size regularly spaced evaluations
+ *      floating point array containing \c size regularly spaced evaluations
  *      in the range [\c min,\c max] of the function to be approximated.
  * \param size
  *      Denotes the size of the \c values array
@@ -156,8 +156,8 @@ extern MTS_EXPORT_CORE Float integrateCubicInterp1DN(size_t idx,
  * \return
  *      The sampled position
  */
-extern MTS_EXPORT_CORE Float sampleCubicInterp1D(size_t idx, const Float *values,
-		size_t size, Float min, Float max, Float sample, Float *fval = NULL);
+extern MTS_EXPORT_CORE float sampleCubicInterp1D(size_t idx, const float *values,
+		size_t size, float min, float max, float sample, float *fval = NULL);
 
 /**
  * \brief Importance sample a segment of a \a nonuniformly sampled 1D Catmull-Rom
@@ -166,11 +166,11 @@ extern MTS_EXPORT_CORE Float sampleCubicInterp1D(size_t idx, const Float *values
  * \param idx
  *      Denotes the desires spline segment (must be between 0 and size-2)
  * \param nodes
- *      Floating point array containing \c size nonuniformly spaced values
+ *      floating point array containing \c size nonuniformly spaced values
  *      denoting positions the where the function to be interpolated was evaluated.
  *      They must be provided in \a increasing order.
  * \param values
- *      Floating point array containing function evaluations matched to
+ *      floating point array containing function evaluations matched to
  *      the entries of \c nodes.
  * \param size
  *      Denotes the size of the \c values array
@@ -182,8 +182,8 @@ extern MTS_EXPORT_CORE Float sampleCubicInterp1D(size_t idx, const Float *values
  * \return
  *      The sampled position
  */
-extern MTS_EXPORT_CORE Float sampleCubicInterp1DN(size_t idx, const Float *nodes,
-		const Float *values, size_t size, Float sample, Float *fval = NULL);
+extern MTS_EXPORT_CORE float sampleCubicInterp1DN(size_t idx, const float *nodes,
+		const float *values, size_t size, float sample, float *fval = NULL);
 
 /**
  * \brief Evaluate a cubic spline interpolant of a uniformly sampled 2D function
@@ -210,7 +210,7 @@ extern MTS_EXPORT_CORE Float sampleCubicInterp1DN(size_t idx, const Float *nodes
  *      The interpolated value or zero when <tt>extrapolate=false</tt>tt> and
  *      \c p lies outside of the knot range
  */
-extern MTS_EXPORT_CORE Float evalCubicInterp2D(const Point2 &p, const Float *values,
+extern MTS_EXPORT_CORE float evalCubicInterp2D(const Point2 &p, const float *values,
 		const Size2 &size, const Point2 &min, const Point2 &max, bool extrapolate = false);
 
 /**
@@ -241,8 +241,8 @@ extern MTS_EXPORT_CORE Float evalCubicInterp2D(const Point2 &p, const Float *val
  *      The interpolated value or zero when <tt>extrapolate=false</tt>tt> and
  *      \c p lies outside of the knot range
  */
-extern MTS_EXPORT_CORE Float evalCubicInterp2DN(const Point2 &p, const Float **nodes,
-		const Float *values, const Size2 &size, bool extrapolate = false);
+extern MTS_EXPORT_CORE float evalCubicInterp2DN(const Point2 &p, const float **nodes,
+		const float *values, const Size2 &size, bool extrapolate = false);
 
 /**
  * \brief Evaluate a cubic spline interpolant of a uniformly sampled 3D function
@@ -270,7 +270,7 @@ extern MTS_EXPORT_CORE Float evalCubicInterp2DN(const Point2 &p, const Float **n
  *      The interpolated value or zero when <tt>extrapolate=false</tt>tt> and
  *      \c p lies outside of the knot range
  */
-extern MTS_EXPORT_CORE Float evalCubicInterp3D(const Point3 &p, const Float *values,
+extern MTS_EXPORT_CORE float evalCubicInterp3D(const Point3 &p, const float *values,
 		const Size3 &size, const Point3 &min, const Point3 &max, bool extrapolate = false);
 
 /**
@@ -302,8 +302,8 @@ extern MTS_EXPORT_CORE Float evalCubicInterp3D(const Point3 &p, const Float *val
  *      The interpolated value or zero when <tt>extrapolate=false</tt>tt> and
  *      \c p lies outside of the knot range
  */
-extern MTS_EXPORT_CORE Float evalCubicInterp3DN(const Point3 &p, const Float **nodes,
-		const Float *values, const Size3 &size, bool extrapolate = false);
+extern MTS_EXPORT_CORE float evalCubicInterp3DN(const Point3 &p, const float **nodes,
+		const float *values, const Size3 &size, bool extrapolate = false);
 
 //! @}
 // -----------------------------------------------------------------------

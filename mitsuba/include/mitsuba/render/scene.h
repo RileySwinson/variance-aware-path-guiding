@@ -217,7 +217,7 @@ public:
 	 *
 	 * \return \c true if an intersection was found
 	 */
-	inline bool rayIntersect(const Ray &ray, Float &t,
+	inline bool rayIntersect(const Ray &ray, float &t,
 			ConstShapePtr &shape, Normal &n, Point2 &uv) const {
 		return m_kdtree->rayIntersect(ray, t, shape, n, uv);
 	}
@@ -288,7 +288,7 @@ public:
 	 *     between zero and one.
 	 */
 	Spectrum evalTransmittance(const Point &p1, bool p1OnSurface,
-		const Point &p2, bool p2OnSurface, Float time, const Medium *medium,
+		const Point &p2, bool p2OnSurface, float time, const Medium *medium,
 		int &interactions, Sampler *sampler = NULL) const;
 
 	//! @}
@@ -360,7 +360,7 @@ public:
 	 *
 	 * \return \c true if an intersection was found
 	 */
-	bool rayIntersectAll(const Ray &ray, Float &t,
+	bool rayIntersectAll(const Ray &ray, float &t,
 			ConstShapePtr &shape, Normal &n, Point2 &uv) const;
 
 	/**
@@ -443,7 +443,7 @@ public:
 	 *     between zero and one.
 	 */
 	Spectrum evalTransmittanceAll(const Point &p1, bool p1OnSurface,
-		const Point &p2, bool p2OnSurface, Float time, const Medium *medium,
+		const Point &p2, bool p2OnSurface, float time, const Medium *medium,
 		int &interactions, Sampler *sampler = NULL) const;
 
 	//! @}
@@ -733,7 +733,7 @@ public:
 	 *    The density expressed with respect to the requested measure
 	 *    (usually \ref ESolidAngle)
 	 */
-	Float pdfEmitterDirect(const DirectSamplingRecord &dRec) const;
+	float pdfEmitterDirect(const DirectSamplingRecord &dRec) const;
 
 	/**
 	 * \brief Evaluate the probability density of the \a direct sampling
@@ -753,7 +753,7 @@ public:
 	 *    The density expressed with respect to the requested measure
 	 *    (usually \ref ESolidAngle)
 	 */
-	Float pdfSensorDirect(const DirectSamplingRecord &dRec) const;
+	float pdfSensorDirect(const DirectSamplingRecord &dRec) const;
 
 	//! @}
 	// =============================================================
@@ -825,7 +825,7 @@ public:
 	 * \return
 	 *    The area density at the supplied position
 	 */
-	Float pdfEmitterPosition(const PositionSamplingRecord &pRec) const;
+	float pdfEmitterPosition(const PositionSamplingRecord &pRec) const;
 
 	/**
 	 * \brief Evaluate the spatial component of the sampling density
@@ -837,7 +837,7 @@ public:
 	 * \return
 	 *    The area density at the supplied position
 	 */
-	inline Float pdfSensorPosition(const PositionSamplingRecord &pRec) const {
+	inline float pdfSensorPosition(const PositionSamplingRecord &pRec) const {
 		return m_sensor->pdfPosition(pRec);
 	}
 
@@ -845,7 +845,7 @@ public:
 	 * \brief Return the discrete probability of choosing a
 	 * certain emitter in <tt>sampleEmitter*</tt>
 	 */
-	inline Float pdfEmitterDiscrete(const Emitter *emitter) const {
+	inline float pdfEmitterDiscrete(const Emitter *emitter) const {
 		return emitter->getSamplingWeight() * m_emitterPDF.getNormalization();
 	}
 
@@ -886,7 +886,7 @@ public:
 		const Emitter* &emitter,
 		const Point2 &spatialSample,
 		const Point2 &directionalSample,
-		Float time) const;
+		float time) const;
 
 	//! @}
 	// =============================================================

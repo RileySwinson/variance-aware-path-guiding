@@ -26,9 +26,9 @@ MTS_NAMESPACE_BEGIN
  * \order{3}
  * \icon{bsdf_dielectric}
  * \parameters{
- *     \parameter{intIOR}{\Float\Or\String}{Interior index of refraction specified
+ *     \parameter{intIOR}{\float\Or\String}{Interior index of refraction specified
  *      numerically or using a known material name. \default{\texttt{bk7} / 1.5046}}
- *     \parameter{extIOR}{\Float\Or\String}{Exterior index of refraction specified
+ *     \parameter{extIOR}{\float\Or\String}{Exterior index of refraction specified
  *      numerically or using a known material name. \default{\texttt{air} / 1.000277}}
  *     \parameter{specular\showbreak Reflectance}{\Spectrum\Or\Texture}{Optional
  *         factor that can be used to modulate the specular reflection component. Note
@@ -146,10 +146,10 @@ class SmoothDielectric : public BSDF {
 public:
 	SmoothDielectric(const Properties &props) : BSDF(props) {
 		/* Specifies the internal index of refraction at the interface */
-		Float intIOR = lookupIOR(props, "intIOR", "bk7");
+		float intIOR = lookupIOR(props, "intIOR", "bk7");
 
 		/* Specifies the external index of refraction at the interface */
-		Float extIOR = lookupIOR(props, "extIOR", "air");
+		float extIOR = lookupIOR(props, "extIOR", "air");
 
 		if (intIOR < 0 || extIOR < 0)
 			Log(EError, "The interior and exterior indices of "
@@ -166,7 +166,7 @@ public:
 
 	SmoothDielectric(Stream *stream, InstanceManager *manager)
 			: BSDF(stream, manager) {
-		m_eta = stream->readFloat();
+		m_eta = stream->readfloat();
 		m_specularReflectance = static_cast<Texture *>(manager->getInstance(stream));
 		m_specularTransmittance = static_cast<Texture *>(manager->getInstance(stream));
 		m_invEta = 1 / m_eta;
@@ -176,7 +176,7 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		BSDF::serialize(stream, manager);
 
-		stream->writeFloat(m_eta);
+		stream->writefloat(m_eta);
 		manager->serialize(stream, m_specularReflectance.get());
 		manager->serialize(stream, m_specularTransmittance.get());
 	}
@@ -220,8 +220,8 @@ public:
 	}
 
 	/// Refraction in local coordinates
-	inline Vector refract(const Vector &wi, Float cosThetaT) const {
-		Float scale = -(cosThetaT < 0 ? m_invEta : m_eta);
+	inline Vector refract(const Vector &wi, float cosThetaT) const {
+		float scale = -(cosThetaT < 0 ? m_invEta : m_eta);
 		return Vector(scale*wi.x, scale*wi.y, cosThetaT);
 	}
 
@@ -231,8 +231,8 @@ public:
 		bool sampleTransmission = (bRec.typeMask & EDeltaTransmission)
 				&& (bRec.component == -1 || bRec.component == 1) && measure == EDiscrete;
 
-		Float cosThetaT;
-		Float F = fresnelDielectricExt(Frame::cosTheta(bRec.wi), cosThetaT, m_eta);
+		float cosThetaT;
+		float F = fresnelDielectricExt(Frame::cosTheta(bRec.wi), cosThetaT, m_eta);
 
 		if (Frame::cosTheta(bRec.wi) * Frame::cosTheta(bRec.wo) >= 0) {
 			if (!sampleReflection || std::abs(dot(reflect(bRec.wi), bRec.wo)-1) > DeltaEpsilon)
@@ -245,21 +245,21 @@ public:
 
 			/* Radiance must be scaled to account for the solid angle compression
 			   that occurs when crossing the interface. */
-			Float factor = (bRec.mode == ERadiance)
+			float factor = (bRec.mode == ERadiance)
 				? (cosThetaT < 0 ? m_invEta : m_eta) : 1.0f;
 
 			return m_specularTransmittance->eval(bRec.its)  * factor * factor * (1 - F);
 		}
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		bool sampleReflection   = (bRec.typeMask & EDeltaReflection)
 				&& (bRec.component == -1 || bRec.component == 0) && measure == EDiscrete;
 		bool sampleTransmission = (bRec.typeMask & EDeltaTransmission)
 				&& (bRec.component == -1 || bRec.component == 1) && measure == EDiscrete;
 
-		Float cosThetaT;
-		Float F = fresnelDielectricExt(Frame::cosTheta(bRec.wi), cosThetaT, m_eta);
+		float cosThetaT;
+		float F = fresnelDielectricExt(Frame::cosTheta(bRec.wi), cosThetaT, m_eta);
 
 		if (Frame::cosTheta(bRec.wi) * Frame::cosTheta(bRec.wo) >= 0) {
 			if (!sampleReflection || std::abs(dot(reflect(bRec.wi), bRec.wo)-1) > DeltaEpsilon)
@@ -274,14 +274,14 @@ public:
 		}
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		bool sampleReflection   = (bRec.typeMask & EDeltaReflection)
 				&& (bRec.component == -1 || bRec.component == 0);
 		bool sampleTransmission = (bRec.typeMask & EDeltaTransmission)
 				&& (bRec.component == -1 || bRec.component == 1);
 
-		Float cosThetaT;
-		Float F = fresnelDielectricExt(Frame::cosTheta(bRec.wi), cosThetaT, m_eta);
+		float cosThetaT;
+		float F = fresnelDielectricExt(Frame::cosTheta(bRec.wi), cosThetaT, m_eta);
 
 		if (sampleTransmission && sampleReflection) {
 			if (sample.x <= F) {
@@ -301,7 +301,7 @@ public:
 
 				/* Radiance must be scaled to account for the solid angle compression
 				   that occurs when crossing the interface. */
-				Float factor = (bRec.mode == ERadiance)
+				float factor = (bRec.mode == ERadiance)
 					? (cosThetaT < 0 ? m_invEta : m_eta) : 1.0f;
 
 				return m_specularTransmittance->eval(bRec.its) * (factor * factor);
@@ -323,7 +323,7 @@ public:
 
 			/* Radiance must be scaled to account for the solid angle compression
 			   that occurs when crossing the interface. */
-			Float factor = (bRec.mode == ERadiance)
+			float factor = (bRec.mode == ERadiance)
 				? (cosThetaT < 0 ? m_invEta : m_eta) : 1.0f;
 
 			return m_specularTransmittance->eval(bRec.its) * (factor * factor * (1-F));
@@ -338,8 +338,8 @@ public:
 		bool sampleTransmission = (bRec.typeMask & EDeltaTransmission)
 				&& (bRec.component == -1 || bRec.component == 1);
 
-		Float cosThetaT;
-		Float F = fresnelDielectricExt(Frame::cosTheta(bRec.wi), cosThetaT, m_eta);
+		float cosThetaT;
+		float F = fresnelDielectricExt(Frame::cosTheta(bRec.wi), cosThetaT, m_eta);
 
 		if (sampleTransmission && sampleReflection) {
 			if (sample.x <= F) {
@@ -357,7 +357,7 @@ public:
 
 				/* Radiance must be scaled to account for the solid angle compression
 				   that occurs when crossing the interface. */
-				Float factor = (bRec.mode == ERadiance)
+				float factor = (bRec.mode == ERadiance)
 					? (cosThetaT < 0 ? m_invEta : m_eta) : 1.0f;
 
 				return m_specularTransmittance->eval(bRec.its) * (factor * factor);
@@ -377,7 +377,7 @@ public:
 
 			/* Radiance must be scaled to account for the solid angle compression
 			   that occurs when crossing the interface. */
-			Float factor = (bRec.mode == ERadiance)
+			float factor = (bRec.mode == ERadiance)
 				? (cosThetaT < 0 ? m_invEta : m_eta) : 1.0f;
 
 			return m_specularTransmittance->eval(bRec.its) * (factor * factor * (1-F));
@@ -386,11 +386,11 @@ public:
 		return Spectrum(0.0f);
 	}
 
-	Float getEta() const {
+	float getEta() const {
 		return m_eta;
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
+	float getRoughness(const Intersection &its, int component) const {
 		return 0.0f;
 	}
 
@@ -409,7 +409,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 private:
-	Float m_eta, m_invEta;
+	float m_eta, m_invEta;
 	ref<Texture> m_specularTransmittance;
 	ref<Texture> m_specularReflectance;
 };
@@ -424,7 +424,7 @@ public:
 		m_flags = ETransparent;
 	}
 
-	Float getAlpha() const {
+	float getAlpha() const {
 		return 0.3f;
 	}
 

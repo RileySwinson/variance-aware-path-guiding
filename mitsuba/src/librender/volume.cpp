@@ -39,8 +39,8 @@ void VolumeDataSource::serialize(Stream *stream, InstanceManager *manager) const
 	m_aabb.serialize(stream);
 }
 
-Float VolumeDataSource::lookupFloat(const Point &p) const {
-	Log(EError, "'%s': does not implement lookupFloat()!", getClass()->getName().c_str());
+float VolumeDataSource::lookupfloat(const Point &p) const {
+	Log(EError, "'%s': does not implement lookupfloat()!", getClass()->getName().c_str());
 	return 0;
 }
 
@@ -54,7 +54,7 @@ Vector VolumeDataSource::lookupVector(const Point &p) const {
 	return Vector();
 }
 
-bool VolumeDataSource::supportsFloatLookups() const {
+bool VolumeDataSource::supportsfloatLookups() const {
 	return false;
 }
 

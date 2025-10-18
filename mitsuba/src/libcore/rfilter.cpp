@@ -27,20 +27,20 @@ ReconstructionFilter::~ReconstructionFilter() { }
 
 ReconstructionFilter::ReconstructionFilter(Stream *stream, InstanceManager *manager)
  : ConfigurableObject(stream, manager) {
-	 m_radius = stream->readFloat();
+	 m_radius = stream->readfloat();
 }
 
 void ReconstructionFilter::serialize(Stream *stream, InstanceManager *manager) const {
-	stream->writeFloat(m_radius);
+	stream->writefloat(m_radius);
 }
 
 void ReconstructionFilter::configure() {
 	Assert(m_radius > 0);
 
-	Float sum = 0.0f;
+	float sum = 0.0f;
 	/* Evaluate and normalize the filter */
 	for (size_t i=0; i<MTS_FILTER_RESOLUTION; ++i) {
-		Float value = eval((m_radius * i) / MTS_FILTER_RESOLUTION);
+		float value = eval((m_radius * i) / MTS_FILTER_RESOLUTION);
 		m_values[i] = value;
 		sum += value;
 	}
@@ -49,7 +49,7 @@ void ReconstructionFilter::configure() {
 	m_scaleFactor = MTS_FILTER_RESOLUTION / m_radius;
 	m_borderSize = (int) std::ceil(m_radius - 0.5f);
 	sum *= 2 * m_radius / MTS_FILTER_RESOLUTION;
-	Float normalization = 1.0f / sum;
+	float normalization = 1.0f / sum;
 	for (size_t i=0; i<MTS_FILTER_RESOLUTION; ++i)
 		m_values[i] *= normalization;
 }

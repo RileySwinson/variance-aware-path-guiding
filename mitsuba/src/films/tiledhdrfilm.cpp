@@ -151,13 +151,13 @@ public:
 			} else if (pixelFormat == "spectrum") {
 				m_pixelFormats.push_back(Bitmap::ESpectrum);
 				for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-					std::pair<Float, Float> coverage = Spectrum::getBinCoverage(i);
+					std::pair<float, float> coverage = Spectrum::getBinCoverage(i);
 					m_channelNames.push_back(name + formatString("%.2f-%.2fnm", coverage.first, coverage.second));
 				}
 			} else if (pixelFormat == "spectrumalpha") {
 				m_pixelFormats.push_back(Bitmap::ESpectrumAlpha);
 				for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-					std::pair<Float, Float> coverage = Spectrum::getBinCoverage(i);
+					std::pair<float, float> coverage = Spectrum::getBinCoverage(i);
 					m_channelNames.push_back(name + formatString("%.2f-%.2fnm", coverage.first, coverage.second));
 				}
 				m_channelNames.push_back(name + "A");
@@ -176,9 +176,9 @@ public:
 		}
 
 		if (componentFormat == "float16") {
-			m_componentFormat = Bitmap::EFloat16;
+			m_componentFormat = Bitmap::Efloat16;
 		} else if (componentFormat == "float32") {
-			m_componentFormat = Bitmap::EFloat32;
+			m_componentFormat = Bitmap::Efloat32;
 		} else if (componentFormat == "uint32") {
 			m_componentFormat = Bitmap::EUInt32;
 		} else {
@@ -248,11 +248,11 @@ public:
 		Imf::PixelType compType;
 		size_t compStride;
 
-		if (m_componentFormat == Bitmap::EFloat16) {
+		if (m_componentFormat == Bitmap::Efloat16) {
 			compType = Imf::HALF;
 			compStride = 2;
-		} else if (m_componentFormat == Bitmap::EFloat32) {
-			compType = Imf::FLOAT;
+		} else if (m_componentFormat == Bitmap::Efloat32) {
+			compType = Imf::float;
 			compStride = 4;
 		} else if (m_componentFormat == Bitmap::EUInt32) {
 			compType = Imf::UINT;
@@ -342,13 +342,13 @@ public:
 				potentiallyWrite(x + xo, y + yo);
 	}
 
-	void setBitmap(const Bitmap *bitmap, Float multiplier) {
+	void setBitmap(const Bitmap *bitmap, float multiplier) {
 		Log(EError, "setBitmap(): Global image updates are permitted by this film, "
 			"which operates strictly on tiles! Please either switch to a compatible "
 			"rendering technique or use a non-tiled film. (e.g. 'hdrfilm')");
 	}
 
-	void addBitmap(const Bitmap *bitmap, Float multiplier) {
+	void addBitmap(const Bitmap *bitmap, float multiplier) {
 		Log(EError, "addBitmap(): Global image updates are permitted by this film, "
 			"which operates strictly on tiles! Please either switch to a compatible "
 			"rendering technique or use a non-tiled film. (e.g. 'hdrfilm')");
@@ -413,7 +413,7 @@ public:
 		uint8_t *targetData = m_tile->getUInt8Data();
 
 		const FormatConverter *cvt = FormatConverter::getInstance(
-			std::make_pair(Bitmap::EFloat, m_tile->getComponentFormat())
+			std::make_pair(Bitmap::Efloat, m_tile->getComponentFormat())
 		);
 
 		for (int i=0; i<m_blockSize; ++i) {
@@ -457,7 +457,7 @@ public:
 		return false; /* Not supported by the tiled EXR film! */
 	}
 
-	void develop(const Scene *scene, Float renderTime) {
+	void develop(const Scene *scene, float renderTime) {
 		if (m_output) {
 			Log(EInfo, "Closing EXR file (%u tiles in total, peak memory usage: %u tiles)..",
 				m_blocksH * m_blocksV, m_peakUsage);

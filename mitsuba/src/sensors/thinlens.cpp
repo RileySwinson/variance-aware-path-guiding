@@ -33,10 +33,10 @@ MTS_NAMESPACE_BEGIN
  *	      Specifies an optional camera-to-world transformation.
  *        \default{none (i.e. camera space $=$ world space)}
  *     }
- *     \parameter{apertureRadius}{\Float}{
+ *     \parameter{apertureRadius}{\float}{
  *         Denotes the radius of the camera's aperture in scene units.
  *     }
- *     \parameter{focusDistance}{\Float}{
+ *     \parameter{focusDistance}{\float}{
  *         Denotes the world-space distance from the camera's aperture to the
  *         focal plane. \default{\code{0}}
  *     }
@@ -45,7 +45,7 @@ MTS_NAMESPACE_BEGIN
  *         \code{35mm} film equivalent units. See the main description
  *         for further details.\default{\code{50mm}}
  *     }
- *     \parameter{fov}{\Float}{
+ *     \parameter{fov}{\float}{
  *         An alternative to \code{focalLength}:
  *         denotes the camera's field of view in degrees---must be
  *         between 0 and 180, excluding the extremes.
@@ -71,12 +71,12 @@ MTS_NAMESPACE_BEGIN
  *         \end{enumerate}
  *         The default is \code{\textbf{x}}.
  *     }
- *     \parameter{shutterOpen, shutterClose}{\Float}{
+ *     \parameter{shutterOpen, shutterClose}{\float}{
  *         Specifies the time interval of the measurement---this
  *         is only relevant when the scene is in motion.
  *         \default{0}
  *     }
- *     \parameter{nearClip, farClip}{\Float}{
+ *     \parameter{nearClip, farClip}{\float}{
  *         Distance to the near/far clip
  *         planes.\default{\code{near\code}-\code{Clip=1e-2} (i.e.
  *         \code{0.01}) and {\code{farClip=1e4} (i.e. \code{10000})}}
@@ -129,7 +129,7 @@ public:
 			   | EDirectionSampleMapsToPixels;
 
 		/* World-space aperture radius */
-		m_apertureRadius = props.getFloat("apertureRadius");
+		m_apertureRadius = props.getfloat("apertureRadius");
 
 		if (m_apertureRadius == 0) {
 			Log(EWarn, "Can't have a zero aperture radius -- "
@@ -144,13 +144,13 @@ public:
 
 	ThinLens(Stream *stream, InstanceManager *manager)
 			: PerspectiveCamera(stream, manager) {
-		m_apertureRadius = stream->readFloat();
+		m_apertureRadius = stream->readfloat();
 		configure();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		PerspectiveCamera::serialize(stream, manager);
-		stream->writeFloat(m_apertureRadius);
+		stream->writefloat(m_apertureRadius);
 	}
 
 	void configure() {
@@ -160,10 +160,10 @@ public:
 		const Vector2i &cropSize   = m_film->getCropSize();
 		const Point2i  &cropOffset = m_film->getCropOffset();
 
-		Vector2 relSize((Float) cropSize.x / (Float) filmSize.x,
-			(Float) cropSize.y / (Float) filmSize.y);
-		Point2 relOffset((Float) cropOffset.x / (Float) filmSize.x,
-			(Float) cropOffset.y / (Float) filmSize.y);
+		Vector2 relSize((float) cropSize.x / (float) filmSize.x,
+			(float) cropSize.y / (float) filmSize.y);
+		Point2 relOffset((float) cropOffset.x / (float) filmSize.x,
+			(float) cropOffset.y / (float) filmSize.y);
 
 		/**
 		 * These do the following (in reverse order):
@@ -228,7 +228,7 @@ public:
 	 *     used to return the fractional pixel position associated with the
 	 *     reference point
 	 */
-	inline Float importance(const Point &p, const Vector &d, Point2 *sample = NULL) const {
+	inline float importance(const Point &p, const Vector &d, Point2 *sample = NULL) const {
 		/* How is this derived? Imagine a hypothetical image plane at a
 		   distance of d=1 away from the aperture in camera space.
 
@@ -266,13 +266,13 @@ public:
 		      d_omega = 1 / (A' * cos^3(theta))
 		*/
 
-		Float cosTheta = Frame::cosTheta(d);
+		float cosTheta = Frame::cosTheta(d);
 
 		/* Check if the direction points behind the camera */
 		if (cosTheta <= 0)
 			return 0.0f;
 
-		Float invCosTheta = 1.0f / cosTheta;
+		float invCosTheta = 1.0f / cosTheta;
 
 		/* Check if the associated pixel is visible */
 		Point scr = m_cameraToSample(p
@@ -291,7 +291,7 @@ public:
 	}
 
 	Spectrum sampleRay(Ray &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		Point2 tmp = warp::squareToUniformDiskConcentric(otherSample)
 			* m_apertureRadius;
 		ray.time = sampleTime(timeSample);
@@ -311,7 +311,7 @@ public:
 		/* Turn these into a normalized ray direction, and
 		   adjust the ray interval accordingly */
 		Vector d = normalize(focusP - apertureP);
-		Float invZ = 1.0f / d.z;
+		float invZ = 1.0f / d.z;
 		ray.mint = m_nearClip * invZ;
 		ray.maxt = m_farClip * invZ;
 
@@ -322,7 +322,7 @@ public:
 	}
 
 	Spectrum sampleRayDifferential(RayDifferential &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		Point2 tmp = warp::squareToUniformDiskConcentric(otherSample)
 			* m_apertureRadius;
 		ray.time = sampleTime(timeSample);
@@ -337,7 +337,7 @@ public:
 		Point apertureP(tmp.x, tmp.y, 0.0f);
 
 		/* Sampled position on the focal plane */
-		Float fDist = m_focusDistance / nearP.z;
+		float fDist = m_focusDistance / nearP.z;
 		Point focusP  =  nearP       * fDist;
 		Point focusPx = (nearP+m_dx) * fDist;
 		Point focusPy = (nearP+m_dy) * fDist;
@@ -345,7 +345,7 @@ public:
 		/* Turn that into a normalized ray direction, and
 		   adjust the ray interval accordingly */
 		Vector d = normalize(focusP - apertureP);
-		Float invZ = 1.0f / d.z;
+		float invZ = 1.0f / d.z;
 		ray.mint = m_nearClip * invZ;
 		ray.maxt = m_farClip * invZ;
 
@@ -379,7 +379,7 @@ public:
 		return Spectrum((pRec.measure == EArea) ? m_aperturePdf : 0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EArea) ? m_aperturePdf : 0.0f;
 	}
 
@@ -417,7 +417,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	inline Float pdfDirection(const DirectionSamplingRecord &dRec,
+	inline float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		if (dRec.measure != ESolidAngle)
 			return 0.0f;
@@ -456,11 +456,11 @@ public:
 		/* Compute the normalized direction vector from the
 		   aperture position to the reference point */
 		Vector localD(refP - apertureP);
-		Float dist = localD.length(),
+		float dist = localD.length(),
 			  invDist = 1.0f / dist;
 		localD *= invDist;
 
-		Float value = importance(apertureP, localD, &dRec.uv);
+		float value = importance(apertureP, localD, &dRec.uv);
 		if (value == 0.0f) {
 			dRec.pdf = 0.0f;
 			return Spectrum(0.0f);
@@ -478,8 +478,8 @@ public:
 		return Spectrum(value * invDist * invDist);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
-		Float dp = -dot(dRec.n, dRec.d);
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
+		float dp = -dot(dRec.n, dRec.d);
 		if (dp < 0)
 			return 0.0f;
 
@@ -493,8 +493,8 @@ public:
 
 	Transform getProjectionTransform(const Point2 &apertureSample,
 			const Point2 &aaSample) const {
-		Float right = std::tan(m_xfov * M_PI/360) * m_nearClip, left = -right;
-		Float top = right / m_aspect, bottom = -top;
+		float right = std::tan(m_xfov * M_PI/360) * m_nearClip, left = -right;
+		float top = right / m_aspect, bottom = -top;
 		Point2 apertureP = warp::squareToUniformDiskConcentric(apertureSample)
 			* m_apertureRadius;
 
@@ -514,7 +514,7 @@ public:
 	}
 
 	AABB getAABB() const {
-		const Float r = m_apertureRadius;
+		const float r = m_apertureRadius;
 		AABB bounds(Point(-r, -r, 0), Point(r, r, 0));
 		return m_worldTransform->getSpatialBounds(bounds);
 	}
@@ -561,7 +561,7 @@ public:
 		Point localP = invTrafo.transformAffine(its.p);
 		Vector localD = invTrafo(d);
 
-		Float result = importance(localP, localD, &samplePos);
+		float result = importance(localP, localD, &samplePos);
 
 		if (result == 0)
 			return Spectrum(0.0f);
@@ -593,9 +593,9 @@ private:
 	Transform m_sampleToCamera;
 	Transform m_clipTransform;
 	AABB2 m_imageRect;
-	Float m_apertureRadius;
-	Float m_aperturePdf;
-	Float m_normalization;
+	float m_apertureRadius;
+	float m_aperturePdf;
+	float m_normalization;
 	Vector m_dx, m_dy;
 };
 

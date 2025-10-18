@@ -444,7 +444,7 @@ std::string formatString(const char *fmt, ...) {
 //  Numerical utility functions
 // -----------------------------------------------------------------------
 
-bool solveQuadratic(Float a, Float b, Float c, Float &x0, Float &x1) {
+bool solveQuadratic(float a, float b, float c, float &x0, float &x1) {
 	/* Linear case */
 	if (a == 0) {
 		if (b != 0) {
@@ -454,13 +454,13 @@ bool solveQuadratic(Float a, Float b, Float c, Float &x0, Float &x1) {
 		return false;
 	}
 
-	Float discrim = b*b - 4.0f*a*c;
+	float discrim = b*b - 4.0f*a*c;
 
 	/* Leave if there is no solution */
 	if (discrim < 0)
 		return false;
 
-	Float temp, sqrtDiscrim = std::sqrt(discrim);
+	float temp, sqrtDiscrim = std::sqrt(discrim);
 
 	/* Numerically stable version of (-b (+/-) sqrtDiscrim) / (2 * a)
 	 *
@@ -524,13 +524,13 @@ bool solveQuadraticDouble(double a, double b, double c, double &x0, double &x1) 
 	return true;
 }
 
-bool solveLinearSystem2x2(const Float a[2][2], const Float b[2], Float x[2]) {
-	Float det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+bool solveLinearSystem2x2(const float a[2][2], const float b[2], float x[2]) {
+	float det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
 
 	if (std::abs(det) <= RCPOVERFLOW)
 		return false;
 
-	Float inverse = (Float) 1.0f / det;
+	float inverse = (float) 1.0f / det;
 
 	x[0] = (a[1][1] * b[0] - a[0][1] * b[1]) * inverse;
 	x[1] = (a[0][0] * b[1] - a[1][0] * b[0]) * inverse;
@@ -538,23 +538,23 @@ bool solveLinearSystem2x2(const Float a[2][2], const Float b[2], Float x[2]) {
 	return true;
 }
 
-void stratifiedSample1D(Random *random, Float *dest, int count, bool jitter) {
-	Float invCount = 1.0f / count;
+void stratifiedSample1D(Random *random, float *dest, int count, bool jitter) {
+	float invCount = 1.0f / count;
 
 	for (int i=0; i<count; i++) {
-		Float offset = jitter ? random->nextFloat() : 0.5f;
+		float offset = jitter ? random->nextfloat() : 0.5f;
 		*dest++ = (i + offset) * invCount;
 	}
 }
 
 void stratifiedSample2D(Random *random, Point2 *dest, int countX, int countY, bool jitter) {
-	Float invCountX = 1.0f / countX;
-	Float invCountY = 1.0f / countY;
+	float invCountX = 1.0f / countX;
+	float invCountY = 1.0f / countY;
 
 	for (int x=0; x<countX; x++) {
 		for (int y=0; y<countY; y++) {
-			Float offsetX = jitter ? random->nextFloat() : 0.5f;
-			Float offsetY = jitter ? random->nextFloat() : 0.5f;
+			float offsetX = jitter ? random->nextfloat() : 0.5f;
+			float offsetY = jitter ? random->nextfloat() : 0.5f;
 			*dest++ = Point2(
 				(x + offsetX) * invCountX,
 				(y + offsetY) * invCountY
@@ -563,11 +563,11 @@ void stratifiedSample2D(Random *random, Point2 *dest, int countX, int countY, bo
 	}
 }
 
-void latinHypercube(Random *random, Float *dest, size_t nSamples, size_t nDim) {
-	Float delta = 1 / (Float) nSamples;
+void latinHypercube(Random *random, float *dest, size_t nSamples, size_t nDim) {
+	float delta = 1 / (float) nSamples;
 	for (size_t i = 0; i < nSamples; ++i)
 		for (size_t j = 0; j < nDim; ++j)
-			dest[nDim * i + j] = (i + random->nextFloat()) * delta;
+			dest[nDim * i + j] = (i + random->nextfloat()) * delta;
 	for (size_t i = 0; i < nDim; ++i) {
 		for (size_t j = 0; j < nSamples; ++j) {
 			size_t other = random->nextSize(nSamples);
@@ -576,8 +576,8 @@ void latinHypercube(Random *random, Float *dest, size_t nSamples, size_t nDim) {
 	}
 }
 
-Vector sphericalDirection(Float theta, Float phi) {
-	Float sinTheta, cosTheta, sinPhi, cosPhi;
+Vector sphericalDirection(float theta, float phi) {
+	float sinTheta, cosTheta, sinPhi, cosPhi;
 
 	math::sincos(theta, &sinTheta, &cosTheta);
 	math::sincos(phi, &sinPhi, &cosPhi);
@@ -591,10 +591,10 @@ Vector sphericalDirection(Float theta, Float phi) {
 
 void coordinateSystem(const Vector &a, Vector &b, Vector &c) {
 	if (std::abs(a.x) > std::abs(a.y)) {
-		Float invLen = 1.0f / std::sqrt(a.x * a.x + a.z * a.z);
+		float invLen = 1.0f / std::sqrt(a.x * a.x + a.z * a.z);
 		c = Vector(a.z * invLen, 0.0f, -a.x * invLen);
 	} else {
-		Float invLen = 1.0f / std::sqrt(a.y * a.y + a.z * a.z);
+		float invLen = 1.0f / std::sqrt(a.y * a.y + a.z * a.z);
 		c = Vector(0.0f, a.z * invLen, -a.y * invLen);
 	}
 	b = cross(c, a);
@@ -609,7 +609,7 @@ void computeShadingFrame(const Vector &n, const Vector &dpdu, Frame &frame) {
 
 void computeShadingFrameDerivative(const Vector &n, const Vector &dpdu, const Vector &dndu, const Vector &dndv, Frame &du, Frame &dv) {
 	Vector s = dpdu - n * dot(n, dpdu);
-	Float invLen_s = 1.0f / s.length();
+	float invLen_s = 1.0f / s.length();
 	s *= invLen_s;
 
 	du.s = invLen_s * (-dndu * dot(n, dpdu) - n * dot(dndu, dpdu));
@@ -635,20 +635,20 @@ Point2 toSphericalCoordinates(const Vector &v) {
 	return result;
 }
 
-Float fresnelDielectric(Float cosThetaI, Float cosThetaT, Float eta) {
+float fresnelDielectric(float cosThetaI, float cosThetaT, float eta) {
 	if (EXPECT_NOT_TAKEN(eta == 1))
 		return 0.0f;
 
-	Float Rs = (cosThetaI - eta * cosThetaT)
+	float Rs = (cosThetaI - eta * cosThetaT)
 			 / (cosThetaI + eta * cosThetaT);
-	Float Rp = (eta * cosThetaI - cosThetaT)
+	float Rp = (eta * cosThetaI - cosThetaT)
 			 / (eta * cosThetaI + cosThetaT);
 
 	/* No polarization -- return the unpolarized reflectance */
 	return 0.5f * (Rs * Rs + Rp * Rp);
 }
 
-Float fresnelDielectricExt(Float cosThetaI_, Float &cosThetaT_, Float eta) {
+float fresnelDielectricExt(float cosThetaI_, float &cosThetaT_, float eta) {
 	if (EXPECT_NOT_TAKEN(eta == 1)) {
 		cosThetaT_ = -cosThetaI_;
 		return 0.0f;
@@ -656,7 +656,7 @@ Float fresnelDielectricExt(Float cosThetaI_, Float &cosThetaT_, Float eta) {
 
 	/* Using Snell's law, calculate the squared sine of the
 	   angle between the normal and the transmitted ray */
-	Float scale = (cosThetaI_ > 0) ? 1/eta : eta,
+	float scale = (cosThetaI_ > 0) ? 1/eta : eta,
 	      cosThetaTSqr = 1 - (1-cosThetaI_*cosThetaI_) * (scale*scale);
 
 	/* Check for total internal reflection */
@@ -666,12 +666,12 @@ Float fresnelDielectricExt(Float cosThetaI_, Float &cosThetaT_, Float eta) {
 	}
 
 	/* Find the absolute cosines of the incident/transmitted rays */
-	Float cosThetaI = std::abs(cosThetaI_);
-	Float cosThetaT = std::sqrt(cosThetaTSqr);
+	float cosThetaI = std::abs(cosThetaI_);
+	float cosThetaT = std::sqrt(cosThetaTSqr);
 
-	Float Rs = (cosThetaI - eta * cosThetaT)
+	float Rs = (cosThetaI - eta * cosThetaT)
 			 / (cosThetaI + eta * cosThetaT);
-	Float Rp = (eta * cosThetaI - cosThetaT)
+	float Rp = (eta * cosThetaI - cosThetaT)
 			 / (eta * cosThetaI + cosThetaT);
 
 	cosThetaT_ = (cosThetaI_ > 0) ? -cosThetaT : cosThetaT;
@@ -680,24 +680,24 @@ Float fresnelDielectricExt(Float cosThetaI_, Float &cosThetaT_, Float eta) {
 	return 0.5f * (Rs * Rs + Rp * Rp);
 }
 
-Float fresnelConductorApprox(Float cosThetaI, Float eta, Float k) {
-	Float cosThetaI2 = cosThetaI*cosThetaI;
+float fresnelConductorApprox(float cosThetaI, float eta, float k) {
+	float cosThetaI2 = cosThetaI*cosThetaI;
 
-	Float tmp = (eta*eta + k*k) * cosThetaI2;
+	float tmp = (eta*eta + k*k) * cosThetaI2;
 
-	Float Rp2 = (tmp - (eta * (2 * cosThetaI)) + 1)
+	float Rp2 = (tmp - (eta * (2 * cosThetaI)) + 1)
 	          / (tmp + (eta * (2 * cosThetaI)) + 1);
 
-	Float tmpF = eta*eta + k*k;
+	float tmpF = eta*eta + k*k;
 
-	Float Rs2 = (tmpF - (eta * (2 * cosThetaI)) + cosThetaI2) /
+	float Rs2 = (tmpF - (eta * (2 * cosThetaI)) + cosThetaI2) /
 	            (tmpF + (eta * (2 * cosThetaI)) + cosThetaI2);
 
 	return 0.5f * (Rp2 + Rs2);
 }
 
-Spectrum fresnelConductorApprox(Float cosThetaI, const Spectrum &eta, const Spectrum &k) {
-	Float cosThetaI2 = cosThetaI*cosThetaI;
+Spectrum fresnelConductorApprox(float cosThetaI, const Spectrum &eta, const Spectrum &k) {
+	float cosThetaI2 = cosThetaI*cosThetaI;
 
 	Spectrum tmp = (eta*eta + k*k) * cosThetaI2;
 
@@ -712,34 +712,34 @@ Spectrum fresnelConductorApprox(Float cosThetaI, const Spectrum &eta, const Spec
 	return 0.5f * (Rp2 + Rs2);
 }
 
-Float fresnelConductorExact(Float cosThetaI, Float eta, Float k) {
+float fresnelConductorExact(float cosThetaI, float eta, float k) {
 	/* Modified from "Optics" by K.D. Moeller, University Science Books, 1988 */
 
-	Float cosThetaI2 = cosThetaI*cosThetaI,
+	float cosThetaI2 = cosThetaI*cosThetaI,
 	      sinThetaI2 = 1-cosThetaI2,
 		  sinThetaI4 = sinThetaI2*sinThetaI2;
 
-	Float temp1 = eta*eta - k*k - sinThetaI2,
+	float temp1 = eta*eta - k*k - sinThetaI2,
 	      a2pb2 = math::safe_sqrt(temp1*temp1 + 4*k*k*eta*eta),
 	      a     = math::safe_sqrt(0.5f * (a2pb2 + temp1));
 
-	Float term1 = a2pb2 + cosThetaI2,
+	float term1 = a2pb2 + cosThetaI2,
 	      term2 = 2*a*cosThetaI;
 
-	Float Rs2 = (term1 - term2) / (term1 + term2);
+	float Rs2 = (term1 - term2) / (term1 + term2);
 
-	Float term3 = a2pb2*cosThetaI2 + sinThetaI4,
+	float term3 = a2pb2*cosThetaI2 + sinThetaI4,
 	      term4 = term2*sinThetaI2;
 
-	Float Rp2 = Rs2 * (term3 - term4) / (term3 + term4);
+	float Rp2 = Rs2 * (term3 - term4) / (term3 + term4);
 
 	return 0.5f * (Rp2 + Rs2);
 }
 
-Spectrum fresnelConductorExact(Float cosThetaI, const Spectrum &eta, const Spectrum &k) {
+Spectrum fresnelConductorExact(float cosThetaI, const Spectrum &eta, const Spectrum &k) {
 	/* Modified from "Optics" by K.D. Moeller, University Science Books, 1988 */
 
-	Float cosThetaI2 = cosThetaI*cosThetaI,
+	float cosThetaI2 = cosThetaI*cosThetaI,
 	      sinThetaI2 = 1-cosThetaI2,
 		  sinThetaI4 = sinThetaI2*sinThetaI2;
 
@@ -764,24 +764,24 @@ Vector reflect(const Vector &wi, const Normal &n) {
 	return 2 * dot(wi, n) * Vector(n) - wi;
 }
 
-Vector refract(const Vector &wi, const Normal &n, Float eta, Float cosThetaT) {
+Vector refract(const Vector &wi, const Normal &n, float eta, float cosThetaT) {
 	if (cosThetaT < 0)
 		eta = 1 / eta;
 
 	return n * (dot(wi, n) * eta + cosThetaT) - wi * eta;
 }
 
-Vector refract(const Vector &wi, const Normal &n, Float eta) {
+Vector refract(const Vector &wi, const Normal &n, float eta) {
 	if (EXPECT_NOT_TAKEN(eta == 1))
 		return -wi;
 
-	Float cosThetaI = dot(wi, n);
+	float cosThetaI = dot(wi, n);
 	if (cosThetaI > 0)
 		eta = 1 / eta;
 
 	/* Using Snell's law, calculate the squared sine of the
 	   angle between the normal and the transmitted ray */
-	Float cosThetaTSqr = 1 - (1-cosThetaI*cosThetaI) * (eta*eta);
+	float cosThetaTSqr = 1 - (1-cosThetaI*cosThetaI) * (eta*eta);
 
 	/* Check for total internal reflection */
 	if (cosThetaTSqr <= 0.0f)
@@ -791,8 +791,8 @@ Vector refract(const Vector &wi, const Normal &n, Float eta) {
 		* std::sqrt(cosThetaTSqr)) - wi * eta;
 }
 
-Vector refract(const Vector &wi, const Normal &n, Float eta, Float &cosThetaT, Float &F) {
-	Float cosThetaI = dot(wi, n);
+Vector refract(const Vector &wi, const Normal &n, float eta, float &cosThetaT, float &F) {
+	float cosThetaI = dot(wi, n);
 	F = fresnelDielectricExt(cosThetaI, cosThetaT, eta);
 
 	if (F == 1.0f) /* Total internal reflection */
@@ -806,12 +806,12 @@ Vector refract(const Vector &wi, const Normal &n, Float eta, Float &cosThetaT, F
 
 namespace {
 	/// Integrand used by fresnelDiffuseReflectance
-	inline Float fresnelDiffuseIntegrand(Float eta, Float xi) {
+	inline float fresnelDiffuseIntegrand(float eta, float xi) {
 		return fresnelDielectricExt(std::sqrt(xi), eta);
 	}
 };
 
-Float fresnelDiffuseReflectance(Float eta, bool fast) {
+float fresnelDiffuseReflectance(float eta, bool fast) {
 	if (fast) {
 		/* Fast mode: the following code approximates the
 		 * diffuse Frensel reflectance for the eta<1 and
@@ -840,7 +840,7 @@ Float fresnelDiffuseReflectance(Float eta, bool fast) {
 			 * Max rel. error in 1.0 - 2.0   : 0.1%
 			 * Max rel. error in 2.0 - 10.0  : 0.2%
 			 */
-			Float invEta = 1.0f / eta,
+			float invEta = 1.0f / eta,
 				  invEta2 = invEta*invEta,
 				  invEta3 = invEta2*invEta,
 				  invEta4 = invEta3*invEta,
@@ -861,7 +861,7 @@ Float fresnelDiffuseReflectance(Float eta, bool fast) {
 	return 0.0f;
 }
 
-std::string timeString(Float time, bool precise) {
+std::string timeString(float time, bool precise) {
 	if (std::isnan(time) || std::isinf(time))
 		return "inf";
 
@@ -884,7 +884,7 @@ std::string timeString(Float time, bool precise) {
 }
 
 std::string memString(size_t size, bool precise) {
-	Float value = (Float) size;
+	float value = (float) size;
 	const char *suffixes[] = {
 		"B", "KiB", "MiB", "GiB", "TiB", "PiB"
 	};

@@ -35,7 +35,7 @@ LogWidget::LogWidget(QWidget *parent)
 	toolBar->setAllowedAreas(Qt::TopToolBarArea);
 	toolBar->setIconSize(QSize(32, 32));
 	toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
-	toolBar->setFloatable(false);
+	toolBar->setfloatable(false);
 
 	QAction *actionShowStats = new QAction(this);
 	QIcon showStatsIcon;

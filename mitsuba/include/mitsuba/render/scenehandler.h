@@ -128,8 +128,8 @@ public:
 protected:
 	std::string transcode(const XMLCh * input) const;
 
-	Float parseFloat(const std::string &name, const std::string &str,
-			Float defVal = -1) const;
+	float parsefloat(const std::string &name, const std::string &str,
+			float defVal = -1) const;
 
 	void clear();
 
@@ -143,7 +143,7 @@ private:
 		EIntegrator, ETexture, ESensor,
 		EEmitter, ESubsurface, EMedium,
 		EVolume, EPhase, EBSDF, ERFilter,
-		ENull, EReference, EInteger, EFloat,
+		ENull, EReference, EInteger, Efloat,
 		EBoolean, EString, ETranslate, ERotate,
 		ELookAt, EScale, EMatrix, EPoint,
 		EVector, ERGB, ESRGB, EBlackBody,

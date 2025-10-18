@@ -3,7 +3,7 @@
 MTS_NAMESPACE_BEGIN
 
 void Intersection::computePartials(const RayDifferential &ray) {
-	Float A[2][2], Bx[2], By[2], x[2];
+	float A[2][2], Bx[2], By[2], x[2];
 	int axes[2];
 
 	/* Compute the texture coordinates partials wrt.
@@ -19,7 +19,7 @@ void Intersection::computePartials(const RayDifferential &ray) {
 	}
 
 	/* Compute a few projections onto the surface normal */
-	const Float
+	const float
 		pp  = dot(geoFrame.n, Vector(p)),
 	    pox = dot(geoFrame.n, Vector(ray.rxOrigin)),
 	    poy = dot(geoFrame.n, Vector(ray.ryOrigin)),
@@ -32,11 +32,11 @@ void Intersection::computePartials(const RayDifferential &ray) {
 	}
 
 	/* Compute ray-plane intersections against the offset rays */
-	const Float tx = (pp-pox) / prx, ty = (pp-poy) / pry;
+	const float tx = (pp-pox) / prx, ty = (pp-poy) / pry;
 
 	/* Calculate the U and V partials by solving two out
 	   of a set of 3 equations in an overconstrained system */
-	Float absX = std::abs(geoFrame.n.x),
+	float absX = std::abs(geoFrame.n.x),
 		  absY = std::abs(geoFrame.n.y),
 		  absZ = std::abs(geoFrame.n.z);
 

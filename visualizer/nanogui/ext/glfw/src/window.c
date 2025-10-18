@@ -324,7 +324,7 @@ GLFWAPI void glfwWindowHint(int hint, int value)
         case GLFW_AUTO_ICONIFY:
             _glfw.hints.window.autoIconify = value ? GLFW_TRUE : GLFW_FALSE;
             break;
-        case GLFW_FLOATING:
+        case GLFW_floatING:
             _glfw.hints.window.floating = value ? GLFW_TRUE : GLFW_FALSE;
             break;
         case GLFW_MAXIMIZED:
@@ -689,7 +689,7 @@ GLFWAPI int glfwGetWindowAttrib(GLFWwindow* handle, int attrib)
             return window->resizable;
         case GLFW_DECORATED:
             return window->decorated;
-        case GLFW_FLOATING:
+        case GLFW_floatING:
             return window->floating;
         case GLFW_CLIENT_API:
             return window->context.client;

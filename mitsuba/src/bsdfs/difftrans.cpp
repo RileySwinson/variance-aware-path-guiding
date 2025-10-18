@@ -82,7 +82,7 @@ public:
 			* (INV_PI * std::abs(Frame::cosTheta(bRec.wo)));
 	}
 
-	Float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
+	float pdf(const BSDFSamplingRecord &bRec, EMeasure measure) const {
 		if (!(bRec.typeMask & EDiffuseTransmission) || measure != ESolidAngle
 			|| Frame::cosTheta(bRec.wi) * Frame::cosTheta(bRec.wo) >= 0)
 			return 0.0f;
@@ -102,7 +102,7 @@ public:
 		return m_transmittance->eval(bRec.its);
 	}
 
-	Spectrum sample(BSDFSamplingRecord &bRec, Float &pdf, const Point2 &sample) const {
+	Spectrum sample(BSDFSamplingRecord &bRec, float &pdf, const Point2 &sample) const {
 		if (!(bRec.typeMask & m_combinedType))
 			return Spectrum(0.0f);
 		bRec.wo = warp::squareToCosineHemisphere(sample);
@@ -131,8 +131,8 @@ public:
 		manager->serialize(stream, m_transmittance.get());
 	}
 
-	Float getRoughness(const Intersection &its, int component) const {
-		return std::numeric_limits<Float>::infinity();
+	float getRoughness(const Intersection &its, int component) const {
+		return std::numeric_limits<float>::infinity();
 	}
 
 	std::string toString() const {

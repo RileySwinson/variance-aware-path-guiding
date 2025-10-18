@@ -62,13 +62,13 @@ struct MTS_EXPORT_CORE Triangle {
 	inline BSphere getBSphere(const Point *positions) const {
 		Vector a = (positions[idx[1]] - positions[idx[0]]);
 		Vector b = (positions[idx[2]] - positions[idx[0]]);
-		Float a2 = dot(a, a);
-		Float b2 = dot(b, b);
-		Float da = std::sqrt(a2);
-		Float db = std::sqrt(b2);
+		float a2 = dot(a, a);
+		float b2 = dot(b, b);
+		float da = std::sqrt(a2);
+		float db = std::sqrt(b2);
 		Vector axb = cross(a, b);
-		Float axb2 = dot(axb, axb);
-		Float daxb = std::sqrt(axb2);
+		float axb2 = dot(axb, axb);
+		float daxb = std::sqrt(axb2);
 		return BSphere(positions[idx[0]] + cross(a2 * b - b2 * a, axb) / (2 * axb2),
 					   da * db * (a - b).length() / (2 * daxb));
 	}
@@ -79,7 +79,7 @@ struct MTS_EXPORT_CORE Triangle {
 			const Point2 &seed) const;
 
 	/// Calculate the surface area of this triangle
-	Float surfaceArea(const Point *positions) const;
+	float surfaceArea(const Point *positions) const;
 
 	/** \brief Ray-triangle intersection test
 	 *
@@ -107,17 +107,17 @@ struct MTS_EXPORT_CORE Triangle {
 	 *   \c true if an intersection has been detected
 	 */
 	FINLINE static bool rayIntersect(const Point &p0, const Point &p1, const Point &p2,
-		const Ray &ray, Float &u, Float &v, Float &t) {
+		const Ray &ray, float &u, float &v, float &t) {
 		/* Find vectors for two edges sharing */
 		Vector edge1 = p1 - p0, edge2 = p2 - p0;
 
 		/* Begin calculating determinant - also used to calculate U parameter */
 		Vector pvec = cross(ray.d, edge2);
 
-		Float det = dot(edge1, pvec);
+		float det = dot(edge1, pvec);
 		if (det == 0)
 			return false;
-		Float inv_det = 1.0f / det;
+		float inv_det = 1.0f / det;
 
 		/* Calculate distance from v[0] to ray origin */
 		Vector tvec = ray.o - p0;
@@ -167,8 +167,8 @@ struct MTS_EXPORT_CORE Triangle {
 	 * \return
 	 *   \c true if an intersection has been detected
 	 */
-	FINLINE bool rayIntersect(const Point *positions, const Ray &ray, Float &u,
-		Float &v, Float &t) const {
+	FINLINE bool rayIntersect(const Point *positions, const Ray &ray, float &u,
+		float &v, float &t) const {
 		return rayIntersect(
 			positions[idx[0]], positions[idx[1]],
 			positions[idx[2]], ray, u, v, t);

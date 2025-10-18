@@ -658,7 +658,7 @@ class PlainObjectBase : public internal::dense_xpr_base<Derived>::type
     {
       EIGEN_STATIC_ASSERT(bool(NumTraits<T0>::IsInteger) &&
                           bool(NumTraits<T1>::IsInteger),
-                          FLOATING_POINT_ARGUMENT_PASSED__INTEGER_WAS_EXPECTED)
+                          floatING_POINT_ARGUMENT_PASSED__INTEGER_WAS_EXPECTED)
       resize(nbRows,nbCols);
     }
     template<typename T0, typename T1>

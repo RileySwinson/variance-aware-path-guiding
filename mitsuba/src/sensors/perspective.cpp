@@ -36,7 +36,7 @@ MTS_NAMESPACE_BEGIN
  *         description for further details.
  *         \default{\code{50mm}}
  *     }
- *     \parameter{fov}{\Float}{
+ *     \parameter{fov}{\float}{
  *         An alternative to \code{focalLength}:
  *         denotes the camera's field of view in degrees---must be
  *         between 0 and 180, excluding the extremes.
@@ -61,12 +61,12 @@ MTS_NAMESPACE_BEGIN
  *         \end{enumerate}
  *         The default is \code{\textbf{x}}.
  *     }
- *     \parameter{shutterOpen, shutterClose}{\Float}{
+ *     \parameter{shutterOpen, shutterClose}{\float}{
  *         Specifies the time interval of the measurement---this
  *         is only relevant when the scene is in motion.
  *         \default{0}
  *     }
- *     \parameter{nearClip, farClip}{\Float}{
+ *     \parameter{nearClip, farClip}{\float}{
  *         Distance to the near/far clip
  *         planes.\default{\code{near\code}-\code{Clip=1e-2} (i.e.
  *         \code{0.01}) and {\code{farClip=1e4} (i.e. \code{10000})}}
@@ -130,10 +130,10 @@ public:
 		const Vector2i &cropSize   = m_film->getCropSize();
 		const Point2i  &cropOffset = m_film->getCropOffset();
 
-		Vector2 relSize((Float) cropSize.x / (Float) filmSize.x,
-			(Float) cropSize.y / (Float) filmSize.y);
-		Point2 relOffset((Float) cropOffset.x / (Float) filmSize.x,
-			(Float) cropOffset.y / (Float) filmSize.y);
+		Vector2 relSize((float) cropSize.x / (float) filmSize.x,
+			(float) cropSize.y / (float) filmSize.y);
+		Point2 relOffset((float) cropOffset.x / (float) filmSize.x,
+			(float) cropOffset.y / (float) filmSize.y);
 
 		/**
 		 * These do the following (in reverse order):
@@ -188,7 +188,7 @@ public:
 	 *     A normalized direction vector from the aperture position to the
 	 *     reference point in question (all in local camera space)
 	 */
-	inline Float importance(const Vector &d) const {
+	inline float importance(const Vector &d) const {
 		/* How is this derived? Imagine a hypothetical image plane at a
 		   distance of d=1 away from the pinhole in camera space.
 
@@ -226,14 +226,14 @@ public:
 		      d_omega = 1 / (A' * cos^3(theta))
 		*/
 
-		Float cosTheta = Frame::cosTheta(d);
+		float cosTheta = Frame::cosTheta(d);
 
 		/* Check if the direction points behind the camera */
 		if (cosTheta <= 0)
 			return 0.0f;
 
 		/* Compute the position on the plane at distance 1 */
-		Float invCosTheta = 1.0f / cosTheta;
+		float invCosTheta = 1.0f / cosTheta;
 		Point2 p(d.x * invCosTheta, d.y * invCosTheta);
 
 		/* Check if the point lies inside the chosen crop rectangle */
@@ -245,7 +245,7 @@ public:
 	}
 
 	Spectrum sampleRay(Ray &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 
 		/* Compute the corresponding position on the
@@ -257,7 +257,7 @@ public:
 		/* Turn that into a normalized ray direction, and
 		   adjust the ray interval accordingly */
 		Vector d = normalize(Vector(nearP));
-		Float invZ = 1.0f / d.z;
+		float invZ = 1.0f / d.z;
 		ray.mint = m_nearClip * invZ;
 		ray.maxt = m_farClip * invZ;
 
@@ -269,7 +269,7 @@ public:
 	}
 
 	Spectrum sampleRayDifferential(RayDifferential &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 
 		/* Compute the corresponding position on the
@@ -281,7 +281,7 @@ public:
 		/* Turn that into a normalized ray direction, and
 		   adjust the ray interval accordingly */
 		Vector d = normalize(Vector(nearP));
-		Float invZ = 1.0f / d.z;
+		float invZ = 1.0f / d.z;
 		ray.mint = m_nearClip * invZ;
 		ray.maxt = m_farClip * invZ;
 
@@ -311,7 +311,7 @@ public:
 		return Spectrum((pRec.measure == EDiscrete) ? 1.0f : 0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -344,7 +344,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		if (dRec.measure != ESolidAngle)
 			return 0.0f;
@@ -408,7 +408,7 @@ public:
 		dRec.uv.y *= m_resolution.y;
 
 		Vector localD(refP);
-		Float dist = localD.length(),
+		float dist = localD.length(),
 			  invDist = 1.0f / dist;
 		localD *= invDist;
 
@@ -423,14 +423,14 @@ public:
 			importance(localD) * invDist * invDist);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return (dRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
 	Transform getProjectionTransform(const Point2 &apertureSample,
 			const Point2 &aaSample) const {
-		Float right = std::tan(m_xfov * M_PI/360) * m_nearClip, left = -right;
-		Float top = right / m_aspect, bottom = -top;
+		float right = std::tan(m_xfov * M_PI/360) * m_nearClip, left = -right;
+		float top = right / m_aspect, bottom = -top;
 
 		Vector2 offset(
 			(right-left)/m_film->getSize().x * (aaSample.x-0.5f),
@@ -467,7 +467,7 @@ private:
 	Transform m_sampleToCamera;
 	Transform m_clipTransform;
 	AABB2 m_imageRect;
-	Float m_normalization;
+	float m_normalization;
 	Vector m_dx, m_dy;
 };
 

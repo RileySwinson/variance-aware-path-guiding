@@ -213,12 +213,12 @@ inline double sampleTEADouble(uint32_t v0, uint32_t v1, int rounds = 4) {
 
 #if defined(SINGLE_PRECISION)
 /// Alias to \ref sampleTEASingle or \ref sampleTEADouble based on compilation flags
-inline Float sampleTEAFloat(uint32_t v0, uint32_t v1, int rounds = 4) {
+inline float sampleTEAfloat(uint32_t v0, uint32_t v1, int rounds = 4) {
 	return sampleTEASingle(v0, v1, rounds);
 }
 #else
 /// Alias to \ref sampleTEASingle or \ref sampleTEADouble based on compilation flags
-inline Float sampleTEAFloat(uint32_t v0, uint32_t v1, int rounds = 4) {
+inline float sampleTEAfloat(uint32_t v0, uint32_t v1, int rounds = 4) {
 	return sampleTEADouble(v0, v1, rounds);
 }
 #endif
@@ -231,7 +231,7 @@ inline Float sampleTEAFloat(uint32_t v0, uint32_t v1, int rounds = 4) {
  * of the input value \c index, mirrors it along the decimal
  * point, and returns the resulting fractional value.
  */
-extern MTS_EXPORT_CORE Float radicalInverse(int base, uint64_t index);
+extern MTS_EXPORT_CORE float radicalInverse(int base, uint64_t index);
 
 /**
  * \brief Calculate a scrambled radical inverse function
@@ -244,7 +244,7 @@ extern MTS_EXPORT_CORE Float radicalInverse(int base, uint64_t index);
  *
  * \remark This function is not available in the Python API
  */
-extern MTS_EXPORT_CORE Float scrambledRadicalInverse(int base,
+extern MTS_EXPORT_CORE float scrambledRadicalInverse(int base,
 	uint64_t index, uint16_t *perm);
 
 /**
@@ -253,7 +253,7 @@ extern MTS_EXPORT_CORE Float scrambledRadicalInverse(int base,
  *
  * Repeated evaluation eventually causes a loss of accuracy
  */
-extern MTS_EXPORT_CORE Float radicalInverseIncremental(int base, Float x);
+extern MTS_EXPORT_CORE float radicalInverseIncremental(int base, float x);
 
 /**
  * \brief Calculate a radical inverse function (fast version)
@@ -269,7 +269,7 @@ extern MTS_EXPORT_CORE Float radicalInverseIncremental(int base, Float x);
  * \param index
  *    Sequence index
  */
-extern MTS_EXPORT_CORE Float radicalInverseFast(uint16_t baseIndex, uint64_t index);
+extern MTS_EXPORT_CORE float radicalInverseFast(uint16_t baseIndex, uint64_t index);
 
 /**
  * \brief Calculate a scrambled radical inverse function (fast version)
@@ -281,7 +281,7 @@ extern MTS_EXPORT_CORE Float radicalInverseFast(uint16_t baseIndex, uint64_t ind
  *
  * \remark This function is not available in the Python API
  */
-extern MTS_EXPORT_CORE Float scrambledRadicalInverseFast(uint16_t baseIndex,
+extern MTS_EXPORT_CORE float scrambledRadicalInverseFast(uint16_t baseIndex,
 		uint64_t index, uint16_t *perm);
 
 //! @}

@@ -180,8 +180,8 @@ void init_opengl(void)
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
-    glVertexPointer(3, GL_FLOAT, sizeof(struct Vertex), vertex);
-    glColorPointer(3, GL_FLOAT, sizeof(struct Vertex), &vertex[0].r); // Pointer to the first color
+    glVertexPointer(3, GL_float, sizeof(struct Vertex), vertex);
+    glColorPointer(3, GL_float, sizeof(struct Vertex), &vertex[0].r); // Pointer to the first color
 
     glPointSize(2.0);
 

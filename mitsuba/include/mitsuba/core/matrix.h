@@ -235,7 +235,7 @@ public:
 		if (value == 0)
 			SLog(EWarn, "Matrix: Division by zero!");
 #endif
-		Float recip = 1/value;
+		float recip = 1/value;
 		for (int i=0; i<M; ++i)
 			for (int j=0; j<N; ++j)
 				result.m[i][j] = m[i][j]*recip;
@@ -248,7 +248,7 @@ public:
 		if (value == 0)
 			SLog(EWarn, "Matrix: Division by zero!");
 #endif
-		Float recip = 1/value;
+		float recip = 1/value;
 		for (int i=0; i<M; ++i)
 			for (int j=0; j<N; ++j)
 				m[i][j] *= recip;
@@ -264,17 +264,17 @@ public:
 	}
 
 	/// Compute the trace of a square matrix
-	inline Float trace() const {
+	inline float trace() const {
 		BOOST_STATIC_ASSERT(M == N);
-		Float sum = 0;
+		float sum = 0;
 		for (int i=0; i<M; ++i)
 			sum += m[i][i];
 		return sum;
 	}
 
 	/// Compute the Frobenius norm
-	inline Float frob() const {
-		Float val = 0;
+	inline float frob() const {
+		float val = 0;
 		for (int i=0; i<M; ++i)
 			for (int j=0; j<N; ++j)
 				val += m[i][j] * m[i][j];
@@ -452,18 +452,18 @@ protected:
  * \brief Basic 2x2 matrix data type
  * \ingroup libcore
  */
-struct MTS_EXPORT_CORE Matrix2x2 : public Matrix<2, 2, Float> {
+struct MTS_EXPORT_CORE Matrix2x2 : public Matrix<2, 2, float> {
 public:
 	inline Matrix2x2() { }
 
 	/// Initialize the matrix with constant entries
-	explicit inline Matrix2x2(Float value) : Matrix<2, 2, Float>(value) { }
+	explicit inline Matrix2x2(float value) : Matrix<2, 2, float>(value) { }
 
 	/// Initialize the matrix from a given 2x2 array
-	explicit inline Matrix2x2(const Float _m[2][2]) : Matrix<2, 2, Float>(_m) { }
+	explicit inline Matrix2x2(const float _m[2][2]) : Matrix<2, 2, float>(_m) { }
 
 	/// Initialize the matrix from a given (float) 2x2 array in row-major order
-	explicit inline Matrix2x2(const Float _m[4]) : Matrix<2, 2, Float>(_m) { }
+	explicit inline Matrix2x2(const float _m[4]) : Matrix<2, 2, float>(_m) { }
 
 	/// Initialize the matrix from two 2D column vectors
 	explicit inline Matrix2x2(const Vector2 &v1, const Vector2 &v2) {
@@ -472,28 +472,28 @@ public:
 	}
 
 	/// Unserialize a matrix from a stream
-	explicit inline Matrix2x2(Stream *stream) : Matrix<2, 2, Float>(stream) { }
+	explicit inline Matrix2x2(Stream *stream) : Matrix<2, 2, float>(stream) { }
 
 	/// Copy constructor
-	inline Matrix2x2(const Matrix<2, 2, Float> &mtx) : Matrix<2, 2, Float>(mtx) { }
+	inline Matrix2x2(const Matrix<2, 2, float> &mtx) : Matrix<2, 2, float>(mtx) { }
 
 	/// Initialize with the given values
-	inline Matrix2x2(Float a00, Float a01, Float a10, Float a11) {
+	inline Matrix2x2(float a00, float a01, float a10, float a11) {
 		m[0][0] = a00; m[0][1] = a01;
 		m[1][0] = a10; m[1][1] = a11;
 	}
 
 	/// Return the determinant (Faster than Matrix::det)
-	inline Float det() const {
+	inline float det() const {
 		return m[0][0]*m[1][1] - m[0][1]*m[1][0];
 	}
 
 	/// Compute the inverse (Faster than Matrix::invert)
 	FINLINE bool invert2x2(Matrix2x2 &target) const {
-		Float det = m[0][0]*m[1][1] - m[0][1]*m[1][0];
+		float det = m[0][0]*m[1][1] - m[0][1]*m[1][0];
 		if (std::abs(det) <= RCPOVERFLOW)
 			return false;
-		Float invDet = 1/det;
+		float invDet = 1/det;
 		target.m[0][0] =  m[1][1] * invDet;
 		target.m[0][1] = -m[0][1] * invDet;
 		target.m[1][1] =  m[0][0] * invDet;
@@ -505,11 +505,11 @@ public:
 	}
 
 	 /// Compute the inverse with det (Faster than Matrix::invert)
-	 FINLINE bool invert2x2(Matrix2x2 &target, Float& det) const {
+	 FINLINE bool invert2x2(Matrix2x2 &target, float& det) const {
 		det = m[0][0]*m[1][1] - m[0][1]*m[1][0];
 		if(std::abs(det) <= RCPOVERFLOW)
 			return false;
-		Float invDet = 1/det;
+		float invDet = 1/det;
 		target.m[0][0] = m[1][1] * invDet;
 		target.m[0][1] = -m[0][1] * invDet;
 		target.m[1][1] = m[0][0] * invDet;
@@ -526,7 +526,7 @@ public:
 	}
 
 	/// Scalar multiplication (creates a temporary)
-	inline Matrix2x2 operator*(Float value) const {
+	inline Matrix2x2 operator*(float value) const {
 		Matrix2x2 result;
 		for (int i=0; i<2; ++i)
 			for (int j=0; j<2; ++j)
@@ -535,7 +535,7 @@ public:
 	}
 
 	/// Assignment operator
-	inline Matrix2x2 &operator=(const Matrix<2, 2, Float> &mat) {
+	inline Matrix2x2 &operator=(const Matrix<2, 2, float> &mat) {
 		for (int i=0; i<2; ++i)
 			for (int j=0; j<2; ++j)
 				m[i][j] = mat.m[i][j];
@@ -557,18 +557,18 @@ public:
  * \brief Basic 3x3 matrix data type
  * \ingroup libcore
  */
-struct MTS_EXPORT_CORE Matrix3x3 : public Matrix<3, 3, Float> {
+struct MTS_EXPORT_CORE Matrix3x3 : public Matrix<3, 3, float> {
 public:
 	inline Matrix3x3() { }
 
 	/// Initialize the matrix with constant entries
-	explicit inline Matrix3x3(Float value) : Matrix<3, 3, Float>(value) { }
+	explicit inline Matrix3x3(float value) : Matrix<3, 3, float>(value) { }
 
 	/// Initialize the matrix from a given 3x3 array
-	explicit inline Matrix3x3(const Float _m[3][3]) : Matrix<3, 3, Float>(_m) { }
+	explicit inline Matrix3x3(const float _m[3][3]) : Matrix<3, 3, float>(_m) { }
 
 	/// Initialize the matrix from a given (float) 3x3 array in row-major order
-	explicit inline Matrix3x3(const Float _m[9]) : Matrix<3, 3, Float>(_m) { }
+	explicit inline Matrix3x3(const float _m[9]) : Matrix<3, 3, float>(_m) { }
 
 	/// Initialize the matrix from three 3D column vectors
 	explicit inline Matrix3x3(const Vector &v1, const Vector &v2, const Vector &v3) {
@@ -578,22 +578,22 @@ public:
 	}
 
 	/// Unserialize a matrix from a stream
-	explicit inline Matrix3x3(Stream *stream) : Matrix<3, 3, Float>(stream) { }
+	explicit inline Matrix3x3(Stream *stream) : Matrix<3, 3, float>(stream) { }
 
 	/// Copy constructor
-	inline Matrix3x3(const Matrix<3, 3, Float> &mtx) : Matrix<3, 3, Float>(mtx) { }
+	inline Matrix3x3(const Matrix<3, 3, float> &mtx) : Matrix<3, 3, float>(mtx) { }
 
 	/// Initialize with the given values
-	inline Matrix3x3(Float a00, Float a01, Float a02,
-			Float a10, Float a11, Float a12,
-			Float a20, Float a21, Float a22) {
+	inline Matrix3x3(float a00, float a01, float a02,
+			float a10, float a11, float a12,
+			float a20, float a21, float a22) {
 		m[0][0] = a00; m[0][1] = a01; m[0][2] = a02;
 		m[1][0] = a10; m[1][1] = a11; m[1][2] = a12;
 		m[2][0] = a20; m[2][1] = a21; m[2][2] = a22;
 	}
 
 	/// Return the determinant (Faster than Matrix::det())
-	inline Float det() const {
+	inline float det() const {
 		return ((m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]))
 			  - (m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]))
 			  + (m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])));
@@ -615,7 +615,7 @@ public:
 	}
 
 	/// Scalar multiplication (creates a temporary)
-	inline Matrix3x3 operator*(Float value) const {
+	inline Matrix3x3 operator*(float value) const {
 		Matrix3x3 result;
 		for (int i=0; i<3; ++i)
 			for (int j=0; j<3; ++j)
@@ -625,7 +625,7 @@ public:
 
 
 	/// Assignment operator
-	inline Matrix3x3 &operator=(const Matrix<3, 3, Float> &mat) {
+	inline Matrix3x3 &operator=(const Matrix<3, 3, float> &mat) {
 		for (int i=0; i<3; ++i)
 			for (int j=0; j<3; ++j)
 				m[i][j] = mat.m[i][j];
@@ -653,17 +653,17 @@ public:
  * \ingroup libcore
  * \ingroup libpython
  */
-struct MTS_EXPORT_CORE Matrix4x4 : public Matrix<4, 4, Float> {
+struct MTS_EXPORT_CORE Matrix4x4 : public Matrix<4, 4, float> {
 	inline Matrix4x4() { }
 
 	/// Initialize the matrix with constant entries
-	explicit inline Matrix4x4(Float value) : Matrix<4, 4, Float>(value) { }
+	explicit inline Matrix4x4(float value) : Matrix<4, 4, float>(value) { }
 
 	/// Initialize the matrix from a given 4x4 array
-	explicit inline Matrix4x4(const Float _m[4][4]) : Matrix<4, 4, Float>(_m) { }
+	explicit inline Matrix4x4(const float _m[4][4]) : Matrix<4, 4, float>(_m) { }
 
 	/// Initialize the matrix from a given (float) 4x4 array in row-major order
-	explicit inline Matrix4x4(const Float _m[16]) : Matrix<4, 4, Float>(_m) { }
+	explicit inline Matrix4x4(const float _m[16]) : Matrix<4, 4, float>(_m) { }
 
 	/// Initialize the matrix from four 4D column vectors
 	explicit inline Matrix4x4(const Vector4 &v1, const Vector4 &v2, const Vector4 &v3, const Vector4 &v4) {
@@ -674,17 +674,17 @@ struct MTS_EXPORT_CORE Matrix4x4 : public Matrix<4, 4, Float> {
 	}
 
 	/// Unserialize a matrix from a stream
-	explicit inline Matrix4x4(Stream *stream) : Matrix<4, 4, Float>(stream) { }
+	explicit inline Matrix4x4(Stream *stream) : Matrix<4, 4, float>(stream) { }
 
 	/// Copy constructor
-	inline Matrix4x4(const Matrix<4, 4, Float> &mtx) : Matrix<4, 4, Float>(mtx) { }
+	inline Matrix4x4(const Matrix<4, 4, float> &mtx) : Matrix<4, 4, float>(mtx) { }
 
 	/// Initialize with the given values
 	inline Matrix4x4(
-		Float a00, Float a01, Float a02, Float a03,
-		Float a10, Float a11, Float a12, Float a13,
-		Float a20, Float a21, Float a22, Float a23,
-		Float a30, Float a31, Float a32, Float a33) {
+		float a00, float a01, float a02, float a03,
+		float a10, float a11, float a12, float a13,
+		float a20, float a21, float a22, float a23,
+		float a30, float a31, float a32, float a33) {
 		m[0][0] = a00; m[0][1] = a01; m[0][2] = a02; m[0][3] = a03;
 		m[1][0] = a10; m[1][1] = a11; m[1][2] = a12; m[1][3] = a13;
 		m[2][0] = a20; m[2][1] = a21; m[2][2] = a22; m[2][3] = a23;
@@ -692,7 +692,7 @@ struct MTS_EXPORT_CORE Matrix4x4 : public Matrix<4, 4, Float> {
 	}
 
 	/// Return the determinant of the upper left 3x3 sub-matrix
-	inline Float det3x3() const {
+	inline float det3x3() const {
 		return ((m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]))
 			  - (m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]))
 			  + (m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])));
@@ -709,7 +709,7 @@ struct MTS_EXPORT_CORE Matrix4x4 : public Matrix<4, 4, Float> {
 	}
 
 	/// Scalar multiplication (creates a temporary)
-	inline Matrix4x4 operator*(Float value) const {
+	inline Matrix4x4 operator*(float value) const {
 		Matrix4x4 result;
 		for (int i=0; i<4; ++i)
 			for (int j=0; j<4; ++j)
@@ -718,7 +718,7 @@ struct MTS_EXPORT_CORE Matrix4x4 : public Matrix<4, 4, Float> {
 	}
 
 	/// Assignment operator
-	inline Matrix4x4 &operator=(const Matrix<4, 4, Float> &mat) {
+	inline Matrix4x4 &operator=(const Matrix<4, 4, float> &mat) {
 		for (int i=0; i<4; ++i)
 			for (int j=0; j<4; ++j)
 				m[i][j] = mat.m[i][j];
@@ -770,7 +770,7 @@ template <typename T, int M, int N> inline Matrix<M, N, T> operator*(T f, const 
  * \return
  *    \c true upon success.
  */
-extern MTS_EXPORT_CORE bool eig3(Matrix3x3 &m, Float lambda[3]);
+extern MTS_EXPORT_CORE bool eig3(Matrix3x3 &m, float lambda[3]);
 
 /**
  * \brief Fast non-iterative 3x3 eigenvalue decomposition
@@ -780,7 +780,7 @@ extern MTS_EXPORT_CORE bool eig3(Matrix3x3 &m, Float lambda[3]);
  * \param lambda
  *    Parameter used to returns the eigenvalues
  */
-extern MTS_EXPORT_CORE void eig3_noniter(Matrix3x3 &m, Float lambda[3]);
+extern MTS_EXPORT_CORE void eig3_noniter(Matrix3x3 &m, float lambda[3]);
 
 MTS_NAMESPACE_END
 

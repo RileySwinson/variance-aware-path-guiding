@@ -37,11 +37,11 @@ public:
 		configure();
 	}
 
-	Float eval(Float x) const {
+	float eval(float x) const {
 		x = std::abs(x);
 
-		Float x2 = x*x, x3 = x2*x;
-		Float B = 0.0f, C = 0.5f;
+		float x2 = x*x, x3 = x2*x;
+		float B = 0.0f, C = 0.5f;
 
 		if (x < 1) {
 			return 1.0f/6.0f * ((12-9*B-6*C)*x3

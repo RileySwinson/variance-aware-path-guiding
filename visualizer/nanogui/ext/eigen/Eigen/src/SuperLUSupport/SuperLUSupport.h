@@ -12,22 +12,22 @@
 
 namespace Eigen { 
 
-#define DECL_GSSVX(PREFIX,FLOATTYPE,KEYTYPE)		\
+#define DECL_GSSVX(PREFIX,floatTYPE,KEYTYPE)		\
     extern "C" {                                                                                          \
-      typedef struct { FLOATTYPE for_lu; FLOATTYPE total_needed; int expansions; } PREFIX##mem_usage_t;   \
+      typedef struct { floatTYPE for_lu; floatTYPE total_needed; int expansions; } PREFIX##mem_usage_t;   \
       extern void PREFIX##gssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,                  \
-                                char *, FLOATTYPE *, FLOATTYPE *, SuperMatrix *, SuperMatrix *,           \
+                                char *, floatTYPE *, floatTYPE *, SuperMatrix *, SuperMatrix *,           \
                                 void *, int, SuperMatrix *, SuperMatrix *,                                \
-                                FLOATTYPE *, FLOATTYPE *, FLOATTYPE *, FLOATTYPE *,                       \
+                                floatTYPE *, floatTYPE *, floatTYPE *, floatTYPE *,                       \
                                 PREFIX##mem_usage_t *, SuperLUStat_t *, int *);                           \
     }                                                                                                     \
     inline float SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A,                                \
          int *perm_c, int *perm_r, int *etree, char *equed,                                               \
-         FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L,                                                      \
+         floatTYPE *R, floatTYPE *C, SuperMatrix *L,                                                      \
          SuperMatrix *U, void *work, int lwork,                                                           \
          SuperMatrix *B, SuperMatrix *X,                                                                  \
-         FLOATTYPE *recip_pivot_growth,                                                                   \
-         FLOATTYPE *rcond, FLOATTYPE *ferr, FLOATTYPE *berr,                                              \
+         floatTYPE *recip_pivot_growth,                                                                   \
+         floatTYPE *rcond, floatTYPE *ferr, floatTYPE *berr,                                              \
          SuperLUStat_t *stats, int *info, KEYTYPE) {                                                      \
     PREFIX##mem_usage_t mem_usage;                                                                        \
     PREFIX##gssvx(options, A, perm_c, perm_r, etree, equed, R, C, L,                                      \
@@ -48,20 +48,20 @@ DECL_GSSVX(z,double,std::complex<double>)
 #ifdef EIGEN_SUPERLU_HAS_ILU
 
 // similarly for the incomplete factorization using gsisx
-#define DECL_GSISX(PREFIX,FLOATTYPE,KEYTYPE)                                                    \
+#define DECL_GSISX(PREFIX,floatTYPE,KEYTYPE)                                                    \
     extern "C" {                                                                                \
       extern void PREFIX##gsisx(superlu_options_t *, SuperMatrix *, int *, int *, int *,        \
-                         char *, FLOATTYPE *, FLOATTYPE *, SuperMatrix *, SuperMatrix *,        \
-                         void *, int, SuperMatrix *, SuperMatrix *, FLOATTYPE *, FLOATTYPE *,   \
+                         char *, floatTYPE *, floatTYPE *, SuperMatrix *, SuperMatrix *,        \
+                         void *, int, SuperMatrix *, SuperMatrix *, floatTYPE *, floatTYPE *,   \
                          PREFIX##mem_usage_t *, SuperLUStat_t *, int *);                        \
     }                                                                                           \
     inline float SuperLU_gsisx(superlu_options_t *options, SuperMatrix *A,                      \
          int *perm_c, int *perm_r, int *etree, char *equed,                                     \
-         FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L,                                            \
+         floatTYPE *R, floatTYPE *C, SuperMatrix *L,                                            \
          SuperMatrix *U, void *work, int lwork,                                                 \
          SuperMatrix *B, SuperMatrix *X,                                                        \
-         FLOATTYPE *recip_pivot_growth,                                                         \
-         FLOATTYPE *rcond,                                                                      \
+         floatTYPE *recip_pivot_growth,                                                         \
+         floatTYPE *rcond,                                                                      \
          SuperLUStat_t *stats, int *info, KEYTYPE) {                                            \
     PREFIX##mem_usage_t mem_usage;                                                              \
     PREFIX##gsisx(options, A, perm_c, perm_r, etree, equed, R, C, L,                            \

@@ -71,31 +71,31 @@ protected:
 	virtual ~TestCase() { }
 
 	/// Asserts that the two integer values are equal
-	void assertEqualsImpl(int actual, int expected, Float epsilon, const char *file, int line);
+	void assertEqualsImpl(int actual, int expected, float epsilon, const char *file, int line);
 
 	/// Asserts that the two floating point values are equal
-	void assertEqualsImpl(Float actual, Float expected, Float epsilon, const char *file, int line);
+	void assertEqualsImpl(float actual, float expected, float epsilon, const char *file, int line);
 
 	/// Asserts that the two spectral power distributions are equal
-	void assertEqualsImpl(const Spectrum &actual, const Spectrum &expected, Float epsilon, const char *file, int line);
+	void assertEqualsImpl(const Spectrum &actual, const Spectrum &expected, float epsilon, const char *file, int line);
 
 	/// Asserts that the two 2D vectors are equal
-	void assertEqualsImpl(const Vector2 &actual, const Vector2 &expected, Float epsilon, const char *file, int line);
+	void assertEqualsImpl(const Vector2 &actual, const Vector2 &expected, float epsilon, const char *file, int line);
 
 	/// Asserts that the two 3D vectors are equal
-	void assertEqualsImpl(const Vector &actual, const Vector &expected, Float epsilon, const char *file, int line);
+	void assertEqualsImpl(const Vector &actual, const Vector &expected, float epsilon, const char *file, int line);
 
 	/// Asserts that the two 4D vectors are equal
-	void assertEqualsImpl(const Vector4 &actual, const Vector4 &expected, Float epsilon, const char *file, int line);
+	void assertEqualsImpl(const Vector4 &actual, const Vector4 &expected, float epsilon, const char *file, int line);
 
 	/// Asserts that the two 2D points are equal
-	void assertEqualsImpl(const Point2 &actual, const Point2 &expected, Float epsilon, const char *file, int line);
+	void assertEqualsImpl(const Point2 &actual, const Point2 &expected, float epsilon, const char *file, int line);
 
 	/// Asserts that the two 3D points are equal
-	void assertEqualsImpl(const Point &actual, const Point &expected, Float epsilon, const char *file, int line);
+	void assertEqualsImpl(const Point &actual, const Point &expected, float epsilon, const char *file, int line);
 
 	/// Asserts that the two 4x4 matrices are equal
-	template<int M, int N> void assertEqualsImpl(const Matrix<M, N, Float> &actual, const Matrix<M, N, Float> &expected, Float epsilon, const char *file, int line) {
+	template<int M, int N> void assertEqualsImpl(const Matrix<M, N, float> &actual, const Matrix<M, N, float> &expected, float epsilon, const char *file, int line) {
 		bool match = true;
 		for (int i=0; i<M; ++i)
 			for (int j=0; j<N; ++j)

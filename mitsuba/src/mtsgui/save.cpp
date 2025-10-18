@@ -69,9 +69,9 @@ static void setProperties(QDomDocument &doc, QDomElement &element,
 				property = doc.createElement("integer");
 				property.setAttribute("value", QString::number(props.getInteger(*it)));
 				break;
-			case Properties::EFloat:
+			case Properties::Efloat:
 				property = doc.createElement("float");
-				property.setAttribute("value", QString::number(props.getFloat(*it)));
+				property.setAttribute("value", QString::number(props.getfloat(*it)));
 				break;
 			case Properties::EString:
 				property = doc.createElement("string");
@@ -80,12 +80,12 @@ static void setProperties(QDomDocument &doc, QDomElement &element,
 			case Properties::EAnimatedTransform: {
 					const AnimatedTransform *trafo = props.getAnimatedTransform(*it);
 
-					std::set<Float> times;
+					std::set<float> times;
 					trafo->collectKeyframes(times);
 
 					property = doc.createElement("animation");
 
-					for (std::set<Float>::iterator it2 = times.begin(); it2 != times.end(); ++it2) {
+					for (std::set<float>::iterator it2 = times.begin(); it2 != times.end(); ++it2) {
 						const Matrix4x4 &matrix = trafo->eval(*it2).getMatrix();
 						QDomElement trafoTag = doc.createElement("transform");
 						QDomElement matrixTag = doc.createElement("matrix");
@@ -109,9 +109,9 @@ static void setProperties(QDomDocument &doc, QDomElement &element,
 					Transform trafo = props.getTransform(*it);
 					if (trafo.hasScale()) {
 						QDomElement scale = doc.createElement("scale");
-						Float valueX = trafo(Vector(1, 0, 0)).length();
-						Float valueY = trafo(Vector(0, 1, 0)).length();
-						Float valueZ = trafo(Vector(0, 0, 1)).length();
+						float valueX = trafo(Vector(1, 0, 0)).length();
+						float valueY = trafo(Vector(0, 1, 0)).length();
+						float valueZ = trafo(Vector(0, 0, 1)).length();
 						if (std::abs(1-valueX) < 1e-3f)
 							valueX = 1.0f;
 						if (std::abs(1-valueY) < 1e-3f)
@@ -218,16 +218,16 @@ void saveScene(QWidget *parent, SceneContext *ctx, const QString &targetFile) {
 		/* Also export the tonemapper settings */
 		if (ctx->toneMappingMethod == EGamma) {
 			filmProps.setString("tonemapMethod", "gamma", false);
-			filmProps.setFloat("exposure", ctx->exposure, false);
+			filmProps.setfloat("exposure", ctx->exposure, false);
 			filmProps.removeProperty("key");
 			filmProps.removeProperty("burn");
 		} else {
 			filmProps.setString("tonemapMethod", "reinhard", false);
-			filmProps.setFloat("key", ctx->reinhardKey, false);
-			filmProps.setFloat("burn", (ctx->reinhardBurn + 10) / 20.0f, false);
+			filmProps.setfloat("key", ctx->reinhardKey, false);
+			filmProps.setfloat("burn", (ctx->reinhardBurn + 10) / 20.0f, false);
 			filmProps.removeProperty("exposure");
 		}
-		filmProps.setFloat("gamma", ctx->srgb ? -1 : ctx->gamma, false);
+		filmProps.setfloat("gamma", ctx->srgb ? -1 : ctx->gamma, false);
 	}
 
 	setProperties(ctx->doc, film, filmProps);

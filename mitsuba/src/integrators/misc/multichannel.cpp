@@ -165,21 +165,21 @@ public:
 			const Sensor *sensor, Sampler *sampler, ImageBlock *block,
 			const bool &stop, const std::vector< TPoint2<uint8_t> > &points) const {
 
-		Float diffScaleFactor = 1.0f /
-			std::sqrt((Float) sampler->getSampleCount());
+		float diffScaleFactor = 1.0f /
+			std::sqrt((float) sampler->getSampleCount());
 
 		bool needsApertureSample = sensor->needsApertureSample();
 		bool needsTimeSample = sensor->needsTimeSample();
 
 		RadianceQueryRecord rRec(scene, sampler);
 		Point2 apertureSample(0.5f);
-		Float timeSample = 0.5f;
+		float timeSample = 0.5f;
 		RayDifferential sensorRay;
 
 		block->clear();
 
 		uint32_t queryType = RadianceQueryRecord::ESensorRay;
-		Float *temp = (Float *) alloca(sizeof(Float) * (m_integrators.size() * SPECTRUM_SAMPLES + 2));
+		float *temp = (float *) alloca(sizeof(float) * (m_integrators.size() * SPECTRUM_SAMPLES + 2));
 
 		for (size_t i = 0; i<points.size(); ++i) {
 			Point2i offset = Point2i(points[i]) + Vector2i(block->getOffset());

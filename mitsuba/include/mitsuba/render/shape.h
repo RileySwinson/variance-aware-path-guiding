@@ -36,7 +36,7 @@ MTS_NAMESPACE_BEGIN
 struct MTS_EXPORT_RENDER Intersection {
 public:
 	inline Intersection() :
-		shape(NULL), t(std::numeric_limits<Float>::infinity()) { }
+		shape(NULL), t(std::numeric_limits<float>::infinity()) { }
 
 	/// Convert a local shading-space vector into world space
 	inline Vector toWorld(const Vector &v) const {
@@ -50,7 +50,7 @@ public:
 
 	/// Is the current intersection valid?
 	inline bool isValid() const {
-		return t != std::numeric_limits<Float>::infinity();
+		return t != std::numeric_limits<float>::infinity();
 	}
 
 	/// Is the intersected shape also a emitter?
@@ -80,7 +80,7 @@ public:
 	 * Returns the exterior medium when \c cosTheta > 0 and
 	 * the interior medium when \c cosTheta <= 0.
 	 */
-	inline const Medium *getTargetMedium(Float cosTheta) const;
+	inline const Medium *getTargetMedium(float cosTheta) const;
 
 	/**
 	 * \brief Returns the BSDF of the intersected shape.
@@ -119,7 +119,7 @@ public:
 	void computePartials(const RayDifferential &ray);
 
 	/// Move the intersection forward or backward through time
-	inline void adjustTime(Float time);
+	inline void adjustTime(float time);
 
 	/// Calls the suitable implementation of \ref Shape::getNormalDerivative()
 	inline void getNormalDerivative(Vector &dndu, Vector &dndv,
@@ -132,7 +132,7 @@ public:
 	const Shape *shape;
 
 	/// Distance traveled along the ray
-	Float t;
+	float t;
 
 	/* Intersection point in 3D coordinates */
 	Point p;
@@ -150,10 +150,10 @@ public:
 	Vector dpdu, dpdv;
 
 	/// UV partials wrt. changes in screen-space
-	Float dudx, dudy, dvdx, dvdy;
+	float dudx, dudy, dvdx, dvdy;
 
 	/// Time value associated with the intersection
-	Float time;
+	float time;
 
 	/// Interpolated vertex color
 	Spectrum color;
@@ -204,7 +204,7 @@ public:
 	 *
 	 * The default implementation throws an exception
 	 */
-	virtual Float getSurfaceArea() const;
+	virtual float getSurfaceArea() const;
 
 	/// Return a bounding box containing the shape
 	virtual AABB getAABB() const = 0;
@@ -250,8 +250,8 @@ public:
 	 * and has the signature
 	 * <tt>intersection = shape.rayIntersect(ray, mint, maxt)</tt>
 	 */
-	virtual bool rayIntersect(const Ray &ray, Float mint,
-			Float maxt, Float &t, void *temp) const;
+	virtual bool rayIntersect(const Ray &ray, float mint,
+			float maxt, float &t, void *temp) const;
 
 	/**
 	 * \brief Fast ray intersection test for visibility queries
@@ -265,7 +265,7 @@ public:
 	 *
 	 * \remark This function is not exposed in Python
 	 */
-	virtual bool rayIntersect(const Ray &ray, Float mint, Float maxt) const;
+	virtual bool rayIntersect(const Ray &ray, float mint, float maxt) const;
 
 	/**
 	 * \brief Given that an intersection has been found, create a
@@ -319,13 +319,13 @@ public:
 	 * \remark In Python, the signature of this function is
 	 * <tt>H, K = shape.getCurvature(its, shadingFrame)</tt>
 	 */
-	void getCurvature(const Intersection &its, Float &H, Float &K,
+	void getCurvature(const Intersection &its, float &H, float &K,
 		bool shadingFrame = true) const;
 
 	/**
 	 * Adjust an intersection record to a different time value
 	 */
-	virtual void adjustTime(Intersection &its, Float time) const;
+	virtual void adjustTime(Intersection &its, float time) const;
 
 	/**
 	 * \brief Return the internal kd-tree of this shape (if any)
@@ -372,7 +372,7 @@ public:
 	 *     position, as well as auxilary information about the sample.
 	 */
 
-	virtual Float pdfPosition(const PositionSamplingRecord &pRec) const;
+	virtual float pdfPosition(const PositionSamplingRecord &pRec) const;
 
 	/**
 	 * \brief Sample a point on the surface of this shape instance
@@ -414,7 +414,7 @@ public:
 	 * \param p
 	 *     An arbitrary point used to define the solid angle measure
 	 */
-	virtual Float pdfDirect(const DirectSamplingRecord &dRec) const;
+	virtual float pdfDirect(const DirectSamplingRecord &dRec) const;
 
 	//! @}
 	// =============================================================

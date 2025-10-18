@@ -242,7 +242,7 @@ public:
 	 * \return
 	 *    The area density at the supplied position
 	 */
-	virtual Float pdfPosition(const PositionSamplingRecord &pRec) const;
+	virtual float pdfPosition(const PositionSamplingRecord &pRec) const;
 
 	/**
 	 * \brief Evaluate the directional component of the sampling density
@@ -258,7 +258,7 @@ public:
 	 *    The directional density at the supplied position
 	 */
 
-	virtual Float pdfDirection(const DirectionSamplingRecord &dRec,
+	virtual float pdfDirection(const DirectionSamplingRecord &dRec,
 		const PositionSamplingRecord &pRec) const;
 
 	/**
@@ -275,7 +275,7 @@ public:
 	 *    The density expressed with respect to the requested measure
 	 *    (usually \ref ESolidAngle)
 	 */
-	virtual Float pdfDirect(const DirectSamplingRecord &dRec) const;
+	virtual float pdfDirect(const DirectSamplingRecord &dRec) const;
 
 	//! @}
 	// =============================================================
@@ -517,7 +517,7 @@ public:
 	virtual Spectrum sampleRay(Ray &ray,
 		const Point2 &spatialSample,
 		const Point2 &directionalSample,
-		Float time) const;
+		float time) const;
 
 	//! @}
 	// =============================================================
@@ -532,7 +532,7 @@ public:
 	 * This is used by the luminaire importance sampling
 	 * routines in \ref Scene.
 	 */
-	inline Float getSamplingWeight() const { return m_samplingWeight; }
+	inline float getSamplingWeight() const { return m_samplingWeight; }
 
 	/**
 	 * \brief Return a bitmap representation of the emitter
@@ -635,7 +635,7 @@ protected:
 	/// Virtual destructor
 	virtual ~Emitter();
 protected:
-	Float m_samplingWeight;
+	float m_samplingWeight;
 };
 
 MTS_NAMESPACE_END

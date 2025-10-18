@@ -32,7 +32,7 @@ public:
 	GaussianFilter(const Properties &props)
 		: ReconstructionFilter(props) {
 		/* Standard deviation */
-		m_stddev = props.getFloat("stddev", 0.5f);
+		m_stddev = props.getfloat("stddev", 0.5f);
 
 		/* Cut off after 4 standard deviations */
 		m_radius = 4 * m_stddev;
@@ -40,18 +40,18 @@ public:
 
 	GaussianFilter(Stream *stream, InstanceManager *manager)
 		: ReconstructionFilter(stream, manager) {
-		m_stddev = stream->readFloat();
+		m_stddev = stream->readfloat();
 		configure();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		ReconstructionFilter::serialize(stream, manager);
-		stream->writeFloat(m_stddev);
+		stream->writefloat(m_stddev);
 	}
 
-	Float eval(Float x) const {
-		Float alpha = -1.0f / (2.0f * m_stddev*m_stddev);
-		return std::max((Float) 0.0f,
+	float eval(float x) const {
+		float alpha = -1.0f / (2.0f * m_stddev*m_stddev);
+		return std::max((float) 0.0f,
 			math::fastexp(alpha * x * x) -
 			math::fastexp(alpha * m_radius * m_radius));
 	}
@@ -62,7 +62,7 @@ public:
 
 	MTS_DECLARE_CLASS()
 protected:
-	Float m_stddev;
+	float m_stddev;
 };
 
 MTS_IMPLEMENT_CLASS_S(GaussianFilter, false, ReconstructionFilter);

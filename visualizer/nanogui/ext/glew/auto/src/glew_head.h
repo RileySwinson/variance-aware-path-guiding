@@ -560,7 +560,7 @@ typedef char GLchar;
 #define GL_UNSIGNED_SHORT 0x1403
 #define GL_INT 0x1404
 #define GL_UNSIGNED_INT 0x1405
-#define GL_FLOAT 0x1406
+#define GL_float 0x1406
 #define GL_2_BYTES 0x1407
 #define GL_3_BYTES 0x1408
 #define GL_4_BYTES 0x1409
@@ -869,7 +869,7 @@ GLAPI void GLAPIENTRY glGetBooleanv (GLenum pname, GLboolean *params);
 GLAPI void GLAPIENTRY glGetClipPlane (GLenum plane, GLdouble *equation);
 GLAPI void GLAPIENTRY glGetDoublev (GLenum pname, GLdouble *params);
 GLAPI GLenum GLAPIENTRY glGetError (void);
-GLAPI void GLAPIENTRY glGetFloatv (GLenum pname, GLfloat *params);
+GLAPI void GLAPIENTRY glGetfloatv (GLenum pname, GLfloat *params);
 GLAPI void GLAPIENTRY glGetIntegerv (GLenum pname, GLint *params);
 GLAPI void GLAPIENTRY glGetLightfv (GLenum light, GLenum pname, GLfloat *params);
 GLAPI void GLAPIENTRY glGetLightiv (GLenum light, GLenum pname, GLint *params);

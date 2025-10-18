@@ -105,7 +105,7 @@ EOT
 	
 # fix WGL_ATI_pixel_format_float
     cat >> $1/WGL_ATI_pixel_format_float <<EOT
-	GL_RGBA_FLOAT_MODE_ATI 0x8820
+	GL_RGBA_float_MODE_ATI 0x8820
 	GL_COLOR_CLEAR_UNCLAMPED_VALUE_ATI 0x8835
 EOT
 
@@ -221,12 +221,12 @@ EOT
     mv tmp $1/GL_NV_explicit_multisample
 
 # fix bugs in GL_ARB_vertex_shader
-    grep -v "GL_FLOAT" $1/GL_ARB_vertex_shader > tmp
+    grep -v "GL_float" $1/GL_ARB_vertex_shader > tmp
     mv tmp $1/GL_ARB_vertex_shader
     perl -e 's/handle /GLhandleARB /g' -pi $1/GL_ARB_vertex_shader
 
 # fix bugs in GL_ARB_shader_objects
-    grep -v "GL_FLOAT " $1/GL_ARB_shader_objects > tmp
+    grep -v "GL_float " $1/GL_ARB_shader_objects > tmp
     mv tmp $1/GL_ARB_shader_objects
     grep -v "GL_INT " $1/GL_ARB_shader_objects > tmp
     mv tmp $1/GL_ARB_shader_objects
@@ -381,10 +381,10 @@ EOT
     void glVertexArrayVertexAttribDivisorEXT (GLuint vaobj, GLuint index, GLuint divisor)
 EOT
 
-# Filter out GL_UNSIGNED_INT and GL_FLOAT from GL_AMD_performance_monitor
+# Filter out GL_UNSIGNED_INT and GL_float from GL_AMD_performance_monitor
     grep -v 'GL_UNSIGNED_INT ' $1/GL_AMD_performance_monitor > tmp
     mv tmp $1/GL_AMD_performance_monitor
-    grep -v 'GL_FLOAT ' $1/GL_AMD_performance_monitor > tmp
+    grep -v 'GL_float ' $1/GL_AMD_performance_monitor > tmp
     mv tmp $1/GL_AMD_performance_monitor
 
 # Filter out GL_STORAGE_CACHED_APPLE and GL_STORAGE_SHARED_APPLE from GL_APPLE_texture_range

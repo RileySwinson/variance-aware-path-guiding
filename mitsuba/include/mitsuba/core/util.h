@@ -60,7 +60,7 @@ extern MTS_EXPORT_CORE std::string formatString(const char *pFmt, ...);
  * \param precise When set to true, a higher-precision string representation
  * is generated.
  */
-extern MTS_EXPORT_CORE std::string timeString(Float time, bool precise = false);
+extern MTS_EXPORT_CORE std::string timeString(float time, bool precise = false);
 
 /// Turn a memory size into a human-readable string
 extern MTS_EXPORT_CORE std::string memString(size_t size, bool precise = false);
@@ -279,8 +279,8 @@ template <typename DataType, typename IndexType> void permute_inplace(
  * \brief Solve a quadratic equation of the form a*x^2 + b*x + c = 0.
  * \return \c true if a solution could be found
  */
-extern MTS_EXPORT_CORE bool solveQuadratic(Float a, Float b,
-	Float c, Float &x0, Float &x1);
+extern MTS_EXPORT_CORE bool solveQuadratic(float a, float b,
+	float c, float &x0, float &x1);
 
 /**
  * \brief Solve a double-precision quadratic equation of the
@@ -291,10 +291,10 @@ extern MTS_EXPORT_CORE bool solveQuadraticDouble(double a, double b,
 	double c, double &x0, double &x1);
 
 //// Convert radians to degrees
-inline Float radToDeg(Float value) { return value * (180.0f / M_PI); }
+inline float radToDeg(float value) { return value * (180.0f / M_PI); }
 
 /// Convert degrees to radians
-inline Float degToRad(Float value) { return value * (M_PI / 180.0f); }
+inline float degToRad(float value) { return value * (M_PI / 180.0f); }
 
 /**
  * \brief Numerically well-behaved routine for computing the angle
@@ -306,7 +306,7 @@ inline Float degToRad(Float value) { return value * (M_PI / 180.0f); }
  * Proposed by Don Hatch at
  * http://www.plunk.org/~hatch/rightway.php
  */
-template <typename VectorType> inline Float unitAngle(const VectorType &u, const VectorType &v) {
+template <typename VectorType> inline float unitAngle(const VectorType &u, const VectorType &v) {
 	if (dot(u, v) < 0)
 		return M_PI - 2 * std::asin(0.5f * (v+u).length());
 	else
@@ -323,7 +323,7 @@ template <typename VectorType> inline Float unitAngle(const VectorType &u, const
 /**
  * \brief Solve a 2x2 linear equation system using basic linear algebra
  */
-extern MTS_EXPORT_CORE bool solveLinearSystem2x2(const Float a[2][2], const Float b[2], Float x[2]);
+extern MTS_EXPORT_CORE bool solveLinearSystem2x2(const float a[2][2], const float b[2], float x[2]);
 
 /**
  * \brief Complete the set {a} to an orthonormal base
@@ -378,7 +378,7 @@ extern MTS_EXPORT_CORE void computeShadingFrameDerivative(const Vector &n, const
  * \param count The interval [0, 1] is split into count strata
  * \param jitter Randomly jitter the samples?
  */
-extern MTS_EXPORT_CORE void stratifiedSample1D(Random *random, Float *dest,
+extern MTS_EXPORT_CORE void stratifiedSample1D(Random *random, float *dest,
 	int count, bool jitter);
 
 /**
@@ -394,10 +394,10 @@ extern MTS_EXPORT_CORE void stratifiedSample2D(Random *random, Point2 *dest,
 
 /// Generate latin hypercube samples
 extern MTS_EXPORT_CORE void latinHypercube(
-		Random *random, Float *dest, size_t nSamples, size_t nDim);
+		Random *random, float *dest, size_t nSamples, size_t nDim);
 
 /// Convert spherical coordinates to a direction
-extern MTS_EXPORT_CORE Vector sphericalDirection(Float theta, Float phi);
+extern MTS_EXPORT_CORE Vector sphericalDirection(float theta, float phi);
 
 /// Convert a direction to spherical coordinates
 extern MTS_EXPORT_CORE Point2 toSphericalCoordinates(const Vector &v);
@@ -431,8 +431,8 @@ extern MTS_EXPORT_CORE Point2 toSphericalCoordinates(const Vector &v);
  * 		Relative refractive index to the transmitted direction
  * \ingroup libpython
  */
-extern MTS_EXPORT_CORE Float fresnelDielectric(Float cosThetaI,
-		Float cosThetaT, Float eta);
+extern MTS_EXPORT_CORE float fresnelDielectric(float cosThetaI,
+		float cosThetaT, float eta);
 
 /**
  * \brief Calculates the unpolarized Fresnel reflection coefficient
@@ -460,8 +460,8 @@ extern MTS_EXPORT_CORE Float fresnelDielectric(Float cosThetaI,
  * 		Relative refractive index
  * \ingroup libpython
  */
-extern MTS_EXPORT_CORE Float fresnelDielectricExt(Float cosThetaI,
-	Float &cosThetaT, Float eta);
+extern MTS_EXPORT_CORE float fresnelDielectricExt(float cosThetaI,
+	float &cosThetaT, float eta);
 
 /**
  * \brief Calculates the unpolarized Fresnel reflection coefficient
@@ -476,7 +476,7 @@ extern MTS_EXPORT_CORE Float fresnelDielectricExt(Float cosThetaI,
  * \param eta
  * 		Relative refractive index
  */
-inline Float fresnelDielectricExt(Float cosThetaI, Float eta) { Float cosThetaT;
+inline float fresnelDielectricExt(float cosThetaI, float eta) { float cosThetaT;
 	return fresnelDielectricExt(cosThetaI, cosThetaT, eta); }
 
 /**
@@ -499,8 +499,8 @@ inline Float fresnelDielectricExt(Float cosThetaI, Float eta) { Float cosThetaT;
  * 		Relative refractive index (imaginary component)
  * \ingroup libpython
  */
-extern MTS_EXPORT_CORE Float fresnelConductorApprox(Float cosThetaI,
-		Float eta, Float k);
+extern MTS_EXPORT_CORE float fresnelConductorApprox(float cosThetaI,
+		float eta, float k);
 
 /**
  * \brief Calculates the unpolarized Fresnel reflection coefficient
@@ -522,7 +522,7 @@ extern MTS_EXPORT_CORE Float fresnelConductorApprox(Float cosThetaI,
  * 		Relative refractive index (imaginary component)
  * \ingroup libpython
  */
-extern MTS_EXPORT_CORE Spectrum fresnelConductorApprox(Float cosThetaI,
+extern MTS_EXPORT_CORE Spectrum fresnelConductorApprox(float cosThetaI,
 		const Spectrum &eta, const Spectrum &k);
 
 /**
@@ -545,8 +545,8 @@ extern MTS_EXPORT_CORE Spectrum fresnelConductorApprox(Float cosThetaI,
  * 		Relative refractive index (imaginary component)
  * \ingroup libpython
  */
-extern MTS_EXPORT_CORE Float fresnelConductorExact(Float cosThetaI,
-		Float eta, Float k);
+extern MTS_EXPORT_CORE float fresnelConductorExact(float cosThetaI,
+		float eta, float k);
 
 /**
  * \brief Calculates the unpolarized Fresnel reflection coefficient
@@ -568,7 +568,7 @@ extern MTS_EXPORT_CORE Float fresnelConductorExact(Float cosThetaI,
  * 		Relative refractive index (imaginary component)
  * \ingroup libpython
  */
-extern MTS_EXPORT_CORE Spectrum fresnelConductorExact(Float cosThetaI,
+extern MTS_EXPORT_CORE Spectrum fresnelConductorExact(float cosThetaI,
 		const Spectrum &eta, const Spectrum &k);
 
 /**
@@ -590,8 +590,8 @@ extern MTS_EXPORT_CORE Spectrum fresnelConductorExact(Float cosThetaI,
  *      in terms of performance.
  * \ingroup libpython
  */
-extern MTS_EXPORT_CORE Float fresnelDiffuseReflectance(
-	Float eta, bool fast = false);
+extern MTS_EXPORT_CORE float fresnelDiffuseReflectance(
+	float eta, bool fast = false);
 
 /**
  * \brief Specularly reflect direction \c wi with respect to the given surface normal
@@ -634,7 +634,7 @@ extern MTS_EXPORT_CORE Vector reflect(const Vector &wi, const Normal &n);
  * \ingroup libpython
  */
 extern MTS_EXPORT_CORE Vector refract(const Vector &wi, const Normal &n,
-	Float eta, Float &cosThetaT, Float &F);
+	float eta, float &cosThetaT, float &F);
 
 /**
  * \brief Specularly refract the direction \c wi into a planar dielectric with
@@ -657,7 +657,7 @@ extern MTS_EXPORT_CORE Vector refract(const Vector &wi, const Normal &n,
  * \ingroup libpython
  */
 extern MTS_EXPORT_CORE Vector refract(const Vector &wi, const Normal &n,
-	Float eta, Float cosThetaT);
+	float eta, float cosThetaT);
 
 /**
  * \brief Specularly refract the direction \c wi into a planar dielectric with
@@ -676,7 +676,7 @@ extern MTS_EXPORT_CORE Vector refract(const Vector &wi, const Normal &n,
  *     Specularly transmitted direction (or zero in
  *     the case of total internal reflection)
  */
-extern MTS_EXPORT_CORE Vector refract(const Vector &wi, const Normal &n, Float eta);
+extern MTS_EXPORT_CORE Vector refract(const Vector &wi, const Normal &n, float eta);
 
 //! @}
 // -----------------------------------------------------------------------

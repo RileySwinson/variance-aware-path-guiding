@@ -29,8 +29,8 @@ static void uploadAttribPy(GLShader &sh, const std::string &name, py::array M, i
         }
     } else if (dtype.kind() == 'f') {
         switch (dtype.itemsize()) {
-            case 2: glType = GL_HALF_FLOAT; break;
-            case 4: glType = GL_FLOAT; break;
+            case 2: glType = GL_HALF_float; break;
+            case 4: glType = GL_float; break;
             case 8: glType = GL_DOUBLE; break;
             default: throw py::type_error("uploadAttrib(): Invalid floating point type!");
         }

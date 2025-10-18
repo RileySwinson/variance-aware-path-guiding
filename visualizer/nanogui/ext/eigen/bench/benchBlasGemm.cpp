@@ -4,7 +4,7 @@
 //    -msse2
 
 // #define EIGEN_DEFAULT_TO_ROW_MAJOR
-#define _FLOAT
+#define _float
 
 #include <iostream>
 
@@ -17,7 +17,7 @@ extern "C" {
 }
 #include <string>
 
-#ifdef _FLOAT
+#ifdef _float
 typedef float Scalar;
 #define CBLAS_GEMM cblas_sgemm
 #else

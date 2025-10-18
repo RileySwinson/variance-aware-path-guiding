@@ -55,9 +55,9 @@
 
 	#if _MSC_VER >= 1600
 		#ifdef SINGLE_PRECISION
-				#pragma detect_mismatch( "MTS_FLOAT_PRECISION", "SINGLE")
+				#pragma detect_mismatch( "MTS_float_PRECISION", "SINGLE")
 		#elif  DOUBLE_PRECISION
-				#pragma detect_mismatch( "MTS_FLOAT_PRECISION", "DOUBLE")
+				#pragma detect_mismatch( "MTS_float_PRECISION", "DOUBLE")
 		#endif
 		#define MTS_STRINGIFY(s) #s
 		#define MTS_XSTRINGIFY(s) MTS_STRINGIFY(s)
@@ -177,9 +177,9 @@
 MTS_NAMESPACE_BEGIN
 
 #if defined(DOUBLE_PRECISION)
-typedef double Float;
+typedef double float;
 #elif defined(SINGLE_PRECISION)
-typedef float Float;
+typedef float float;
 #else
 #error No precision flag was defined!
 #endif

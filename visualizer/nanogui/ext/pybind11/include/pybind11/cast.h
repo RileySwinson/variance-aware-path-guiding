@@ -475,16 +475,16 @@ public:
         if (!src) {
             return false;
         } if (std::is_floating_point<T>::value) {
-            py_value = (py_type) PyFloat_AsDouble(src.ptr());
+            py_value = (py_type) Pyfloat_AsDouble(src.ptr());
         } else if (sizeof(T) <= sizeof(long)) {
-            if (PyFloat_Check(src.ptr()))
+            if (Pyfloat_Check(src.ptr()))
                 return false;
             if (std::is_signed<T>::value)
                 py_value = (py_type) PyLong_AsLong(src.ptr());
             else
                 py_value = (py_type) PyLong_AsUnsignedLong(src.ptr());
         } else {
-            if (PyFloat_Check(src.ptr()))
+            if (Pyfloat_Check(src.ptr()))
                 return false;
             if (std::is_signed<T>::value)
                 py_value = (py_type) PYBIND11_LONG_AS_LONGLONG(src.ptr());
@@ -504,7 +504,7 @@ public:
             PyErr_Clear();
             if (type_error && PyNumber_Check(src.ptr())) {
                 auto tmp = reinterpret_borrow<object>(std::is_floating_point<T>::value
-                                                      ? PyNumber_Float(src.ptr())
+                                                      ? PyNumber_float(src.ptr())
                                                       : PyNumber_Long(src.ptr()));
                 PyErr_Clear();
                 return load(tmp, false);
@@ -518,7 +518,7 @@ public:
 
     static handle cast(T src, return_value_policy /* policy */, handle /* parent */) {
         if (std::is_floating_point<T>::value) {
-            return PyFloat_FromDouble((double) src);
+            return Pyfloat_FromDouble((double) src);
         } else if (sizeof(T) <= sizeof(long)) {
             if (std::is_signed<T>::value)
                 return PyLong_FromLong((long) src);

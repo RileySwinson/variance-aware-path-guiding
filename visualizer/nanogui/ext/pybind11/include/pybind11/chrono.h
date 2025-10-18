@@ -53,8 +53,8 @@ public:
             return true;
         }
         // If invoked with a float we assume it is seconds and convert
-        else if (PyFloat_Check(src.ptr())) {
-            value = type(duration_cast<duration<rep, period>>(duration<double>(PyFloat_AsDouble(src.ptr()))));
+        else if (Pyfloat_Check(src.ptr())) {
+            value = type(duration_cast<duration<rep, period>>(duration<double>(Pyfloat_AsDouble(src.ptr()))));
             return true;
         }
         else return false;

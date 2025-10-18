@@ -84,9 +84,9 @@ enum ESourceType {
 };
 
 struct Vec4 {
-	Float x, y, z, w;
+	float x, y, z, w;
 
-	inline Vec4(Float x=0, Float y=0, Float z=0, Float w=0)
+	inline Vec4(float x=0, float y=0, float z=0, float w=0)
 		: x(x), y(y), z(z), w(w) {
 	}
 
@@ -94,15 +94,15 @@ struct Vec4 {
 		x += v.x; y += v.y; z += v.z; w += v.w;
 	}
 
-	inline Vec4 operator*(Float f) const {
+	inline Vec4 operator*(float f) const {
 		return Vec4(x * f, y * f, z * f, w * f);
 	}
 
-	inline Float operator[](int i) const {
+	inline float operator[](int i) const {
 		return (&x)[i];
 	}
 
-	inline Float &operator[](int i) {
+	inline float &operator[](int i) {
 		return (&x)[i];
 	}
 
@@ -197,7 +197,7 @@ VertexData *fetchVertexData(Transform transform,
 				--i;
 		}
 
-		domListOfFloats &floatArray = source->getFloat_array()->getValue();
+		domListOffloats &floatArray = source->getfloat_array()->getValue();
 		domSource::domTechnique_common *techniqueCommon = source->getTechnique_common();
 		if (!techniqueCommon)
 			SLog(EError, "Data source does not have a <technique_common> tag!");
@@ -212,7 +212,7 @@ VertexData *fetchVertexData(Transform transform,
 		Vec4 *target = new Vec4[size];
 		for (size_t j=0; j<size; ++j)
 			for (unsigned int k=0; k<nParams; ++k)
-				target[j][k] = (Float) floatArray[j*stride+k];
+				target[j][k] = (float) floatArray[j*stride+k];
 
 		result->data[offset] = target;
 
@@ -346,11 +346,11 @@ public:
 
 typedef std::map<SimpleTriangle, bool, triangle_key_order> TriangleMap;
 
-static inline Float fromSRGBComponent(Float value) {
-	if (value <= (Float) 0.04045)
-		return value / (Float) 12.92;
-	return std::pow((value + (Float) 0.055)
-		/ (Float) (1.0 + 0.055), (Float) 2.4);
+static inline float fromSRGBComponent(float value) {
+	if (value <= (float) 0.04045)
+		return value / (float) 12.92;
+	return std::pow((value + (float) 0.055)
+		/ (float) (1.0 + 0.055), (float) 2.4);
 }
 
 void writeGeometry(ColladaContext &ctx, const std::string &prefixName, std::string id,
@@ -465,9 +465,9 @@ void writeGeometry(ColladaContext &ctx, const std::string &prefixName, std::stri
 		if (target_texcoords)
 			*target_texcoords++ = vertexBuffer[i].uv;
 		if (target_colors) {
-			Float r = vertexBuffer[i].col.x;
-			Float g = vertexBuffer[i].col.y;
-			Float b = vertexBuffer[i].col.z;
+			float r = vertexBuffer[i].col.x;
+			float g = vertexBuffer[i].col.y;
+			float b = vertexBuffer[i].col.z;
 			if (!ctx.cvt->m_srgb)
 				*target_colors++ = Color3(r, g, b);
 			else
@@ -534,9 +534,9 @@ void exportAnimation(ColladaContext &ctx, const fs::path &path, const std::strin
 	for (AnimationMap::iterator it = start; it != end; ++it) {
 		AbstractAnimationTrack *track = it->second;
 		int type = track->getType();
-		if (type == FloatTrack::ERotationX
-			|| type == FloatTrack::ERotationY
-			|| type == FloatTrack::ERotationZ)
+		if (type == floatTrack::ERotationX
+			|| type == floatTrack::ERotationY
+			|| type == floatTrack::ERotationZ)
 			continue;
 		trafo->addTrack(track);
 	}
@@ -775,7 +775,7 @@ void loadMaterialParam(ColladaContext &ctx, const std::string &name,
 	domCommon_color_or_texture_type_complexType::domTexture* texture =
 		value->getTexture().cast();
 	if (color && !handleRefs) {
-		domFloat4 &colValue = color->getValue();
+		domfloat4 &colValue = color->getValue();
 		if (ctx.cvt->m_srgb)
 			ctx.os << "\t\t<srgb name=\"" << name << "\" value=\"";
 		else
@@ -796,7 +796,7 @@ void loadMaterialParam(ColladaContext &ctx, const std::string &name,
 		domCommon_float_or_param_type *value, bool handleRef) {
 	if (!value)
 		return;
-	domCommon_float_or_param_type::domFloat *floatValue = value->getFloat();
+	domCommon_float_or_param_type::domfloat *floatValue = value->getfloat();
 	if (!handleRef && floatValue) {
 		ctx.os << "\t\t<float name=\"" << name << "\" value=\""
 		   << floatValue->getValue() << "\"/>" << endl;
@@ -874,7 +874,7 @@ void loadMaterial(ColladaContext &ctx, domMaterial &mat) {
 		bool isDiffuse = false;
 
 		if (specular && specular->getColor().cast()) {
-			domFloat4 &colValue = specular->getColor()->getValue();
+			domfloat4 &colValue = specular->getColor()->getValue();
 			if (colValue.get(0) == colValue.get(1) &&
 				colValue.get(1) == colValue.get(2) &&
 				colValue.get(2) == 0)
@@ -908,7 +908,7 @@ void loadMaterial(ColladaContext &ctx, domMaterial &mat) {
 		bool isDiffuse = false;
 
 		if (specular && specular->getColor().cast()) {
-			domFloat4 &colValue = specular->getColor()->getValue();
+			domfloat4 &colValue = specular->getColor()->getValue();
 			if (colValue.get(0) == colValue.get(1) &&
 				colValue.get(1) == colValue.get(2) &&
 				colValue.get(2) == 0)
@@ -931,8 +931,8 @@ void loadMaterial(ColladaContext &ctx, domMaterial &mat) {
 		}
 	} else if (constant) {
 		domCommon_float_or_param_type* transparency = constant->getTransparency();
-		domCommon_float_or_param_type::domFloat *transparencyValue =
-				transparency ? transparency->getFloat() : NULL;
+		domCommon_float_or_param_type::domfloat *transparencyValue =
+				transparency ? transparency->getfloat() : NULL;
 		if (transparencyValue && transparencyValue->getValue() > 0.5) {
 			ctx.os << "\t<bsdf id=\"" << identifier << "\" type=\"dielectric\"/>" << endl << endl;
 		} else {
@@ -967,7 +967,7 @@ void loadLight(ColladaContext &ctx, Transform transform, domLight &light) {
 	Point pos = transform(Point(0, 0, 0));
 	Point target = transform(Point(0, 0, 1));
 
-	Float intensity = 1;
+	float intensity = 1;
 	const domTechnique_Array &techniques = light.getTechnique_array();
 	for (size_t i=0; i<techniques.getCount(); ++i) {
 		domTechnique *tech = techniques.get(i);
@@ -975,7 +975,7 @@ void loadLight(ColladaContext &ctx, Transform transform, domLight &light) {
 		daeElement *intensityElement = tech->getChild("intensity");
 		if (intensityElement && intensityElement->hasCharData()) {
 			std::string charData = intensityElement->getCharData();
-			intensity = (Float) strtod(charData.c_str(), &end_ptr);
+			intensity = (float) strtod(charData.c_str(), &end_ptr);
 			if (*end_ptr != '\0')
 				SLog(EError, "Could not parse the light intensity!");
 		}
@@ -992,7 +992,7 @@ void loadLight(ColladaContext &ctx, Transform transform, domLight &light) {
 			notQuadratic = true;
 		if (notQuadratic)
 			SLog(EWarn, "Point light \"%s\" is not a quadratic light! Treating it as one -- expect problems.", identifier.c_str());
-		domFloat3 &color = point->getColor()->getValue();
+		domfloat3 &color = point->getColor()->getValue();
 		ctx.os << "\t<emitter id=\"" << identifier << "\" type=\"point\">" << endl;
 		ctx.os << "\t\t<rgb name=\"intensity\" value=\"" << color[0]*intensity << " " << color[1]*intensity << " " << color[2]*intensity << "\"/>" << endl << endl;
 		ctx.os << "\t\t<transform name=\"toWorld\">" << endl;
@@ -1003,7 +1003,7 @@ void loadLight(ColladaContext &ctx, Transform transform, domLight &light) {
 
 	domLight::domTechnique_common::domDirectional *directional = light.getTechnique_common()->getDirectional().cast();
 	if (directional) {
-		domFloat3 &color = directional->getColor()->getValue();
+		domfloat3 &color = directional->getColor()->getValue();
 		ctx.os << "\t<emitter id=\"" << identifier << "\" type=\"directional\">" << endl;
 		ctx.os << "\t\t<rgb name=\"irradiance\" value=\"" << color[0]*intensity << " " << color[1]*intensity << " " << color[2]*intensity << "\"/>" << endl << endl;
 		ctx.os << "\t\t<transform name=\"toWorld\">" << endl;
@@ -1023,10 +1023,10 @@ void loadLight(ColladaContext &ctx, Transform transform, domLight &light) {
 			notQuadratic = true;
 		if (notQuadratic)
 			SLog(EWarn, "Spot light \"%s\" is not a quadratic light! Treating it as one -- expect problems.", identifier.c_str());
-		domFloat3 &color = spot->getColor()->getValue();
-		Float falloffAngle = 180.0f;
+		domfloat3 &color = spot->getColor()->getValue();
+		float falloffAngle = 180.0f;
 		if (spot->getFalloff_angle())
-			falloffAngle = (Float) spot->getFalloff_angle()->getValue();
+			falloffAngle = (float) spot->getFalloff_angle()->getValue();
 		ctx.os << "\t<emitter id=\"" << identifier << "\" type=\"spot\">" << endl;
 		ctx.os << "\t\t<rgb name=\"intensity\" value=\"" << color[0]*intensity << " " << color[1]*intensity << " " << color[2]*intensity << "\"/>" << endl;
 		ctx.os << "\t\t<float name=\"cutoffAngle\" value=\"" << falloffAngle/2 << "\"/>" << endl << endl;
@@ -1037,7 +1037,7 @@ void loadLight(ColladaContext &ctx, Transform transform, domLight &light) {
 	}
 	domLight::domTechnique_common::domAmbient *ambient = light.getTechnique_common()->getAmbient().cast();
 	if (ambient) {
-		domFloat3 &color = ambient->getColor()->getValue();
+		domfloat3 &color = ambient->getColor()->getValue();
 		ctx.os << "\t<emitter id=\"" << identifier << "\" type=\"constant\">" << endl;
 		ctx.os << "\t\t<rgb name=\"radiance\" value=\"" << color[0]*intensity << " " << color[1]*intensity << " " << color[2]*intensity << "\"/>" << endl;
 		ctx.os << "\t</emitter>" << endl << endl;
@@ -1130,7 +1130,7 @@ void loadCamera(ColladaContext &ctx, Transform transform, domCamera &camera) {
 	}
 
 	SLog(EDebug, "Converting camera \"%s\" ..", identifier.c_str());
-	Float aspect = 1.0f;
+	float aspect = 1.0f;
 	int xres=768;
 
 	// Cameras in Mitsuba point along the positive Z axis (COLLADA: neg. Z)
@@ -1146,10 +1146,10 @@ void loadCamera(ColladaContext &ctx, Transform transform, domCamera &camera) {
 		getTechnique_common()->getOrthographic().cast();
 	if (ortho) {
 		if (ortho->getAspect_ratio().cast() != 0)
-			aspect = (Float) ortho->getAspect_ratio()->getValue();
+			aspect = (float) ortho->getAspect_ratio()->getValue();
 		if (ctx.cvt->m_xres != -1) {
 			xres = ctx.cvt->m_xres;
-			aspect = (Float) ctx.cvt->m_xres / (Float) ctx.cvt->m_yres;
+			aspect = (float) ctx.cvt->m_xres / (float) ctx.cvt->m_yres;
 		}
 		ctx.os << "\t<sensor id=\"" << identifier << "\" type=\"orthographic\">" << endl;
 	}
@@ -1159,22 +1159,22 @@ void loadCamera(ColladaContext &ctx, Transform transform, domCamera &camera) {
 	if (persp) {
 		if (ctx.cvt->m_xres != -1) {
 			xres = ctx.cvt->m_xres;
-			aspect = (Float) ctx.cvt->m_xres / (Float) ctx.cvt->m_yres;
+			aspect = (float) ctx.cvt->m_xres / (float) ctx.cvt->m_yres;
 		} else {
 			if (persp->getAspect_ratio().cast() != 0)
-				aspect = (Float) persp->getAspect_ratio()->getValue();
+				aspect = (float) persp->getAspect_ratio()->getValue();
 		}
 		ctx.os << "\t<sensor id=\"" << identifier << "\" type=\"perspective\">" << endl;
 		if (persp->getXfov().cast()) {
-			Float xFov = (Float) persp->getXfov()->getValue();
-			Float yFov = radToDeg(2 * std::atan(std::tan(degToRad(xFov)/2) / aspect));
+			float xFov = (float) persp->getXfov()->getValue();
+			float yFov = radToDeg(2 * std::atan(std::tan(degToRad(xFov)/2) / aspect));
 			if (aspect <= 1.0f)
 				ctx.os << "\t\t<float name=\"fov\" value=\"" << xFov << "\"/>" << endl;
 			else
 				ctx.os << "\t\t<float name=\"fov\" value=\"" << yFov << "\"/>" << endl;
 		} else if (persp->getYfov().cast()) {
-			Float yFov = (Float) persp->getYfov()->getValue();
-			Float xFov = radToDeg(2 * std::atan(std::tan(degToRad(yFov)/2) * aspect));
+			float yFov = (float) persp->getYfov()->getValue();
+			float xFov = radToDeg(2 * std::atan(std::tan(degToRad(yFov)/2) * aspect));
 			if (aspect > 1.0f)
 				ctx.os << "\t\t<float name=\"fov\" value=\"" << yFov << "\"/>" << endl;
 			else
@@ -1225,39 +1225,39 @@ void loadNode(ColladaContext &ctx, Transform transform, domNode &node, std::stri
 			if (element->hasAttribute("sid") && element->getAttribute("sid") == "post-rotationY")
 				continue;
 			daeTArray<double> value = daeSafeCast<domRotate>(element)->getValue();
-			Vector axis((Float) value.get(0), (Float) value.get(1), (Float) value.get(2));
-			Float angle = (Float) value.get(3);
+			Vector axis((float) value.get(0), (float) value.get(1), (float) value.get(2));
+			float angle = (float) value.get(3);
 			if (angle != 0) {
 				if (axis.isZero()) {
 					SLog(EWarn, "Encountered a rotation around a zero vector -- ignoring!");
 				} else {
 					transform = transform *
-						Transform::rotate(axis, (Float) value.get(3));
+						Transform::rotate(axis, (float) value.get(3));
 				}
 			}
 		} else if (element->typeID() == domTranslate::ID()) {
 			daeTArray<double> value = daeSafeCast<domTranslate>(element)->getValue();
 			transform = transform *
-				Transform::translate(Vector((Float) value.get(0), (Float) value.get(1), (Float) value.get(2)));
+				Transform::translate(Vector((float) value.get(0), (float) value.get(1), (float) value.get(2)));
 		} else if (element->typeID() == domScale::ID()) {
 			daeTArray<double> value = daeSafeCast<domScale>(element)->getValue();
 			transform = transform *
-				Transform::scale(Vector((Float) value.get(0), (Float) value.get(1), (Float) value.get(2)));
+				Transform::scale(Vector((float) value.get(0), (float) value.get(1), (float) value.get(2)));
 		} else if (element->typeID() == domLookat::ID()) {
 			daeTArray<double> value = daeSafeCast<domLookat>(element)->getValue();
 			transform = transform *
 				Transform::lookAt(
-					Point((Float) value.get(0), (Float) value.get(1), (Float) value.get(2)),
-					Point((Float) value.get(3), (Float) value.get(4), (Float) value.get(5)),
-					Vector((Float) value.get(6), (Float) value.get(7), (Float) value.get(8))
+					Point((float) value.get(0), (float) value.get(1), (float) value.get(2)),
+					Point((float) value.get(3), (float) value.get(4), (float) value.get(5)),
+					Vector((float) value.get(6), (float) value.get(7), (float) value.get(8))
 			);
 		} else if (element->typeID() == domMatrix::ID()) {
 			daeTArray<double> value = daeSafeCast<domMatrix>(element)->getValue();
 			Matrix4x4 matrix(
-				(Float) value.get(0), (Float) value.get(1), (Float) value.get(2), (Float) value.get(3),
-				(Float) value.get(4), (Float) value.get(5), (Float) value.get(6), (Float) value.get(7),
-				(Float) value.get(8), (Float) value.get(9), (Float) value.get(10), (Float) value.get(11),
-				(Float) value.get(12), (Float) value.get(13), (Float) value.get(14), (Float) value.get(15)
+				(float) value.get(0), (float) value.get(1), (float) value.get(2), (float) value.get(3),
+				(float) value.get(4), (float) value.get(5), (float) value.get(6), (float) value.get(7),
+				(float) value.get(8), (float) value.get(9), (float) value.get(10), (float) value.get(11),
+				(float) value.get(12), (float) value.get(13), (float) value.get(14), (float) value.get(15)
 			);
 			transform = transform * Transform(matrix);
 		}
@@ -1393,31 +1393,31 @@ void loadAnimation(ColladaContext &ctx, domAnimation &anim) {
 			if (target.size() == 2) {
 				trackType = VectorTrack::ETranslationXYZ;
 			} else if (target[2] == "x") {
-				trackType = FloatTrack::ETranslationX;
+				trackType = floatTrack::ETranslationX;
 			} else if (target[2] == "y") {
-				trackType = FloatTrack::ETranslationY;
+				trackType = floatTrack::ETranslationY;
 			} else if (target[2] == "z") {
-				trackType = FloatTrack::ETranslationZ;
+				trackType = floatTrack::ETranslationZ;
 			}
 		} else if (target[1] == "scale") {
 			if (target.size() == 2) {
 				trackType = VectorTrack::EScaleXYZ;
 			} else if (target[2] == "x") {
-				trackType = FloatTrack::EScaleX;
+				trackType = floatTrack::EScaleX;
 			} else if (target[2] == "y") {
-				trackType = FloatTrack::EScaleY;
+				trackType = floatTrack::EScaleY;
 			} else if (target[2] == "z") {
-				trackType = FloatTrack::EScaleZ;
+				trackType = floatTrack::EScaleZ;
 			}
 		} else if ((target[1] == "rotationx" || target[1] == "rotatex") && target.size() == 3 && target[2] == "angle") {
-				trackType = FloatTrack::ERotationX;
+				trackType = floatTrack::ERotationX;
 		} else if ((target[1] == "rotationy" || target[1] == "rotatey") && target.size() == 3 && target[2] == "angle") {
-				trackType = FloatTrack::ERotationY;
+				trackType = floatTrack::ERotationY;
 		} else if ((target[1] == "rotationz" || target[1] == "rotatez") && target.size() == 3 && target[2] == "angle") {
-				trackType = FloatTrack::ERotationZ;
+				trackType = floatTrack::ERotationZ;
 		}
 
-		if (trackType == FloatTrack::EInvalid) {
+		if (trackType == floatTrack::EInvalid) {
 			SLog(EWarn, "Skipping unsupported animation track of type %s.%s",
 				target[1].c_str(), target.size() > 2 ? target[2].c_str() : "");
 			continue;
@@ -1443,29 +1443,29 @@ void loadAnimation(ColladaContext &ctx, domAnimation &anim) {
 				if (trackType == VectorTrack::EScaleXYZ || trackType == VectorTrack::ETranslationXYZ)
 					track = new VectorTrack(trackType, size);
 				else
-					track = new FloatTrack(trackType, size);
+					track = new floatTrack(trackType, size);
 				track->incRef();
 			} else {
 				SAssert(track->getSize() == size);
 			}
 
 			if (semantic == "INPUT") {
-				domListOfFloats &floatArray = source->getFloat_array()->getValue();
+				domListOffloats &floatArray = source->getfloat_array()->getValue();
 				SAssert(stride == 1);
 				for (size_t i=0; i<size; ++i)
-					track->setTime(i, (Float) floatArray[i]);
+					track->setTime(i, (float) floatArray[i]);
 			} else if (semantic == "OUTPUT") {
-				domListOfFloats &floatArray = source->getFloat_array()->getValue();
+				domListOffloats &floatArray = source->getfloat_array()->getValue();
 				if (trackType == VectorTrack::ETranslationXYZ || trackType == VectorTrack::EScaleXYZ) {
 					SAssert(stride == 3);
 					for (size_t i=0; i<size; ++i)
 						((VectorTrack *) track)->setValue(i,
-							Vector((Float) floatArray[i*3+0], (Float) floatArray[i*3+1],
-								(Float) floatArray[i*3+2]));
+							Vector((float) floatArray[i*3+0], (float) floatArray[i*3+1],
+								(float) floatArray[i*3+2]));
 				} else {
 					SAssert(stride == 1);
 					for (size_t i=0; i<size; ++i)
-						((FloatTrack *) track)->setValue(i, (Float) floatArray[i]);
+						((floatTrack *) track)->setValue(i, (float) floatArray[i]);
 				}
 			} else if (semantic == "INTERPOLATION") {
 				/// Ignored for now
@@ -1485,15 +1485,15 @@ void mergeRotations(ColladaContext &ctx) {
 		std::string key = it->first;
 		AnimationMap::iterator start = ctx.animations.lower_bound(key);
 		AnimationMap::iterator end = ctx.animations.upper_bound(key);
-		FloatTrack *tracks[] = { NULL, NULL, NULL };
+		floatTrack *tracks[] = { NULL, NULL, NULL };
 
 		for (AnimationMap::iterator it2 = start; it2 != end; ++it2) {
-			if (it2->second->getType() == FloatTrack::ERotationX)
-				tracks[0] = (FloatTrack *) it2->second;
-			else if (it2->second->getType() == FloatTrack::ERotationY)
-				tracks[1] = (FloatTrack *) it2->second;
-			else if (it2->second->getType() == FloatTrack::ERotationZ)
-				tracks[2] = (FloatTrack *) it2->second;
+			if (it2->second->getType() == floatTrack::ERotationX)
+				tracks[0] = (floatTrack *) it2->second;
+			else if (it2->second->getType() == floatTrack::ERotationY)
+				tracks[1] = (floatTrack *) it2->second;
+			else if (it2->second->getType() == floatTrack::ERotationZ)
+				tracks[2] = (floatTrack *) it2->second;
 		}
 
 		if (!tracks[0] && !tracks[1] && !tracks[2]) {
@@ -1504,7 +1504,7 @@ void mergeRotations(ColladaContext &ctx) {
 		SLog(EDebug, "Converting rotation track of \"%s\" to quaternions ..",
 				key.c_str());
 
-		std::set<Float> times;
+		std::set<float> times;
 		for (size_t i=0; i<3; ++i)
 			for (size_t j=0; j<(tracks[i] ? tracks[i]->getSize() : (size_t) 0); ++j)
 				times.insert(tracks[i]->getTime(j));
@@ -1512,11 +1512,11 @@ void mergeRotations(ColladaContext &ctx) {
 		QuatTrack *newTrack = new QuatTrack(QuatTrack::ERotationQuat, times.size());
 		size_t idx = 0;
 
-		for (std::set<Float>::iterator it2 = times.begin();
+		for (std::set<float>::iterator it2 = times.begin();
 			it2 != times.end(); ++it2) {
-			Float time = *it2, rot[3];
+			float time = *it2, rot[3];
 			for (int i=0; i<3; ++i)
-				rot[i] = tracks[i] ? (tracks[i]->eval(time) * (M_PI/180)) : (Float) 0;
+				rot[i] = tracks[i] ? (tracks[i]->eval(time) * (M_PI/180)) : (float) 0;
 
 			newTrack->setTime(idx, time);
 			newTrack->setValue(idx, Quaternion::fromEulerAngles(

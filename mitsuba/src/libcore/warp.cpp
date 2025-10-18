@@ -23,18 +23,18 @@ MTS_NAMESPACE_BEGIN
 namespace warp {
 
 Vector squareToUniformSphere(const Point2 &sample) {
-	Float z = 1.0f - 2.0f * sample.y;
-	Float r = math::safe_sqrt(1.0f - z*z);
-	Float sinPhi, cosPhi;
+	float z = 1.0f - 2.0f * sample.y;
+	float r = math::safe_sqrt(1.0f - z*z);
+	float sinPhi, cosPhi;
 	math::sincos(2.0f * M_PI * sample.x, &sinPhi, &cosPhi);
 	return Vector(r * cosPhi, r * sinPhi, z);
 }
 
 Vector squareToUniformHemisphere(const Point2 &sample) {
-	Float z = sample.x;
-	Float tmp = math::safe_sqrt(1.0f - z*z);
+	float z = sample.x;
+	float tmp = math::safe_sqrt(1.0f - z*z);
 
-	Float sinPhi, cosPhi;
+	float sinPhi, cosPhi;
 	math::sincos(2.0f * M_PI * sample.y, &sinPhi, &cosPhi);
 
 	return Vector(cosPhi * tmp, sinPhi * tmp, z);
@@ -42,7 +42,7 @@ Vector squareToUniformHemisphere(const Point2 &sample) {
 
 Vector squareToCosineHemisphere(const Point2 &sample) {
 	Point2 p = squareToUniformDiskConcentric(sample);
-	Float z = math::safe_sqrt(1.0f - p.x*p.x - p.y*p.y);
+	float z = math::safe_sqrt(1.0f - p.x*p.x - p.y*p.y);
 
 	/* Guard against numerical imprecisions */
 	if (EXPECT_NOT_TAKEN(z == 0))
@@ -51,11 +51,11 @@ Vector squareToCosineHemisphere(const Point2 &sample) {
 	return Vector(p.x, p.y, z);
 }
 
-Vector squareToUniformCone(Float cosCutoff, const Point2 &sample) {
-	Float cosTheta = (1-sample.x) + sample.x * cosCutoff;
-	Float sinTheta = math::safe_sqrt(1.0f - cosTheta * cosTheta);
+Vector squareToUniformCone(float cosCutoff, const Point2 &sample) {
+	float cosTheta = (1-sample.x) + sample.x * cosCutoff;
+	float sinTheta = math::safe_sqrt(1.0f - cosTheta * cosTheta);
 
-	Float sinPhi, cosPhi;
+	float sinPhi, cosPhi;
 	math::sincos(2.0f * M_PI * sample.y, &sinPhi, &cosPhi);
 
 	return Vector(cosPhi * sinTheta,
@@ -63,8 +63,8 @@ Vector squareToUniformCone(Float cosCutoff, const Point2 &sample) {
 }
 
 Point2 squareToUniformDisk(const Point2 &sample) {
-	Float r = std::sqrt(sample.x);
-	Float sinPhi, cosPhi;
+	float r = std::sqrt(sample.x);
+	float sinPhi, cosPhi;
 	math::sincos(2.0f * M_PI * sample.y, &sinPhi, &cosPhi);
 
 	return Point2(
@@ -74,17 +74,17 @@ Point2 squareToUniformDisk(const Point2 &sample) {
 }
 
 Point2 squareToUniformTriangle(const Point2 &sample) {
-	Float a = math::safe_sqrt(1.0f - sample.x);
+	float a = math::safe_sqrt(1.0f - sample.x);
 	return Point2(1 - a, a * sample.y);
 }
 
 Point2 squareToUniformDiskConcentric(const Point2 &sample) {
-	Float r1 = 2.0f*sample.x - 1.0f;
-	Float r2 = 2.0f*sample.y - 1.0f;
+	float r1 = 2.0f*sample.x - 1.0f;
+	float r2 = 2.0f*sample.y - 1.0f;
 
 	/* Modified concencric map code with less branching (by Dave Cline), see
 	   http://psgraphics.blogspot.ch/2011/01/improved-code-for-concentric-map.html */
-	Float phi, r;
+	float phi, r;
 	if (r1 == 0 && r2 == 0) {
 		r = phi = 0;
 	} else if (r1*r1 > r2*r2) {
@@ -95,14 +95,14 @@ Point2 squareToUniformDiskConcentric(const Point2 &sample) {
 		phi = (M_PI/2.0f) - (r1/r2) * (M_PI/4.0f);
 	}
 
-	Float cosPhi, sinPhi;
+	float cosPhi, sinPhi;
 	math::sincos(phi, &sinPhi, &cosPhi);
 
 	return Point2(r * cosPhi, r * sinPhi);
 }
 
 Point2 uniformDiskToSquareConcentric(const Point2 &p) {
-	Float r   = std::sqrt(p.x * p.x + p.y * p.y),
+	float r   = std::sqrt(p.x * p.x + p.y * p.y),
 		  phi = std::atan2(p.y, p.x),
 		  a, b;
 
@@ -129,19 +129,19 @@ Point2 uniformDiskToSquareConcentric(const Point2 &p) {
 }
 
 Point2 squareToStdNormal(const Point2 &sample) {
-	Float r   = std::sqrt(-2 * math::fastlog(1-sample.x)),
+	float r   = std::sqrt(-2 * math::fastlog(1-sample.x)),
 		  phi = 2 * M_PI * sample.y;
 	Point2 result;
 	math::sincos(phi, &result.y, &result.x);
 	return result * r;
 }
 
-Float squareToStdNormalPdf(const Point2 &pos) {
+float squareToStdNormalPdf(const Point2 &pos) {
 	return INV_TWOPI * math::fastexp(-(pos.x*pos.x + pos.y*pos.y)/2.0f);
 }
 
-static Float intervalToTent(Float sample) {
-	Float sign;
+static float intervalToTent(float sample) {
+	float sign;
 
 	if (sample < 0.5f) {
 		sign = 1;
@@ -161,8 +161,8 @@ Point2 squareToTent(const Point2 &sample) {
 	);
 }
 
-Float intervalToNonuniformTent(Float a, Float b, Float c, Float sample) {
-	Float factor;
+float intervalToNonuniformTent(float a, float b, float c, float sample) {
+	float factor;
 
 	if (sample * (c-a) < b-a) {
 		factor = a-b;

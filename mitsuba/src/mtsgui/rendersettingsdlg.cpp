@@ -474,11 +474,11 @@ void RenderSettingsDialog::apply(SceneContext *ctx) {
 	Vector2i oldCropSize = oldFilm->getCropSize();
 	Point2i oldCropOffset = oldFilm->getCropOffset();
 
-	Vector2i size(math::roundToInt((oldSize.x * cropSize.x / (Float) oldCropSize.x)),
-			      math::roundToInt((oldSize.y * cropSize.y / (Float) oldCropSize.y)));
+	Vector2i size(math::roundToInt((oldSize.x * cropSize.x / (float) oldCropSize.x)),
+			      math::roundToInt((oldSize.y * cropSize.y / (float) oldCropSize.y)));
 
-	Point2i cropOffset(math::roundToInt((oldCropOffset.x * cropSize.x / (Float) oldCropSize.x)),
-			           math::roundToInt((oldCropOffset.y * cropSize.y / (Float) oldCropSize.y)));
+	Point2i cropOffset(math::roundToInt((oldCropOffset.x * cropSize.x / (float) oldCropSize.x)),
+			           math::roundToInt((oldCropOffset.y * cropSize.y / (float) oldCropSize.y)));
 
 	filmProps.setInteger("width", size.x, false);
 	filmProps.setInteger("height", size.y, false);
@@ -504,7 +504,7 @@ void RenderSettingsDialog::apply(SceneContext *ctx) {
 
 	if (cropSize.x != ctx->framebuffer->getWidth() ||
 		cropSize.y != ctx->framebuffer->getHeight()) {
-		ctx->framebuffer = new Bitmap(Bitmap::ERGBA, Bitmap::EFloat32, cropSize);
+		ctx->framebuffer = new Bitmap(Bitmap::ERGBA, Bitmap::Efloat32, cropSize);
 		ctx->framebuffer->clear();
 		ctx->mode = EPreview;
 	}
@@ -515,7 +515,7 @@ void RenderSettingsDialog::apply(SceneContext *ctx) {
 	if (oldSensor->getClass()->derivesFrom(MTS_CLASS(PerspectiveCamera))) {
 		sensorProps.removeProperty("focalLength");
 		sensorProps.setString("fovAxis", "y", false);
-		sensorProps.setFloat("fov",
+		sensorProps.setfloat("fov",
 			static_cast<const PerspectiveCamera *>(oldSensor.get())->getYFov(), false);
 	}
 

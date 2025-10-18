@@ -32,7 +32,7 @@ class LanczosSincFilter : public ReconstructionFilter {
 public:
 	LanczosSincFilter(const Properties &props)
 		: ReconstructionFilter(props) {
-		m_radius = (Float) props.getInteger("lobes", 3);
+		m_radius = (float) props.getInteger("lobes", 3);
 	}
 
 	LanczosSincFilter(Stream *stream, InstanceManager *manager)
@@ -40,7 +40,7 @@ public:
 		configure();
 	}
 
-	Float eval(Float x) const {
+	float eval(float x) const {
 		x = std::abs(x);
 
 		if (x < Epsilon)
@@ -48,8 +48,8 @@ public:
 		else if (x > m_radius)
 			return 0.0f;
 
-		Float x1 = M_PI * x;
-		Float x2 = x1 / m_radius;
+		float x1 = M_PI * x;
+		float x2 = x1 / m_radius;
 
 		return (std::sin(x1) * std::sin(x2)) / (x1 * x2);
 	}

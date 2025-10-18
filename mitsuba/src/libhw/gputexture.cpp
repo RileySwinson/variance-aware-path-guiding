@@ -29,7 +29,7 @@ GPUTexture::GPUTexture(const std::string &name, Bitmap *bitmap)
 	m_fbType = ENone;
 	m_samples = 1;
 	m_depthMode = ECompare;
-	m_borderColor = Color3(static_cast<Float>(0));
+	m_borderColor = Color3(static_cast<float>(0));
 	m_size = Point3i(0);
 
 	if (bitmap != NULL) {
@@ -94,9 +94,9 @@ void GPUTexture::setBitmap(unsigned int slot, Bitmap *bitmap) {
 			case Bitmap::EUInt8: m_componentFormat = EUInt8; break;
 			case Bitmap::EUInt16: m_componentFormat = EUInt16; break;
 			case Bitmap::EUInt32: m_componentFormat = EUInt32; break;
-			case Bitmap::EFloat16: m_componentFormat = EFloat16; break;
-			case Bitmap::EFloat32: m_componentFormat = EFloat32; break;
-			case Bitmap::EFloat64: m_componentFormat = EFloat64; break;
+			case Bitmap::Efloat16: m_componentFormat = Efloat16; break;
+			case Bitmap::Efloat32: m_componentFormat = Efloat32; break;
+			case Bitmap::Efloat64: m_componentFormat = Efloat64; break;
 			default:
 				Log(EError, "Unsupported component format %i!",
 					(int) bitmap->getComponentFormat());
@@ -169,9 +169,9 @@ namespace detail {
 			case GPUTexture::EUInt8: return "uint8";
 			case GPUTexture::EUInt16: return "uint16";
 			case GPUTexture::EUInt32: return "uint32";
-			case GPUTexture::EFloat16: return "float16";
-			case GPUTexture::EFloat32: return "float32";
-			case GPUTexture::EFloat64: return "float64";
+			case GPUTexture::Efloat16: return "float16";
+			case GPUTexture::Efloat32: return "float32";
+			case GPUTexture::Efloat64: return "float64";
 			default: SLog(EError, "Invalid component format"); return NULL;
 		}
 	}

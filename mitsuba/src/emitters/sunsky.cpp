@@ -39,17 +39,17 @@ MTS_NAMESPACE_BEGIN
  * \icon{emitter_sunsky}
  * \order{8}
  * \parameters{
- *     \parameter{turbidity}{\Float}{
+ *     \parameter{turbidity}{\float}{
  *         This parameter determines the amount of aerosol present in the atmosphere.
  *         Valid range: 1-10. \default{3, corresponding to a clear sky in a temperate climate}
  *     }
  *     \parameter{albedo}{\Spectrum}{Specifies the ground albedo \default{0.15}}
  *     \parameter{year, month, day}{\Integer}{Denote the date of the
  *      observation \default{2010, 07, 10}}
- *     \parameter{hour,minute,\showbreak second}{\Float}{Local time
+ *     \parameter{hour,minute,\showbreak second}{\float}{Local time
  *       at the location of the observer in 24-hour format\default{15, 00, 00,
  *       i.e. 3PM}}
- *     \parameter{latitude, longitude, timezone}{\Float}{
+ *     \parameter{latitude, longitude, timezone}{\float}{
  *       These three parameters specify the oberver's latitude and longitude
  *       in degrees, and the local timezone offset in hours, which are required
  *       to compute the sun's position. \default{35.6894, 139.6917, 9 --- Tokyo, Japan}
@@ -60,21 +60,21 @@ MTS_NAMESPACE_BEGIN
  *       of the sun direction (\code{year, hour, latitude,} etc.
  *       are unnecessary. \default{none}
  *     }
- *     \parameter{stretch}{\Float}{
+ *     \parameter{stretch}{\float}{
  *         Stretch factor to extend emitter below the horizon, must be
  *         in [1,2] \default{\code{1}, i.e. not used}
  *     }
  *     \parameter{resolution}{\Integer}{Specifies the horizontal resolution of the precomputed
  *         image that is used to represent the sun environment map \default{512, i.e. 512$\times$256}}
- *     \parameter{sunScale}{\Float}{
+ *     \parameter{sunScale}{\float}{
  *         This parameter can be used to separately scale the amount of illumination
  *         emitted by the sun. \default{1}
  *     }
- *     \parameter{skyScale}{\Float}{
+ *     \parameter{skyScale}{\float}{
  *         This parameter can be used to separately scale the amount of illumination
  *         emitted by the sky.\default{1}
  *     }
- *     \parameter{sunRadiusScale}{\Float}{
+ *     \parameter{sunRadiusScale}{\float}{
  *         Scale factor to adjust the radius of the sun, while preserving its power.
  *         Set to \code{0} to turn it into a directional light source.
  *     }
@@ -99,10 +99,10 @@ class SunSkyEmitter : public Emitter {
 public:
 	SunSkyEmitter(const Properties &props)
 		: Emitter(props) {
-		Float scale = props.getFloat("scale", 1.0f),
-		      sunScale = props.getFloat("sunScale", scale),
-		      skyScale = props.getFloat("skyScale", scale),
-			  sunRadiusScale = props.getFloat("sunRadiusScale", 1.0f);
+		float scale = props.getfloat("scale", 1.0f),
+		      sunScale = props.getfloat("sunScale", scale),
+		      skyScale = props.getfloat("skyScale", scale),
+			  sunRadiusScale = props.getfloat("sunRadiusScale", 1.0f);
 
 		const Transform &trafo = m_worldTransform->eval(0);
 
@@ -111,7 +111,7 @@ public:
 		if (props.hasProperty("sunDirection"))
 			skyProps.setVector("sunDirection", trafo.inverse()(props.getVector("sunDirection")));
 		skyProps.setPluginName("sky");
-		skyProps.setFloat("scale", skyScale, false);
+		skyProps.setfloat("scale", skyScale, false);
 
 		ref<Emitter> sky = static_cast<Emitter *>(
 			PluginManager::getInstance()->createObject(
@@ -120,7 +120,7 @@ public:
 		props.markQueried("albedo");
 
 		int resolution = props.getInteger("resolution", 512);
-		ref<Bitmap> bitmap = new Bitmap(SUNSKY_PIXELFORMAT, Bitmap::EFloat,
+		ref<Bitmap> bitmap = new Bitmap(SUNSKY_PIXELFORMAT, Bitmap::Efloat,
 			Vector2i(resolution, resolution/2));
 
 		Point2 factor((2*M_PI) / bitmap->getWidth(),
@@ -130,18 +130,18 @@ public:
 		Log(EDebug, "Rasterizing sun & skylight emitter to an %ix%i environment map ..",
 				resolution, resolution/2);
 
-		Spectrum *data = (Spectrum *) bitmap->getFloatData();
+		Spectrum *data = (Spectrum *) bitmap->getfloatData();
 
 		/* First, rasterize the sky */
 		#if defined(MTS_OPENMP)
 			#pragma omp parallel for
 		#endif
 		for (int y=0; y<bitmap->getHeight(); ++y) {
-			Float theta = (y+.5f) * factor.y;
+			float theta = (y+.5f) * factor.y;
 			Spectrum *target = data + y * bitmap->getWidth();
 
 			for (int x=0; x<bitmap->getWidth(); ++x) {
-				Float phi = (x+.5f) * factor.x;
+				float phi = (x+.5f) * factor.x;
 
 				RayDifferential ray(Point(0.0f),
 					toSphere(SphericalCoordinates(theta, phi)), 0.0f);
@@ -163,17 +163,17 @@ public:
 
 		SphericalCoordinates sun = computeSunCoordinates(props);
 		Spectrum sunRadiance = computeSunRadiance(sun.elevation,
-			props.getFloat("turbidity", 3.0f)) * sunScale;
-		sun.elevation *= props.getFloat("stretch", 1.0f);
+			props.getfloat("turbidity", 3.0f)) * sunScale;
+		sun.elevation *= props.getfloat("stretch", 1.0f);
 		Frame sunFrame = Frame(toSphere(sun));
 
-		Float theta = degToRad(SUN_APP_RADIUS * 0.5f);
+		float theta = degToRad(SUN_APP_RADIUS * 0.5f);
 
 		if (sunRadiusScale == 0) {
-			Float solidAngle = 2 * M_PI * (1 - std::cos(theta));
+			float solidAngle = 2 * M_PI * (1 - std::cos(theta));
 			Properties props("directional");
 			props.setVector("direction", -trafo(sunFrame.n));
-			props.setFloat("samplingWeight", m_samplingWeight);
+			props.setfloat("samplingWeight", m_samplingWeight);
 			props.setSpectrum("irradiance", sunRadiance * solidAngle);
 
 			m_dirEmitter = static_cast<Emitter *>(
@@ -181,14 +181,14 @@ public:
 				MTS_CLASS(Emitter), props));
 		} else {
 			size_t pixelCount = resolution*resolution/2;
-			Float cosTheta = std::cos(theta * sunRadiusScale);
+			float cosTheta = std::cos(theta * sunRadiusScale);
 
 			/* Ratio of the sphere that is covered by the sun */
-			Float coveredPortion = 0.5f * (1 - cosTheta);
+			float coveredPortion = 0.5f * (1 - cosTheta);
 
 			/* Approx. number of samples that need to be generated,
 			   be very conservative */
-			size_t nSamples = (size_t) std::max((Float) 100,
+			size_t nSamples = (size_t) std::max((float) 100,
 				(pixelCount * coveredPortion * 1000));
 
 			factor = Point2(bitmap->getWidth() / (2*M_PI),
@@ -196,21 +196,21 @@ public:
 
 			Spectrum value =
 				sunRadiance * (2 * M_PI * (1-std::cos(theta))) *
-				static_cast<Float>(bitmap->getWidth() * bitmap->getHeight())
+				static_cast<float>(bitmap->getWidth() * bitmap->getHeight())
 				/ (2 * M_PI * M_PI * nSamples);
 
 			for (size_t i=0; i<nSamples; ++i) {
 				Vector dir = sunFrame.toWorld(
 					warp::squareToUniformCone(cosTheta, sample02(i)));
 
-				Float sinTheta = math::safe_sqrt(1-dir.y*dir.y);
+				float sinTheta = math::safe_sqrt(1-dir.y*dir.y);
 				SphericalCoordinates sphCoords = fromSphere(dir);
 
 				Point2i pos(
 					std::min(std::max(0, (int) (sphCoords.azimuth * factor.x)), bitmap->getWidth()-1),
 					std::min(std::max(0, (int) (sphCoords.elevation * factor.y)), bitmap->getHeight()-1));
 
-				data[pos.x + pos.y * bitmap->getWidth()] += value / std::max((Float) 1e-3f, sinTheta);
+				data[pos.x + pos.y * bitmap->getWidth()] += value / std::max((float) 1e-3f, sinTheta);
 			}
 
 		}
@@ -224,7 +224,7 @@ public:
 		bitmapData.size = sizeof(Bitmap);
 		envProps.setData("bitmap", bitmapData);
 		envProps.setAnimatedTransform("toWorld", m_worldTransform);
-		envProps.setFloat("samplingWeight", m_samplingWeight);
+		envProps.setfloat("samplingWeight", m_samplingWeight);
 		m_envEmitter = static_cast<Emitter *>(
 			PluginManager::getInstance()->createObject(
 			MTS_CLASS(Emitter), envProps));

@@ -115,11 +115,11 @@ public:
 	}
 
 	AABB getAABB() const {
-		std::set<Float> times;
+		std::set<float> times;
 		m_objectToWorld->collectKeyframes(times);
 
 		AABB aabb;
-		for (std::set<Float>::iterator it = times.begin(); it != times.end(); ++it) {
+		for (std::set<float>::iterator it = times.begin(); it != times.end(); ++it) {
 			const Transform &trafo = m_objectToWorld->eval(*it);
 			aabb.expandBy(trafo(Point( 1,  0, 0)));
 			aabb.expandBy(trafo(Point(-1,  0, 0)));
@@ -129,17 +129,17 @@ public:
 		return aabb;
 	}
 
-	Float getSurfaceArea() const {
+	float getSurfaceArea() const {
 		const Transform &trafo = m_objectToWorld->eval(0);
 		Vector dpdu = trafo(Vector(1, 0, 0));
 		Vector dpdv = trafo(Vector(0, 1, 0));
 		return M_PI * dpdu.length() * dpdv.length();
 	}
 
-	inline bool rayIntersect(const Ray &_ray, Float mint, Float maxt, Float &t, void *temp) const {
+	inline bool rayIntersect(const Ray &_ray, float mint, float maxt, float &t, void *temp) const {
 		Ray ray;
 		m_objectToWorld->eval(ray.time).inverse().transformAffine(_ray, ray);
-		Float hit = -ray.o.z / ray.d.z;
+		float hit = -ray.o.z / ray.d.z;
 
 		if (!(hit >= mint && hit <= maxt))
 			return false;
@@ -150,7 +150,7 @@ public:
 			t = hit;
 
 			if (temp) {
-				Float *data = static_cast<Float *>(temp);
+				float *data = static_cast<float *>(temp);
 				data[0] = local.x;
 				data[1] = local.y;
 			}
@@ -161,23 +161,23 @@ public:
 		}
 	}
 
-	bool rayIntersect(const Ray &ray, Float mint, Float maxt) const {
-		Float t;
+	bool rayIntersect(const Ray &ray, float mint, float maxt) const {
+		float t;
 		return Disk::rayIntersect(ray, mint, maxt, t, NULL);
 	}
 
 	void fillIntersectionRecord(const Ray &ray,
 			const void *temp, Intersection &its) const {
-		const Float *data = static_cast<const Float *>(temp);
+		const float *data = static_cast<const float *>(temp);
 
-		Float r = std::sqrt(data[0] * data[0] + data[1] * data[1]),
+		float r = std::sqrt(data[0] * data[0] + data[1] * data[1]),
 			  invR = (r == 0) ? 0.0f : (1.0f / r);
 
-		Float phi = std::atan2(data[1], data[0]);
+		float phi = std::atan2(data[1], data[0]);
 		if (phi < 0)
 			phi += 2*M_PI;
 
-		Float cosPhi = data[0] * invR, sinPhi = data[1] * invR;
+		float cosPhi = data[0] * invR, sinPhi = data[1] * invR;
 		const Transform &trafo = m_objectToWorld->eval(ray.time);
 
 		its.shape = this;
@@ -208,14 +208,14 @@ public:
 		Point2 *texcoords = mesh->getVertexTexcoords();
 		Triangle *triangles = mesh->getTriangles();
 
-		Float dphi = (2 * M_PI) / (Float) (phiSteps-1);
+		float dphi = (2 * M_PI) / (float) (phiSteps-1);
 
 		const Transform &trafo = m_objectToWorld->eval(0.0f);
 		Point center = trafo(Point(0.0f));
 		Normal normal = normalize(trafo(Normal(0, 0, 1)));
 
 		for (uint32_t i=0; i<phiSteps; ++i) {
-			Float phi = i*dphi;
+			float phi = i*dphi;
 			vertices[i] = center;
 			vertices[phiSteps+i] = trafo(
 				Point(std::cos(phi), std::sin(phi), 0)
@@ -254,7 +254,7 @@ public:
 		pRec.measure = EArea;
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return m_invSurfaceArea;
 	}
 
@@ -285,7 +285,7 @@ public:
 	MTS_DECLARE_CLASS()
 private:
 	ref<AnimatedTransform> m_objectToWorld;
-	Float m_invSurfaceArea;
+	float m_invSurfaceArea;
 };
 
 MTS_IMPLEMENT_CLASS_S(Disk, false, Shape)

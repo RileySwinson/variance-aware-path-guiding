@@ -55,16 +55,16 @@ public:
 	 *     reachable using the lens perturbation
 	 */
 	MultiChainPerturbation(const Scene *scene, Sampler *sampler,
-		MemoryPool &pool, Float minJump, Float coveredArea);
+		MemoryPool &pool, float minJump, float coveredArea);
 
 	// =============================================================
 	//! @{ \name Implementation of the Mutator interface
 
 	EMutationType getType() const;
-	Float suitability(const Path &path) const;
+	float suitability(const Path &path) const;
 	bool sampleMutation(Path &source, Path &proposal,
 			MutationRecord &muRec, const MutationRecord& sourceMuRec);
-	Float Q(const Path &source, const Path &proposal,
+	float Q(const Path &source, const Path &proposal,
 			const MutationRecord &muRec) const;
 	void accept(const MutationRecord &muRec);
 
@@ -80,11 +80,11 @@ protected:
 	ref<Sampler> m_sampler;
 	MemoryPool &m_pool;
 	Vector2 m_filmRes;
-	Float m_r1, m_r2;
-	Float m_theta1, m_theta2;
-	Float m_logRatio, m_thetaLogRatio;
-	Float m_imagePlaneArea;
-	Float m_mediumConcentration;
+	float m_r1, m_r2;
+	float m_theta1, m_theta2;
+	float m_logRatio, m_thetaLogRatio;
+	float m_imagePlaneArea;
+	float m_mediumConcentration;
 };
 
 MTS_NAMESPACE_END

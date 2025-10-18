@@ -23,7 +23,7 @@ MTS_NAMESPACE_BEGIN
 
 /*!\plugin{constvolume}{Constant-valued volume data source}
  * \parameters{
- *     \parameter{value}{\Float\Or\Spectrum\Or\Vector}{
+ *     \parameter{value}{\float\Or\Spectrum\Or\Vector}{
  *       Specifies the value of the volume
  *     }
  * }
@@ -56,8 +56,8 @@ public:
 		: VolumeDataSource(props) {
 		m_type = props.getType("value");
 
-		if (m_type == Properties::EFloat)
-			m_float = props.getFloat("value");
+		if (m_type == Properties::Efloat)
+			m_float = props.getfloat("value");
 		else if (m_type == Properties::EVector)
 			m_vector = props.getVector("value");
 		else if (m_type == Properties::ESpectrum)
@@ -70,8 +70,8 @@ public:
 	ConstantDataSource(Stream *stream, InstanceManager *manager)
 		: VolumeDataSource(stream, manager) {
 		m_type = stream->readInt();
-		if (m_type == Properties::EFloat)
-			m_float = stream->readFloat();
+		if (m_type == Properties::Efloat)
+			m_float = stream->readfloat();
 		else if (m_type == Properties::EVector)
 			m_vector = Vector(stream);
 		else if (m_type == Properties::ESpectrum)
@@ -88,15 +88,15 @@ public:
 		stream->writeInt(m_type);
 		if (m_type == Properties::ESpectrum)
 			m_spectrum.serialize(stream);
-		else if (m_type == Properties::EFloat)
-			stream->writeFloat(m_float);
+		else if (m_type == Properties::Efloat)
+			stream->writefloat(m_float);
 		else if (m_type == Properties::EVector)
 			m_vector.serialize(stream);
 		else
 			Log(EError, "Internal error - unknown data type");
 	}
 
-	Float lookupFloat(const Point &p) const {
+	float lookupfloat(const Point &p) const {
 		return m_float;
 	}
 
@@ -108,8 +108,8 @@ public:
 		return m_vector;
 	}
 
-	bool supportsFloatLookups() const {
-		return m_type == Properties::EFloat;
+	bool supportsfloatLookups() const {
+		return m_type == Properties::Efloat;
 	}
 
 	bool supportsSpectrumLookups() const {
@@ -120,18 +120,18 @@ public:
 		return m_type == Properties::EVector;
 	}
 
-	Float getStepSize() const {
-		return std::numeric_limits<Float>::infinity();
+	float getStepSize() const {
+		return std::numeric_limits<float>::infinity();
 	}
 
-	Float getMaximumFloatValue() const {
+	float getMaximumfloatValue() const {
 		return m_float;
 	}
 
 	std::string toString() const {
 		std::ostringstream oss;
 		oss << "ConstantDataSource[value=";
-		if (m_type == Properties::EFloat)
+		if (m_type == Properties::Efloat)
 			oss << m_float;
 		else if (m_type == Properties::EVector)
 			oss << m_vector.toString();
@@ -146,7 +146,7 @@ public:
 	MTS_DECLARE_CLASS()
 protected:
 	int m_type;
-	Float m_float;
+	float m_float;
 	Vector m_vector;
 	Spectrum m_spectrum;
 };

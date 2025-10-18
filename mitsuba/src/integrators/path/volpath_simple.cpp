@@ -93,7 +93,7 @@ public:
 		RayDifferential ray(r);
 		Spectrum Li(0.0f);
 		bool nullChain = true, scattered = false;
-		Float eta = 1.0f;
+		float eta = 1.0f;
 
 		/* Perform the first ray intersection (or ignore if the
 		   intersection has already been provided). */
@@ -149,7 +149,7 @@ public:
 				/* ==================================================================== */
 
 				PhaseFunctionSamplingRecord pRec(mRec, -ray.d);
-				Float phaseVal = phase->sample(pRec, rRec.sampler);
+				float phaseVal = phase->sample(pRec, rRec.sampler);
 				if (phaseVal == 0)
 					break;
 				throughput *= phaseVal;
@@ -192,7 +192,7 @@ public:
 					Li += throughput * its.LoSub(scene, rRec.sampler, -ray.d, rRec.depth);
 
 				/* Prevent light leaks due to the use of shading normals */
-				Float wiDotGeoN = -dot(its.geoFrame.n, ray.d),
+				float wiDotGeoN = -dot(its.geoFrame.n, ray.d),
 					  wiDotShN  = Frame::cosTheta(its.wi);
 				if (m_strictNormals && wiDotGeoN * wiDotShN < 0)
 					break;
@@ -218,7 +218,7 @@ public:
 						BSDFSamplingRecord bRec(its, its.toLocal(dRec.d));
 						bRec.sampler = rRec.sampler;
 
-						Float woDotGeoN = dot(its.geoFrame.n, dRec.d);
+						float woDotGeoN = dot(its.geoFrame.n, dRec.d);
 						/* Prevent light leaks due to the use of shading normals */
 						if (!m_strictNormals ||
 							woDotGeoN * Frame::cosTheta(bRec.wo) > 0)
@@ -262,7 +262,7 @@ public:
 
 				/* Prevent light leaks due to the use of shading normals */
 				const Vector wo = its.toWorld(bRec.wo);
-				Float woDotGeoN = dot(its.geoFrame.n, wo);
+				float woDotGeoN = dot(its.geoFrame.n, wo);
 				if (woDotGeoN * Frame::cosTheta(bRec.wo) <= 0 && m_strictNormals)
 					break;
 
@@ -285,7 +285,7 @@ public:
 				   index boundaries. Stop with at least some probability to avoid
 				   getting stuck (e.g. due to total internal reflection) */
 
-				Float q = std::min(throughput.max() * eta * eta, (Float) 0.95f);
+				float q = std::min(throughput.max() * eta * eta, (float) 0.95f);
 				if (rRec.nextSample1D() >= q)
 					break;
 				throughput /= q;

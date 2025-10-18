@@ -122,7 +122,7 @@ network communication link. Especially when dealing with multiple machines,
 it is important to realize that the machines may use different binary representations
 related to their respective \emph{endianness}. To prevent issues from arising,
 the \code{Stream} interface provides many methods for writing and reading
-small chunks of data (e.g. \code{writeShort}, \code{readFloat}, ..),
+small chunks of data (e.g. \code{writeShort}, \code{readfloat}, ..),
 which automatically perform endianness translation. In our case, the
 \code{Spectrum} class already provides serialization/unserialization support,
 so we don't really have to do anything.
@@ -181,19 +181,19 @@ in parallel rendering jobs and you'll get something like this:
 \end{center}
 That is admittedly not very exciting --- so let's do some actual computation.
 \subsection{Visualizing depth}
-Add an instance variable \code{Float m\_maxDist;} to the implementation. This
+Add an instance variable \code{float m\_maxDist;} to the implementation. This
 will store the maximum distance from the camera to any object, which is needed
-to map distances into the $[0,1]$ range. Note the upper-case \code{Float} ---
+to map distances into the $[0,1]$ range. Note the upper-case \code{float} ---
 this means that either a single- or a double-precision variable is
 substituted based the compilation flags. This variable constitutes local
 state, thus it must not be forgotten in the serialization- and unserialization routines:
 append
 \begin{cpp}
-    m_maxDist = stream->readFloat();
+    m_maxDist = stream->readfloat();
 \end{cpp}
 and
 \begin{cpp}
-    stream->writeFloat(m_maxDist);
+    stream->writefloat(m_maxDist);
 \end{cpp}
 to the unserialization constructor and the \code{serialize} method, respectively.
 
@@ -212,7 +212,7 @@ we can override the \code{preprocess} function:
         const AABB &sceneAABB = scene->getAABB();
     /* Find the camera position at t=0 seconds */
         Point cameraPosition = scene->getSensor()->getWorldTransform()->eval(0).transformAffine(Point(0.0f));
-        m_maxDist = - std::numeric_limits<Float>::infinity();
+        m_maxDist = - std::numeric_limits<float>::infinity();
 
         for (int i=0; i<8; ++i)
             m_maxDist = std::max(m_maxDist,
@@ -239,7 +239,7 @@ other nodes before the rendering begins.
 Now, replace the body of the \code{Li} method with
 \begin{cpp}
     if (rRec.rayIntersect(r)) {
-        Float distance = rRec.its.t;
+        float distance = rRec.its.t;
         return Spectrum(1.0f - distance/m_maxDist) * m_color;
     }
     return Spectrum(0.0f);

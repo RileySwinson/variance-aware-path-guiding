@@ -60,10 +60,10 @@ public:
 
 	AABB getAABB() const;
 
-	bool rayIntersect(const Ray &_ray, Float mint,
-			Float maxt, Float &t, void *temp) const;
+	bool rayIntersect(const Ray &_ray, float mint,
+			float maxt, float &t, void *temp) const;
 
-	bool rayIntersect(const Ray &_ray, Float mint, Float maxt) const;
+	bool rayIntersect(const Ray &_ray, float mint, float maxt) const;
 
 	void fillIntersectionRecord(const Ray &ray,
 		const void *temp, Intersection &its) const;
@@ -75,7 +75,7 @@ public:
 
 	size_t getEffectivePrimitiveCount() const;
 
-	void adjustTime(Intersection &its, Float time) const;
+	void adjustTime(Intersection &its, float time) const;
 
 	//! @}
 	// =============================================================

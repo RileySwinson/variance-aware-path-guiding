@@ -20,8 +20,8 @@
 namespace half_float { class half; }
 #endif
 
-#ifndef GL_HALF_FLOAT
-#  define GL_HALF_FLOAT 0x140B
+#ifndef GL_HALF_float
+#  define GL_HALF_float 0x140B
 #endif
 
 NAMESPACE_BEGIN(nanogui)
@@ -38,8 +38,8 @@ template <> struct type_traits<int16_t> { enum { type = GL_SHORT, integral = 1 }
 template <> struct type_traits<uint8_t> { enum { type = GL_UNSIGNED_BYTE, integral = 1 }; };
 template <> struct type_traits<int8_t> { enum { type = GL_BYTE, integral = 1 }; };
 template <> struct type_traits<double> { enum { type = GL_DOUBLE, integral = 0 }; };
-template <> struct type_traits<float> { enum { type = GL_FLOAT, integral = 0 }; };
-template <> struct type_traits<half_float::half> { enum { type = GL_HALF_FLOAT, integral = 0 }; };
+template <> struct type_traits<float> { enum { type = GL_float, integral = 0 }; };
+template <> struct type_traits<half_float::half> { enum { type = GL_HALF_float, integral = 0 }; };
 template <typename T> struct serialization_helper;
 NAMESPACE_END(detail)
 

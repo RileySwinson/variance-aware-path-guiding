@@ -150,10 +150,10 @@ std::string RendererCapabilities::toString() const {
 		oss << "\tERenderToTexture,\n";
 	if (m_capabilities[EBufferBlit])
 		oss << "\tEBufferBlit,\n";
-	if (m_capabilities[EFloatingPointBuffer])
-		oss << "\tEFloatingPointBuffer,\n";
-	if (m_capabilities[EFloatingPointTextures])
-		oss << "\tEFloatingPointTextures,\n";
+	if (m_capabilities[EfloatingPointBuffer])
+		oss << "\tEfloatingPointBuffer,\n";
+	if (m_capabilities[EfloatingPointTextures])
+		oss << "\tEfloatingPointTextures,\n";
 	if (m_capabilities[EMultisampleRenderToTexture])
 		oss << "\tEEMultisampleRenderToTexture,\n";
 	if (m_capabilities[EVertexBufferObjects])

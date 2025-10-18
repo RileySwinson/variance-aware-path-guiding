@@ -67,7 +67,7 @@ Spectrum SamplingIntegrator::E(const Scene *scene, const Intersection &its,
 			dRec, its, medium, maxIntermediateInteractions, query.nextSample2D());
 
 		if (!directRadiance.isZero()) {
-			Float dp = dot(dRec.d, its.shFrame.n);
+			float dp = dot(dRec.d, its.shFrame.n);
 			if (dp > 0)
 				E += directRadiance * dp;
 		}
@@ -84,7 +84,7 @@ Spectrum SamplingIntegrator::E(const Scene *scene, const Intersection &its,
 		sampler->advance();
 	}
 
-	return E / (Float) nSamples;
+	return E / (float) nSamples;
 }
 
 void SamplingIntegrator::cancel() {
@@ -141,15 +141,15 @@ void SamplingIntegrator::renderBlock(const Scene *scene,
 		const Sensor *sensor, Sampler *sampler, ImageBlock *block,
 		const bool &stop, const std::vector< TPoint2<uint8_t> > &points) const {
 
-	Float diffScaleFactor = 1.0f /
-		std::sqrt((Float) sampler->getSampleCount());
+	float diffScaleFactor = 1.0f /
+		std::sqrt((float) sampler->getSampleCount());
 
 	bool needsApertureSample = sensor->needsApertureSample();
 	bool needsTimeSample = sensor->needsTimeSample();
 
 	RadianceQueryRecord rRec(scene, sampler);
 	Point2 apertureSample(0.5f);
-	Float timeSample = 0.5f;
+	float timeSample = 0.5f;
 	RayDifferential sensorRay;
 
 	block->clear();

@@ -30,13 +30,13 @@ MTS_NAMESPACE_BEGIN
  *
  * Internally represented using floating point numbers of the chosen
  * compile-time precision. The main difference of this data structure
- * when compared to \ref TVector3<Float> is in how instances of
+ * when compared to \ref TVector3<float> is in how instances of
  * \ref Normal are treated by linear transformations.
  *
  * \ingroup libcore
  * \ingroup libpython
  */
-struct Normal : public TVector3<Float> {
+struct Normal : public TVector3<float> {
 	/** \brief Construct a new normal without initializing it.
 	 *
 	 * This construtor is useful when the normal will either not
@@ -49,23 +49,23 @@ struct Normal : public TVector3<Float> {
 	Normal() { }
 
 	/// Initialize the vector with the specified X and Z components
-	Normal(Float x, Float y, Float z) : TVector3<Float>(x, y, z) { }
+	Normal(float x, float y, float z) : TVector3<float>(x, y, z) { }
 
 	/// Initialize all components of the the normal with the specified value
-	explicit Normal(Float val) : TVector3<Float>(val) { }
+	explicit Normal(float val) : TVector3<float>(val) { }
 
 	/// Unserialize a normal from a binary data stream
 	Normal(Stream *stream) {
-		x = stream->readElement<Float>();
-		y = stream->readElement<Float>();
-		z = stream->readElement<Float>();
+		x = stream->readElement<float>();
+		y = stream->readElement<float>();
+		z = stream->readElement<float>();
 	}
 
 	/// Construct a normal from a vector data structure
-	Normal(const TVector3<Float> &v) : TVector3<Float>(v.x, v.y, v.z) { }
+	Normal(const TVector3<float> &v) : TVector3<float>(v.x, v.y, v.z) { }
 
 	/// Assign a vector to this normal
-	void operator=(const TVector3<Float> &v) {
+	void operator=(const TVector3<float> &v) {
 		x = v.x; y = v.y; z = v.z;
 	}
 };

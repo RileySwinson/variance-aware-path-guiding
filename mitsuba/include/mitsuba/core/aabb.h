@@ -122,11 +122,11 @@ template <typename T> struct TAABB {
 	}
 
 	/// Calculate the n-1 dimensional volume of the boundary
-	inline Float getSurfaceArea() const {
+	inline float getSurfaceArea() const {
 		VectorType d = max - min;
-		Float result = 0.0f;
+		float result = 0.0f;
 		for (int i=0; i<PointType::dim; ++i) {
-			Float term = 1.0f;
+			float term = 1.0f;
 			for (int j=0; j<PointType::dim; ++j) {
 				if (i == j)
 					continue;
@@ -314,14 +314,14 @@ template <typename T> struct TAABB {
 	 * \c nearT and \c farT values as a tuple (or \c None, when no
 	 * intersection was found)
 	 */
-	FINLINE bool rayIntersect(const RayType &ray, Float &nearT, Float &farT) const {
-		nearT = -std::numeric_limits<Float>::infinity();
-		farT  = std::numeric_limits<Float>::infinity();
+	FINLINE bool rayIntersect(const RayType &ray, float &nearT, float &farT) const {
+		nearT = -std::numeric_limits<float>::infinity();
+		farT  = std::numeric_limits<float>::infinity();
 
 		/* For each pair of AABB planes */
 		for (int i=0; i<PointType::dim; i++) {
-			const Float origin = ray.o[i];
-			const Float minVal = min[i], maxVal = max[i];
+			const float origin = ray.o[i];
+			const float minVal = min[i], maxVal = max[i];
 
 			if (ray.d[i] == 0) {
 				/* The ray is parallel to the planes */
@@ -329,8 +329,8 @@ template <typename T> struct TAABB {
 					return false;
 			} else {
 				/* Calculate intersection distances */
-				Float t1 = (minVal - origin) * ray.dRcp[i];
-				Float t2 = (maxVal - origin) * ray.dRcp[i];
+				float t1 = (minVal - origin) * ray.dRcp[i];
+				float t2 = (maxVal - origin) * ray.dRcp[i];
 
 				if (t1 > t2)
 					std::swap(t1, t2);
@@ -362,13 +362,13 @@ template <typename T> struct TAABB {
 	 * <tt>(nearT, farT, near, far) = rayIntersect(ray, nearT, farT)</tt>.
 	 * It returns \c None when no intersection was found.
 	 */
-	FINLINE bool rayIntersect(const RayType &ray, Float &nearT, Float &farT, PointType &near, PointType &far) const {
+	FINLINE bool rayIntersect(const RayType &ray, float &nearT, float &farT, PointType &near, PointType &far) const {
 		int nearAxis = -1, farAxis = -1;
 
 		/* For each pair of AABB planes */
 		for (int i=0; i<PointType::dim; i++) {
-			const Float origin = ray.o[i];
-			const Float minVal = min[i], maxVal = max[i];
+			const float origin = ray.o[i];
+			const float minVal = min[i], maxVal = max[i];
 
 			if (ray.d[i] == 0) {
 				/* The ray is parallel to the planes */
@@ -376,8 +376,8 @@ template <typename T> struct TAABB {
 					return false;
 			} else {
 				/* Calculate intersection distances */
-				Float t1 = (minVal - origin) * ray.dRcp[i];
-				Float t2 = (maxVal - origin) * ray.dRcp[i];
+				float t1 = (minVal - origin) * ray.dRcp[i];
+				float t2 = (maxVal - origin) * ray.dRcp[i];
 
 				bool flip = t1 > t2;
 				if (flip)
@@ -402,10 +402,10 @@ template <typename T> struct TAABB {
 
 		/* Avoid roundoff errors on the component where the intersection took place */
 		if (nearAxis >= 0)
-			near[nearAxis % PointType::dim] = ((Float *) this)[nearAxis];
+			near[nearAxis % PointType::dim] = ((float *) this)[nearAxis];
 
 		if (farAxis >= 0)
-			far[farAxis % PointType::dim]   = ((Float *) this)[farAxis];
+			far[farAxis % PointType::dim]   = ((float *) this)[farAxis];
 
 		return true;
 	}
@@ -470,9 +470,9 @@ public:
 		: TAABB<Point>(aabb) { }
 
 	/// Calculate the surface area of the bounding box
-	inline Float getSurfaceArea() const {
+	inline float getSurfaceArea() const {
 		Vector d = max - min;
-		return (Float) 2.0 * (d.x*d.y + d.x*d.z + d.y*d.z);
+		return (float) 2.0 * (d.x*d.y + d.x*d.z + d.y*d.z);
 	}
 
 	/**

@@ -33,7 +33,7 @@
 #include <mitsuba/core/random.h>
 #include <mitsuba/core/sse.h>
 
-using mitsuba::Float;
+using mitsuba::float;
 using mitsuba::Thread;
 using mitsuba::EError;
 
@@ -159,7 +159,7 @@ struct TonemapReinhard
 template <class TMO>
 void tonemap(const mitsuba::Bitmap* src, mitsuba::Bitmap* dest, const TMO& tmo){
 	SAssert(src->getSize() == dest->getSize());
-	SAssert(src->getComponentFormat()  == mitsuba::Bitmap::EFloat32);
+	SAssert(src->getComponentFormat()  == mitsuba::Bitmap::Efloat32);
 	SAssert(src->getPixelFormat()      == mitsuba::Bitmap::ERGBA);
 	SAssert(dest->getComponentFormat() == mitsuba::Bitmap::EUInt8);
 	SAssert(dest->getPixelFormat()     == mitsuba::Bitmap::ERGBA);
@@ -178,7 +178,7 @@ void tonemap(const mitsuba::Bitmap* src, mitsuba::Bitmap* dest, const TMO& tmo){
 
 void luminanceInfo(const mitsuba::Bitmap* src, const float multiplier,
 	float& outMaxLuminance, float& avgLogLuminance) {
-	SAssert(src->getComponentFormat()  == mitsuba::Bitmap::EFloat32);
+	SAssert(src->getComponentFormat()  == mitsuba::Bitmap::Efloat32);
 	SAssert(src->getPixelFormat()      == mitsuba::Bitmap::ERGBA);
 	const RGBA32F* pixels = static_cast<const RGBA32F*>(src->getData());
 
@@ -293,7 +293,7 @@ private:
 	inline Vector2i nextSize() {
 		uint32_t w = m_rnd->nextUInt(2048) + 1;
 		uint32_t h = m_rnd->nextUInt(2048) + 1;
-		if (m_rnd->nextFloat() > 0.75f) {
+		if (m_rnd->nextfloat() > 0.75f) {
 			w |= 1;
 			h |= 1;
 		}
@@ -305,7 +305,7 @@ private:
 		// Interpret as an f-stop on an image with average luminance 0.18
 		float fstop = static_cast<float>(m_rnd->nextStandardNormal());
 		// Sometimes add really bright or dim stuff
-		if (m_rnd->nextFloat() > 0.98f) {
+		if (m_rnd->nextfloat() > 0.98f) {
 			fstop *= 8.0f;
 		}
 		float factor = pow2(fstop);
@@ -314,15 +314,15 @@ private:
 
 	/// Fill a HDR bitmap with plausible values. Returns the maximum value
 	inline float fill(Bitmap *hdr) {
-		SAssert(hdr->getComponentFormat() == Bitmap::EFloat32);
+		SAssert(hdr->getComponentFormat() == Bitmap::Efloat32);
 		SAssert(hdr->getPixelFormat()     == Bitmap::ERGBA);
-		float *d = hdr->getFloat32Data();
+		float *d = hdr->getfloat32Data();
 		float maxValue = 0;
 		for(size_t i = 0; i != hdr->getPixelCount(); ++i, d += 4) {
 			d[0] = getHDRValue();
 			d[1] = getHDRValue();
 			d[2] = getHDRValue();
-			d[3] = m_rnd->nextFloat();
+			d[3] = m_rnd->nextfloat();
 			maxValue = std::max(maxValue, std::max(d[0], std::max(d[1], d[2])));
 		}
 		return maxValue;
@@ -379,12 +379,12 @@ void TestTonemapperSSE::testGamma(Bitmap *hdr, int numImages, int numRuns) {
 		const float whitePoint = fill(hdr);
 		for (int runIdx = 0; runIdx < numRuns; ++runIdx) {
 			// Random set of parameters for the current run
-			const bool sRGB = m_rnd->nextFloat() < 0.5f/8.0f;
-			const Float invGamma = 1.0f / std::max(0.1f,
+			const bool sRGB = m_rnd->nextfloat() < 0.5f/8.0f;
+			const float invGamma = 1.0f / std::max(0.1f,
 				m_rnd->nextStandardNormal() + 2.2f);
 			float wFStop = m_rnd->nextStandardNormal();
 			float wFactor = pow2(wFStop);
-			const Float invWhitePoint = 1 / (whitePoint * wFactor);
+			const float invWhitePoint = 1 / (whitePoint * wFactor);
 
 			tmoSIMD->setInvGamma(invGamma);
 			tmoSIMD->setSRGB(sRGB);
@@ -419,14 +419,14 @@ void TestTonemapperSSE::testReinhard(Bitmap *hdr, int numImages, int numRuns) {
 		const float whitePoint = fill(hdr);
 		for (int runIdx = 0; runIdx < numRuns; ++runIdx) {
 			// Random set of parameters for the current run
-			const bool sRGB = m_rnd->nextFloat() < 0.5f/8.0f;
-			const Float invGamma = 1.0f / std::max(0.1f,
+			const bool sRGB = m_rnd->nextfloat() < 0.5f/8.0f;
+			const float invGamma = 1.0f / std::max(0.1f,
 				m_rnd->nextStandardNormal() + 2.2f);
 			float wFStop = m_rnd->nextStandardNormal();
 			float wFactor = pow2(wFStop);
-			const Float invWhitePoint = 1 / (whitePoint * wFactor);
-			const Float multiplier = m_rnd->nextFloat() + 0.5f;
-			const Float scale = m_rnd->nextFloat() * 4.0f + 0.01f;
+			const float invWhitePoint = 1 / (whitePoint * wFactor);
+			const float multiplier = m_rnd->nextfloat() + 0.5f;
+			const float scale = m_rnd->nextfloat() * 4.0f + 0.01f;
 
 			tmoSIMD->setInvGamma(invGamma);
 			tmoSIMD->setSRGB(sRGB);
@@ -498,10 +498,10 @@ void TestTonemapperSSE::testGamma(int numImageSizes, int runsPerImage,
 	m_timer->reset(true);
 	for (int i = 0; i < numImageSizes; ++i) {
 		mitsuba::Vector2i size = nextSize();
-		ref<Bitmap> hdr = new Bitmap(Bitmap::ERGBA, Bitmap::EFloat32, size);
+		ref<Bitmap> hdr = new Bitmap(Bitmap::ERGBA, Bitmap::Efloat32, size);
 		testGamma(hdr, runsPerImage, paramsPerImage);
 	}
-	Float seconds = m_timer->stop();
+	float seconds = m_timer->stop();
 	Log(EInfo, "Gamma test done: %g s, reference: %g s, SIMD: %g s",
 		seconds, m_timerRef->getSeconds(), m_timerSIMD->getSeconds());
 	Log(EInfo, "Error - mean: %g, stddev: %g, max: %g",
@@ -521,10 +521,10 @@ void TestTonemapperSSE::testReinhard(int numImageSizes, int runsPerImage,
 	m_timer->reset(true);
 	for (int i = 0; i < numImageSizes; ++i) {
 		mitsuba::Vector2i size = nextSize();
-		ref<Bitmap> hdr = new Bitmap(Bitmap::ERGBA, Bitmap::EFloat32, size);
+		ref<Bitmap> hdr = new Bitmap(Bitmap::ERGBA, Bitmap::Efloat32, size);
 		testReinhard(hdr, runsPerImage, paramsPerImage);
 	}
-	Float seconds = m_timer->stop();
+	float seconds = m_timer->stop();
 	Log(EInfo, "Reinhard test done: %g s, reference: %g s, SIMD: %g s",
 		seconds, m_timerRef->getSeconds(), m_timerSIMD->getSeconds());
 	Log(EInfo, " Error - mean: %g, stddev: %g, max: %g",
@@ -544,14 +544,14 @@ void TestTonemapperSSE::testLuminance(int numImageSizes,int runsPerImage) {
 	m_timer->reset(true);
 	for (int i = 0; i < numImageSizes; ++i) {
 		mitsuba::Vector2i size = nextSize();
-		ref<Bitmap> hdr = new Bitmap(Bitmap::ERGBA, Bitmap::EFloat32, size);
+		ref<Bitmap> hdr = new Bitmap(Bitmap::ERGBA, Bitmap::Efloat32, size);
 		for (int j = 0; j < runsPerImage; ++j) {
 			fill(hdr);
-			tmo->setMultiplier(m_rnd->nextFloat() + 0.5f);
+			tmo->setMultiplier(m_rnd->nextfloat() + 0.5f);
 			testLuminance(hdr, tmo);
 		}
 	}
-	Float seconds = m_timer->stop();
+	float seconds = m_timer->stop();
 	Log(EInfo, "Luminance info test done: %g s, reference: %g s, SIMD: %g s",
 		seconds, m_timerRef->getSeconds(), m_timerSIMD->getSeconds());
 	Log(EInfo, "Max lum error - mean: %g, stddev: %g, max: %g",
@@ -559,7 +559,7 @@ void TestTonemapperSSE::testLuminance(int numImageSizes,int runsPerImage) {
 	Log(EInfo, "Avg log-lum error - mean: %g, stddev: %g, max: %g",
 		m_varAvgLogLum.mean(), m_varAvgLogLum.stddev(), m_varAvgLogLum.max());
 
-	assertEquals(static_cast<Float>(m_varMaxLum.max()), static_cast<Float>(0));
+	assertEquals(static_cast<float>(m_varMaxLum.max()), static_cast<float>(0));
 	assertTrue(m_varAvgLogLum.mean()   < 1e-5);
 	assertTrue(m_varAvgLogLum.stddev() < 1e-6);
 }
@@ -583,8 +583,8 @@ void TestTonemapperSSE::testBasic(const RGBA32F &pixel,
 	tmoSIMD->setSRGB(params.isSRGB);
 
 	// Basic sanity check of the reference implementation
-	const RGBA32F expectedFloat = tmo(pixel);
-	const RGBA8 expected = expectedFloat;
+	const RGBA32F expectedfloat = tmo(pixel);
+	const RGBA8 expected = expectedfloat;
 	const Vector4i v4i = expected;
 	assertEquals(v4i[0], expected.r);
 	assertEquals(v4i[1], expected.g);
@@ -592,7 +592,7 @@ void TestTonemapperSSE::testBasic(const RGBA32F &pixel,
 	assertEquals(v4i[3], expected.a);
 
 	// Populate and execute the SIMD tonemapper
-	ref<Bitmap> hdr = new Bitmap(Bitmap::ERGBA,Bitmap::EFloat32, Vector2i(1,1));
+	ref<Bitmap> hdr = new Bitmap(Bitmap::ERGBA,Bitmap::Efloat32, Vector2i(1,1));
 	ref<Bitmap> ldr = new Bitmap(Bitmap::ERGBA,Bitmap::EUInt8,   Vector2i(1,1));
 	RGBA32F* data = static_cast<RGBA32F*>(hdr->getData());
 	assertEquals(reinterpret_cast<uintptr_t>(data) % 16, 0);
@@ -615,7 +615,7 @@ void TestTonemapperSSE::testBasic(const RGBA32F &pixel,
 	tmoSIMD->setLuminanceInfo(hdr, tmo.multiplier);
 	assertEquals(tmoSIMD->maxLuminance(), Y);
 	// Relative epsilon based on qFuzzyCompare
-	const Float epsilon = 0.0001f * std::min(std::abs(avgLogLuminance),
+	const float epsilon = 0.0001f * std::min(std::abs(avgLogLuminance),
 		std::abs(tmoSIMD->logAvgLuminance()));
 	assertEqualsEpsilon(tmoSIMD->logAvgLuminance(), avgLogLuminance, epsilon);
 }
@@ -624,7 +624,7 @@ void TestTonemapperSSE::testBasic() {
 
 	TonemapCPU::Params params;
 	RGBA32F pixel;
-	Vector4f delta(static_cast<Float>(0));
+	Vector4f delta(static_cast<float>(0));
 
 	params.invWhitePoint = 8.7875755e-011f;
 	params.invGamma      = 0.69960159f;

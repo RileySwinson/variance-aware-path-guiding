@@ -314,7 +314,7 @@ private:
 	}
 
 	void insert(OctreeNode *node, const AABB &nodeAABB, const Item &value,
-			const AABB &coverage, Float diag2, uint32_t depth) {
+			const AABB &coverage, float diag2, uint32_t depth) {
 		/* Add the data item to the current octree node if the max. tree
 		   depth is reached or the data item's coverage area is smaller
 		   than the current node size */

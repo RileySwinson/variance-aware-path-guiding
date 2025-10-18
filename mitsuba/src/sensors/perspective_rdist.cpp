@@ -42,7 +42,7 @@ MTS_NAMESPACE_BEGIN
  *         description for further details.
  *         \default{\code{50mm}}
  *     }
- *     \parameter{fov}{\Float}{
+ *     \parameter{fov}{\float}{
  *         An alternative to \code{focalLength}:
  *         denotes the camera's field of view in degrees---must be
  *         between 0 and 180, excluding the extremes.
@@ -67,12 +67,12 @@ MTS_NAMESPACE_BEGIN
  *         \end{enumerate}
  *         The default is \code{\textbf{x}}.
  *     }
- *     \parameter{shutterOpen, shutterClose}{\Float}{
+ *     \parameter{shutterOpen, shutterClose}{\float}{
  *         Specifies the time interval of the measurement---this
  *         is only relevant when the scene is in motion.
  *         \default{0}
  *     }
- *     \parameter{nearClip, farClip}{\Float}{
+ *     \parameter{nearClip, farClip}{\float}{
  *         Distance to the near/far clip
  *         planes.\default{\code{near\code}-\code{Clip=1e-2} (i.e.
  *         \code{0.01}) and {\code{farClip=1e4} (i.e. \code{10000})}}
@@ -115,8 +115,8 @@ public:
 			m_distortion = false;
 		} else if (kc_tokens.size() == 2) {
 			char *end_ptr0, *end_ptr1;
-			m_kc[0] = (Float) std::strtod(kc_tokens[0].c_str(), &end_ptr0);
-			m_kc[1] = (Float) std::strtod(kc_tokens[1].c_str(), &end_ptr1);
+			m_kc[0] = (float) std::strtod(kc_tokens[0].c_str(), &end_ptr0);
+			m_kc[1] = (float) std::strtod(kc_tokens[1].c_str(), &end_ptr1);
 			if (*end_ptr0 != '\0' || *end_ptr1 != 0)
 				Log(EError, "Invalid input to the 'kc' parameter!");
 			m_distortion = m_kc[0] != 0 || m_kc[1] != 0;
@@ -128,15 +128,15 @@ public:
 	PerspectiveCameraRDist(Stream *stream, InstanceManager *manager)
 			: PerspectiveCamera(stream, manager) {
 		configure();
-		m_kc[0] = stream->readFloat();
-		m_kc[1] = stream->readFloat();
+		m_kc[0] = stream->readfloat();
+		m_kc[1] = stream->readfloat();
 		m_distortion = m_kc[0] != 0 || m_kc[1] != 0;
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		PerspectiveCamera::serialize(stream, manager);
-		stream->writeFloat(m_kc[0]);
-		stream->writeFloat(m_kc[1]);
+		stream->writefloat(m_kc[0]);
+		stream->writefloat(m_kc[1]);
 	}
 
 	void configure() {
@@ -146,10 +146,10 @@ public:
 		const Vector2i &cropSize   = m_film->getCropSize();
 		const Point2i  &cropOffset = m_film->getCropOffset();
 
-		Vector2 relSize((Float) cropSize.x / (Float) filmSize.x,
-			(Float) cropSize.y / (Float) filmSize.y);
-		Point2 relOffset((Float) cropOffset.x / (Float) filmSize.x,
-			(Float) cropOffset.y / (Float) filmSize.y);
+		Vector2 relSize((float) cropSize.x / (float) filmSize.x,
+			(float) cropSize.y / (float) filmSize.y);
+		Point2 relOffset((float) cropOffset.x / (float) filmSize.x,
+			(float) cropOffset.y / (float) filmSize.y);
 
 		/**
 		 * These do the following (in reverse order):
@@ -195,16 +195,16 @@ public:
 			Transform::scale(Vector(1.0f / relSize.x, 1.0f / relSize.y, 1.0f));
 	}
 
-	Float applyDistortion(Float r2) const {
+	float applyDistortion(float r2) const {
 		return 1 + r2*(m_kc[0] + r2*m_kc[1]);
 	}
 
-	Float invertDistortion(Float y) const {
+	float invertDistortion(float y) const {
 		int it = 0;
-		Float r = y;
+		float r = y;
 
 		while (true) {
-			Float r2 = r*r,
+			float r2 = r*r,
 			      f  = r*(1+r2*(m_kc[0] + r2*m_kc[1])) - y,
 			      df = 1 + r2*(3*m_kc[0] + 5*m_kc[1]*r2);
 
@@ -225,7 +225,7 @@ public:
 	 *     A normalized direction vector from the aperture position to the
 	 *     reference point in question (all in local camera space)
 	 */
-	inline Float importance(const Vector &d) const {
+	inline float importance(const Vector &d) const {
 		/* How is this derived? Imagine a hypothetical image plane at a
 		   distance of d=1 away from the pinhole in camera space.
 
@@ -263,25 +263,25 @@ public:
 		      d_omega = 1 / (A' * cos^3(theta))
 		*/
 
-		Float cosTheta = Frame::cosTheta(d);
+		float cosTheta = Frame::cosTheta(d);
 
 		/* Check if the direction points behind the camera */
 		if (cosTheta <= 0)
 			return 0.0f;
 
 		/* Compute the position on the plane at distance 1 */
-		Float invCosTheta = 1.0f / cosTheta;
+		float invCosTheta = 1.0f / cosTheta;
 		Point2 p(d.x * invCosTheta, d.y * invCosTheta);
 
-		Float importance = m_normalization * invCosTheta
+		float importance = m_normalization * invCosTheta
 				* invCosTheta * invCosTheta;
 
 		if (m_distortion) {
 			/* Correct importance for radial distortion */
-			Float rOrig2  = Vector2(p).lengthSquared(),
+			float rOrig2  = Vector2(p).lengthSquared(),
 				  rFactor = applyDistortion(rOrig2);
 
-			Float deriv = 1 + rOrig2*(3*m_kc[0] + 5*m_kc[1]*rOrig2);
+			float deriv = 1 + rOrig2*(3*m_kc[0] + 5*m_kc[1]*rOrig2);
 			importance *= std::abs(rFactor*deriv);
 			p *= rFactor;
 		}
@@ -294,7 +294,7 @@ public:
 	}
 
 	Spectrum sampleRay(Ray &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 
 		/* Compute the corresponding position on the
@@ -304,14 +304,14 @@ public:
 			pixelSample.y * m_invResolution.y, 0.0f));
 
 		if (m_distortion) {
-			Float correction = invertDistortion(Vector2(nearP.x / nearP.z, nearP.y / nearP.z).length());
+			float correction = invertDistortion(Vector2(nearP.x / nearP.z, nearP.y / nearP.z).length());
 			nearP.x *= correction; nearP.y *= correction;
 		}
 
 		/* Turn that into a normalized ray direction, and
 		   adjust the ray interval accordingly */
 		Vector d = normalize(Vector(nearP));
-		Float invZ = 1.0f / d.z;
+		float invZ = 1.0f / d.z;
 
 		ray.mint = m_nearClip * invZ;
 		ray.maxt = m_farClip * invZ;
@@ -326,7 +326,7 @@ public:
 	}
 
 	Spectrum sampleRayDifferential(RayDifferential &ray, const Point2 &pixelSample,
-			const Point2 &otherSample, Float timeSample) const {
+			const Point2 &otherSample, float timeSample) const {
 		ray.time = sampleTime(timeSample);
 
 		/* Compute the corresponding position on the
@@ -337,14 +337,14 @@ public:
 
 		if (m_distortion) {
 			/* Ray differentials don't take distortion into account */
-			Float correction = invertDistortion(Vector2(nearP.x / nearP.z, nearP.y / nearP.z).length());
+			float correction = invertDistortion(Vector2(nearP.x / nearP.z, nearP.y / nearP.z).length());
 			nearP.x *= correction; nearP.y *= correction;
 		}
 
 		/* Turn that into a normalized ray direction, and
 		   adjust the ray interval accordingly */
 		Vector d = normalize(Vector(nearP));
-		Float invZ = 1.0f / d.z;
+		float invZ = 1.0f / d.z;
 		ray.mint = m_nearClip * invZ;
 		ray.maxt = m_farClip * invZ;
 
@@ -374,7 +374,7 @@ public:
 		return Spectrum((pRec.measure == EDiscrete) ? 1.0f : 0.0f);
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return (pRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
@@ -399,7 +399,7 @@ public:
 		Point nearP = m_sampleToCamera(samplePos);
 
 		if (m_distortion) {
-			Float correction = invertDistortion(Vector2(nearP.x / nearP.z, nearP.y / nearP.z).length());
+			float correction = invertDistortion(Vector2(nearP.x / nearP.z, nearP.y / nearP.z).length());
 			nearP.x *= correction; nearP.y *= correction;
 		}
 
@@ -412,7 +412,7 @@ public:
 		return Spectrum(1.0f);
 	}
 
-	Float pdfDirection(const DirectionSamplingRecord &dRec,
+	float pdfDirection(const DirectionSamplingRecord &dRec,
 			const PositionSamplingRecord &pRec) const {
 		if (dRec.measure != ESolidAngle)
 			return 0.0f;
@@ -438,7 +438,7 @@ public:
 		Point local(Point(invTrafo(dRec.d)));
 
 		if (m_distortion) {
-			Float correction = applyDistortion(Vector2(local.x / local.z, local.y / local.z).lengthSquared());
+			float correction = applyDistortion(Vector2(local.x / local.z, local.y / local.z).lengthSquared());
 			local.x *= correction; local.y *= correction;
 		}
 
@@ -472,7 +472,7 @@ public:
 		Point refPc(refP);
 
 		if (m_distortion) {
-			Float correction = applyDistortion(Vector2(refPc.x / refPc.z, refPc.y / refPc.z).lengthSquared());
+			float correction = applyDistortion(Vector2(refPc.x / refPc.z, refPc.y / refPc.z).lengthSquared());
 			refPc.x *= correction; refPc.y *= correction;
 		}
 
@@ -488,7 +488,7 @@ public:
 		dRec.uv.y *= m_resolution.y;
 
 		Vector localD(refP);
-		Float dist = localD.length(),
+		float dist = localD.length(),
 			  invDist = 1.0f / dist;
 		localD *= invDist;
 
@@ -503,14 +503,14 @@ public:
 			importance(localD) * invDist * invDist);
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		return (dRec.measure == EDiscrete) ? 1.0f : 0.0f;
 	}
 
 	Transform getProjectionTransform(const Point2 &apertureSample,
 			const Point2 &aaSample) const {
-		Float right = std::tan(m_xfov * M_PI/360) * m_nearClip, left = -right;
-		Float top = right / m_aspect, bottom = -top;
+		float right = std::tan(m_xfov * M_PI/360) * m_nearClip, left = -right;
+		float top = right / m_aspect, bottom = -top;
 
 		Vector2 offset(
 			(right-left)/m_film->getSize().x * (aaSample.x-0.5f),
@@ -547,10 +547,10 @@ private:
 	Transform m_sampleToCamera;
 	Transform m_clipTransform;
 	AABB2 m_imageRect;
-	Float m_normalization;
+	float m_normalization;
 	Vector m_dx, m_dy;
 	bool m_distortion;
-	Float m_kc[2];
+	float m_kc[2];
 };
 
 MTS_IMPLEMENT_CLASS_S(PerspectiveCameraRDist, false, PerspectiveCamera)

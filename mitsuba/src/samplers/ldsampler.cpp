@@ -86,11 +86,11 @@ public:
 					SIZE_T_FMT, m_sampleCount);
 		}
 
-		m_samples1D = new Float*[m_maxDimension];
+		m_samples1D = new float*[m_maxDimension];
 		m_samples2D = new Point2*[m_maxDimension];
 
 		for (size_t i=0; i<m_maxDimension; i++) {
-			m_samples1D[i] = new Float[m_sampleCount];
+			m_samples1D[i] = new float[m_sampleCount];
 			m_samples2D[i] = new Point2[m_sampleCount];
 		}
 
@@ -102,10 +102,10 @@ public:
 		m_random = static_cast<Random *>(manager->getInstance(stream));
 		m_maxDimension = stream->readSize();
 
-		m_samples1D = new Float*[m_maxDimension];
+		m_samples1D = new float*[m_maxDimension];
 		m_samples2D = new Point2*[m_maxDimension];
 		for (size_t i=0; i<m_maxDimension; i++) {
-			m_samples1D[i] = new Float[(size_t) m_sampleCount];
+			m_samples1D[i] = new float[(size_t) m_sampleCount];
 			m_samples2D[i] = new Point2[(size_t) m_sampleCount];
 		}
 	}
@@ -131,10 +131,10 @@ public:
 		sampler->m_sampleCount = m_sampleCount;
 		sampler->m_maxDimension = m_maxDimension;
 		sampler->m_random = new Random(m_random);
-		sampler->m_samples1D = new Float*[m_maxDimension];
+		sampler->m_samples1D = new float*[m_maxDimension];
 		sampler->m_samples2D = new Point2*[m_maxDimension];
 		for (size_t i=0; i<m_maxDimension; i++) {
-			sampler->m_samples1D[i] = new Float[m_sampleCount];
+			sampler->m_samples1D[i] = new float[m_sampleCount];
 			sampler->m_samples2D[i] = new Point2[m_sampleCount];
 		}
 		for (size_t i=0; i<m_req1D.size(); ++i)
@@ -145,7 +145,7 @@ public:
 		return sampler.get();
 	}
 
-	inline void generate1D(Float *samples, size_t sampleCount) {
+	inline void generate1D(float *samples, size_t sampleCount) {
 		#if defined(SINGLE_PRECISION)
 			uint32_t scramble = m_random->nextULong() & 0xFFFFFFFF;
 			for (size_t i = 0; i < sampleCount; ++i)
@@ -211,12 +211,12 @@ public:
 		m_dimension1DArray = m_dimension2DArray = 0;
 	}
 
-	Float next1D() {
+	float next1D() {
 		Assert(m_sampleIndex < m_sampleCount);
 		if (m_dimension1D < m_maxDimension)
 			return m_samples1D[m_dimension1D++][m_sampleIndex];
 		else
-			return m_random->nextFloat();
+			return m_random->nextfloat();
 	}
 
 	Point2 next2D() {
@@ -224,7 +224,7 @@ public:
 		if (m_dimension2D < m_maxDimension)
 			return m_samples2D[m_dimension2D++][m_sampleIndex];
 		else
-			return Point2(m_random->nextFloat(), m_random->nextFloat());
+			return Point2(m_random->nextfloat(), m_random->nextfloat());
 	}
 
 	std::string toString() const {
@@ -242,7 +242,7 @@ private:
 	size_t m_maxDimension;
 	size_t m_dimension1D;
 	size_t m_dimension2D;
-	Float **m_samples1D;
+	float **m_samples1D;
 	Point2 **m_samples2D;
 };
 

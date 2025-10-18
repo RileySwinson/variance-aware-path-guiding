@@ -110,7 +110,7 @@ public:
 		m_pool = &m_pathSampler->getMemoryPool();
 
 		/* Jump sizes recommended by Eric Veach */
-		Float minJump = 0.1f, coveredArea = 0.05f;
+		float minJump = 0.1f, coveredArea = 0.05f;
 
 		/* Register all available mutators */
 		if (m_config.bidirectionalMutation)
@@ -139,7 +139,7 @@ public:
 			Log(EError, "There must be at least one mutator!");
 	}
 
-	void pathCallback(int s, int t, Float weight, Path &path, const bool *stop) {
+	void pathCallback(int s, int t, float weight, Path &path, const bool *stop) {
 		if (std::isnan(weight) || std::isinf(weight) || weight < 0)
 			Log(EWarn, "Invalid path weight: %f, ignoring path!", weight);
 
@@ -154,12 +154,12 @@ public:
 		}
 #endif
 
-		Float meanChains = m_config.numChains * weight
+		float meanChains = m_config.numChains * weight
 			/ (m_config.luminance * m_sampler->getSampleCount());
 
 		/* Optional: do not launch too many chains if this is desired by the user */
 		if (m_config.maxChains > 0 && meanChains > m_config.maxChains)
-			meanChains = std::min(meanChains, (Float) m_config.maxChains);
+			meanChains = std::min(meanChains, (float) m_config.maxChains);
 
 		/* Decide the actual number of chains that will be launched, as well
 		   as their deposition energy */
@@ -167,13 +167,13 @@ public:
 		if (numChains == 0)
 			return;
 
-		Float depositionEnergy = weight / (m_sampler->getSampleCount()
+		float depositionEnergy = weight / (m_sampler->getSampleCount()
 				* meanChains * m_config.chainLength);
 
 		DiscreteDistribution suitabilities(m_mutators.size());
 		std::ostringstream oss;
 		Spectrum relWeight(0.0f);
-		Float accumulatedWeight = 0;
+		float accumulatedWeight = 0;
 		MutationRecord muRec, currentMuRec(Mutator::EMutationTypeCount, 0, 0, 0, Spectrum(0.f));
 		Path *current = new Path(),
 			 *proposed = new Path();
@@ -215,13 +215,13 @@ public:
 
 				statsAccepted.incrementBase(1);
 				if (success) {
-					Float Qxy = mutator->Q(*current, *proposed, muRec) * suitabilities[mutatorIdx];
+					float Qxy = mutator->Q(*current, *proposed, muRec) * suitabilities[mutatorIdx];
 					suitabilities.clear();
 					for (size_t j=0; j<m_mutators.size(); ++j)
 						suitabilities.append(m_mutators[j]->suitability(*proposed));
 					suitabilities.normalize();
-					Float Qyx = mutator->Q(*proposed, *current, muRec.reverse()) * suitabilities[mutatorIdx];
-					Float a = std::min((Float) 1, Qyx / Qxy);
+					float Qyx = mutator->Q(*proposed, *current, muRec.reverse()) * suitabilities[mutatorIdx];
+					float a = std::min((float) 1, Qyx / Qxy);
 
 					#if defined(MTS_BD_DEBUG_HEAVY)
 						if (!proposed->verify(m_scene, EImportance, oss)) {
@@ -298,7 +298,7 @@ public:
 
 		m_hilbertCurve.initialize(TVector2<uint8_t>(rect->getSize()));
 		m_result->clear();
-		boost::function<void (int, int, Float, Path &)> callback
+		boost::function<void (int, int, float, Path &)> callback
 			= boost::bind(&ERPTRenderer::pathCallback, this, _1, _2, _3, _4, &stop);
 
 		for (size_t i=0; i<m_hilbertCurve.getPointCount(); ++i) {

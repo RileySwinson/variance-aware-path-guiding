@@ -59,25 +59,25 @@ public:
 		PhaseFunction::serialize(stream, manager);
 	}
 
-	Float sample(PhaseFunctionSamplingRecord &pRec,
+	float sample(PhaseFunctionSamplingRecord &pRec,
 			Sampler *sampler) const {
 		Point2 sample(sampler->next2D());
 		pRec.wo = warp::squareToUniformSphere(sample);
 		return 1.0f;
 	}
 
-	Float sample(PhaseFunctionSamplingRecord &pRec,
-			Float &pdf, Sampler *sampler) const {
+	float sample(PhaseFunctionSamplingRecord &pRec,
+			float &pdf, Sampler *sampler) const {
 		pRec.wo = warp::squareToUniformSphere(sampler->next2D());
 		pdf = warp::squareToUniformSpherePdf();
 		return 1.0f;
 	}
 
-	Float eval(const PhaseFunctionSamplingRecord &pRec) const {
+	float eval(const PhaseFunctionSamplingRecord &pRec) const {
 		return warp::squareToUniformSpherePdf();
 	}
 
-	Float getMeanCosine() const {
+	float getMeanCosine() const {
 		return 0.0f;
 	}
 

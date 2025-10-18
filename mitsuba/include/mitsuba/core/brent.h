@@ -40,11 +40,11 @@ public:
 	struct Result {
 		bool success;
 		size_t iterations;
-		Float x;
-		Float y;
+		float x;
+		float y;
 
 		/// Create a new result instance
-		inline Result(bool success, size_t iterations, Float x, Float y)
+		inline Result(bool success, size_t iterations, float x, float y)
 			: success(success), iterations(iterations), x(x), y(y) { }
 
 		/// Return a string representation of the result
@@ -76,9 +76,9 @@ public:
 	 *      iterations will stop when |minX-maxX|/minX < relAccuracyPos.
 	 */
 	inline BrentSolver(size_t maxIterations = 100,
-			Float absAccuracy = 1e-6f,
-			Float absAccuracyPos = 1e-6f,
-			Float relAccuracyPos = 1e-6f)
+			float absAccuracy = 1e-6f,
+			float absAccuracyPos = 1e-6f,
+			float relAccuracyPos = 1e-6f)
 		: m_maxIterations(maxIterations),
 		  m_absAccuracy(absAccuracy),
 		  m_absAccuracyPos(absAccuracyPos),
@@ -94,8 +94,8 @@ public:
 	 * \param max the upper bound for the interval.
 	 * \return the value where the function is zero
 	 */
-	Result solve(const boost::function<Float (Float)> &func,
-			Float min, Float max) const;
+	Result solve(const boost::function<float (float)> &func,
+			float min, float max) const;
 
 	/**
 	 * \brief Find a zero in the given interval with an initial guess
@@ -111,8 +111,8 @@ public:
 	 *    if no initial point is known)
 	 * \return the value where the function is zero
 	 */
-	Result solve(const boost::function<Float (Float)> &func,
-			Float min, Float max, Float initial) const;
+	Result solve(const boost::function<float (float)> &func,
+			float min, float max, float initial) const;
 
 	/**
 	 * Find a zero starting search according to the three provided points.
@@ -127,15 +127,15 @@ public:
 	 * \param y2 function value at the bracket point.
 	 * \return the value where the function is zero
 	 */
-	Result solve(const boost::function<Float (Float)> &func,
-				 Float x0, Float y0,
-				 Float x1, Float y1,
-				 Float x2, Float y2) const;
+	Result solve(const boost::function<float (float)> &func,
+				 float x0, float y0,
+				 float x1, float y1,
+				 float x2, float y2) const;
 protected:
 	size_t m_maxIterations;
-	Float m_absAccuracy;
-	Float m_absAccuracyPos;
-	Float m_relAccuracyPos;
+	float m_absAccuracy;
+	float m_absAccuracyPos;
+	float m_relAccuracyPos;
 };
 
 MTS_NAMESPACE_END

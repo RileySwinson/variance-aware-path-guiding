@@ -418,7 +418,7 @@ public:
         window->setLayout(layout);
 
         /* FP widget */ {
-            new Label(window, "Floating point :", "sans-bold");
+            new Label(window, "floating point :", "sans-bold");
             textBox = new TextBox(window);
             textBox->setEditable(true);
             textBox->setFixedSize(Vector2i(100, 20));

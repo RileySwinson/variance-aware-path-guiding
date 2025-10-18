@@ -34,7 +34,7 @@ MTS_NAMESPACE_BEGIN
  *     \parameter{center}{\Point}{
  *	     Center of the sphere in object-space \default{(0, 0, 0)}
  *	   }
- *     \parameter{radius}{\Float}{
+ *     \parameter{radius}{\float}{
  *	     Radius of the sphere in object-space units \default{1}
  *	   }
  *     \parameter{toWorld}{\Transform\Or\Animation}{
@@ -108,11 +108,11 @@ public:
 	Sphere(const Properties &props) : Shape(props) {
 		m_objectToWorld =
 			Transform::translate(Vector(props.getPoint("center", Point(0.0f))));
-		m_radius = props.getFloat("radius", 1.0f);
+		m_radius = props.getfloat("radius", 1.0f);
 
 		if (props.hasProperty("toWorld")) {
 			Transform objectToWorld = props.getTransform("toWorld");
-			Float radius = objectToWorld(Vector(1,0,0)).length();
+			float radius = objectToWorld(Vector(1,0,0)).length();
 			// Remove the scale from the object-to-world transform
 			m_objectToWorld =
 				  objectToWorld
@@ -134,7 +134,7 @@ public:
 	Sphere(Stream *stream, InstanceManager *manager)
 			: Shape(stream, manager) {
 		m_objectToWorld = Transform(stream);
-		m_radius = stream->readFloat();
+		m_radius = stream->readfloat();
 		m_center = Point(stream);
 		m_flipNormals = stream->readBool();
 		m_worldToObject = m_objectToWorld.inverse();
@@ -144,7 +144,7 @@ public:
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Shape::serialize(stream, manager);
 		m_objectToWorld.serialize(stream);
-		stream->writeFloat(m_radius);
+		stream->writefloat(m_radius);
 		m_center.serialize(stream);
 		stream->writeBool(m_flipNormals);
 	}
@@ -156,11 +156,11 @@ public:
 		return aabb;
 	}
 
-	Float getSurfaceArea() const {
+	float getSurfaceArea() const {
 		return 4*M_PI*m_radius*m_radius;
 	}
 
-	bool rayIntersect(const Ray &ray, Float mint, Float maxt, Float &t, void *tmp) const {
+	bool rayIntersect(const Ray &ray, float mint, float maxt, float &t, void *tmp) const {
 		Vector3d o = Vector3d(ray.o) - Vector3d(m_center);
 		Vector3d d(ray.d);
 
@@ -178,15 +178,15 @@ public:
 		if (nearT < mint) {
 			if (farT > maxt)
 				return false;
-			t = (Float) farT;
+			t = (float) farT;
 		} else {
-			t = (Float) nearT;
+			t = (float) nearT;
 		}
 
 		return true;
 	}
 
-	bool rayIntersect(const Ray &ray, Float mint, Float maxt) const {
+	bool rayIntersect(const Ray &ray, float mint, float maxt) const {
 		Vector3d o = Vector3d(ray.o) - Vector3d(m_center);
 		Vector3d d(ray.d);
 
@@ -216,8 +216,8 @@ public:
 		#endif
 
 		Vector local = m_worldToObject(its.p - m_center);
-		Float theta = math::safe_acos(local.z/m_radius);
-		Float phi = std::atan2(local.y, local.x);
+		float theta = math::safe_acos(local.z/m_radius);
+		float phi = std::atan2(local.y, local.x);
 
 		if (phi < 0)
 			phi += 2*M_PI;
@@ -226,11 +226,11 @@ public:
 		its.uv.y = theta * INV_PI;
 		its.dpdu = m_objectToWorld(Vector(-local.y, local.x, 0) * (2*M_PI));
 		its.geoFrame.n = normalize(its.p - m_center);
-		Float zrad = std::sqrt(local.x*local.x + local.y*local.y);
+		float zrad = std::sqrt(local.x*local.x + local.y*local.y);
 		its.shape = this;
 
 		if (zrad > 0) {
-			Float invZRad = 1.0f / zrad,
+			float invZRad = 1.0f / zrad,
 				  cosPhi = local.x * invZRad,
 				  sinPhi = local.y * invZRad;
 			its.dpdv = m_objectToWorld(Vector(local.z * cosPhi, local.z * sinPhi,
@@ -239,7 +239,7 @@ public:
 			its.geoFrame.t = normalize(its.dpdv);
 		} else {
 			// avoid a singularity
-			const Float cosPhi = 0, sinPhi = 1;
+			const float cosPhi = 0, sinPhi = 1;
 			its.dpdv = m_objectToWorld(Vector(local.z * cosPhi, local.z * sinPhi,
 					-std::sin(theta)*m_radius) * M_PI);
 			coordinateSystem(its.geoFrame.n, its.geoFrame.s, its.geoFrame.t);
@@ -267,13 +267,13 @@ public:
 		pRec.measure = EArea;
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return m_invSurfaceArea;
 	}
 
 	void getNormalDerivative(const Intersection &its,
 			Vector &dndu, Vector &dndv, bool shadingFrame) const {
-		Float invRadius = (m_flipNormals ? -1.0f : 1.0f) / m_radius;
+		float invRadius = (m_flipNormals ? -1.0f : 1.0f) / m_radius;
 		dndu = its.dpdu * invRadius;
 		dndv = its.dpdv * invRadius;
 	}
@@ -285,18 +285,18 @@ public:
 	 */
 	void sampleDirect(DirectSamplingRecord &dRec, const Point2 &sample) const {
 		const Vector refToCenter = m_center - dRec.ref;
-		const Float refDist2 = refToCenter.lengthSquared();
-		const Float invRefDist = static_cast<Float>(1) / std::sqrt(refDist2);
+		const float refDist2 = refToCenter.lengthSquared();
+		const float invRefDist = static_cast<float>(1) / std::sqrt(refDist2);
 
 		/* Sine of the angle of the cone containing the
 		   sphere as seen from 'dRec.ref' */
-		const Float sinAlpha = m_radius * invRefDist;
+		const float sinAlpha = m_radius * invRefDist;
 
 		if (sinAlpha < 1-Epsilon) {
 			/* The reference point lies outside of the sphere.
 			   => sample based on the projected cone. */
 
-			Float cosAlpha = math::safe_sqrt(1.0f - sinAlpha * sinAlpha);
+			float cosAlpha = math::safe_sqrt(1.0f - sinAlpha * sinAlpha);
 
 			dRec.d = Frame(refToCenter * invRefDist).toWorld(
 				warp::squareToUniformCone(cosAlpha, sample));
@@ -304,24 +304,24 @@ public:
 
 			/* Distance to the projection of the sphere center
 			   onto the ray (dRec.ref, dRec.d) */
-			const Float projDist = dot(refToCenter, dRec.d);
+			const float projDist = dot(refToCenter, dRec.d);
 
 			/* To avoid numerical problems move the query point to the
 			   intersection of the of the original direction ray and a plane
 			   with normal refToCenter which goes through the sphere's center */
-			const Float baseT = refDist2 / projDist;
+			const float baseT = refDist2 / projDist;
 			const Point query = dRec.ref + dRec.d * baseT;
 
 			const Vector queryToCenter = m_center - query;
-			const Float queryDist2     = queryToCenter.lengthSquared();
-			const Float queryProjDist  = dot(queryToCenter, dRec.d);
+			const float queryDist2     = queryToCenter.lengthSquared();
+			const float queryProjDist  = dot(queryToCenter, dRec.d);
 
 			/* Try to find the intersection point between the
 			   sampled ray and the sphere. */
-			Float A = 1.0f, B = -2*queryProjDist,
+			float A = 1.0f, B = -2*queryProjDist,
 				  C = queryDist2 - m_radius*m_radius;
 
-			Float nearT, farT;
+			float nearT, farT;
 			if (!solveQuadratic(A, B, C, nearT, farT)) {
 				/* The intersection couldn't be found due to roundoff errors..
 				   Don't give up -- one workaround is to project the closest
@@ -341,7 +341,7 @@ public:
 			dRec.n = Normal(d);
 			dRec.d = dRec.p - dRec.ref;
 
-			Float dist2 = dRec.d.lengthSquared();
+			float dist2 = dRec.d.lengthSquared();
 			dRec.dist = std::sqrt(dist2);
 			dRec.d /= dRec.dist;
 			dRec.pdf = m_invSurfaceArea * dist2
@@ -354,18 +354,18 @@ public:
 		dRec.measure = ESolidAngle;
 	}
 
-	Float pdfDirect(const DirectSamplingRecord &dRec) const {
+	float pdfDirect(const DirectSamplingRecord &dRec) const {
 		const Vector refToCenter = m_center - dRec.ref;
-		const Float invRefDist = (Float) 1.0f / refToCenter.length();
+		const float invRefDist = (float) 1.0f / refToCenter.length();
 
 		/* Sine of the angle of the cone containing the
 		   sphere as seen from 'dRec.ref' */
-		const Float sinAlpha = m_radius * invRefDist;
+		const float sinAlpha = m_radius * invRefDist;
 
 		if (sinAlpha < 1-Epsilon) {
 			/* The reference point lies outside the sphere */
-			Float cosAlpha = math::safe_sqrt(1 - sinAlpha*sinAlpha);
-			Float pdfSA = warp::squareToUniformConePdf(cosAlpha);
+			float cosAlpha = math::safe_sqrt(1 - sinAlpha*sinAlpha);
+			float pdfSA = warp::squareToUniformConePdf(cosAlpha);
 
 			if (dRec.measure == ESolidAngle)
 				return pdfSA;
@@ -390,12 +390,12 @@ public:
 		/// Choice of discretization
 		const uint32_t thetaSteps = 20;
 		const uint32_t phiSteps = thetaSteps * 2;
-		const Float dTheta = M_PI / (thetaSteps-1);
-		const Float dPhi   = (2*M_PI) / (phiSteps-1);
+		const float dTheta = M_PI / (thetaSteps-1);
+		const float dPhi   = (2*M_PI) / (phiSteps-1);
 
 		/// Precompute cosine and sine tables
-		Float *cosPhi = new Float[phiSteps];
-		Float *sinPhi = new Float[phiSteps];
+		float *cosPhi = new float[phiSteps];
+		float *sinPhi = new float[phiSteps];
 		for (uint32_t i=0; i<phiSteps; ++i) {
 			sinPhi[i] = std::sin(i*dPhi);
 			cosPhi[i] = std::cos(i*dPhi);
@@ -413,8 +413,8 @@ public:
 		Triangle *triangles = mesh->getTriangles();
 		uint32_t vertexIdx = 0;
 		for (uint32_t theta=0; theta<thetaSteps; ++theta) {
-			Float sinTheta = std::sin(theta * dTheta);
-			Float cosTheta = std::cos(theta * dTheta);
+			float sinTheta = std::sin(theta * dTheta);
+			float cosTheta = std::cos(theta * dTheta);
 
 			for (uint32_t phi=0; phi<phiSteps; ++phi) {
 				Vector v(
@@ -486,8 +486,8 @@ private:
 	Transform m_objectToWorld;
 	Transform m_worldToObject;
 	Point m_center;
-	Float m_radius;
-	Float m_invSurfaceArea;
+	float m_radius;
+	float m_invSurfaceArea;
 	bool m_flipNormals;
 };
 

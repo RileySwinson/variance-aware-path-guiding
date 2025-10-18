@@ -37,7 +37,7 @@ MTS_NAMESPACE_BEGIN
  *       Denotes the desired output file format. The options
  *       are \code{openexr} (for ILM's OpenEXR format),
  *       \code{rgbe} (for Greg Ward's RGBE format),
- *       or \code{pfm} (for the Portable Float Map format)
+ *       or \code{pfm} (for the Portable float Map format)
  *       \default{\code{openexr}}
  *     }
  *     \parameter{pixelFormat}{\String}{Specifies the desired pixel format
@@ -97,7 +97,7 @@ MTS_NAMESPACE_BEGIN
  *
  * The plugin can also write RLE-compressed files in the Radiance RGBE format
  * pioneered by Greg Ward (set \code{fileFormat=rgbe}), as well as the
- * Portable Float Map format (set \code{fileFormat=pfm}).
+ * Portable float Map format (set \code{fileFormat=pfm}).
  * In the former case,
  * the \code{componentFormat} and \code{pixelFormat} parameters are ignored,
  * and the output is ``\code{float8}''-compressed RGB data.
@@ -276,13 +276,13 @@ public:
 			} else if (pixelFormat == "spectrum") {
 				m_pixelFormats.push_back(Bitmap::ESpectrum);
 				for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-					std::pair<Float, Float> coverage = Spectrum::getBinCoverage(i);
+					std::pair<float, float> coverage = Spectrum::getBinCoverage(i);
 					m_channelNames.push_back(name + formatString("%.2f-%.2fnm", coverage.first, coverage.second));
 				}
 			} else if (pixelFormat == "spectrumalpha") {
 				m_pixelFormats.push_back(Bitmap::ESpectrumAlpha);
 				for (int i=0; i<SPECTRUM_SAMPLES; ++i) {
-					std::pair<Float, Float> coverage = Spectrum::getBinCoverage(i);
+					std::pair<float, float> coverage = Spectrum::getBinCoverage(i);
 					m_channelNames.push_back(name + formatString("%.2f-%.2fnm", coverage.first, coverage.second));
 				}
 				m_channelNames.push_back(name + "A");
@@ -301,9 +301,9 @@ public:
 		}
 
 		if (componentFormat == "float16") {
-			m_componentFormat = Bitmap::EFloat16;
+			m_componentFormat = Bitmap::Efloat16;
 		} else if (componentFormat == "float32") {
-			m_componentFormat = Bitmap::EFloat32;
+			m_componentFormat = Bitmap::Efloat32;
 		} else if (componentFormat == "uint32") {
 			m_componentFormat = Bitmap::EUInt32;
 		} else {
@@ -319,9 +319,9 @@ public:
 				Log(EWarn, "The RGBE format only supports pixelFormat=\"rgb\". Overriding..");
 				m_pixelFormats[0] = Bitmap::ERGB;
 			}
-			if (m_componentFormat != Bitmap::EFloat32) {
+			if (m_componentFormat != Bitmap::Efloat32) {
 				Log(EWarn, "The RGBE format only supports componentFormat=\"float32\". Overriding..");
-				m_componentFormat = Bitmap::EFloat32;
+				m_componentFormat = Bitmap::Efloat32;
 			}
 		} else if (m_fileFormat == Bitmap::EPFM) {
 			/* PFM output; override pixel & component format if necessary */
@@ -332,9 +332,9 @@ public:
 					" Overriding (setting to \"rgb\")..");
 				m_pixelFormats[0] = Bitmap::ERGB;
 			}
-			if (m_componentFormat != Bitmap::EFloat32) {
+			if (m_componentFormat != Bitmap::Efloat32) {
 				Log(EWarn, "The PFM format only supports componentFormat=\"float32\". Overriding..");
-				m_componentFormat = Bitmap::EFloat32;
+				m_componentFormat = Bitmap::Efloat32;
 			}
 		}
 
@@ -392,18 +392,18 @@ public:
 		m_storage->put(block);
 	}
 
-	void setBitmap(const Bitmap *bitmap, Float multiplier) {
+	void setBitmap(const Bitmap *bitmap, float multiplier) {
 		bitmap->convert(m_storage->getBitmap(), multiplier);
 	}
 
-	void addBitmap(const Bitmap *bitmap, Float multiplier) {
+	void addBitmap(const Bitmap *bitmap, float multiplier) {
 		/* Currently, only accumulating spectrum-valued floating point images
 		   is supported. This function basically just exists to support the
 		   somewhat peculiar film updates done by BDPT */
 
 		Vector2i size = bitmap->getSize();
 		if (bitmap->getPixelFormat() != Bitmap::ESpectrum ||
-			bitmap->getComponentFormat() != Bitmap::EFloat ||
+			bitmap->getComponentFormat() != Bitmap::Efloat ||
 			bitmap->getGamma() != 1.0f ||
 			size != m_storage->getSize() ||
 			m_pixelFormats.size() != 1) {
@@ -411,10 +411,10 @@ public:
 		}
 
 		size_t nPixels = (size_t) size.x * (size_t) size.y;
-		const Float *source = bitmap->getFloatData();
-		Float *target = m_storage->getBitmap()->getFloatData();
+		const float *source = bitmap->getfloatData();
+		float *target = m_storage->getBitmap()->getfloatData();
 		for (size_t i=0; i<nPixels; ++i) {
-			Float weight = target[SPECTRUM_SAMPLES + 1];
+			float weight = target[SPECTRUM_SAMPLES + 1];
 			if (weight == 0)
 				weight = target[SPECTRUM_SAMPLES + 1] = 1;
 			weight *= multiplier;
@@ -428,7 +428,7 @@ public:
 			const Point2i &targetOffset, Bitmap *target) const {
 		const Bitmap *source = m_storage->getBitmap();
 		const FormatConverter *cvt = FormatConverter::getInstance(
-			std::make_pair(Bitmap::EFloat, target->getComponentFormat())
+			std::make_pair(Bitmap::Efloat, target->getComponentFormat())
 		);
 
 		size_t sourceBpp = source->getBytesPerPixel();
@@ -443,8 +443,8 @@ public:
 			/* Special case for general multi-channel images -- just develop the first component(s) */
 			for (int i=0; i<size.y; ++i) {
 				for (int j=0; j<size.x; ++j) {
-					Float weight = *((Float *) (sourceData + (j+1)*sourceBpp - sizeof(Float)));
-					Float invWeight = weight != 0 ? ((Float) 1 / weight) : (Float) 0;
+					float weight = *((float *) (sourceData + (j+1)*sourceBpp - sizeof(float)));
+					float invWeight = weight != 0 ? ((float) 1 / weight) : (float) 0;
 					cvt->convert(Bitmap::ESpectrum, 1.0f, sourceData + j*sourceBpp,
 						target->getPixelFormat(), target->getGamma(), targetData + j * targetBpp,
 						1, invWeight);
@@ -478,7 +478,7 @@ public:
 		m_destFile = destFile;
 	}
 
-	void develop(const Scene *scene, Float renderTime) {
+	void develop(const Scene *scene, float renderTime) {
 		if (m_destFile.empty())
 			return;
 

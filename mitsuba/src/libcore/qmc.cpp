@@ -83,12 +83,12 @@ const int primeTable[primeTableSize] = {
 
 /* Radical inverse: generic versions */
 
-Float radicalInverse(int base, uint64_t i) {
-	Float radical = (Float) 1 / (Float) base;
-	Float inverse = 0.0f, digit = radical;
+float radicalInverse(int base, uint64_t i) {
+	float radical = (float) 1 / (float) base;
+	float inverse = 0.0f, digit = radical;
 
 	while (i) {
-		inverse += digit * (Float) (i % base);
+		inverse += digit * (float) (i % base);
 		digit *= radical;
 		i /= base;
 	}
@@ -96,12 +96,12 @@ Float radicalInverse(int base, uint64_t i) {
 	return std::min(inverse, ONE_MINUS_EPS);
 }
 
-Float scrambledRadicalInverse(int base, uint64_t i, uint16_t *perm) {
-	Float radical = (Float) 1 / (Float) base;
-	Float inverse = 0.0f, digit = radical;
+float scrambledRadicalInverse(int base, uint64_t i, uint16_t *perm) {
+	float radical = (float) 1 / (float) base;
+	float inverse = 0.0f, digit = radical;
 
 	while (i) {
-		inverse += digit * (Float) perm[i % base];
+		inverse += digit * (float) perm[i % base];
 		digit *= radical;
 		i /= base;
 	}
@@ -111,9 +111,9 @@ Float scrambledRadicalInverse(int base, uint64_t i, uint16_t *perm) {
 	return std::min(inverse, ONE_MINUS_EPS);
 }
 
-Float radicalInverseIncremental(int base, Float x) {
-	Float radical = (Float) 1 / (Float) base;
-	Float h, hh, r = 1.0f - x - (Float) 1e-10;
+float radicalInverseIncremental(int base, float x) {
+	float radical = (float) 1 / (float) base;
+	float h, hh, r = 1.0f - x - (float) 1e-10;
 
 	if (radical < r) {
 		x += radical;
@@ -138,9 +138,9 @@ Float radicalInverseIncremental(int base, Float x) {
    processor architectures) */
 
 #define RINV(base) { \
-		const Float radical = (Float) 1 / (Float) base; \
+		const float radical = (float) 1 / (float) base; \
 		uint64_t value = 0; \
-		Float factor = 1.0f; \
+		float factor = 1.0f; \
 		while (index) { \
 			uint64_t next  = index / base; \
 			uint64_t digit = index - next*base; \
@@ -148,14 +148,14 @@ Float radicalInverseIncremental(int base, Float x) {
  			factor *= radical; \
 			index = next; \
 		} \
-		inverse = (Float) value * factor; \
+		inverse = (float) value * factor; \
 	}
 
 
 #define SCRAMBLED_RINV(base) { \
-		const Float radical = (Float) 1 / (Float) base; \
+		const float radical = (float) 1 / (float) base; \
 		uint64_t value = 0; \
-		Float factor = 1.0f; \
+		float factor = 1.0f; \
 		while (index) { \
 			uint64_t next  = index / base; \
 			uint64_t digit = index - next*base; \
@@ -163,11 +163,11 @@ Float radicalInverseIncremental(int base, Float x) {
  			factor *= radical; \
 			index = next; \
 		} \
-		inverse = factor * ((Float) value + radical * perm[0] / (1 - radical)); \
+		inverse = factor * ((float) value + radical * perm[0] / (1 - radical)); \
 	}
 
-Float radicalInverseFast(uint16_t baseIndex, uint64_t index) {
-	Float inverse = 0.0f;
+float radicalInverseFast(uint16_t baseIndex, uint64_t index) {
+	float inverse = 0.0f;
 
 	switch (baseIndex) {
 		case 0: RINV(2); break;
@@ -1198,8 +1198,8 @@ Float radicalInverseFast(uint16_t baseIndex, uint64_t index) {
 	return std::min(inverse, ONE_MINUS_EPS);
 }
 
-Float scrambledRadicalInverseFast(uint16_t baseIndex, uint64_t index, uint16_t *perm) {
-	Float inverse = 0.0f;
+float scrambledRadicalInverseFast(uint16_t baseIndex, uint64_t index, uint16_t *perm) {
+	float inverse = 0.0f;
 
 	switch (baseIndex) {
 		case 0: SCRAMBLED_RINV(2); break;

@@ -86,7 +86,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	oss << std::fixed;
 	oss.precision(2);
 	for (int i=0; i<SPECTRUM_SAMPLES; i++) {
-		std::pair<Float, Float> bin = Spectrum::getBinCoverage(i);
+		std::pair<float, float> bin = Spectrum::getBinCoverage(i);
 		if (i < SPECTRUM_SAMPLES) {
 			oss << bin.first << "-" << bin.second << " nm";
 			if (i+1<SPECTRUM_SAMPLES)
@@ -1121,7 +1121,7 @@ void MainWindow::on_glView_crop(int type, int x, int y, int width, int height) {
 	} else if (type == GLWidget::ECropAndMagnify) {
 		int maxOldSize = std::max(oldCropSize.x, oldCropSize.y);
 		int maxNewSize = std::max(width, height);
-		Float magnification = maxOldSize / (Float) maxNewSize;
+		float magnification = maxOldSize / (float) maxNewSize;
 
 		width = math::floorToInt(width*magnification);
 		height = math::floorToInt(height*magnification);
@@ -1168,7 +1168,7 @@ void MainWindow::on_glView_crop(int type, int x, int y, int width, int height) {
 	scene->setSensor(newSensor);
 
 	context->framebuffer = new Bitmap(Bitmap::ERGBA,
-		Bitmap::EFloat32, Vector2i(width, height));
+		Bitmap::Efloat32, Vector2i(width, height));
 	context->framebuffer->clear();
 	context->scrollOffset = Vector2i(0, 0);
 	context->mode = EPreview;
@@ -1204,7 +1204,7 @@ bool MainWindow::isActive() {
 void MainWindow::drawHLine(SceneContext *ctx, int x1, int y, int x2, const float *color) {
 	y = std::max(0, std::min(y, ctx->framebuffer->getHeight()-1));
 	x1 = std::max(0, x1); x2 = std::min(x2, ctx->framebuffer->getWidth()-1);
-	float *framebuffer = ctx->framebuffer->getFloat32Data();
+	float *framebuffer = ctx->framebuffer->getfloat32Data();
 	int fbOffset = (x1 + y*ctx->framebuffer->getWidth())*4;
 	for (int x=x1; x<=x2; x++) {
 		framebuffer[fbOffset] = color[0];
@@ -1217,7 +1217,7 @@ void MainWindow::drawHLine(SceneContext *ctx, int x1, int y, int x2, const float
 void MainWindow::drawVLine(SceneContext *ctx, int x, int y1, int y2, const float *color) {
 	x = std::max(0, std::min(x, ctx->framebuffer->getWidth()-1));
 	y1 = std::max(0, y1); y2 = std::min(y2, ctx->framebuffer->getHeight()-1);
-	float *framebuffer = ctx->framebuffer->getFloat32Data();
+	float *framebuffer = ctx->framebuffer->getfloat32Data();
 	int width = ctx->framebuffer->getWidth(), fbOffset = (x + y1*width)*4;
 	for (int y=y1; y<=y2; y++) {
 		framebuffer[fbOffset] = color[0];
@@ -1271,12 +1271,12 @@ void MainWindow::on_actionPreviewSettings_triggered() {
 	SceneContext *context = m_context[ui->tabBar->currentIndex()];
 	PreviewSettingsDialog d(this, context, ui->glView->getRendererCapabilities());
 	connect(&d, SIGNAL(pathLengthChanged(int)), ui->glView, SLOT(setPathLength(int)));
-	connect(&d, SIGNAL(clampingChanged(Float)), ui->glView, SLOT(setClamping(Float)));
+	connect(&d, SIGNAL(clampingChanged(float)), ui->glView, SLOT(setClamping(float)));
 	connect(&d, SIGNAL(shadowMapResolutionChanged(int)), ui->glView, SLOT(setShadowMapResolution(int)));
-	connect(&d, SIGNAL(gammaChanged(bool, Float)), ui->glView, SLOT(setGamma(bool, Float)));
-	connect(&d, SIGNAL(exposureChanged(Float)), ui->glView, SLOT(setExposure(Float)));
-	connect(&d, SIGNAL(reinhardKeyChanged(Float)), ui->glView, SLOT(setReinhardKey(Float)));
-	connect(&d, SIGNAL(reinhardBurnChanged(Float)), ui->glView, SLOT(setReinhardBurn(Float)));
+	connect(&d, SIGNAL(gammaChanged(bool, float)), ui->glView, SLOT(setGamma(bool, float)));
+	connect(&d, SIGNAL(exposureChanged(float)), ui->glView, SLOT(setExposure(float)));
+	connect(&d, SIGNAL(reinhardKeyChanged(float)), ui->glView, SLOT(setReinhardKey(float)));
+	connect(&d, SIGNAL(reinhardBurnChanged(float)), ui->glView, SLOT(setReinhardBurn(float)));
 	connect(&d, SIGNAL(previewMethodChanged(EPreviewMethod)), ui->glView, SLOT(setPreviewMethod(EPreviewMethod)));
 	connect(&d, SIGNAL(toneMappingMethodChanged(EToneMappingMethod)), ui->glView, SLOT(setToneMappingMethod(EToneMappingMethod)));
 	connect(&d, SIGNAL(diffuseReceiversChanged(bool)), ui->glView, SLOT(setDiffuseReceivers(bool)));
@@ -1300,12 +1300,12 @@ void MainWindow::on_actionPreviewSettings_triggered() {
 	if (!m_previewSettings) {
 		m_previewSettings = new PreviewSettingsDlg(this);
 		connect(m_previewSettings, SIGNAL(pathLengthChanged(int)), ui->glView, SLOT(setPathLength(int)));
-		connect(m_previewSettings, SIGNAL(clampingChanged(Float)), ui->glView, SLOT(setClamping(Float)));
+		connect(m_previewSettings, SIGNAL(clampingChanged(float)), ui->glView, SLOT(setClamping(float)));
 		connect(m_previewSettings, SIGNAL(shadowMapResolutionChanged(int)), ui->glView, SLOT(setShadowMapResolution(int)));
-		connect(m_previewSettings, SIGNAL(gammaChanged(bool, Float)), ui->glView, SLOT(setGamma(bool, Float)));
-		connect(m_previewSettings, SIGNAL(exposureChanged(Float)), ui->glView, SLOT(setExposure(Float)));
-		connect(m_previewSettings, SIGNAL(reinhardKeyChanged(Float)), ui->glView, SLOT(setReinhardKey(Float)));
-		connect(m_previewSettings, SIGNAL(reinhardBurnChanged(Float)), ui->glView, SLOT(setReinhardBurn(Float)));
+		connect(m_previewSettings, SIGNAL(gammaChanged(bool, float)), ui->glView, SLOT(setGamma(bool, float)));
+		connect(m_previewSettings, SIGNAL(exposureChanged(float)), ui->glView, SLOT(setExposure(float)));
+		connect(m_previewSettings, SIGNAL(reinhardKeyChanged(float)), ui->glView, SLOT(setReinhardKey(float)));
+		connect(m_previewSettings, SIGNAL(reinhardBurnChanged(float)), ui->glView, SLOT(setReinhardBurn(float)));
 		connect(m_previewSettings, SIGNAL(previewMethodChanged(EPreviewMethod)), ui->glView, SLOT(setPreviewMethod(EPreviewMethod)));
 		connect(m_previewSettings, SIGNAL(toneMappingMethodChanged(EToneMappingMethod)), ui->glView, SLOT(setToneMappingMethod(EToneMappingMethod)));
 		connect(m_previewSettings, SIGNAL(close()), this, SLOT(onPreviewSettingsClose()));
@@ -1565,7 +1565,7 @@ void MainWindow::on_actionExportImage_triggered() {
 		tr("All supported formats (*.exr *.hdr *.rgbe *.pfm *.png *.jpg *.jpeg);;"
 	        "High dynamic range OpenEXR image (*.exr);;"
 	        "High dynamic range Radiance RGBE image (*.rgbe *.hdr);;"
-	        "High dynamic range Portable Float Map image (*.pfm);;"
+	        "High dynamic range Portable float Map image (*.pfm);;"
 	        "High dynamic range Portable Pixel Map image (*.ppm);;"
 	        "Tonemapped low dynamic range image (*.png *.jpg *.jpeg)"));
 	if (!fileName.isEmpty()) {
@@ -1584,7 +1584,7 @@ void MainWindow::on_actionExportImage_triggered() {
 	    "", tr("All supported formats (*.exr *.hdr *.rgbe *.pfm *.png *.jpg *.jpeg);;"
 	           "High dynamic range OpenEXR image (*.exr);;"
 	           "High dynamic range Radiance RGBE image (*.rgbe *.hdr);;"
-	           "High dynamic range Portable Float Map image (*.pfm);;"
+	           "High dynamic range Portable float Map image (*.pfm);;"
 	        "High dynamic range Portable Pixel Map image (*.ppm);;"
 	           "Tonemapped low dynamic range image (*.png *.jpg *.jpeg)"));
 
@@ -1658,18 +1658,18 @@ void MainWindow::exportImage(const QString &fileName) {
 		if (compFormat == Bitmap::EUInt8 || compFormat == Bitmap::EUInt16) {
 			/* Tonemap the image */
 			if (ctx->toneMappingMethod == EReinhard) {
-				Float logAvgLuminance = 0, maxLuminance = 0; /* Unused */
+				float logAvgLuminance = 0, maxLuminance = 0; /* Unused */
 
-				Float burn = (ctx->reinhardBurn + 10) / 20.0f;
+				float burn = (ctx->reinhardBurn + 10) / 20.0f;
 				bitmap = bitmap->clone();
 				bitmap->tonemapReinhard(logAvgLuminance, maxLuminance,
 					ctx->reinhardKey, burn);
 			}
 
 			bitmap = bitmap->convert(Bitmap::ERGB, compFormat,
-				ctx->srgb ? (Float) -1 : ctx->gamma,
+				ctx->srgb ? (float) -1 : ctx->gamma,
 				ctx->toneMappingMethod == EReinhard
-				? (Float) 1.0f : std::pow((Float) 2, ctx->exposure));
+				? (float) 1.0f : std::pow((float) 2, ctx->exposure));
 		}
 
 		if (fileName == "__clipboard__") {
@@ -2000,7 +2000,7 @@ void MainWindow::onActivateCamera() {
 	context->scene->setSensor(sensor);
 
 	context->framebuffer = new Bitmap(Bitmap::ERGBA,
-		Bitmap::EFloat32, size);
+		Bitmap::Efloat32, size);
 	context->framebuffer->clear();
 	context->scrollOffset = Vector2i(0, 0);
 	context->mode = EPreview;

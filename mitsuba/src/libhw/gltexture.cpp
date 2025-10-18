@@ -348,13 +348,13 @@ void GLTexture::lookupGLConstants() {
 		case EUInt32:
 			m_dataFormat = GL_UNSIGNED_INT;
 			break;
-		case EFloat16:
-			m_dataFormat = GL_HALF_FLOAT_ARB;
+		case Efloat16:
+			m_dataFormat = GL_HALF_float_ARB;
 			break;
-		case EFloat32:
-			m_dataFormat = GL_FLOAT;
+		case Efloat32:
+			m_dataFormat = GL_float;
 			break;
-		case EFloat64:
+		case Efloat64:
 			m_dataFormat = GL_DOUBLE;
 			break;
 		default:
@@ -373,7 +373,7 @@ void GLTexture::lookupGLConstants() {
 			return;
 		}
   }
-  else if (m_componentFormat == EFloat16) {
+  else if (m_componentFormat == Efloat16) {
 		switch (m_pixelFormat) {
 			case ELuminance: m_internalFormat = GL_LUMINANCE16F_ARB; break;
 			case ELuminanceAlpha: m_internalFormat = GL_LUMINANCE_ALPHA16F_ARB; break;
@@ -383,7 +383,7 @@ void GLTexture::lookupGLConstants() {
 				Log(EError, "Unknown/unsupported pixel format!");
 				return;
 		}
-	} else if (m_componentFormat == EFloat32) {
+	} else if (m_componentFormat == Efloat32) {
 		switch (m_pixelFormat) {
 			case EDepth: m_internalFormat = GL_DEPTH_COMPONENT32F; break;
 			case ELuminance: m_internalFormat = GL_LUMINANCE32F_ARB; break;
@@ -493,9 +493,9 @@ void GLTexture::download(Bitmap *bitmap) {
 		case Bitmap::EUInt8:   dataFormat = GL_UNSIGNED_BYTE; break;
 		case Bitmap::EUInt16:  dataFormat = GL_UNSIGNED_SHORT; break;
 		case Bitmap::EUInt32:  dataFormat = GL_UNSIGNED_INT; break;
-		case Bitmap::EFloat16: dataFormat = GL_HALF_FLOAT_ARB; break;
-		case Bitmap::EFloat32: dataFormat = GL_FLOAT; break;
-		case Bitmap::EFloat64: dataFormat = GL_DOUBLE; break;
+		case Bitmap::Efloat16: dataFormat = GL_HALF_float_ARB; break;
+		case Bitmap::Efloat32: dataFormat = GL_float; break;
+		case Bitmap::Efloat64: dataFormat = GL_DOUBLE; break;
 		default:
 			Log(EError, "GLTexture::download(): Unknown/unsupported component format %i!",
 					(int) bitmap->getComponentFormat());
@@ -552,7 +552,7 @@ Color3 GLTexture::getPixel(int x, int y) const {
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fboId);
 	glPushAttrib(GL_VIEWPORT_BIT);
 	glViewport(0, 0, m_size.x, m_size.y);
-	glReadPixels(x, y, 1, 1, GL_RGB, GL_FLOAT, &pixels);
+	glReadPixels(x, y, 1, 1, GL_RGB, GL_float, &pixels);
 	glPopAttrib();
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, GL_NONE);
 

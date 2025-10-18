@@ -111,7 +111,7 @@ public:
 	virtual void setSampleIndex(size_t sampleIndex);
 
 	/// Retrieve the next component value from the current sample
-	virtual Float next1D() = 0;
+	virtual float next1D() = 0;
 
 	/// Retrieve the next two component values from the current sample
 	virtual Point2 next2D() = 0;
@@ -137,7 +137,7 @@ public:
 	Point2 *next2DArray(size_t size);
 
 	/// Same as above, but 1D
-	Float *next1DArray(size_t size);
+	float *next1DArray(size_t size);
 
 	/**
 	 * \brief Request that a 2D array will be made available for
@@ -175,7 +175,7 @@ protected:
 	size_t m_sampleCount;
 	size_t m_sampleIndex;
 	std::vector<size_t> m_req1D, m_req2D;
-	std::vector<Float *> m_sampleArrays1D;
+	std::vector<float *> m_sampleArrays1D;
 	std::vector<Point2 *> m_sampleArrays2D;
 	size_t m_dimension1DArray, m_dimension2DArray;
 };

@@ -114,7 +114,7 @@ public:
 	inline IrradianceSample(Stream *stream) {
 		p = Point(stream);
 		E = Spectrum(stream);
-		area = stream->readFloat();
+		area = stream->readfloat();
 	}
 
 	/**
@@ -128,7 +128,7 @@ public:
 	inline void serialize(Stream *stream) const {
 		p.serialize(stream);
 		E.serialize(stream);
-		stream->writeFloat(area);
+		stream->writefloat(area);
 	}
 
 	/// Return the position (used by the octree code)
@@ -138,7 +138,7 @@ public:
 
 	Point p;
 	Spectrum E;
-	Float area;    //!< total surface area represented by this sample
+	float area;    //!< total surface area represented by this sample
 	uint8_t label; //!< used by the octree construction code
 };
 
@@ -196,7 +196,7 @@ class IrradianceSamplingProcess : public ParallelProcess {
 public:
 	IrradianceSamplingProcess(PositionSampleVector *positions,
 		size_t granularity, int irrSamples, bool irrIndirect,
-		Float time, const void *data);
+		float time, const void *data);
 
 	inline IrradianceSampleVector *getIrradianceSampleVector() {
 		return m_irradianceSamples.get();
@@ -225,7 +225,7 @@ private:
 	size_t m_samplesRequested, m_granularity;
 	int m_irrSamples;
 	bool m_irrIndirect;
-	Float m_time;
+	float m_time;
 	ref<Mutex> m_resultMutex;
 	ProgressReporter *m_progress;
 	AABB m_aabb;

@@ -589,7 +589,7 @@ __m128 fastlog_ps(__m128 x) {
 
 	// Extract the original exponent and undo the bias
 	const V4i biasedExponent = srl(castAsInt(x0), 23);
-	const V4f origExponent = toFloat(biasedExponent - const_127);
+	const V4f origExponent = tofloat(biasedExponent - const_127);
 
 	V4f vFrac = v_min1 * rcp(v_plus1); // Is it worth it to use rcp_nr?
 	vFrac += vFrac;
@@ -651,7 +651,7 @@ __m128 fastpow_ps(__m128 x, __m128 y) {
 
 	// Extract the original exponent and undo the bias
 	const V4i biasedExponent = srl(castAsInt(x0), 23);
-	const V4f origExponent = toFloat(biasedExponent - const_127);
+	const V4f origExponent = tofloat(biasedExponent - const_127);
 
 	V4f vFrac = v_min1 * rcp(v_plus1); // Is it worth it to use rcp_nr?
 	vFrac += vFrac;
@@ -695,7 +695,7 @@ __m128 fastpow_ps(__m128 x, __m128 y) {
 	const V4f resExp = truncExp - expNormalization;
 	V4i biasedExp = toInt(resExp) + const_127;
 	biasedExp = sll(biasedExp, 23);
-	const V4f exponentPart = castAsFloat(biasedExp) & negative_mask;
+	const V4f exponentPart = castAsfloat(biasedExp) & negative_mask;
 
 	// Get the fractional part of the exponent
 	exponent -= resExp;

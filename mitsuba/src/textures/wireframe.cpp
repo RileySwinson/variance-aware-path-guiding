@@ -34,11 +34,11 @@ MTS_NAMESPACE_BEGIN
  *       Edge color value
  *       \default{0.1}
  *     }
- *     \parameter{lineWidth}{\Float}{
+ *     \parameter{lineWidth}{\float}{
  *        World-space width of the mesh edges
  *        \default{automatic}
  *     }
- *     \parameter{stepWidth}{\Float}{
+ *     \parameter{stepWidth}{\float}{
  *        Controls the width of the step function used for the
  *        color transition. It is specified as a value between zero
  *        and one (relative to the \code{lineWidth} parameter)
@@ -55,11 +55,11 @@ MTS_NAMESPACE_BEGIN
 class WireFrame : public Texture {
 public:
 	WireFrame(const Properties &props) : Texture(props) {
-		m_lineWidth = props.getFloat("lineWidth", 0.0f);
-		m_stepWidth = props.getFloat("stepWidth", 0.5f);
+		m_lineWidth = props.getfloat("lineWidth", 0.0f);
+		m_stepWidth = props.getfloat("stepWidth", 0.5f);
 		m_edgeColor = props.getSpectrum("edgeColor", Spectrum(0.1f));
 		m_interiorColor = props.getSpectrum("interiorColor", Spectrum(.5f));
-		m_stepWidth = std::max((Float) 0.0f, std::min(m_stepWidth, (Float) 1.0f));
+		m_stepWidth = std::max((float) 0.0f, std::min(m_stepWidth, (float) 1.0f));
 		m_mutex = new Mutex();
 	}
 
@@ -68,14 +68,14 @@ public:
 		m_mutex = new Mutex();
 		m_edgeColor = Spectrum(stream);
 		m_interiorColor = Spectrum(stream);
-		m_lineWidth = stream->readFloat();
+		m_lineWidth = stream->readfloat();
 	}
 
 	void serialize(Stream *stream, InstanceManager *manager) const {
 		Texture::serialize(stream, manager);
 		m_edgeColor.serialize(stream);
 		m_interiorColor.serialize(stream);
-		stream->writeFloat(m_lineWidth);
+		stream->writefloat(m_lineWidth);
 	}
 
 	Spectrum eval(const Intersection &its, bool /* unused */) const {
@@ -93,7 +93,7 @@ public:
 			   to 10% of the average average edge length */
 			LockGuard lock(m_mutex);
 			if (m_lineWidth == 0) {
-				Float lineWidth = 0;
+				float lineWidth = 0;
 				for (size_t i=0; i<triMesh->getTriangleCount(); ++i) {
 					const Triangle &tri = triMesh->getTriangles()[i];
 					for (int j=0; j<3; ++j)
@@ -107,7 +107,7 @@ public:
 
 		const Triangle &tri = triMesh->getTriangles()[its.primIndex];
 
-		Float minDist = std::numeric_limits<Float>::infinity();
+		float minDist = std::numeric_limits<float>::infinity();
 		for (int i=0; i<3; ++i) {
 			const Point& cur  = positions[tri.idx[i]];
 			const Point& next = positions[tri.idx[(i+1)%3]];
@@ -118,7 +118,7 @@ public:
 			minDist = std::min(minDist, (cur + d1 * dot(d1, d2) - its.p).lengthSquared());
 		}
 
-		Float a = math::smoothStep(m_lineWidth*(1.f-m_stepWidth), m_lineWidth, std::sqrt(minDist));
+		float a = math::smoothStep(m_lineWidth*(1.f-m_stepWidth), m_lineWidth, std::sqrt(minDist));
 		return m_edgeColor*(1-a) + m_interiorColor*a;
 	}
 
@@ -172,9 +172,9 @@ public:
 
 	MTS_DECLARE_CLASS()
 protected:
-	mutable Float m_lineWidth;
+	mutable float m_lineWidth;
 	mutable ref<Mutex> m_mutex;
-	Float m_stepWidth;
+	float m_stepWidth;
 	Spectrum m_edgeColor;
 	Spectrum m_interiorColor;
 };

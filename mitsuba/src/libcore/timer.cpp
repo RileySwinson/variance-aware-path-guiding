@@ -116,7 +116,7 @@ void Timer::start() {
 #endif
 }
 
-Float Timer::stop() {
+float Timer::stop() {
 	if (m_active) {
 		m_elapsed += timeInNanoseconds() - m_startTime;
 		m_active = false;
@@ -126,7 +126,7 @@ Float Timer::stop() {
 		Log(EWarn, "The timer is not active, ignoring stop()");
 	}
 #endif
-	return (Float) (m_elapsed * 1e-9);
+	return (float) (m_elapsed * 1e-9);
 }
 
 void Timer::reset(bool restart) {
@@ -155,8 +155,8 @@ unsigned int Timer::getMilliseconds() const {
 	return (unsigned int) ((timeSinceStart() + m_elapsed) * 1e-6);
 }
 
-Float Timer::getSeconds() const {
-	return (Float) ((timeSinceStart() + m_elapsed) * 1e-9);
+float Timer::getSeconds() const {
+	return (float) ((timeSinceStart() + m_elapsed) * 1e-9);
 }
 
 uint64_t Timer::getNanosecondsSinceStart() const {
@@ -171,17 +171,17 @@ unsigned int Timer::getMillisecondsSinceStart() const {
 	return (unsigned int) (timeSinceStart() * 1e-6);
 }
 
-Float Timer::getSecondsSinceStart() const {
-	return (Float) (timeSinceStart() * 1e-9);
+float Timer::getSecondsSinceStart() const {
+	return (float) (timeSinceStart() * 1e-9);
 }
 
-Float Timer::lap() {
+float Timer::lap() {
 	double time = timeInNanoseconds();
 	double delta = m_active ? (time - m_startTime) : 0;
 	m_elapsed += delta;
 	m_startTime = time;
 	m_active = true;
-	return (Float) (delta * 1e-9);
+	return (float) (delta * 1e-9);
 }
 
 std::string Timer::toString() const {

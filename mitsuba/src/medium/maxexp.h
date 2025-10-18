@@ -27,19 +27,19 @@ MTS_NAMESPACE_BEGIN
 
 class MaxExpDist {
 public:
-	MaxExpDist(const std::vector<Float> &sigmaT)
+	MaxExpDist(const std::vector<float> &sigmaT)
 	 : m_sigmaT(sigmaT), m_cdf(sigmaT.size()+1), m_intervalStart(sigmaT.size()) {
 		/* Sort the coefficients in decreasing order */
-		std::sort(m_sigmaT.begin(), m_sigmaT.end(), std::greater<Float>());
+		std::sort(m_sigmaT.begin(), m_sigmaT.end(), std::greater<float>());
 
 		m_cdf[0] = 0;
 		for (size_t i=0; i<m_sigmaT.size(); ++i) {
 			if (i > 0 && m_sigmaT[i] == m_sigmaT[i-1])
 				SLog(EError, "Internal error: sigmaT must vary across channels");
 			/* Integrate max(f_1(t), .., f_n(t)) on [0, \infty]*/
-			Float lower = (i==0) ? -1 : -std::pow((m_sigmaT[i]/m_sigmaT[i-1]),
+			float lower = (i==0) ? -1 : -std::pow((m_sigmaT[i]/m_sigmaT[i-1]),
 						-m_sigmaT[i] / (m_sigmaT[i]-m_sigmaT[i-1]));
-			Float upper = (i==m_sigmaT.size()-1) ? 0 : -std::pow((m_sigmaT[i+1]/m_sigmaT[i]),
+			float upper = (i==m_sigmaT.size()-1) ? 0 : -std::pow((m_sigmaT[i+1]/m_sigmaT[i]),
 						-m_sigmaT[i] / (m_sigmaT[i+1]-m_sigmaT[i]));
 			m_cdf[i+1] = m_cdf[i] + (upper - lower);
 
@@ -56,14 +56,14 @@ public:
 			m_cdf[i] *= m_invNormalization;
 	}
 
-	Float sample(Float u, Float &pdf) const {
+	float sample(float u, float &pdf) const {
 		/* Find the f_i for this sample */
-		const Float *lowerBound = std::lower_bound(&m_cdf[0], &m_cdf[m_cdf.size()], u);
+		const float *lowerBound = std::lower_bound(&m_cdf[0], &m_cdf[m_cdf.size()], u);
 		int index = std::max(0, (int) (lowerBound - &m_cdf[0]) - 1);
 		SAssert(index >= 0 && index < (int) m_sigmaT.size());
 
 		/* Sample according to f_i */
-		Float t = -math::fastlog(math::fastexp(-m_intervalStart[index] * m_sigmaT[index])
+		float t = -math::fastlog(math::fastexp(-m_intervalStart[index] * m_sigmaT[index])
 			- m_normalization * (u - m_cdf[index])) / m_sigmaT[index];
 
 		/* Compute the probability of this sample */
@@ -72,31 +72,31 @@ public:
 		return t;
 	}
 
-	Float pdf(Float t) const {
-		const Float *lowerBound = std::lower_bound(&m_intervalStart[0],
+	float pdf(float t) const {
+		const float *lowerBound = std::lower_bound(&m_intervalStart[0],
 				&m_intervalStart[m_intervalStart.size()], t);
 		int index = std::max(0, (int) (lowerBound - &m_intervalStart[0]) - 1);
 		SAssert(index >= 0 && index < (int) m_sigmaT.size());
 		return m_sigmaT[index] * math::fastexp(-m_sigmaT[index] * t) * m_invNormalization;
 	}
 
-	Float cdf(Float t) const {
-		const Float *lowerBound = std::lower_bound(&m_intervalStart[0],
+	float cdf(float t) const {
+		const float *lowerBound = std::lower_bound(&m_intervalStart[0],
 				&m_intervalStart[m_intervalStart.size()], t);
 		int index = std::max(0, (int) (lowerBound - &m_intervalStart[0]) - 1);
 		SAssert(index >= 0 && index < (int) m_sigmaT.size());
 
-		Float lower = (index==0) ? -1 : -std::pow((m_sigmaT[index]/m_sigmaT[index-1]),
+		float lower = (index==0) ? -1 : -std::pow((m_sigmaT[index]/m_sigmaT[index-1]),
 					-m_sigmaT[index] / (m_sigmaT[index]-m_sigmaT[index-1]));
-		Float upper = -math::fastexp(-m_sigmaT[index] * t);
+		float upper = -math::fastexp(-m_sigmaT[index] * t);
 
 		return m_cdf[index] + (upper - lower) * m_invNormalization;
 	}
 private:
-	std::vector<Float> m_sigmaT;
-	std::vector<Float> m_cdf;
-	std::vector<Float> m_intervalStart;
-	Float m_normalization, m_invNormalization;
+	std::vector<float> m_sigmaT;
+	std::vector<float> m_cdf;
+	std::vector<float> m_intervalStart;
+	float m_normalization, m_invNormalization;
 };
 
 MTS_NAMESPACE_END

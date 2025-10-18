@@ -105,7 +105,7 @@ AABB ShapeGroup::getAABB() const {
 	return AABB();
 }
 
-Float ShapeGroup::getSurfaceArea() const {
+float ShapeGroup::getSurfaceArea() const {
 	return 0.0f;
 }
 

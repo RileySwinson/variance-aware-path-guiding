@@ -79,9 +79,9 @@ template<typename T> struct GenericNumTraits
   
 #ifdef EIGEN2_SUPPORT
   enum {
-    HasFloatingPoint = !IsInteger
+    HasfloatingPoint = !IsInteger
   };
-  typedef NonInteger FloatingPoint;
+  typedef NonInteger floatingPoint;
 #endif
 };
 

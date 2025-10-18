@@ -63,7 +63,7 @@ def test_type_selection():
     from pybind11_tests import selective_func
 
     assert selective_func(np.array([1], dtype=np.int32)) == "Int branch taken."
-    assert selective_func(np.array([1.0], dtype=np.float32)) == "Float branch taken."
+    assert selective_func(np.array([1.0], dtype=np.float32)) == "float branch taken."
     assert selective_func(np.array([1.0j], dtype=np.complex64)) == "Complex float branch taken."
 
 

@@ -48,7 +48,7 @@
 
 - (void) showAt: (NSPoint) point {
 	NSRect frame = [panel frame];
-	CGFloat screenHeight = [[NSScreen mainScreen] visibleFrame].size.height;
+	CGfloat screenHeight = [[NSScreen mainScreen] visibleFrame].size.height;
 	frame.origin.x = point.x - frame.size.width/2.0f;
 	frame.origin.y = screenHeight - (point.y + frame.size.height/2.0f);
 	[panel setFrame: frame display:YES];
@@ -103,9 +103,9 @@
 	if (method != context->toneMappingMethod) {
 		delegate->triggerToneMappingMethodChanged(method);
 		if (method == EGamma)
-			[exposure setFloatValue: (float) context->exposure];
+			[exposure setfloatValue: (float) context->exposure];
 		else
-			[exposure setFloatValue: (float) context->reinhardBurn];
+			[exposure setfloatValue: (float) context->reinhardBurn];
 	}
 	[self updateUI];
 }
@@ -170,10 +170,10 @@
 	[toneMappingMethod selectItemAtIndex: EGamma];
 	[shadowMapResolution selectItemAtIndex: 2];
 	[pathLength setIntValue: 3];
-	[clamping setFloatValue: 0.1];
-	[gamma setFloatValue: 2.2];
-	[exposure setFloatValue: 0.0];
-	[reinhardKey setFloatValue: 0.18];
+	[clamping setfloatValue: 0.1];
+	[gamma setfloatValue: 2.2];
+	[exposure setfloatValue: 0.0];
+	[reinhardKey setfloatValue: 0.18];
 	[sRGB setState: NSOnState];
 	[diffuseSourcesBox setState: NSOnState];
 	[diffuseReceiversBox setState: NSOffState];
@@ -191,18 +191,18 @@
 - (void) setContext: (SceneContext *) ctx {
 	[previewMethod selectItemAtIndex: ctx->previewMethod];
 	[toneMappingMethod selectItemAtIndex: ctx->toneMappingMethod];
-	[reinhardKey setFloatValue: (float) ctx->reinhardKey];
+	[reinhardKey setfloatValue: (float) ctx->reinhardKey];
 	[pathLength setIntValue: ctx->pathLength];
-	[clamping setFloatValue: (float) ctx->clamping];
-	[gamma setFloatValue: (float) ctx->gamma];
+	[clamping setfloatValue: (float) ctx->clamping];
+	[gamma setfloatValue: (float) ctx->gamma];
 	[sRGB setState: ctx->srgb ? NSOnState : NSOffState];
 	[diffuseSourcesBox setState: ctx->diffuseSources ? NSOnState : NSOffState];
 	[diffuseReceiversBox setState: ctx->diffuseReceivers ? NSOnState : NSOffState];
 
 	if (ctx->toneMappingMethod == EGamma)
-		[exposure setFloatValue: (float) ctx->exposure];
+		[exposure setfloatValue: (float) ctx->exposure];
 	else
-		[exposure setFloatValue: (float) ctx->reinhardBurn];
+		[exposure setfloatValue: (float) ctx->reinhardBurn];
 
 	int shadowMapIdx;
 	switch (ctx->shadowMapResolution) {

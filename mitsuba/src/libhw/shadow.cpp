@@ -133,7 +133,7 @@ ref<GPUTexture> ShadowMapGenerator::allocate(Renderer *renderer,
 	ref<GPUTexture> result = renderer->createGPUTexture("Shadow map");
 
 	result->setSize(Point3i(res, res, 1));
-	result->setComponentFormat(GPUTexture::EFloat32);
+	result->setComponentFormat(GPUTexture::Efloat32);
 	result->setPixelFormat(GPUTexture::EDepth);
 	result->setFrameBufferType(GPUTexture::EDepthBuffer);
 	result->setDepthMode(GPUTexture::ENormal);
@@ -187,7 +187,7 @@ retry:
 }
 
 void ShadowMapGenerator::render(Renderer *renderer, GPUTexture *shadowMap,
-		EShadowMapType type, const Transform &trafo, Float minDepth, Float maxDepth,
+		EShadowMapType type, const Transform &trafo, float minDepth, float maxDepth,
 		const std::vector<Renderer::TransformedGPUGeometry> &geo) {
 	GPUProgram *prog = m_program[type];
 
@@ -363,7 +363,7 @@ Transform ShadowMapGenerator::directionalFindGoodFrame(const AABB &aabb, const V
 	M.setZero();
 	for (int i=0; i<2; ++i) {
 		for (int j=0; j<=i; ++j) {
-			Float sum = 0.0f;
+			float sum = 0.0f;
 			for (int k=0; k<8; ++k)
 				sum += samples[k][i] * samples[k][j];
 			M(i, j) = sum;
@@ -371,7 +371,7 @@ Transform ShadowMapGenerator::directionalFindGoodFrame(const AABB &aabb, const V
 	}
 	M(0, 1) = M(1, 0);
 
-	Float eig[2];
+	float eig[2];
 	Matrix2x2 Q;
 	M.symEig(Q, eig);
 

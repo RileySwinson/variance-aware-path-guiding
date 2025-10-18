@@ -19,13 +19,13 @@ public:
 signals:
 	void pathLengthChanged(int length);
 	void shadowMapResolutionChanged(int resolution);
-	void clampingChanged(Float clamping);
-	void exposureChanged(Float exposure);
-	void gammaChanged(bool srgb, Float gamma);
+	void clampingChanged(float clamping);
+	void exposureChanged(float exposure);
+	void gammaChanged(bool srgb, float gamma);
 	void previewMethodChanged(EPreviewMethod method);
 	void toneMappingMethodChanged(EToneMappingMethod method);
-	void reinhardKeyChanged(Float key);
-	void reinhardBurnChanged(Float burn);
+	void reinhardKeyChanged(float key);
+	void reinhardBurnChanged(float burn);
 	void diffuseReceiversChanged(bool);
 	void diffuseSourcesChanged(bool);
 

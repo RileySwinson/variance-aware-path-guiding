@@ -248,7 +248,7 @@ public:
 	void setSize(const Vector2i &dimension);
 
 	/// Return the aspect ratio of the device
-	inline Float getAspect() const { return (Float) m_size.x / (Float) m_size.y; }
+	inline float getAspect() const { return (float) m_size.x / (float) m_size.y; }
 
 	/// Return the position of the device
 	inline Point2i getPosition() const { return m_position; }

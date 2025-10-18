@@ -100,7 +100,7 @@ private:
 	std::deque<VPL> m_vpls;
 	std::vector<GPUTexture *> m_releaseList;
 	ref<const AnimatedTransform> m_camTransform;
-	Float m_backgroundScaleFactor;
+	float m_backgroundScaleFactor;
 	bool m_quit, m_sleep, m_motion, m_useSync;
 	bool m_refreshScene;
 };

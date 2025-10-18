@@ -84,7 +84,7 @@ SceneHandler::SceneHandler(const ParameterMap &params,
 	m_tags["null"]       = TagEntry(ENull,       (Class *) NULL);
 	m_tags["ref"]        = TagEntry(EReference,  (Class *) NULL);
 	m_tags["integer"]    = TagEntry(EInteger,    (Class *) NULL);
-	m_tags["float"]      = TagEntry(EFloat,      (Class *) NULL);
+	m_tags["float"]      = TagEntry(Efloat,      (Class *) NULL);
 	m_tags["boolean"]    = TagEntry(EBoolean,    (Class *) NULL);
 	m_tags["string"]     = TagEntry(EString,     (Class *) NULL);
 	m_tags["translate"]  = TagEntry(ETranslate,  (Class *) NULL);
@@ -179,8 +179,8 @@ void SceneHandler::characters(const XMLCh* const name,
 		XMLLog(EWarn, "Unexpected character data: %s", value.c_str());
 }
 
-Float SceneHandler::parseFloat(const std::string &name,
-		const std::string &str, Float defVal) const {
+float SceneHandler::parsefloat(const std::string &name,
+		const std::string &str, float defVal) const {
 	char *end_ptr = NULL;
 	if (str.empty()) {
 		if (defVal == -1)
@@ -188,7 +188,7 @@ Float SceneHandler::parseFloat(const std::string &name,
 		return defVal;
 	}
 
-	Float result = (Float) std::strtod(str.c_str(), &end_ptr);
+	float result = (float) std::strtod(str.c_str(), &end_ptr);
 	if (*end_ptr != '\0')
 		XMLLog(EError, "Invalid floating point value specified (in <%s>)", name.c_str());
 	return result;
@@ -317,9 +317,9 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 			}
 			break;
 
-		case EFloat: {
-				Float value = parseFloat(name, context.attributes["value"]);
-				context.parent->properties.setFloat(context.attributes["name"], value);
+		case Efloat: {
+				float value = parsefloat(name, context.attributes["value"]);
+				context.parent->properties.setfloat(context.attributes["name"], value);
 			}
 			break;
 
@@ -346,18 +346,18 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 			break;
 
 		case ETranslate: {
-				Float x = parseFloat(name, context.attributes["x"], 0);
-				Float y = parseFloat(name, context.attributes["y"], 0);
-				Float z = parseFloat(name, context.attributes["z"], 0);
+				float x = parsefloat(name, context.attributes["x"], 0);
+				float y = parsefloat(name, context.attributes["y"], 0);
+				float z = parsefloat(name, context.attributes["z"], 0);
 				m_transform = Transform::translate(Vector(x, y, z)) * m_transform;
 			}
 			break;
 
 		case ERotate: {
-				Float x = parseFloat(name, context.attributes["x"], 0);
-				Float y = parseFloat(name, context.attributes["y"], 0);
-				Float z = parseFloat(name, context.attributes["z"], 0);
-				Float angle = parseFloat(name, context.attributes["angle"]);
+				float x = parsefloat(name, context.attributes["x"], 0);
+				float y = parsefloat(name, context.attributes["y"], 0);
+				float z = parsefloat(name, context.attributes["z"], 0);
+				float angle = parsefloat(name, context.attributes["angle"]);
 				m_transform = Transform::rotate(Vector(x, y, z), angle) * m_transform;
 			}
 			break;
@@ -367,23 +367,23 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 				if (tokens.size() != 3)
 					XMLLog(EError, "<lookat>: invalid 'origin' argument");
 				Point o(
-					parseFloat(name, tokens[0]),
-					parseFloat(name, tokens[1]),
-					parseFloat(name, tokens[2]));
+					parsefloat(name, tokens[0]),
+					parsefloat(name, tokens[1]),
+					parsefloat(name, tokens[2]));
 				tokens = tokenize(context.attributes["target"], ", ");
 				if (tokens.size() != 3)
 					XMLLog(EError, "<lookat>: invalid 'target' argument");
 				Point t(
-					parseFloat(name, tokens[0]),
-					parseFloat(name, tokens[1]),
-					parseFloat(name, tokens[2]));
+					parsefloat(name, tokens[0]),
+					parsefloat(name, tokens[1]),
+					parsefloat(name, tokens[2]));
 				Vector u(0.0f);
 				tokens = tokenize(context.attributes["up"], ", ");
 				if (tokens.size() == 3)
 					u = Vector(
-						parseFloat(name, tokens[0]),
-						parseFloat(name, tokens[1]),
-						parseFloat(name, tokens[2]));
+						parsefloat(name, tokens[0]),
+						parsefloat(name, tokens[1]),
+						parsefloat(name, tokens[2]));
 				else if (tokens.size() == 0)
 					;
 				else
@@ -406,16 +406,16 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 					context.attributes["z"] != "";
 				bool hasValue =
 					context.attributes["value"] != "";
-				Float x=0, y=0, z=0;
+				float x=0, y=0, z=0;
 
 				if (hasXYZ && hasValue) {
 					XMLLog(EError, "<scale>: provided both xyz and value arguments!");
 				} else if (hasXYZ) {
-					x = parseFloat(name, context.attributes["x"], 1);
-					y = parseFloat(name, context.attributes["y"], 1);
-					z = parseFloat(name, context.attributes["z"], 1);
+					x = parsefloat(name, context.attributes["x"], 1);
+					y = parsefloat(name, context.attributes["y"], 1);
+					z = parsefloat(name, context.attributes["z"], 1);
 				} else if (hasValue) {
-					x = y = z = parseFloat(name, context.attributes["value"]);
+					x = y = z = parsefloat(name, context.attributes["value"]);
 				} else {
 					XMLLog(EError, "<scale>: provided neither xyz nor value arguments!");
 				}
@@ -434,25 +434,25 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 
 				for (int i=0; i<4; ++i)
 					for (int j=0; j<4; ++j)
-						mtx.m[i][j] = parseFloat(name, tokens[index++]);
+						mtx.m[i][j] = parsefloat(name, tokens[index++]);
 
 				m_transform = Transform(mtx) * m_transform;
 			}
 			break;
 
 		case EPoint: {
-				Float x = parseFloat(name, context.attributes["x"]);
-				Float y = parseFloat(name, context.attributes["y"]);
-				Float z = parseFloat(name, context.attributes["z"]);
+				float x = parsefloat(name, context.attributes["x"]);
+				float y = parsefloat(name, context.attributes["y"]);
+				float z = parsefloat(name, context.attributes["z"]);
 
 				context.parent->properties.setPoint(context.attributes["name"], Point(x, y, z));
 			}
 			break;
 
 		case EVector: {
-				Float x = parseFloat(name, context.attributes["x"]);
-				Float y = parseFloat(name, context.attributes["y"]);
-				Float z = parseFloat(name, context.attributes["z"]);
+				float x = parsefloat(name, context.attributes["x"]);
+				float y = parsefloat(name, context.attributes["y"]);
+				float z = parsefloat(name, context.attributes["z"]);
 
 				context.parent->properties.setVector(context.attributes["name"], Vector(x, y, z));
 			}
@@ -476,7 +476,7 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 
 				std::string valueStr = context.attributes["value"];
 				std::vector<std::string> tokens = tokenize(valueStr, ", ");
-				Float value[3];
+				float value[3];
 				if (tokens.size() == 1 && tokens[0].length() == 7 && tokens[0][0] == '#') {
 					char *end_ptr = NULL;
 					/* Parse HTML-style hexadecimal colors */
@@ -487,10 +487,10 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 					value[1] = ((encoded & 0x00FF00) >> 8) / 255.0f;
 					value[2] =  (encoded & 0x0000FF) / 255.0f;
 				} else if (tokens.size() == 1) {
-					value[0] = value[1] = value[2] = parseFloat(name, tokens[0]);
+					value[0] = value[1] = value[2] = parsefloat(name, tokens[0]);
 				} else if (tokens.size() == 3) {
 					for (int i=0; i<3; i++)
-						value[i] = parseFloat(name, tokens[i]);
+						value[i] = parsefloat(name, tokens[i]);
 				} else {
 					value[0] = value[1] = value[2] = 0; // avoid warning
 					XMLLog(EError, "Invalid RGB value specified");
@@ -505,7 +505,7 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 		case ESRGB: {
 				std::string valueStr = context.attributes["value"];
 				std::vector<std::string> tokens = tokenize(valueStr, ", ");
-				Float value[3];
+				float value[3];
 				if (tokens.size() == 1 && tokens[0].length() == 7 && tokens[0][0] == '#') {
 					char *end_ptr = NULL;
 					/* Parse HTML-style hexadecimal colors */
@@ -516,10 +516,10 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 					value[1] = ((encoded & 0x00FF00) >> 8) / 255.0f;
 					value[2] =  (encoded & 0x0000FF) / 255.0f;
 				} else if (tokens.size() == 1) {
-					value[0] = value[1] = value[2] = parseFloat(name, tokens[0]);
+					value[0] = value[1] = value[2] = parsefloat(name, tokens[0]);
 				} else if (tokens.size() == 3) {
 					for (int i=0; i<3; i++)
-						value[i] = parseFloat(name, tokens[i]);
+						value[i] = parsefloat(name, tokens[i]);
 				} else {
 					value[0] = value[1] = value[2] = 0; // avoid warning
 					XMLLog(EError, "Invalid sRGB value specified");
@@ -535,10 +535,10 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 				std::string temperature = trim(context.attributes["temperature"]);
 				if (temperature.length() > 0 && std::toupper(temperature[temperature.length()-1]) == 'K')
 					temperature = temperature.substr(0, temperature.length()-1);
-				Float temperatureValue = parseFloat(name, temperature);
-				Float scale = 1;
+				float temperatureValue = parsefloat(name, temperature);
+				float scale = 1;
 				if (context.attributes.find("scale") != context.attributes.end())
-					scale = parseFloat(name, context.attributes["scale"]);
+					scale = parsefloat(name, context.attributes["scale"]);
 				BlackBodySpectrum bb(temperatureValue);
 				Spectrum discrete;
 				discrete.fromContinuousSpectrum(bb);
@@ -568,7 +568,7 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 				} else if (hasValue) {
 					std::vector<std::string> tokens = tokenize(
 						context.attributes["value"], ", ");
-					Float value[SPECTRUM_SAMPLES];
+					float value[SPECTRUM_SAMPLES];
 					if (tokens.size() == 1 && tokens[0].find(':') == std::string::npos) {
 						Spectrum::EConversionIntent intent = Spectrum::EReflectance;
 						if (context.parent->tag == EEmitter)
@@ -584,7 +584,7 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 								XMLLog(EError, "Invalid intent \"%s\", must be "
 									"\"reflectance\" or \"illuminant\"", intentString.c_str());
 						}
-						value[0] = parseFloat(name, tokens[0]);
+						value[0] = parsefloat(name, tokens[0]);
 						Spectrum spec;
 						if (intent == Spectrum::EReflectance)
 							spec = Spectrum(value[0]);
@@ -601,8 +601,8 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 								std::vector<std::string> tokens2 = tokenize(tokens[i], ":");
 								if (tokens2.size() != 2)
 									XMLLog(EError, "Invalid spectrum->value mapping specified");
-								Float wavelength = parseFloat(name, tokens2[0]);
-								Float value = parseFloat(name, tokens2[1]);
+								float wavelength = parsefloat(name, tokens2[0]);
+								float value = parsefloat(name, tokens2[1]);
 								interp.append(wavelength, value);
 							}
 							interp.zeroExtend();
@@ -615,7 +615,7 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 							if (tokens.size() != SPECTRUM_SAMPLES)
 								XMLLog(EError, "Invalid spectrum value specified (length does not match the current spectral discretization!)");
 							for (int i=0; i<SPECTRUM_SAMPLES; i++)
-								value[i] = parseFloat(name, tokens[i]);
+								value[i] = parsefloat(name, tokens[i]);
 							context.parent->properties.setSpectrum(context.attributes["name"],
 								Spectrum(value));
 						}
@@ -637,7 +637,7 @@ void SceneHandler::endElement(const XMLCh* const xmlName) {
 					context.parent->properties.setTransform(
 						context.attributes["name"], m_transform);
 				} else {
-					Float time = parseFloat("time", context.attributes["time"]);
+					float time = parsefloat("time", context.attributes["time"]);
 					m_animatedTransform->appendTransform(time, m_transform);
 				}
 			}

@@ -34,7 +34,7 @@ ref<Bitmap> BidirectionalUtils::renderDirectComponent(Scene *scene, int sceneRes
 	const Film *film = scene->getFilm();
 	Integrator *integrator = scene->getIntegrator();
 	/* Render the direct illumination component separately */
-	ref<Bitmap> directImage = new Bitmap(Bitmap::ERGBA, Bitmap::EFloat32, film->getCropSize());
+	ref<Bitmap> directImage = new Bitmap(Bitmap::ERGBA, Bitmap::Efloat32, film->getCropSize());
 	bool hasMedia = scene->getMedia().size() > 0;
 	bool hasDOF = scene->getSensor()->needsApertureSample();
 	size_t pixelSamples = directSamples;
@@ -83,7 +83,7 @@ ref<Bitmap> BidirectionalUtils::renderDirectComponent(Scene *scene, int sceneRes
 
 	if (success) {
 		ref<Bitmap> bitmap = new Bitmap(
-			Bitmap::ESpectrum, Bitmap::EFloat,
+			Bitmap::ESpectrum, Bitmap::Efloat,
 			film->getCropSize());
 		film->develop(Point2i(0, 0),
 			film->getCropSize(), Point2i(0, 0), bitmap);
@@ -185,7 +185,7 @@ ref<Bitmap> BidirectionalUtils::mltLuminancePass(Scene *scene, int sceneResID,
 
 	/* Develop the rendered image into a luminance bitmap */
 	ref<Bitmap> luminanceMap = new Bitmap(Bitmap::ELuminance,
-		Bitmap::EFloat, reducedCropSize);
+		Bitmap::Efloat, reducedCropSize);
 	nestedFilm->develop(Point2i(0, 0), reducedCropSize,
 		Point2i(0, 0), luminanceMap);
 
@@ -193,7 +193,7 @@ ref<Bitmap> BidirectionalUtils::mltLuminancePass(Scene *scene, int sceneResID,
 	luminanceMap = luminanceMap->resample(rfilter,
 		ReconstructionFilter::EClamp,
 		ReconstructionFilter::EClamp, origCropSize,
-		0.0f, std::numeric_limits<Float>::infinity());
+		0.0f, std::numeric_limits<float>::infinity());
 
 	return luminanceMap;
 }

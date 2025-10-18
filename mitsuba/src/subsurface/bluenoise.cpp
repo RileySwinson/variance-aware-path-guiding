@@ -63,7 +63,7 @@ struct Cell {
 };
 
 void blueNoisePointSet(const Scene *scene, const std::vector<Shape *> &shapes,
-		Float radius, PositionSampleVector *target, Float &sa, AABB &aabb,
+		float radius, PositionSampleVector *target, float &sa, AABB &aabb,
 		const void *data) {
 	int kmax = 8; /* Perform 8 trial runs */
 
@@ -120,7 +120,7 @@ void blueNoisePointSet(const Scene *scene, const std::vector<Shape *> &shapes,
 		#endif
 
 		Random *random = t_rng[tid].get();
-		Point2 sample(random->nextFloat(), random->nextFloat());
+		Point2 sample(random->nextfloat(), random->nextfloat());
 		int shapeIndex = (int) areaDistr.sampleReuse(sample.x);
 		Shape *shape = shapes[shapeIndex];
 
@@ -135,7 +135,7 @@ void blueNoisePointSet(const Scene *scene, const std::vector<Shape *> &shapes,
 	rep.update(1);
 	timer->reset();
 
-	Float cellWidth = radius / std::sqrt(3.0f),
+	float cellWidth = radius / std::sqrt(3.0f),
 		  invCellWidth = 1.0f / cellWidth;
 
 	aabb.reset();
@@ -201,7 +201,7 @@ void blueNoisePointSet(const Scene *scene, const std::vector<Shape *> &shapes,
 
 	SLog(EInfo, "    done (took %i ms), got %i cells, avg. samples per cell: %f",
 		timer->getMilliseconds(), (int) cells.size(),
-		samples.size() / (Float) cells.size());
+		samples.size() / (float) cells.size());
 	rep.update(4);
 	timer->reset();
 

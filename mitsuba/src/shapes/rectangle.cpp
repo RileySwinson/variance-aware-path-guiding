@@ -118,14 +118,14 @@ public:
 		return aabb;
 	}
 
-	Float getSurfaceArea() const {
+	float getSurfaceArea() const {
 		return m_dpdu.length() * m_dpdv.length();
 	}
 
-	inline bool rayIntersect(const Ray &_ray, Float mint, Float maxt, Float &t, void *temp) const {
+	inline bool rayIntersect(const Ray &_ray, float mint, float maxt, float &t, void *temp) const {
 		Ray ray;
 		m_worldToObject.transformAffine(_ray, ray);
-		Float hit = -ray.o.z / ray.d.z;
+		float hit = -ray.o.z / ray.d.z;
 
 		if (!(hit >= mint && hit <= maxt))
 			return false;
@@ -136,7 +136,7 @@ public:
 			t = hit;
 
 			if (temp) {
-				Float *data = static_cast<Float *>(temp);
+				float *data = static_cast<float *>(temp);
 				data[0] = local.x;
 				data[1] = local.y;
 			}
@@ -147,14 +147,14 @@ public:
 		return false;
 	}
 
-	bool rayIntersect(const Ray &ray, Float mint, Float maxt) const {
-		Float t;
+	bool rayIntersect(const Ray &ray, float mint, float maxt) const {
+		float t;
 		return Rectangle::rayIntersect(ray, mint, maxt, t, NULL);
 	}
 
 	void fillIntersectionRecord(const Ray &ray,
 			const void *temp, Intersection &its) const {
-		const Float *data = static_cast<const Float *>(temp);
+		const float *data = static_cast<const float *>(temp);
 		its.geoFrame = m_frame;
 		its.shFrame = its.geoFrame.n;
 		its.shape = this;
@@ -215,7 +215,7 @@ public:
 		pRec.uv = sample;
 	}
 
-	Float pdfPosition(const PositionSamplingRecord &pRec) const {
+	float pdfPosition(const PositionSamplingRecord &pRec) const {
 		return m_invSurfaceArea;
 	}
 
@@ -248,7 +248,7 @@ private:
 	Transform m_worldToObject;
 	Frame m_frame;
 	Vector m_dpdu, m_dpdv;
-	Float m_invSurfaceArea;
+	float m_invSurfaceArea;
 };
 
 MTS_IMPLEMENT_CLASS_S(Rectangle, false, Shape)

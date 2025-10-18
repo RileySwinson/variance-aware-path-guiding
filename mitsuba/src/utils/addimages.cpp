@@ -32,10 +32,10 @@ public:
 			return -1;
 		}
 		char *end_ptr = NULL;
-		Float weight1 = (Float) strtod(argv[1], &end_ptr);
+		float weight1 = (float) strtod(argv[1], &end_ptr);
 		if (*end_ptr != '\0')
 			SLog(EError, "Could not parse floating point value");
-		Float weight2 = (Float) strtod(argv[3], &end_ptr);
+		float weight2 = (float) strtod(argv[3], &end_ptr);
 		if (*end_ptr != '\0')
 			SLog(EError, "Could not parse floating point value");
 
@@ -63,25 +63,25 @@ public:
 			aBitmap->getChannelCount();
 
 		switch (aBitmap->getComponentFormat()) {
-			case Bitmap::EFloat16: {
-					half *aData = aBitmap->getFloat16Data();
-					half *bData = bBitmap->getFloat16Data();
-					half *outData = outBitmap->getFloat16Data();
+			case Bitmap::Efloat16: {
+					half *aData = aBitmap->getfloat16Data();
+					half *bData = bBitmap->getfloat16Data();
+					half *outData = outBitmap->getfloat16Data();
 					for (size_t i=0; i<nEntries; ++i)
-						*outData++ = (half) ((float) std::max((Float) 0,
-								weight1 * (Float) (*aData++) +
-								weight2 * (Float) (*bData++)));
+						*outData++ = (half) ((float) std::max((float) 0,
+								weight1 * (float) (*aData++) +
+								weight2 * (float) (*bData++)));
 				}
 				break;
 
-			case Bitmap::EFloat32: {
-					float *aData = aBitmap->getFloat32Data();
-					float *bData = bBitmap->getFloat32Data();
-					float *outData = outBitmap->getFloat32Data();
+			case Bitmap::Efloat32: {
+					float *aData = aBitmap->getfloat32Data();
+					float *bData = bBitmap->getfloat32Data();
+					float *outData = outBitmap->getfloat32Data();
 					for (size_t i=0; i<nEntries; ++i)
-						*outData++ = (float) std::max((Float) 0,
-								weight1 * (Float) (*aData++) +
-								weight2 * (Float) (*bData++));
+						*outData++ = (float) std::max((float) 0,
+								weight1 * (float) (*aData++) +
+								weight2 * (float) (*bData++));
 				}
 				break;
 
@@ -90,9 +90,9 @@ public:
 					uint32_t *bData = bBitmap->getUInt32Data();
 					uint32_t *outData = outBitmap->getUInt32Data();
 					for (size_t i=0; i<nEntries; ++i)
-						*outData++ = (uint32_t) std::max((Float) 0,
-								weight1 * (Float) (*aData++) +
-								weight2 * (Float) (*bData++));
+						*outData++ = (uint32_t) std::max((float) 0,
+								weight1 * (float) (*aData++) +
+								weight2 * (float) (*bData++));
 				}
 				break;
 
