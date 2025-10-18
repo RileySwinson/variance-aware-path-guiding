@@ -30,14 +30,9 @@ void BinaryTile::update(const Sample& sample)
     // Update mean deviation
     value_mean += dx / n;
     float dx2 = contribution - value_mean;
-    float old_md = meandev();
-    this->leaf.diff_sum += std::abs(dx2);
-    float new_md = this->leaf.diff_sum / n;
-
-    // Update variance of absolute deviations
-    float d1 = std::abs(dx2) - old_md;
-    float d2 = std::abs(dx2) - new_md;
-    this->leaf.m2 += d1 * d2;
+    float diff_squared = dx * dx2;
+    this->leaf.m2 += diff_squared;
+    this->leaf.ad_sum += std::sqrt(diff_squared);
 
     // Update sample count & sum
     this->data.sample_count++;
@@ -85,7 +80,7 @@ float BinaryTile::meandev() const
         return 0.0f;
     }
 
-    return (this->leaf.diff_sum / sample_count);
+    return (this->leaf.ad_sum / sample_count);
 }
 
 float BinaryTile::var() const
@@ -184,6 +179,7 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, BTTracker& tracker, bool 
         tracker.increment();
     }
 
+    tracker.increment();
     tracker.set_boundaries(x_bounds, y_bounds);
     return *curr_tile;
 }
@@ -369,7 +365,7 @@ void BinaryTileCoding::preprocess()
 {
     // Allocate tiles space
     int base_tiles = TILE_DIMS.x * TILE_DIMS.y;
-    int max_cap = (1 << (MAX_DEPTH + 1)) - 1;
+    int max_cap = (1 << MAX_DEPTH) - 1;
 
     for (auto& tiling : this->tilings)
     {

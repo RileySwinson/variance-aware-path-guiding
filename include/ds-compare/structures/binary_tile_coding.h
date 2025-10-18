@@ -74,10 +74,10 @@ struct LeafNode {
     Point2f cov = Point2f(0.0f);
     // Sample mean required for covariance updates.
     Point2f sample_mean = Point2f(0.0f);
-    // Sum of squared differences of the absolute deviations from their mean (used for variance).
+    // Sum of squared distances from the mean.
     float m2 = 0.0f;
-    // Sum of absolute differences used for MD metric.
-    float diff_sum = 0.0f;
+    // Sum of absolute deviations used for MD metric.
+    float ad_sum = 0.0f;
 };
 
 /**
@@ -139,7 +139,7 @@ struct BinaryTile {
     /// Returns the mean deviation of the current leaf.
     float meandev() const;
 
-    /// Returns the variance *of the mean deviations* of the current leaf.
+    /// Returns the sample variance of the current leaf.
     float var() const;
 
     /// Returns the normalized area of this tile.
