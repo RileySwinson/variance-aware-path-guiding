@@ -87,20 +87,20 @@ struct DS_COMPARE ErrorMetrics {
 		float sum = 0.0f;
 		for (const auto& sample : reference)
 		{
-			auto value = sample.value / sample.pdf;
+			auto value = (sample.value / sample.pdf) * INV_FOURPI;
 			sum += std::abs(value - gt_mean);
 		}
 
 		// Uncomment for estimator mean vs. gt mean comparison in console
-		/*Float mean = 0.0;
+		Float mean = 0.0;
 		for (const auto& sample : reference)
 		{
-			mean += sample.value / sample.pdf;
+			mean += (sample.value / sample.pdf) * INV_FOURPI;
 		}
 		mean /= reference.size();
 
 		std::cout << "[Estimator / GT]: " << mean << " / " << gt_mean << std::endl;
-		std::cout << "MD: " << (sum / sample_count) << std::endl;*/
+		std::cout << "MD: " << (sum / sample_count) << std::endl;
 
 		return (sum / sample_count);
 	}

@@ -148,17 +148,15 @@ public:
 						Point2 coords(random->nextFloat(), random->nextFloat());
 						Float rng = random->nextFloat();
 
-						Sample sample;
-						if (rng < this->args.comparer.chance)
+						Sample sample = (rng < this->args.comparer.chance)
+							? ds->sample(coords)
+							: envmap.sample(Sample::Mode::Sphere, coords);
+
+						if (sample.is_valid())
 						{
-							sample = ds->sample(coords);
-						}
-						else
-						{
-							sample = envmap.sample(Sample::Mode::Sphere, coords);
+							sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
 						}
 
-						sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
 						curr_samples.push_back(sample);
 					}
 
@@ -217,7 +215,7 @@ public:
 					auto uv_coords = Converter::spherical_to_uv(spherical);
 					auto im_coords = Converter::uv_to_image(uv_coords, envmap.bitmap->getSize());
 
-					sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta); //auto value = (f_x / p_x) * INV_FOURPI;
+					sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
 					observations.store(im_coords, sample);
 				}
 				tracker.timer_end("sample");
@@ -240,7 +238,7 @@ public:
 				eval_map.write(envmap_path);
 
 				/* Compute metrics and store them */
-				tracker.store(MD, ErrorMetrics::MD(observations.to_flat(samples_guiding), gt_mean * 4 * M_PI));
+				tracker.store(MD, ErrorMetrics::MD(observations.to_flat(samples_guiding), gt_mean));
 				tracker.store(RMSE, ErrorMetrics::RMSE(gt_map, eval_map));
 				tracker.store(MSE, ErrorMetrics::MSE(gt_map, eval_map));
 				tracker.store(MAE, ErrorMetrics::MAE(gt_map, eval_map));

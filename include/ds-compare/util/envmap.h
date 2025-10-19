@@ -324,12 +324,9 @@ struct DS_COMPARE EnvironmentMap {
 
 		if (mode == Sample::Mode::Native)
 		{
-			Point2i uv(
-				pos.x * this->bitmap->getWidth(),
-				pos.y * this->bitmap->getHeight()
-			);
+			auto px = Converter::uv_to_image(pos, this->bitmap->getSize());
 
-			Float px_lum = get_pixel_luminance(uv);
+			Float px_lum = get_pixel_luminance(px);
 			Float total_lum = this->bitmap_integral * this->bitmap->getPixelCount();
 			return (px_lum / total_lum);
 		}
@@ -506,15 +503,11 @@ private:
 		Float phi = std::atan2(dir.y, dir.x);
 		if (phi < 0) phi += 2 * M_PI;
 
-		Point2 uv_norm = Converter::spherical_to_uv(Point2(phi, theta));
-
-		Point2i uv(
-			uv_norm.x * this->bitmap->getWidth(),
-			uv_norm.y * this->bitmap->getHeight()
-		);
+		auto uv_norm = Converter::spherical_to_uv(Point2(phi, theta));
+		auto px = Converter::uv_to_image(uv_norm, this->bitmap->getSize());
 
 		Sample sample_data = {
-			.value = get_pixel_luminance(uv),
+			.value = get_pixel_luminance(px),
 			.pdf = pdf(mode, uv_norm),
 			.theta = theta,
 			.phi = phi
