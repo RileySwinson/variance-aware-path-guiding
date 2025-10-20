@@ -23,7 +23,7 @@
 # Michael Eickmeyer, 2025 @ TU Wien.
 ##############################################
 
-import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil
+import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil, pprint
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, wait
 from threading import Event, Thread
@@ -163,8 +163,10 @@ settings = {
     'testing': {
         # Enables multithreading for concurrent evaluation of environment maps.
         'multithreading': True,
+        # Enables the native Mitsuba output (e.g., for debugging). This hides the progress visualization when enabled.
+        'native_output': False,
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
-        'batches': os.cpu_count(),
+        'batches': 5,
         # Metrics to store in the benchmark.csv files. Names must match the metrics specified in ds::compare.
         'metrics': ['MD', 'Memory', 'store (s)', 'sample (s)']
     },
@@ -174,21 +176,21 @@ settings = {
         # Path to folder containing the results.
         'result_path': Value('rp', './data/results/'),
         # Number of learning samples per data structure. These samples are used to create a guiding distribution.
-        'samples_learning': Range('sl', start=64, end=65536, func=lambda x: x * 2),
+        'samples_learning': Value('sl', 65536),
         # Number of guiding samples per data structure. These samples are used to recreate the sampled distribution from the guiding distribution.
         'samples_guiding': Value('sg', 1048576),
         # A blacklist specifying which data structures should be skipped in the overall test.
-        'blacklist': Value('b', [0]),
+        'blacklist': Value('b', [0, 1, 2, 3, 4]),
         # Whether to normalize the envmap each data structure is 'learning' with. (Keep this false unless you know what you're doing.)
         'normalize': Value('n', False),
         # Whether to visualize guided samples
-        'visualize': Value('v', True),
+        'visualize': Value('v', False),
         # Specifies the method used for the sample visualization. Possible values: 'flat', 'mono', 'heatmap'. If 'visualize' is set to False, this setting has no effect.
         'vis_mode': Value('vm', 'mono')
     },
     'strategy': {
         # Learning strategy to employ. 'preprocess' for 1-pass learning, 'forward' for geometric series.
-        'strategy': Value('s', 'forward'),
+        'strategy': Value('strategy', 'forward'),
         # Number of samples the forward strategy should start with. The number is doubled for every subsequent batch, until samples_learning is reached. If the strategy is 'preprocess', this setting is ignored.
         'samples_start': Value('ss', 4),
         # The probability that the data structure is used to generate samples for the next batch. 1 - P(A) = Probability to sample uniformly.
@@ -214,24 +216,24 @@ settings = {
             'max_depth': Range('dtd', start=2, end=20)
         },
         'von Mises-Fisher Mixtures': {
-            'components': Range('vc', start=1, end=32),
+            'components': Range('vc', start=4, end=16, func=lambda x: x + 1),
             'use_ruppert': Toggle('vr', True)
         },
         'Tile Coding': {
             'tilings': Range('t', start=1, end=8),
-            'tiles_x': Range('tx', start=2, end=32, func=lambda x: x * 2),
-            'tiles_y': Range('ty', start=2, end=32, func=lambda x: x * 2),
-            'transformation': Sequence('tt', ['planar', 'spherical', 'cosine'])
+            'tiles_x': Range('tx', start=8, end=32, func=lambda x: x + 4),
+            'tiles_y': Range('ty', start=4, end=16, func=lambda x: x + 4),
+            'transformation': Value('tt', 'spherical')
         },
         'Binary Tile Coding': {
-            'tilings': Range('bt', start=1, end=6),
-            'tiles_x': Range('btx', start=1, end=8),
-            'tiles_y': Range('bty', start=1, end=8),
-            'max_depth': Range('btmd', start=1, end=12),
+            'tilings': Range('bt', start=1, end=4),
+            'tiles_x': Value('btx', 1),
+            'tiles_y': Value('bty', 1),
+            'max_depth': Range('btmd', start=7, end=12, func=lambda x: x + 1),
             'max_splits': Value('btms', -1),
-            'eagerness': Range('btea', start=0, end=5, func=lambda x: x + 1),
-            'excess': Value('btex', 0.2),
-            'transformation': Sequence('btt', ['planar', 'spherical', 'cosine'])
+            'eagerness': Range('btea', start=0, end=4, func=lambda x: x + 1),
+            'excess': Range('btex', start=0.1, end=0.5, func=lambda x: x + 0.1),
+            'transformation': Value('btt', 'spherical')
         }
     }
 }
@@ -296,7 +298,7 @@ def build_argvals(s, a):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ['multithreading', 'batches', 'metrics', 'envmap_path', 'result_path']:
+        elif k.lower() in ['multithreading', 'native_output', 'batches', 'metrics', 'envmap_path', 'result_path']:
             continue
         else:
             a.append((v.flag(), v.get(as_str=True)))
@@ -380,7 +382,7 @@ def collect_args():
                     args.append(v)
             else:
                 args.append(value)
-        
+
         commands.append(args)
 
 def create_batches():
@@ -497,6 +499,18 @@ def collect_data(curr_settings, wipe=False):
             for out_folder in dirs:
                 # Store results from metrics.csv into the collector
                 csv_path = os.path.join(path, out_folder, 'metrics.csv')
+
+                time_elapsed = 0
+                while not os.path.exists(csv_path):
+                    time.sleep(1)
+
+                    time_elapsed += 1
+                    if time_elapsed > 10:
+                        break
+
+                if not os.path.isfile(csv_path):
+                    raise ValueError("%s is not a file! (Probably because it does not exist...)" % csv_path)
+
                 with open(csv_path) as file:
                     reader = csv.reader(file, delimiter=',', quotechar='"')
 
@@ -527,6 +541,8 @@ def collect_data(curr_settings, wipe=False):
     
     for metric in metrics:
         data = collector[metric]
+
+        pprint.pprint(data)
 
         ds_path = os.path.join(benchmark_path, f'{ds_name}_{metric}.csv')
         payload = {}
@@ -563,7 +579,17 @@ def start_comparer(command):
     Calls the command to start Mitsuba.
     """
 
-    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    if settings['testing']['native_output']:
+        result = subprocess.run(command)
+
+        if result.returncode != 0:
+            print(f"--- ERROR DETECTED ---")
+            print(f"Command failed: {' '.join(command)}")
+            print(f"STDOUT:\n{result.stdout}")
+            print(f"STDERR:\n{result.stderr}")
+            print(f"----------------------")
+    else:
+        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
 def rcall(data, pos=0):
     """
@@ -626,8 +652,9 @@ def run_test():
                     pass
 
     # Start watch thread
-    watcher = Thread(target=watch_folder)
-    watcher.start()
+    if not settings['testing']['native_output']:
+        watcher = Thread(target=watch_folder)
+        watcher.start()
 
     # Run benchmark per data structure
     for ds_i in range(len(ds_keys)):
@@ -641,14 +668,19 @@ def run_test():
         stats.run['ds'] = ds_i
         stats.run['total'] = math.prod(fs.steps() for fs in fluid_settings)
 
-        while not sl.final():
-            rcall(fluid_settings)
-            stats.reset()
-            sl.next()
+        variable_samples = isinstance(sl, FluidSetting)
+
+        if variable_samples:
+            while not sl.final():
+                rcall(fluid_settings)
+                stats.reset()
+                sl.next()
 
         rcall(fluid_settings)
         stats.reset()
-        sl.reset()
+
+        if variable_samples:
+            sl.reset()
 
 def restore_old_folders():
     """
