@@ -23,7 +23,7 @@
 # Michael Eickmeyer, 2025 @ TU Wien.
 ##############################################
 
-import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil, pprint
+import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, wait
 from threading import Event, Thread
@@ -166,7 +166,9 @@ settings = {
         # Enables the native Mitsuba output (e.g., for debugging). This hides the progress visualization when enabled.
         'native_output': False,
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
-        'batches': 5,
+        'batches': os.cpu_count(),
+        # Batch the environment maps such that each batch has approximately even memory. Otherwise, batches are count-based.
+        'memory_batching': False,
         # Metrics to store in the benchmark.csv files. Names must match the metrics specified in ds::compare.
         'metrics': ['MD', 'Memory', 'store (s)', 'sample (s)']
     },
@@ -176,11 +178,11 @@ settings = {
         # Path to folder containing the results.
         'result_path': Value('rp', './data/results/'),
         # Number of learning samples per data structure. These samples are used to create a guiding distribution.
-        'samples_learning': Value('sl', 65536),
+        'samples_learning': Range('sl', start=64, end=65536, func=lambda x: x * 2),
         # Number of guiding samples per data structure. These samples are used to recreate the sampled distribution from the guiding distribution.
         'samples_guiding': Value('sg', 1048576),
         # A blacklist specifying which data structures should be skipped in the overall test.
-        'blacklist': Value('b', [0, 1, 2, 3, 4]),
+        'blacklist': Value('b', [0]),
         # Whether to normalize the envmap each data structure is 'learning' with. (Keep this false unless you know what you're doing.)
         'normalize': Value('n', False),
         # Whether to visualize guided samples
@@ -298,7 +300,7 @@ def build_argvals(s, a):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ['multithreading', 'native_output', 'batches', 'metrics', 'envmap_path', 'result_path']:
+        elif k.lower() in ['multithreading', 'native_output', 'batches', 'memory_batching', 'metrics', 'envmap_path', 'result_path']:
             continue
         else:
             a.append((v.flag(), v.get(as_str=True)))
@@ -393,8 +395,6 @@ def create_batches():
     print('Creating batches...')
 
     b_id = 0
-    curr_bytes = 0
-    curr_files = 0
 
     base_name = settings['general']['envmap_path'].get()
     res_name = settings['general']['result_path'].get()
@@ -446,20 +446,29 @@ def create_batches():
 
             # store new path with metadata
             file_storage[file_id] = (new_name, os.path.join(full_path, file))
-    
+
+    use_memory_batching = settings['testing']['memory_batching']
+
     # drop files into batches
-    bytes_per_batch = total_bytes / batch_count
+    curr_bytes = 0
+    curr_files = 0
+
+    items_in_batch = int(len(file_storage.keys()) / batch_count) # count-based
+    bytes_per_batch = total_bytes / batch_count # memory-based
     for file in file_storage.items():
         (file_id, file_data) = file
         (new_name, old_path) = file_data
 
-        if (curr_bytes > bytes_per_batch) and (b_id < batch_count - 1):
-            stats.progress[batch_key()] = [0, curr_files]
-            batch_paths.append(new_path)
+        memory_check_true = (use_memory_batching) and (curr_bytes > bytes_per_batch) and (b_id < batch_count - 1)
+        count_check_true = (not use_memory_batching) and (curr_files == items_in_batch) and (b_id < batch_count - 1)
 
-            b_id += 1
-            curr_bytes = 0
-            curr_files = 0
+        if memory_check_true or count_check_true:
+                stats.progress[batch_key()] = [0, curr_files]
+                batch_paths.append(new_path)
+
+                b_id += 1
+                curr_bytes = 0
+                curr_files = 0
 
         # create a folder in the results folder and testing folder respectively
         create_folder(os.path.join(res_name, batch_key()))
@@ -541,8 +550,6 @@ def collect_data(curr_settings, wipe=False):
     
     for metric in metrics:
         data = collector[metric]
-
-        pprint.pprint(data)
 
         ds_path = os.path.join(benchmark_path, f'{ds_name}_{metric}.csv')
         payload = {}
