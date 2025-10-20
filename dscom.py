@@ -23,7 +23,7 @@
 # Michael Eickmeyer, 2025 @ TU Wien.
 ##############################################
 
-import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil
+import subprocess, os, time, math, signal, sys, uuid, warnings, csv, shutil, random
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, wait
 from threading import Event, Thread
@@ -167,6 +167,8 @@ settings = {
         'native_output': False,
         # (Max.) Number of batches the envmaps get divided into. Set to -1 to disable & use the provided folder structure.
         'batches': os.cpu_count(),
+        # If enabled, only a randomly generated number of environment maps are used for the evaluation. Set to -1 to disable.
+        'em_samples': -1,
         # Batch the environment maps such that each batch has approximately even memory. Otherwise, batches are count-based.
         'memory_batching': False,
         # Metrics to store in the benchmark.csv files. Names must match the metrics specified in ds::compare.
@@ -300,7 +302,7 @@ def build_argvals(s, a):
     for k, v in s.items():
         if isinstance(v, dict):
             build_argvals(v, a)
-        elif k.lower() in ['multithreading', 'native_output', 'batches', 'memory_batching', 'metrics', 'envmap_path', 'result_path']:
+        elif k.lower() in ['multithreading', 'native_output', 'batches', 'em_samples', 'memory_batching', 'metrics', 'envmap_path', 'result_path']:
             continue
         else:
             a.append((v.flag(), v.get(as_str=True)))
@@ -447,13 +449,23 @@ def create_batches():
             # store new path with metadata
             file_storage[file_id] = (new_name, os.path.join(full_path, file))
 
-    use_memory_batching = settings['testing']['memory_batching']
+    # if a sample size is specified, N envmaps are chosen at random
+    envmap_samples = settings['testing']['em_samples']
+    if envmap_samples > 0:
+        samples = { }
+        for i in range(envmap_samples):
+            index = int(random.uniform(0, len(file_storage.keys())))
+            f_key = list(file_storage.keys())[index]
+            samples[f_key] = file_storage.pop(f_key)
+
+    file_storage = samples
 
     # drop files into batches
     curr_bytes = 0
     curr_files = 0
 
-    items_in_batch = int(len(file_storage.keys()) / batch_count) # count-based
+    use_memory_batching = settings['testing']['memory_batching']
+    items_in_batch = max(int(len(file_storage.keys()) / batch_count), 1) # count-based
     bytes_per_batch = total_bytes / batch_count # memory-based
     for file in file_storage.items():
         (file_id, file_data) = file
