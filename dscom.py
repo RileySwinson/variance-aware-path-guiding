@@ -209,22 +209,22 @@ settings = {
     'structures': {
         'Unidirectional': { },
         'Spherical Harmonics': {
-            'bands': Range('shb', start=1, end=10),
-            'depth': Range('shd', start=1, end=20),
+            'bands': Range('shb', start=5, end=10, func=lambda x: x + 1),
+            'depth': Range('shd', start=5, end=20, func=lambda x: x + 1),
             'use_offset': Toggle('sho', True)
         },
         'D-Tree': {
             'frac_loss': Value('dtl', 'none'),
             'dir_filter': Value('dtf', 'nearest'),
-            'threshold': Range('dtt', start=0.01, end=0.5, func=lambda x: x + 0.01),
-            'max_depth': Range('dtd', start=2, end=20)
+            'threshold': Range('dtt', start=0.01, end=0.2, func=lambda x: x + 0.01),
+            'max_depth': Range('dtd', start=10, end=20, func=lambda x: x + 1)
         },
         'von Mises-Fisher Mixtures': {
             'components': Range('vc', start=4, end=16, func=lambda x: x + 1),
             'use_ruppert': Toggle('vr', True)
         },
         'Tile Coding': {
-            'tilings': Range('t', start=1, end=8),
+            'tilings': Range('t', start=1, end=4),
             'tiles_x': Range('tx', start=8, end=32, func=lambda x: x + 4),
             'tiles_y': Range('ty', start=4, end=16, func=lambda x: x + 4),
             'transformation': Value('tt', 'spherical')
@@ -458,7 +458,7 @@ def create_batches():
             f_key = list(file_storage.keys())[index]
             samples[f_key] = file_storage.pop(f_key)
 
-    file_storage = samples
+        file_storage = samples
 
     # drop files into batches
     curr_bytes = 0
