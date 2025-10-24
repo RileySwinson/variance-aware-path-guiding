@@ -82,8 +82,7 @@ public:
 			const std::string folder_path = base_name + "/" + folder_name + "/" + envmap_file_name;
 			boost::filesystem::create_directories(folder_path);
 
-			/* Generate bitmap for ground truth PDF & write to file */
-			Float max = 0;
+			/* Generate bitmap for ground truth map & write to file */
 			EnvironmentMap gt_map = envmap
 				.deep_copy(true)
 				.map([&](Point2i coords, Point3& px) {
@@ -92,17 +91,26 @@ public:
 					{
 						px[c] = lum;
 					}
-
-					if (lum > max) max = lum;
 				});
-
-			if (this->args.comparer.normalize)
-			{
-				gt_map.normalize(max);
-			}
 
 			Float gt_mean = gt_map.mean();
 			gt_map.write(folder_path + "/gt.exr");
+
+			// Uncomment for PDF vis
+			/*EnvironmentMap pdf_map = envmap
+				.deep_copy(true)
+				.map([&](Point2i coords, Point3& px) {
+					Point2 uv = Converter::image_to_uv(coords, envmap.bitmap->getSize());
+
+					auto p_x = envmap.pdf(Sample::Mode::Native, uv) / (2.0 * M_PI * M_PI);
+					for (int c = 0; c < envmap.bitmap->getChannelCount(); ++c)
+					{
+						px[c] = p_x;
+					}
+
+					accumulator += p_x;
+				});*/
+			//pdf_map.write(folder_path + "/pdf.exr");
 
 			Log(EInfo, "Comparing data structures for envmap '%s'...", (folder_name + "/" + envmap_file_name).c_str());
 
@@ -286,7 +294,6 @@ private:
 				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.comparer.samples_guiding), "Reconstruction sample count.")
 				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.comparer.mode), "Envmap sampling mode.")
 				("blacklist,b", p_opt::value<std::vector<int>>(&this->args.comparer.blacklist)->multitoken(), "List of data structure indices that won't be run.")
-				("normalize,n", p_opt::value<bool>(&this->args.comparer.normalize), "Normalize?")
 				("visualize,v", p_opt::value<bool>(&this->args.comparer.visualize), "Visualize samples?")
 				("vis-mode,vm", p_opt::value<EnvironmentMap::VisualizationMode>(&this->args.comparer.vis_mode), "Visualization mode for guiding samples.")
 				// Strategy

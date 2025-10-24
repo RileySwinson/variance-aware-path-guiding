@@ -185,8 +185,6 @@ settings = {
         'samples_guiding': Value('sg', 1048576),
         # A blacklist specifying which data structures should be skipped in the overall test.
         'blacklist': Value('b', [0]),
-        # Whether to normalize the envmap each data structure is 'learning' with. (Keep this false unless you know what you're doing.)
-        'normalize': Value('n', False),
         # Whether to visualize guided samples
         'visualize': Value('v', False),
         # Specifies the method used for the sample visualization. Possible values: 'flat', 'mono', 'heatmap'. If 'visualize' is set to False, this setting has no effect.

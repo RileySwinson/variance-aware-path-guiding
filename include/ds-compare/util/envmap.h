@@ -327,8 +327,7 @@ struct DS_COMPARE EnvironmentMap {
 			auto px = Converter::uv_to_image(pos, this->bitmap->getSize());
 
 			Float px_lum = get_pixel_luminance(px);
-			Float total_lum = this->bitmap_integral * this->bitmap->getPixelCount();
-			return (px_lum / total_lum);
+			return (px_lum / this->bitmap_integral);
 		}
 		
 		return 0;
