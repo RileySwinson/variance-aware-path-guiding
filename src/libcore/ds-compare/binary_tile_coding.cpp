@@ -179,7 +179,6 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, BTTracker& tracker, bool 
         tracker.increment();
     }
 
-    tracker.increment();
     tracker.set_boundaries(x_bounds, y_bounds);
     return *curr_tile;
 }
@@ -349,7 +348,7 @@ void BinaryTileCoding::construct(DSArguments& init_data)
 {
     SAssert(init_data.btc.tilings > 0);
     SAssert(init_data.btc.tiles_x > 0 && init_data.btc.tiles_y > 0);
-    SAssert(init_data.btc.max_depth > 0);
+    SAssert(init_data.btc.max_depth > -1);
 
     BinaryTileCoding::TILE_DIMS = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
     BinaryTileCoding::TILING_EXCESS = init_data.btc.excess;
