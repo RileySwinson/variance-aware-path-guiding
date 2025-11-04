@@ -6,28 +6,23 @@
 #include <array>
 #include <functional>
 #include <numeric>
-#include <thread>
 #include <algorithm>
 #include <cassert>
 
-#define BTC_NAMESPACE_BEGIN namespace BTC {
-#define BTC_NAMESPACE_END }
+#define TC_NAMESPACE_BEGIN namespace TC {
+#define TC_NAMESPACE_END }
 
-BTC_NAMESPACE_BEGIN
+TC_NAMESPACE_BEGIN
 
-#define BTC_Epsilon   1e-08f
+#define TC_Epsilon    1e-08f
 #define M_PI          3.14159265358979323846f
 #define INV_PI        0.31830988618379067154f
 #define INV_TWOPI     0.15915494309189533577f
 #define INV_FOURPI    0.07957747154594766788f
 
-// Set this to true to enable multithreading which should speed things up a fair bit IFF a somewhat significant number of samples are proccessed at once.
-#define BTC_MULTITHREADING false
-
 struct Sample {
     float phi = 0;
     float theta = 0;
-
     float value = 0;
     float p = 0;
 };
@@ -43,13 +38,6 @@ struct Pair {
 };
 
 struct Util {
-    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    static T clamp(const T& n, const T& lower, const T& upper) {
-        return std::max(lower, std::min(n, upper));
-    };
-};
-
-struct Converter {
 private:
     template<typename T>
     class Mapper
@@ -80,6 +68,11 @@ private:
     };
 
 public:
+    template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+    static T clamp(const T& n, const T& lower, const T& upper) {
+        return std::max(lower, std::min(n, upper));
+    };
+
     /// Converts spherical coordinates [phi, theta] in the domain [0, 2pi) x [0, pi] to uv coordinates in the domain [0, 1)^2
     static Pair<float> spherical_to_uv(const Pair<float>& spherical)
     {
@@ -87,8 +80,8 @@ public:
         float v = spherical.y * INV_PI;
 
         return Pair<float>(
-            Util::clamp(u, 0.0f, 1 - BTC_Epsilon),
-            Util::clamp(v, 0.0f, 1 - BTC_Epsilon)
+            Util::clamp(u, 0.0f, 1 - TC_Epsilon),
+            Util::clamp(v, 0.0f, 1 - TC_Epsilon)
         );
     }
 
@@ -99,8 +92,8 @@ public:
         float theta = M_PI * uv.y;
 
         return Pair<float>(
-            Util::clamp(phi, 0.0f, 2 * M_PI - BTC_Epsilon),
-            Util::clamp(theta, 0.0f, M_PI - BTC_Epsilon)
+            Util::clamp(phi, 0.0f, 2 * M_PI - TC_Epsilon),
+            Util::clamp(theta, 0.0f, M_PI - TC_Epsilon)
         );
     }
 
@@ -155,15 +148,15 @@ struct Transformation {
 
         static TransformationPair<T> cosine(
             [](T value) {
-                int i = std::floor(value);
-                auto sgn = (i % 2 == 0) ? 1 : -1;
-                return 0.5 * (1 - sgn * std::cos(value * M_PI)) + i;
+                auto i = std::floor(value);
+                auto f = value - i;
+                return (1.0 - std::cos(f * M_PI)) * 0.5 + i;
             },
             [](T value) {
                 auto i = std::floor(value);
                 auto f = value - i;
-                auto pos = 1.0 - (2.0 * f);
-                return (std::acos(pos) / M_PI) + i;
+                auto pos = (2.0 * f) - 1.0;
+                return (std::acos(-pos) * INV_PI) + i;
             }
         );
 
@@ -173,6 +166,23 @@ struct Transformation {
 
         return nullptr;
     }
+};
+
+struct BTCArguments {
+    // Number of tilings per BTC structure, default = 3
+    int tilings = 3;
+    // Number of base tiles in both dimensions, default = [1, 1]
+    Pair<int> tiles = Pair<int>(1, 1);
+    // How much the tiling domain exceeds the sample domain, default = 0.1f
+    float excess = 0.1f;
+    // Max. depth per tiling, default = 10
+    int max_depth = 10;
+    // Max. splits per data structure (tilings share this value), default = UINT32_MAX
+    int max_splits = UINT32_MAX;
+    // Chosen confidence interval ranging from 0 (99.9%) to 4 (95%), default = 4
+    int eagerness = 4;
+    // Domain transformation function (keep this as is unless you know what you are doing), default = Spherical
+    Transformation::Domain transformation = Transformation::Domain::Spherical;
 };
 
 struct RandomGen {
@@ -893,200 +903,4 @@ private:
     }
 };
 
-/**
- * @brief Used to specify the direction of an entity, e.g. a split, amongst other things.
- *
- * In the case of a split:
- * HORIZONTAL = divides horizontally, i.e. the split goes from top to bottom.
- * VERTICAL = divides vertically, i.e. the split goes from left to right.
- */
-enum Direction {
-    Horizontal,
-    Vertical
-};
-
-enum TileType {
-    Node,
-    Leaf
-};
-
-/**
- * @brief Helper struct to track tile data.
- */
-struct TileTracker {
-    int depth = 0;
-    Pair<float> x_bounds;
-    Pair<float> y_bounds;
-
-    inline void increment()
-    {
-        this->depth++;
-    }
-
-    inline void boundaries(const Pair<float>& x, const Pair<float>& y)
-    {
-        this->x_bounds = x;
-        this->y_bounds = y;
-    }
-
-    inline Pair<float> clamped(const Direction dir) const
-    {
-        auto bounds = (dir == Horizontal) ? this->x_bounds : this->y_bounds;
-        return Pair<float>(
-            Util::clamp(bounds.x, 0.0f, 1.0f),
-            Util::clamp(bounds.y, 0.0f, 1.0f)
-        );
-    }
-};
-
-/**
- * @brief Tile in a tiling.
- *
- * The most low-level entity in the 'Binary Tile Coding' data structure, storing radiance information
- * in a specific area of the sample space (and beyond). Can be both leaf and non-leaf (node), determined
- * by the should_split() method that returns true if the collected sample statistics implicate that the
- * tile should be split. To access a child, use the tiles vector in combination with the child indices.
- */
-struct BinaryTile {
-    struct TileData {
-        uint32_t sample_count : 31;
-        TileType tile_type : 1;
-
-        TileData() : sample_count(0), tile_type(Leaf) {};
-    };
-
-    struct NodeData {
-        /* ==== Traversal Data (20 bytes) ==== */
-        std::array<float, 2> power = { 0.0f, 0.0f };
-        std::array<uint32_t, 2> children = { UINT32_MAX, UINT32_MAX };
-        Direction split_direction = Horizontal;
-    };
-
-    struct LeafData {
-        /* ==== Statistics (24 bytes) ==== */
-        Pair<float> cov = Pair<float>(0.0f, 0.0f);
-        Pair<float> sample_mean = Pair<float>(0.0f, 0.0f);
-        float m2 = 0;
-        float diff_sum = 0;
-    };
-
-    TileData data;
-    float sum = 0.0f;
-    union {
-        NodeData node;
-        LeafData leaf;
-    };
-
-    BinaryTile(const TileType type)
-    {
-        this->data = TileData();
-        if (type == TileType::Node)
-            this->node = NodeData();
-        else
-            this->leaf = LeafData();
-    };
-
-    /// Returns whether the current tile is a leaf.
-    bool is_leaf() const;
-
-    /// Determines if a leaf tile should be split by performing a One-Sample T-Test against the subdivision threshold.
-    bool should_split(const TileTracker& tracker) const;
-
-    /// Returns the split direction of a leaf tile by calculating the absolute covariance in both x and y direction.
-    Direction split_direction(const TileTracker& tracker) const;
-
-    /// Correctly updates the covariance, variance and mean deviation statistics.
-    void update_statistics(const Sample& sample);
-
-    /// Correctly updates sum and sample count. Must be called after update_statistics()!
-    void update_sum(const Sample& sample);
-
-    /// Returns the area-adjusted mean deviation of the current leaf.
-    float meandev(const TileTracker& tracker) const;
-
-    /// Returns the area-adjusted variance of the current leaf.
-    float var(const TileTracker& tracker) const;
-
-    /// Returns the mean of the radiance stored in this tile.
-    float mean() const;
-
-    /// Returns the normalized area of this tile.
-    float area(const TileTracker& tracker) const;
-
-private:
-    BinaryTile() = default;
-};
-
-/**
- * @brief Tiling containing tiles.
- *
- * Each 'Binary Tiling' can be understood as a collection of tiles that act as binary trees.
- * The number of binary trees depends on the initialization, and is guaranteed to be x * y, where x is
- * the number of tiles in x-direction and y the #tiles in y-direction. If only one tile is stored during
- * the entire construction process, the tiling will only contain a single tree. If, e.g., a tiling is
- * however initialized with x = y = 4, it will contain 16 b-trees, as each base tile acts as its own tree.
- */
-struct BinaryTiling {
-    std::vector<BinaryTile> tiles;
-    Pair<float> x_bounds;
-    Pair<float> y_bounds;
-
-    float total_base_mean = 0.0f;
-    std::vector<float> row_means;
-    std::vector<float> tile_areas;
-
-    /// Finds a tile at a given position within the bounds of this tiling. If find_empty is false, the parent will be returned in case both children are empty.
-    BinaryTile& find_tile(const Pair<float>& pos, bool find_empty = true);
-
-    /// Finds a tile at a given position within the bounds of this tiling, but with the option to pass a TileTracker to obtain further data about the tile. If find_empty is false, the parent will be returned in case both children are empty.
-    BinaryTile& find_tile(const Pair<float>& pos, TileTracker& counter, bool find_empty = true);
-
-    /// Stores a sample in a binary tiling.
-    void insert(const Sample& sample);
-
-    /// Utility function to recursively add the power (mean * area) from all children to their parent tiles.
-    float recurse_statistics(BinaryTile& curr_tile, TileTracker tracker, float& leaf_sum);
-
-    /// Utility function to calculate the planar (!) boundaries of a base tile.
-    std::pair<Pair<float>, Pair<float>> base_tile_bounds(int x, int y) const;
-
-    /// Utility function to obtain the x and y position of a base tile by sampling from a CDF.
-    Pair<int> base_tile_pos(const Pair<float>& pos);
-
-    /// Checks if the children of the passed in tile are both empty, i.e., their mean equals 0.
-    inline bool children_empty(BinaryTile& tile) const;
-
-    /// Transforms a value to the right domain (e.g., spherical, cosine). The user may specify a custom transformation by providing a lambda as last parameter.
-    template <typename T>
-    T transform(T value, bool inverse = false, const std::function<T(T)>& f = nullptr);
-};
-
-/**
- * @brief Uppermost layer of the Binary Tile Coding (BTC).
- */
-struct BinaryTileCoding {
-    static TTable::CI CI;
-    static Transformation::Domain TRANSFORM_MODE;
-    static int MAX_DEPTH;
-    static Pair<int> TILE_DIMS;
-
-    float leaf_sum = 0.0f;
-
-    ~BinaryTileCoding() {}
-
-    void construct(int tilings = 4, Pair<int> tiles = Pair<int>(1, 1), int max_depth = 10, int eagerness = 4, Transformation::Domain trafo = Transformation::Domain::Spherical);
-    void preprocess();
-    void store(std::vector<Sample>& samples);
-    void postprocess();
-
-    Sample sample(Pair<float>& pos);
-    float eval(Pair<float>& pos);
-    void wipe();
-    int memory();
-
-private:
-    static RandomGen random;
-    std::vector<BinaryTiling> tilings;
-};
-
-BTC_NAMESPACE_END
+TC_NAMESPACE_END
