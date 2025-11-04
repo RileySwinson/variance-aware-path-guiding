@@ -94,13 +94,19 @@ float BinaryTile::var() const
     return (this->leaf.m2 / (sample_count - 1));
 }
 
-float BinaryTile::area(const BTTracker& tracker)
+float BinaryTile::area(const BTTracker& tracker, bool transform)
 {
     auto x_clamped = tracker.clamped(Horizontal);
     if (x_clamped.x == x_clamped.y) return 0.0f;
 
     auto y_clamped = tracker.clamped(Vertical);
     if (y_clamped.x == y_clamped.y) return 0.0f;
+
+    if (transform)
+    {
+        y_clamped.x = BinaryTiling::transform(y_clamped.x);
+        y_clamped.y = BinaryTiling::transform(y_clamped.y);
+    }
 
     double d_theta = std::cos(M_PI * y_clamped.x) - std::cos(M_PI * y_clamped.y);
     double d_phi = 2 * M_PI * (x_clamped.y - x_clamped.x);
@@ -173,10 +179,11 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, BTTracker& tracker, bool 
             bounds.x = split; // we're in the right or lower subtree
         }
 
+        tracker.increment();
+        tracker.sum = parent.power[!first_child];
+
         auto index = parent.children[!first_child];
         curr_tile = &this->tiles[index];
-
-        tracker.increment();
     }
 
     tracker.set_boundaries(x_bounds, y_bounds);
@@ -220,10 +227,7 @@ float BinaryTiling::recurse_statistics(BinaryTile& curr_tile, BTTracker tracker,
 {
     if (curr_tile.is_leaf() || children_empty(curr_tile))
     {
-        tracker.y_bounds.x = transform(tracker.y_bounds.x);
-        tracker.y_bounds.y = transform(tracker.y_bounds.y);
-
-        float power = curr_tile.sum * curr_tile.area(tracker);
+        float power = curr_tile.sum * curr_tile.area(tracker, true);
         leaf_sum += power;
 
         return power;
@@ -348,7 +352,8 @@ void BinaryTileCoding::construct(DSArguments& init_data)
 {
     SAssert(init_data.btc.tilings > 0);
     SAssert(init_data.btc.tiles_x > 0 && init_data.btc.tiles_y > 0);
-    SAssert(init_data.btc.max_depth > -1);
+    SAssert(init_data.btc.max_depth >= 0);
+    SAssert(init_data.btc.eagerness > -1 && init_data.btc.eagerness < 5);
 
     BinaryTileCoding::TILE_DIMS = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
     BinaryTileCoding::TILING_EXCESS = init_data.btc.excess;
@@ -461,10 +466,7 @@ void BinaryTileCoding::build()
                 BinaryTile& tile = tiling.tiles[i];
                 float base_power = tiling.recurse_statistics(tile, tracker, this->leaf_sum);
 
-                tracker.y_bounds.x = tiling.transform(tracker.y_bounds.x);
-                tracker.y_bounds.y = tiling.transform(tracker.y_bounds.y);
-
-                float a = tile.area(tracker);
+                float a = tile.area(tracker, true);
                 row_mean += base_power * a;
                 tiling.tile_areas[i] = a;
             }
@@ -551,11 +553,13 @@ Sample BinaryTileCoding::sample(Point2& pos)
         {
             bounds.y = halved;
             curr_tile = first;
+            tracker.sum = power_first;
         }
         else
         {
             bounds.x = halved;
             curr_tile = second;
+            tracker.sum = power_second;
         }
 
         tracker.increment();
@@ -580,12 +584,13 @@ Sample BinaryTileCoding::sample(Point2& pos)
     coords.y = boost::algorithm::clamp(coords.y, 0.0, 1.0 - Epsilon);
 
     // [5] Calculate p(x) based on position
-    float prob = curr_tile->sum;
+    float prob = tracker.sum / curr_tile->area(tracker, true);
     for (int ti = 0; ti < tiling_count; ++ti)
     {
         if (ti == i) continue;
-        BinaryTile& tile = this->tilings[ti].find_tile(coords, false);
-        prob += tile.sum;
+        tracker = BTTracker();
+        BinaryTile& tile = this->tilings[ti].find_tile(coords, tracker, false);
+        prob += tracker.sum / tile.area(tracker, true);
     }
     prob = std::max(Epsilon, prob / this->leaf_sum);
 
@@ -608,8 +613,9 @@ Float BinaryTileCoding::eval(Point2& pos)
     float prob = 0.0f;
     for (auto& tiling : this->tilings)
     {
-        BinaryTile& tile = tiling.find_tile(pos, false);
-        prob += tile.sum;
+        BTTracker tracker;
+        BinaryTile& tile = tiling.find_tile(pos, tracker, false);
+        prob += tracker.sum / tile.area(tracker, true);
     }
 
     return std::max(Epsilon, (prob / this->leaf_sum));

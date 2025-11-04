@@ -26,6 +26,7 @@ enum Direction {
  */
 struct BTTracker {
     int depth = 0;
+    float sum = 0;
     Point2 x_bounds;
     Point2 y_bounds;
 
@@ -142,8 +143,8 @@ struct BinaryTile {
     /// Returns the sample variance of the current leaf.
     float var() const;
 
-    /// Returns the normalized area of this tile.
-    float area(const BTTracker& tracker);
+    /// Returns the area of this tile.
+    float area(const BTTracker& tracker, bool transform = false);
 
     /// Returns whether the current tile is a leaf.
     inline bool is_leaf() const;
@@ -194,7 +195,7 @@ struct BinaryTiling {
 
     /// Transforms a value to the right domain (e.g., spherical, cosine). The user may specify a custom transformation by providing a lambda as last parameter.
     template <typename T>
-    T transform(T value, bool inverse = false, const std::function<T(T)>& f = nullptr);
+    static T transform(T value, bool inverse = false, const std::function<T(T)>& f = nullptr);
 };
 
 /**
