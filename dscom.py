@@ -208,8 +208,7 @@ settings = {
         'Unidirectional': { },
         'Spherical Harmonics': {
             'bands': Range('shb', start=5, end=10, func=lambda x: x + 1),
-            'depth': Range('shd', start=5, end=20, func=lambda x: x + 1),
-            'use_offset': Toggle('sho', True)
+            'depth': Range('shd', start=5, end=20, func=lambda x: x + 1)
         },
         'D-Tree': {
             'frac_loss': Value('dtl', 'none'),
