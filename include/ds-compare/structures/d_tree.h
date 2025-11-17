@@ -173,19 +173,16 @@ struct MTS_EXPORT_CORE DirectionalTree : public DataStructure {
 
     ~DirectionalTree() { }
 
-    void construct(DSArguments& init_data) override;
-    void preprocess() override;
-    void store(std::vector<Sample>& samples) override;
-    void postprocess() override;
-
-    Sample sample(Point2& pos) override;
-    Float eval(Point2& pos) override;
-
-    void wipe() override;
-
-    DSType type() override;
-    std::string name() override;
-    int memory() override;
+    void construct_impl(DSArguments& init_data) override;
+    void preprocess_impl() override;
+    void store_impl(Sample& sample) override;
+    void postprocess_impl(bool last_iteration = false) override;
+    Sample sample_impl(Point2& pos) override;
+    Float eval_impl(Point2& pos) override;
+    void wipe_impl() override;
+    DSType type_impl() override;
+    std::string name_impl() override;
+    int memory_impl() override;
 
     /* PPG funcs from here */
 

@@ -9,32 +9,32 @@ MTS_NAMESPACE_BEGIN
 struct MTS_EXPORT_CORE Unidirectional : public DataStructure {
     ~Unidirectional() { }
 
-    void construct(DSArguments& init_data) override;
+    void construct_impl(DSArguments& init_data) override;
 
-    void preprocess() override;
+    void preprocess_impl() override;
 
-    void store(std::vector<Sample>& samples) override;
+    void store_impl(Sample& sample) override;
 
-    void postprocess() override;
+    void postprocess_impl(bool last_iteration = false) override;
 
-    Sample sample(Point2& pos) override;
+    Sample sample_impl(Point2& pos) override;
 
-    Float eval(Point2& pos) override;
+    Float eval_impl(Point2& pos) override;
 
-    void wipe() override;
+    void wipe_impl() override;
 
-    DSType type() override;
+    DSType type_impl() override;
 
-    std::string name() override;
+    std::string name_impl() override;
 
-    int memory() override;
+    int memory_impl() override;
 
 private:
     Sample::Mode sample_mode;
     ref<Random> random = new Random();
 
     /// Takes a position in spherical coordinates [phi, theta] and returns the pdf at that position.
-    Float pdf(Point2& pos);
+    Float pdf(Point2& pos) const;
 };
 
 MTS_NAMESPACE_END

@@ -7,6 +7,16 @@
 
 MTS_NAMESPACE_BEGIN
 
+#if !defined(STATTRAK_FUNCTION_TIMER)
+    #define STATTRAK_FUNCTION_TIMER(name) \
+       auto stattrak_timer_##__LINE__ = StatTrak::get().scoped_timer(name)
+#endif
+
+#if !defined(STATTRAK_BLOCK_TIMER)
+    #define STATTRAK_BLOCK_TIMER(name) \
+        if (auto stattrak_timer_##__LINE__ = StatTrak::get().scoped_timer(name))
+#endif
+
 enum DS_COMPARE DSType : int;
 
 enum DS_COMPARE MeasureMetric : int {
@@ -61,37 +71,13 @@ struct DS_COMPARE StatTrak {
         this->m_data.clear();
     }
 
-    void timer_start(const std::string& identifier = "")
+    /// Specify which identifiers should be used in the final output. If not specified, all will be used.
+    template<typename... Args>
+    void set_valid_timers(Args&&... args)
     {
-        /* Check if there's even an entry for the currently active ds, if not, create one */
-        auto it = this->m_data.find(this->m_active);
-        if (it == this->m_data.end())
-        {
-            this->m_data[this->m_active];
-        }
-        
-        StatData& data = this->m_data.at(this->m_active);
-        data.m_times.emplace(identifier, std::vector<TimeMeasure>());
-
-        TimeMeasure& measure = get_first_available(data.m_times.at(identifier), true);
-        measure.start = std::chrono::steady_clock::now();
-    }
-
-    void timer_end(const std::string& identifier = "")
-    {
-        auto end_measure = std::chrono::steady_clock::now();
-
-        StatData& data = this->m_data.at(this->m_active);
-
-        auto it = data.m_times.find(identifier);
-        if (it == data.m_times.end())
-        {
-            SLog(EError, "Identifier '%s' could not be found.", identifier.c_str());
-        }
-
-        TimeMeasure& measure = get_first_available(it->second, false);
-        measure.end = end_measure;
-        measure.finished = true;
+        (void)std::initializer_list<int>{
+            (this->whitelist.push_back(std::forward<Args>(args)), 0)...
+        };
     }
 
     /// Obtain the duration between two measured points specified by the identifier for the currently assigned data structure.
@@ -207,6 +193,38 @@ struct DS_COMPARE StatTrak {
         output.close();
     }
 
+
+    class ScopedTimer {
+    public:
+        ScopedTimer(StatTrak& parent, const std::string& identifier) : m_parent(parent), m_identifier(identifier)
+        {
+            this->m_index = this->m_parent.timer_start(this->m_identifier);
+        }
+
+        ~ScopedTimer()
+        {
+            this->m_parent.timer_end(this->m_identifier, this->m_index);
+        }
+
+        ScopedTimer(const ScopedTimer&) = delete;
+        ScopedTimer& operator=(const ScopedTimer&) = delete;
+
+        ScopedTimer(ScopedTimer&&) = default;
+        ScopedTimer& operator=(ScopedTimer&&) = default;
+
+        explicit operator bool() const { return true; }
+
+    private:
+        StatTrak& m_parent;
+        const std::string m_identifier;
+        size_t m_index;
+    };
+
+    ScopedTimer scoped_timer(const std::string& identifier)
+    {
+        return ScopedTimer(*this, identifier);
+    }
+
     StatTrak(StatTrak const&)       = delete;
     void operator=(StatTrak const&) = delete;
 private:
@@ -220,21 +238,66 @@ private:
 
     DSType m_active;
     std::map<DSType, StatData> m_data;
+    std::vector<std::string> whitelist;
 
-    TimeMeasure& get_first_available(std::vector<TimeMeasure>& slots, bool rec_start)
+    size_t timer_start(const std::string& identifier = "")
     {
-        for (auto& slot : slots)
+        /* Cancel if the identifier isn't whitelisted */
+        if (std::find(this->whitelist.begin(), this->whitelist.end(), identifier) == this->whitelist.end())
         {
-            if (slot.finished) continue;
-            if (rec_start && slot.start) SLog(EError, "Attempting to start a timer before finishing the previous segment.");
-
-            return slot;
+            return 0;
         }
 
-        if (!rec_start) SLog(EError, "Attempting to stop a timer although there is no active timer running.");
+        /* Check if there's even an entry for the currently active ds, if not, create one */
+        auto it = this->m_data.find(this->m_active);
+        if (it == this->m_data.end())
+        {
+            this->m_data[this->m_active];
+        }
 
+        std::vector<TimeMeasure>& slots = this->m_data.at(this->m_active).m_times[identifier];
         slots.push_back(TimeMeasure());
-        return slots.back();
+
+        slots.back().start = std::chrono::steady_clock::now();
+
+        return slots.size() - 1;
+    }
+
+    void timer_end(const std::string& identifier = "", size_t slot_index = 0)
+    {
+        /* Cancel if the identifier isn't whitelisted */
+        if (std::find(this->whitelist.begin(), this->whitelist.end(), identifier) == this->whitelist.end())
+        {
+            return;
+        }
+
+        auto end_measure = std::chrono::steady_clock::now();
+
+        StatData& data = this->m_data.at(this->m_active);
+
+        auto it = data.m_times.find(identifier);
+        if (it == data.m_times.end())
+        {
+            SLog(EError, "Identifier '%s' could not be found.", identifier.c_str());
+            return;
+        }
+
+        std::vector<TimeMeasure>& slots = it->second;
+        if (slot_index >= slots.size())
+        {
+            SLog(EError, "Timer slot index %zu is out of bounds for identifier '%s'.", slot_index, identifier.c_str());
+            return;
+        }
+
+        TimeMeasure& measure = slots[slot_index];
+        if (measure.finished)
+        {
+            SLog(EError, "Timer for '%s' at slot %zu was already finished.", identifier.c_str(), slot_index);
+            return;
+        }
+
+        measure.end = end_measure;
+        measure.finished = true;
     }
 
     Float get_duration_helper(const TimesMap& times, const std::string& identifier, const int slot)

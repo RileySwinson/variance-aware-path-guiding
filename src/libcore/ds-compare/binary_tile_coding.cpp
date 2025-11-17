@@ -348,7 +348,7 @@ uint32_t BinaryTileCoding::MAX_SPLITS = UINT32_MAX;
 TTable::CI BinaryTileCoding::CI = TTable::CI::P999;
 TCParams::Transformation BinaryTileCoding::TRANSFORM_MODE = TCParams::Transformation::Spherical;
 
-void BinaryTileCoding::construct(DSArguments& init_data)
+void BinaryTileCoding::construct_impl(DSArguments& init_data)
 {
     SAssert(init_data.btc.tilings > 0);
     SAssert(init_data.btc.tiles_x > 0 && init_data.btc.tiles_y > 0);
@@ -365,7 +365,7 @@ void BinaryTileCoding::construct(DSArguments& init_data)
     this->tilings = std::vector<BinaryTiling>(init_data.btc.tilings);
 }
 
-void BinaryTileCoding::preprocess()
+void BinaryTileCoding::preprocess_impl()
 {
     // Allocate tiles space
     int base_tiles = TILE_DIMS.x * TILE_DIMS.y;
@@ -406,13 +406,13 @@ void BinaryTileCoding::preprocess()
     }
 }
 
-void BinaryTileCoding::store(std::vector<Sample>& samples)
+void BinaryTileCoding::store_impl(Sample& sample)
 {
 #if BTC_MULTITHREADING
     auto insert = [&](BinaryTiling& tiling) {
         for (auto& sample : samples)
         {
-            tiling.insert(sample, split_count);
+            tiling.insert(sample, this->split_count);
         }
     };
     
@@ -431,16 +431,11 @@ void BinaryTileCoding::store(std::vector<Sample>& samples)
         }
     }
 #else
-    for (auto& sample : samples)
+    for (auto& tiling : this->tilings)
     {
-        for (auto& tiling : this->tilings)
-        {
-            tiling.insert(sample, split_count);
-        }
+        tiling.insert(sample, this->split_count);
     }
 #endif
-
-    build();
 }
 
 void BinaryTileCoding::build()
@@ -479,15 +474,20 @@ void BinaryTileCoding::build()
     }
 }
 
-void BinaryTileCoding::postprocess()
+void BinaryTileCoding::postprocess_impl(bool last_iteration)
 {
-    for (BinaryTiling& tiling : this->tilings)
+    build();
+
+    if (last_iteration)
     {
-        tiling.tiles.shrink_to_fit();
+        for (BinaryTiling& tiling : this->tilings)
+        {
+            tiling.tiles.shrink_to_fit();
+        }
     }
 }
 
-Sample BinaryTileCoding::sample(Point2& pos)
+Sample BinaryTileCoding::sample_impl(Point2& pos)
 {
     if (this->leaf_sum <= 0.0f)
     {
@@ -495,7 +495,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
 
         Sample empty = {
             .value = 0,
-            .pdf = INV_FOURPI,
+            .pdf = INV_FOURPI * std::sin(random.y),
             .theta = std::acos(1.0f - 2.0f * random.y),
             .phi = 2.0f * M_PI * random.x
         };
@@ -531,10 +531,10 @@ Sample BinaryTileCoding::sample(Point2& pos)
     while (!curr_tile->is_leaf())
     {
         InternalNode& parent = curr_tile->internal;
-        BinaryTile* first = &tiling.tiles[parent.children[0]];
-        BinaryTile* second = &tiling.tiles[parent.children[1]];
+        float power_first = parent.power[0];
+        float power_second = parent.power[1];
 
-        if (first->sum == 0 && second->sum == 0)
+        if (power_first == 0 && power_second == 0)
         {
             break;
         }
@@ -543,22 +543,19 @@ Sample BinaryTileCoding::sample(Point2& pos)
         Point2& bounds = h_split ? x_bounds : y_bounds;
         Float halved = (bounds.x + bounds.y) * 0.5;
 
-        float power_first = std::max(Epsilon, parent.power[0]);
-        float power_second = std::max(Epsilon, parent.power[1]);
-
         Float random = BinaryTileCoding::random.next1D();
         float split = power_first / (power_first + power_second);
 
         if (random < split)
         {
             bounds.y = halved;
-            curr_tile = first;
+            curr_tile = &tiling.tiles[parent.children[0]];
             tracker.sum = power_first;
         }
         else
         {
             bounds.x = halved;
-            curr_tile = second;
+            curr_tile = &tiling.tiles[parent.children[1]];
             tracker.sum = power_second;
         }
 
@@ -603,7 +600,7 @@ Sample BinaryTileCoding::sample(Point2& pos)
     return sample;
 }
 
-Float BinaryTileCoding::eval(Point2& pos)
+Float BinaryTileCoding::eval_impl(Point2& pos)
 {
     if (this->leaf_sum <= 0.0f)
     {
@@ -621,7 +618,7 @@ Float BinaryTileCoding::eval(Point2& pos)
     return std::max(Epsilon, (prob / this->leaf_sum));
 }
 
-void BinaryTileCoding::wipe()
+void BinaryTileCoding::wipe_impl()
 {
     this->leaf_sum = 0.0f;
     this->split_count = 0;
@@ -632,17 +629,17 @@ void BinaryTileCoding::wipe()
     }
 }
 
-DSType BinaryTileCoding::type()
+DSType BinaryTileCoding::type_impl()
 {
     return DSType::DS_BinaryTileCoding;
 }
 
-std::string BinaryTileCoding::name()
+std::string BinaryTileCoding::name_impl()
 {
     return "Binary Tile Coding";
 }
 
-int BinaryTileCoding::memory()
+int BinaryTileCoding::memory_impl()
 {
     size_t total_size = sizeof(*this);
     total_size += this->tilings.capacity() * sizeof(BinaryTiling);

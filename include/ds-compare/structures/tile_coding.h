@@ -25,25 +25,29 @@ struct GuidingMap {
 struct MTS_EXPORT_CORE TileCoding : public DataStructure {
     ~TileCoding() { }
 
-    void construct(DSArguments& init_data) override;
-    void preprocess() override;
-    void store(std::vector<Sample>& samples) override;
-    void postprocess() override;
+    void construct_impl(DSArguments& init_data) override;
+    void preprocess_impl() override;
+    void store_impl(Sample& sample) override;
+    void postprocess_impl(bool last_iteration = false) override;
 
-    Sample sample(Point2& pos) override;
-    Float eval(Point2& pos) override;
-    void wipe() override;
-    DSType type() override;
-    std::string name() override;
-    int memory() override;
+    Sample sample_impl(Point2& pos) override;
+    Float eval_impl(Point2& pos) override;
+    void wipe_impl() override;
+    DSType type_impl() override;
+    std::string name_impl() override;
+    int memory_impl() override;
 
 private:
     std::vector<Tiling> tilings;
     GuidingMap guiding_map;
+
     int m_tiling_count = 4;
     Point2i m_tiling_dims; // x = width, y = height
     Sample::Mode m_mode;
     TCParams::Transformation m_transform_mode;
+
+    std::vector<Point2> m_tiling_origin;
+    Point2 m_tiling_len;
     
     Float m_integral = 0;
     std::vector<Float> m_cdf;

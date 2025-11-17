@@ -22,7 +22,7 @@ float GuidingMap::get(int pos)
     return t.sum;
 }
 
-void TileCoding::construct(DSArguments& init_data)
+void TileCoding::construct_impl(DSArguments& init_data)
 {
     SAssert(init_data.tc.tilings > 0 && init_data.tc.tiles_x > 0 && init_data.tc.tiles_y > 0);
 
@@ -32,7 +32,7 @@ void TileCoding::construct(DSArguments& init_data)
     this->m_transform_mode = init_data.tc.transformation_mode;
 }
 
-void TileCoding::preprocess()
+void TileCoding::preprocess_impl()
 {
     empty_tilings();
 
@@ -43,66 +43,85 @@ void TileCoding::preprocess()
 
     this->guiding_map.tiles.resize(inner.x * inner.y);
     this->guiding_map.dims = inner;
-}
-
-void TileCoding::store(std::vector<Sample>& samples)
-{
-    const auto dims_x = this->m_tiling_dims.x;
-    const auto dims_y = this->m_tiling_dims.y;
 
     // Calculate offset
     int total_shifts = this->m_tiling_count - 1;
     Point2 shift(
-        1.0 / (dims_x * this->m_tiling_count - total_shifts),
-        1.0 / (dims_y * this->m_tiling_count - total_shifts)
+        1.0 / (this->m_tiling_dims.x * this->m_tiling_count - total_shifts),
+        1.0 / (this->m_tiling_dims.y * this->m_tiling_count - total_shifts)
     );
 
-    Float x_len = 1 + (total_shifts * shift.x);
-    Float y_len = 1 + (total_shifts * shift.y);
+    this->m_tiling_len = Point2(
+        1 + (total_shifts * shift.x),
+        1 + (total_shifts * shift.y)
+    );
 
-    // Store samples by mapping (sample range & offset) -> [0, 1) -> [0, dim(axis))
-    for (const auto& sample : samples)
+	this->m_tiling_origin.reserve(this->m_tiling_count);
+    for (int ti = 0; ti < this->m_tiling_count; ++ti)
     {
-        Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
-        uv.y = transform(uv.y, true);
+        Point2 t_origin(0 - (ti * shift.x), 0 - (ti * shift.y));
+        this->m_tiling_origin.push_back(t_origin);
+    }
+}
 
-        for (int ti = 0; ti < this->m_tiling_count; ++ti)
-        {
-            Tiling& tiling = this->tilings[ti];
+void TileCoding::store_impl(Sample& sample)
+{
+    const auto dims_x = this->m_tiling_dims.x;
+    const auto dims_y = this->m_tiling_dims.y;
 
-            Point2 t_origin(0 - (ti * shift.x), 0 - (ti * shift.y));
+    Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
+    uv.y = transform(uv.y, true);
 
-            Float x_warped = Converter::map(uv.x).from({ t_origin.x, t_origin.x + x_len }).to({ 0.0, 1.0 });
-            Float y_warped = Converter::map(uv.y).from({ t_origin.y, t_origin.y + y_len }).to({ 0.0, 1.0 });
+    for (int ti = 0; ti < this->m_tiling_count; ++ti)
+    {
+		Point2& t_origin = this->m_tiling_origin[ti];
+        Float x_warped = Converter::map(uv.x).from({ t_origin.x, t_origin.x + this->m_tiling_len.x }).to({ 0.0, 1.0 });
+        Float y_warped = Converter::map(uv.y).from({ t_origin.y, t_origin.y + this->m_tiling_len.y }).to({ 0.0, 1.0 });
 
-            Point2i index(
-                x_warped * dims_x,
-                y_warped * dims_y
-            );
+        Point2i index(
+            x_warped * dims_x,
+            y_warped * dims_y
+        );
 
-            if (index.x == dims_x) index.x--;
-            if (index.y == dims_y) index.y--;
+        if (index.x == dims_x) index.x--;
+        if (index.y == dims_y) index.y--;
 
-            int i = (index.y * dims_x) + index.x;
-            Tile& tile = tiling[i];
-            tile.sum += sample.value / sample.pdf;
-        }
+        Tiling& tiling = this->tilings[ti];
+        int i = (index.y * dims_x) + index.x;
+        Tile& tile = tiling[i];
+        tile.sum += sample.value / sample.pdf;
+	}
+}
+
+void TileCoding::postprocess_impl(bool last_iteration)
+{
+	build_map();
+	calc_cdf();
+    empty_tilings();
+
+    /* Wipe tilings completely -- we only need the map */
+    if (last_iteration)
+    {
+        this->tilings.clear();
+        this->tilings.shrink_to_fit();
+    }
+}
+
+Sample TileCoding::sample_impl(Point2& sample)
+{
+    if (this->m_total_sum <= 0)
+    {
+        Point2 rng = this->random.next2D();
+
+        Sample empty;
+        empty.value = 0;
+        empty.pdf = 1.0 / (4 * M_PI);
+        empty.phi = 2 * M_PI * rng.x;
+        empty.theta = std::acos(1 - 2 * rng.y);
+
+		return empty;
     }
 
-    build_map();
-    calc_cdf();
-    empty_tilings();
-}
-
-void TileCoding::postprocess()
-{
-    /* Wipe tilings completely -- we only need the map */
-    this->tilings.clear();
-    this->tilings.shrink_to_fit();
-}
-
-Sample TileCoding::sample(Point2& sample)
-{
     int total_shifts = this->m_tiling_count - 1;
     int x_len = (this->m_tiling_dims.x * this->m_tiling_count) - total_shifts;
     int y_len = this->m_cdf.size();
@@ -148,12 +167,12 @@ Sample TileCoding::sample(Point2& sample)
     return sample_data;
 }
 
-Float TileCoding::eval(Point2& pos)
+Float TileCoding::eval_impl(Point2& pos)
 {
     return pdf(pos);
 }
 
-void TileCoding::wipe()
+void TileCoding::wipe_impl()
 {
     this->guiding_map.tiles.clear();
     this->m_cdf.clear();
@@ -161,17 +180,17 @@ void TileCoding::wipe()
     this->m_total_sum = 0;
 }
 
-DSType TileCoding::type()
+DSType TileCoding::type_impl()
 {
     return DSType::DS_TileCoding;
 }
 
-std::string TileCoding::name()
+std::string TileCoding::name_impl()
 {
     return "Tile Coding";
 }
 
-int TileCoding::memory()
+int TileCoding::memory_impl()
 {
     size_t size_self = sizeof(*this);
     size_t size_tilings = this->tilings.capacity() * sizeof(Tiling);

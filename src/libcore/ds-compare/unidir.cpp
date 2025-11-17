@@ -2,27 +2,27 @@
 
 MTS_NAMESPACE_BEGIN
 
-void Unidirectional::construct(DSArguments& init_data)
+void Unidirectional::construct_impl(DSArguments& init_data)
 {
     this->sample_mode = init_data.comparer.mode;
 }
 
-void Unidirectional::preprocess()
+void Unidirectional::preprocess_impl()
 {
     return;
 }
 
-void Unidirectional::store(std::vector<Sample>& samples)
+void Unidirectional::store_impl(Sample& sample)
 {
     return; // We don't want to store anything for unguided unidirectional path tracing
 }
 
-void Unidirectional::postprocess()
+void Unidirectional::postprocess_impl(bool last_iteration)
 {
     return;
 }
 
-Sample Unidirectional::sample(Point2& pos)
+Sample Unidirectional::sample_impl(Point2& pos)
 {
     // If the mode is set to cosine, we only want to return samples from the upper hemisphere.
     // Otherwise, return one over the the whole sphere.
@@ -45,28 +45,28 @@ Sample Unidirectional::sample(Point2& pos)
     return sample;
 }
 
-Float Unidirectional::eval(Point2& pos)
+Float Unidirectional::eval_impl(Point2& pos)
 {
     Point2 coords = Converter::uv_to_spherical(pos);
     return pdf(coords);
 }
 
-void Unidirectional::wipe()
+void Unidirectional::wipe_impl()
 {
     return;
 }
 
-DSType Unidirectional::type()
+DSType Unidirectional::type_impl()
 {
     return DSType::DS_Unidirectional;
 }
 
-std::string Unidirectional::name()
+std::string Unidirectional::name_impl()
 {
     return "Unidirectional";
 }
 
-Float Unidirectional::pdf(Point2& coords)
+Float Unidirectional::pdf(Point2& coords) const
 {
     if (this->sample_mode == Sample::Mode::Cosine)
         return std::max((Float) 0, INV_PI * std::cos(coords.y));
@@ -74,7 +74,7 @@ Float Unidirectional::pdf(Point2& coords)
     return INV_FOURPI;
 }
 
-int Unidirectional::memory()
+int Unidirectional::memory_impl()
 {
     return 0; // In a real path tracing setting no data structure is used, hence we return 0.
 }

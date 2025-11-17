@@ -24,6 +24,34 @@ enum DS_COMPARE DSType : int {
 };
 
 /**
+ * \brief Possible data structure learning strategies.
+ */
+enum DS_COMPARE DSLearningStrategy : int {
+    Preprocess,
+    Forward
+};
+
+inline std::istream& operator>>(std::istream& in, DSLearningStrategy& strategy)
+{
+    std::string token;
+    in >> token;
+
+    if (token == "preprocess")
+    {
+        strategy = DSLearningStrategy::Preprocess;
+        return in;
+    }
+    if (token == "forward")
+    {
+        strategy = DSLearningStrategy::Forward;
+        return in;
+    }
+
+    in.setstate(std::ios_base::failbit);
+    return in;
+};
+
+/**
  * Storage struct for the various parameters a data structure must need. This is passed
  * into each construct(), where data structures can then individually fetch the needed information for initialization.
  * If a value is missing, the missing value may be added by the user.
@@ -33,13 +61,13 @@ struct DS_COMPARE DSArguments {
         std::string path = "./data/tests/envmaps/";
         std::string result_path = "./data/results";
         Sample::Mode mode = Sample::Mode::Sphere;
-        uint32_t samples_learning = 16384; // 2^14
-        uint32_t samples_guiding = 65536; // 2^16
+        uint32_t samples_learning = 65536; // 2^16
+        uint32_t samples_evaluating = 1048576; // 2^20
         std::vector<int> blacklist;
         bool visualize = true;
         EnvironmentMap::VisualizationMode vis_mode = EnvironmentMap::VisualizationMode::Mono;
 
-        Sample::Strategy strategy = Sample::Strategy::Preprocess;
+        DSLearningStrategy strategy = DSLearningStrategy::Forward;
         uint32_t samples_start = 4;
         Float chance = 0.75;
     };
@@ -52,7 +80,6 @@ struct DS_COMPARE DSArguments {
     struct SH {
         int bands = 7;
         int depth = 12;
-        bool use_offset = true;
     };
     
     struct DTree {
@@ -69,19 +96,19 @@ struct DS_COMPARE DSArguments {
 
     struct TC {
         int tilings = 4;
-        int tiles_x = 16;
-        int tiles_y = 8;
+        int tiles_x = 32;
+        int tiles_y = 16;
         TCParams::Transformation transformation_mode = TCParams::Transformation::Spherical;
     };
 
     struct BTC {
-        int tilings = 4;
+        int tilings = 3;
         int tiles_x = 1;
         int tiles_y = 1;
         uint32_t max_depth = 10;
         uint32_t max_splits = UINT32_MAX;
-        int eagerness = 0;
-        float excess = 0.2f;
+        int eagerness = 4;
+        float excess = 0.1f;
         TCParams::Transformation transformation_mode = TCParams::Transformation::Spherical;
     };
 
@@ -104,34 +131,74 @@ struct DS_COMPARE DataStructure {
     virtual ~DataStructure() { }
 
     /// Calls all relevant functions and initializes the data structure in such a way that it is ready-to-use for data storage.
-    virtual void construct(DSArguments& init_data) = 0;
+    void construct(DSArguments& init_data)
+    {
+        STATTRAK_FUNCTION_TIMER("::construct");
+		this->construct_impl(init_data);
+    }
 
     /// Performs operations after construction but before storage, if necessary.
-    virtual void preprocess() = 0;
-
-    /// Stores a number of samples into the data structure.
-    virtual void store(std::vector<Sample>& samples) = 0;
-
+    void preprocess()
+    {
+        STATTRAK_FUNCTION_TIMER("::preprocess");
+		this->preprocess_impl();
+    }
+    
+    /// Stores a sample into the data structure.
+    void store(Sample& sample)
+    {
+        STATTRAK_FUNCTION_TIMER("::store");
+		this->store_impl(sample);
+    }
+    
     /// Performs operations after storage but before sampling, if necessary.
-    virtual void postprocess() = 0;
-
+    void postprocess(bool last_iteration = false)
+    {
+        STATTRAK_FUNCTION_TIMER("::postprocess");
+		this->postprocess_impl(last_iteration);
+    }
+    
     /// Obtains a sample from the underlying approximation that is stored in the data structure.
-    virtual Sample sample(Point2& pos) = 0;
-
+    Sample sample(Point2& pos)
+    {
+        STATTRAK_FUNCTION_TIMER("::sample");
+		return this->sample_impl(pos);
+    }
+    
     /// Evaluates the underlying sampling pdf at a given position in the domain [0, 1)^2.
-    virtual Float eval(Point2& pos) = 0;
-
+    Float eval(Point2& pos)
+    {
+        STATTRAK_FUNCTION_TIMER("::eval");
+		return this->eval_impl(pos);
+    }
+    
     /// Clears the entire data structure such that it is back to its initial, empty state.
-    virtual void wipe() = 0;
-
+    void wipe()
+    {
+        STATTRAK_FUNCTION_TIMER("::wipe");
+		this->wipe_impl();
+    }
+    
     /// Returns the type of the data structure, see DSType.
-    virtual DSType type() = 0;
-
+    DSType type()
+    {
+        STATTRAK_FUNCTION_TIMER("::type");
+		return this->type_impl();
+    }
+    
     /// Returns the name of the data structure.
-    virtual std::string name() = 0;
-
+    std::string name()
+    {
+        STATTRAK_FUNCTION_TIMER("::name");
+		return this->name_impl();
+    }
+    
     /// Obtains the approximate memory footprint for this data structure (in bytes).
-    virtual int memory() = 0;
+    int memory()
+    {
+        STATTRAK_FUNCTION_TIMER("::memory");
+		return this->memory_impl();
+    }
 
     /* ==== Miscellaneous ==== */
 
@@ -141,6 +208,18 @@ struct DS_COMPARE DataStructure {
         if (start == end) return false;
         return (std::find(start, end, type()) != end);
     }
+
+protected:
+    virtual void construct_impl(DSArguments& init_data) = 0;
+    virtual void preprocess_impl() = 0;
+    virtual void store_impl(Sample& sample) = 0;
+    virtual void postprocess_impl(bool last_iteration = false) = 0;
+    virtual Sample sample_impl(Point2& pos) = 0;
+    virtual Float eval_impl(Point2& pos) = 0;
+    virtual void wipe_impl() = 0;
+    virtual DSType type_impl() = 0;
+    virtual std::string name_impl() = 0;
+    virtual int memory_impl() = 0;
 };
 
 /**

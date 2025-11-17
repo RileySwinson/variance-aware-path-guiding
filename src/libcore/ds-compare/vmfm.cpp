@@ -2,7 +2,7 @@
 
 MTS_NAMESPACE_BEGIN
 
-void VMFM::construct(DSArguments& init_data)
+void VMFM::construct_impl(DSArguments& init_data)
 {
     if (init_data.vmf.use_ruppert)
     {
@@ -22,42 +22,42 @@ void VMFM::construct(DSArguments& init_data)
     }
 }
 
-void VMFM::preprocess()
+void VMFM::preprocess_impl()
 {
     return;
 }
 
-void VMFM::store(std::vector<Sample>& input_samples)
+void VMFM::store_impl(Sample& sample)
 {
-    std::vector<VMMSample> samples;
-
-    for (const auto& sample : input_samples)
+    if (sample.pdf == 0)
     {
-        if (sample.pdf == 0)
-        {
-            continue;
-        }
-
-        Vector3 direction(
-            std::sin(sample.theta) * std::cos(sample.phi),
-            std::sin(sample.theta) * std::sin(sample.phi),
-            std::cos(sample.theta)
-        );
-
-        samples.emplace_back(
-            VMMSample(Point3(), direction, sample.value / sample.pdf, sample.pdf, Epsilon)
-        );
+        return;
     }
 
-    boost::apply_visitor(FitVisitor(samples), this->strategy.get());
+    Vector3 direction(
+        std::sin(sample.theta) * std::cos(sample.phi),
+        std::sin(sample.theta) * std::sin(sample.phi),
+        std::cos(sample.theta)
+    );
+
+    this->curr_samples.emplace_back(
+        VMMSample(Point3(), direction, sample.value / sample.pdf, sample.pdf, Epsilon)
+    );
 }
 
-void VMFM::postprocess()
+void VMFM::postprocess_impl(bool last_iteration)
 {
-    return;
+    boost::apply_visitor(FitVisitor(this->curr_samples), this->strategy.get());
+
+    if (last_iteration)
+    {
+		this->sample_memory = this->curr_samples.size() * sizeof(VMMSample);
+    }
+
+    this->curr_samples.clear();
 }
 
-Sample VMFM::sample(Point2& pos)
+Sample VMFM::sample_impl(Point2& pos)
 {
     VMM4& vmm = this->strategy.vmm();
 
@@ -77,7 +77,7 @@ Sample VMFM::sample(Point2& pos)
     return sample;
 }
 
-Float VMFM::eval(Point2& pos)
+Float VMFM::eval_impl(Point2& pos)
 {
     Point2 spherical = Converter::uv_to_spherical(pos);
     Vector3 directional(
@@ -90,29 +90,30 @@ Float VMFM::eval(Point2& pos)
     return vmm.pdf(directional);
 }
 
-void VMFM::wipe()
+void VMFM::wipe_impl()
 {
     boost::apply_visitor(WipeVisitor(), this->strategy.get());
 }
 
-std::string VMFM::name()
+std::string VMFM::name_impl()
 {
     return "Von-Mises-Fisher Mixture";
 }
 
-DSType VMFM::type()
+DSType VMFM::type_impl()
 {
     return DSType::DS_VMFMixture;
 }
 
-int VMFM::memory()
+int VMFM::memory_impl()
 {
     // It completely suffices to call sizeof, as there is no dynamic storage or
     // similar used in this vMFM implementation. This obviously only serves as a
     // lower bound, as there still may be platform-dependent dynamic allocations
     // happening, but this generally applies to all memory approximations.
+    auto vmm_memory = sizeof(this->strategy.vmm());
 
-    return sizeof(this->strategy.vmm());
+    return vmm_memory + this->sample_memory;
 }
 
 MTS_NAMESPACE_END

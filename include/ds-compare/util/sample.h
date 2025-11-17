@@ -4,6 +4,7 @@
 #define __DSCOMPARE_UTIL_SAMPLE_H_
 
 #include <ds-compare/util/_definitions.h>
+#include <ds-compare/util/converter.h>
 
 MTS_NAMESPACE_BEGIN
 
@@ -18,11 +19,6 @@ struct DS_COMPARE Sample {
 		Cosine,
 		Native,
 		Sphere
-	};
-
-	enum Strategy {
-		Preprocess,
-		Forward
 	};
 
 	friend std::istream& operator>>(std::istream& in, Sample::Mode& mode)
@@ -43,26 +39,6 @@ struct DS_COMPARE Sample {
 		if (token == "sphere")
 		{
 			mode = Sample::Mode::Sphere;
-			return in;
-		}
-
-		in.setstate(std::ios_base::failbit);
-		return in;
-	};
-
-	friend std::istream& operator>>(std::istream& in, Sample::Strategy& strategy)
-	{
-		std::string token;
-		in >> token;
-
-		if (token == "preprocess")
-		{
-			strategy = Sample::Strategy::Preprocess;
-			return in;
-		}
-		if (token == "forward")
-		{
-			strategy = Sample::Strategy::Forward;
 			return in;
 		}
 
@@ -100,11 +76,23 @@ struct DS_COMPARE Sample {
 };
 
 struct SampleStorage {
+	SampleStorage(const Vector2i& map_dims, const std::vector<Sample>& flat_samples) : map_dims(map_dims), samples(flat_samples) { }
+	SampleStorage(const Vector2i& map_dims, std::vector<Sample>&& flat_samples) : map_dims(map_dims), samples(std::move(flat_samples)) { }
 	SampleStorage(const Vector2i& map_dims) : map_dims(map_dims) { }
-
-	void store(const Point2i& im_coords, Sample sample)
+	SampleStorage(const Vector2i& map_dims, std::size_t size) : map_dims(map_dims)
 	{
+		this->samples.reserve(size);
+	}
+	
+	void store(Sample sample)
+	{
+		this->samples.push_back(sample);
+
+		Point2 spherical(sample.phi, sample.theta);
+		auto uv_coords = Converter::spherical_to_uv(spherical);
+		auto im_coords = Converter::uv_to_image(uv_coords, this->map_dims);
 		int pos = (im_coords.y * this->map_dims.x) + im_coords.x;
+
 		this->umap_samples[pos].push_back(sample);
 	}
 
@@ -123,26 +111,20 @@ struct SampleStorage {
 
 	inline std::size_t max() const
 	{
+		if (this->umap_samples.empty()) return 0;
+
 		return std::max_element(
 			this->umap_samples.begin(), 
 			this->umap_samples.end(),
-			[](const auto& a, const auto& b) { 
+			[](const auto& a, const auto& b) {
 				return a.second.size() < b.second.size();
 			}
 		)->second.size();
 	}
 
-	std::vector<Sample> to_flat(std::size_t init_size = 0) const
+	std::vector<Sample> to_flat() const
 	{
-		std::vector<Sample> flat_vector;
-		flat_vector.reserve(init_size);
-
-		for (const auto& observation : this->umap_samples)
-		{
-			flat_vector.insert(flat_vector.end(), observation.second.begin(), observation.second.end());
-		}
-
-		return flat_vector;
+		return this->samples;
 	}
 
 	void write(const std::string& path)
@@ -169,8 +151,9 @@ struct SampleStorage {
 	}
 
 private:
+	Vector2i map_dims;
 	std::unordered_map<uint32_t, std::vector<Sample>> umap_samples;
-	const Vector2i map_dims;
+	std::vector<Sample> samples;
 };
 
 MTS_NAMESPACE_END

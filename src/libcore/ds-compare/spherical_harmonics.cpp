@@ -36,7 +36,7 @@ SphericalHarmonics::SphericalHarmonics(Stream* stream) {
         m_coeffs[i] = stream->readFloat();
 }
 
-void SphericalHarmonics::construct(DSArguments& init_data)
+void SphericalHarmonics::construct_impl(DSArguments& init_data)
 { 
     SAssert(init_data.sh.bands > 0);
     SAssert(init_data.sh.depth > 0);
@@ -44,25 +44,29 @@ void SphericalHarmonics::construct(DSArguments& init_data)
     *this = SphericalHarmonics(init_data.sh.bands);
 
     this->sampler = new SphericalHarmonicsSampler(init_data.sh.bands, init_data.sh.depth);
-    this->m_sample_mode = init_data.comparer.mode;
-    this->m_use_offset = init_data.sh.use_offset;
+    this->m_curr_samples.reserve((std::size_t) (init_data.comparer.samples_learning * 0.5));
 
     staticInitialization();
 }
 
-void SphericalHarmonics::preprocess()
+void SphericalHarmonics::preprocess_impl()
 {
     return;
 }
 
-void SphericalHarmonics::store(std::vector<Sample>& samples)
+void SphericalHarmonics::store_impl(Sample& sample)
+{
+    this->m_curr_samples.push_back(sample);
+}
+
+void SphericalHarmonics::postprocess_impl(bool last_iteration)
 {
     int total_bands = getBands();
-    int batch_samples = samples.size();
+    int batch_samples = this->m_curr_samples.size();
 
     for (int s_i = 0; s_i < batch_samples; ++s_i)
     {
-        Sample sample = samples.at(s_i);
+        Sample sample = this->m_curr_samples[s_i];
 
         Float theta = sample.theta, cos_theta = std::cos(theta);
         Float phi = sample.phi;
@@ -77,21 +81,18 @@ void SphericalHarmonics::store(std::vector<Sample>& samples)
                 const Float P = legendreP(l, std::abs(m), cos_theta);
 
                 const Float coeff_val = factor1 * factor2 * K * P;
-                operator()(l, m, false) += (sample.value / sample.pdf) * coeff_val;
+                operator()(l, m) += (sample.value / sample.pdf) * coeff_val;
             }
         }
     }
 
+    this->m_num_samples_curr = batch_samples;
     this->m_num_samples += batch_samples;
-    update_usable_coeffs();
+    this->m_curr_samples.clear();
+    update_coeffs();
 }
 
-void SphericalHarmonics::postprocess()
-{
-    return;
-}
-
-Sample SphericalHarmonics::sample(Point2& pos)
+Sample SphericalHarmonics::sample_impl(Point2& pos)
 {
     if (pos.x < 0.0 || pos.y < 0.0 || pos.x >= 1.0 || pos.y >= 1.0)
     {
@@ -114,39 +115,40 @@ Sample SphericalHarmonics::sample(Point2& pos)
     return sample;
 }
 
-Float SphericalHarmonics::eval(Point2& pos)
+Float SphericalHarmonics::eval_impl(Point2& pos)
 {
     Point2 coords = Converter::uv_to_spherical(pos);
     return std::max(Epsilon, eval(coords.y, coords.x));
 }
 
-void SphericalHarmonics::wipe()
+void SphericalHarmonics::wipe_impl()
 {
     this->clear();
 }
 
-DSType SphericalHarmonics::type()
+DSType SphericalHarmonics::type_impl()
 {
     return DSType::DS_SphericalHarmonics;
 }
 
-std::string SphericalHarmonics::name()
+std::string SphericalHarmonics::name_impl()
 {
     return "Spherical Harmonics";
 }
 
-int SphericalHarmonics::memory()
+int SphericalHarmonics::memory_impl()
 {
+    // (temporary) memory used up by stored samples
+	auto sample_memory = this->m_curr_samples.size() * sizeof(Sample);
+
     // number of coefficients * bytes in float + coefficient pointer size + 2 * bytes in int (#bands, #samples)
-    return this->m_coeffs.size() * sizeof(Float) + sizeof(this->m_coeffs) + 2 * sizeof(this->m_bands);
+    return this->m_coeffs.size() * sizeof(Float) + sizeof(this->m_coeffs) + 2 * sizeof(this->m_bands) + sample_memory;
 }
 
-void SphericalHarmonics::update_usable_coeffs()
+void SphericalHarmonics::update_coeffs()
 {
     int total_bands = getBands();
     const double weight = 1.0 / this->m_num_samples;
-
-    this->m_coeffs_usable = this->m_coeffs;
 
     for (int l = 0; l < total_bands; ++l)
     {
@@ -156,10 +158,10 @@ void SphericalHarmonics::update_usable_coeffs()
         }
     }
 
-    if (this->m_use_offset)
+    Float min = findMinimum();
+    if (min < Epsilon)
     {
-        Float min = findMinimum();
-        if (min < Epsilon) addOffset(Epsilon - min);
+        addOffset(Epsilon - min);
     }
 
     normalize();
@@ -197,11 +199,11 @@ Float SphericalHarmonics::eval(Float theta, Float phi) const {
     for (int l=0; l<m_bands; ++l) {
         for (int m=1; m<=l; ++m) {
             Float L = legendreP(l, m, cosTheta) * normalization(l, m);
-            result += operator()(l, -m, true) * SQRT_TWO * sinPhi[m-1] * L;
-            result += operator()(l, m, true)  * SQRT_TWO * cosPhi[m-1] * L;
+            result += operator()(l, -m) * SQRT_TWO * sinPhi[m-1] * L;
+            result += operator()(l, m)  * SQRT_TWO * cosPhi[m-1] * L;
         }
 
-        result += operator()(l, 0, true) * legendreP(l, 0, cosTheta) * normalization(l, 0);
+        result += operator()(l, 0) * legendreP(l, 0, cosTheta) * normalization(l, 0);
     }
 
     return result;
@@ -270,8 +272,8 @@ Float SphericalHarmonics::evalAzimuthallyInvariant(const Vector &v) const {
 void SphericalHarmonics::normalize() {
     Float correction = 1 / (2 * (Float) std::sqrt(M_PI) * operator()(0, 0));
 
-    for (size_t i=0; i<(size_t) m_coeffs_usable.size(); ++i)
-        m_coeffs_usable[i] *= correction;
+    for (size_t i=0; i<(size_t) m_coeffs.size(); ++i)
+        m_coeffs[i] *= correction;
 }
 
 void SphericalHarmonics::convolve(const SphericalHarmonics &kernel) {

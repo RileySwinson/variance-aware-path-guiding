@@ -565,7 +565,7 @@ void DirectionalTree::dump(BlobWriter& blob, const Point& p, const Vector& size)
     }
 }
 
-void DirectionalTree::construct(DSArguments& init_data)
+void DirectionalTree::construct_impl(DSArguments& init_data)
 {
     this->param_sampling_frac_loss = init_data.dt.frac_loss;
     this->param_dir_filter = init_data.dt.dir_filter;
@@ -573,49 +573,41 @@ void DirectionalTree::construct(DSArguments& init_data)
     this->param_max_depth = init_data.dt.max_depth;
 }
 
-void DirectionalTree::preprocess()
+void DirectionalTree::preprocess_impl()
 {
     return;
 }
 
-void DirectionalTree::store(std::vector<Sample>& samples)
+void DirectionalTree::store_impl(Sample& sample)
 {
     // Keep in mind that Müller et al. only works with the "forward" strategy.
     // Using "preprocess" won't fail, but it will stop after a single subdivision
     // as we only call reset() once.
 
-    auto total_samples = samples.size();
-    for (size_t s_i = 0; s_i < total_samples; ++s_i)
-    {
-        Sample& sample = samples.at(s_i);
+    Vector directional(
+        std::sin(sample.theta) * std::cos(sample.phi),
+        std::sin(sample.theta) * std::sin(sample.phi),
+        std::cos(sample.theta)
+    );
 
-        Vector directional(
-            std::sin(sample.theta) * std::cos(sample.phi),
-            std::sin(sample.theta) * std::sin(sample.phi),
-            std::cos(sample.theta)
-        );
+    DTreeRecord rec;
+    rec.isDelta = false;
+    rec.d = directional;
+    rec.radiance = sample.value;
+    rec.product = 0; // We set the product to 0 to prevent possibly unwanted optimizations in this simulated setting.
+    rec.woPdf = sample.pdf;
+    rec.statisticalWeight = 1;
 
-        DTreeRecord rec;
-        rec.isDelta = false;
-        rec.d = directional;
-        rec.radiance = sample.value;
-        rec.product = 0; // We set the product to 0 to prevent possibly unwanted optimizations in this simulated setting.
-        rec.woPdf = sample.pdf;
-        rec.statisticalWeight = 1;
+    record(rec, this->param_dir_filter, this->param_sampling_frac_loss);
+}
 
-        record(rec, this->param_dir_filter, this->param_sampling_frac_loss);
-    }
-
+void DirectionalTree::postprocess_impl(bool last_iteration)
+{
     build();
     reset(this->param_max_depth, this->param_d_tree_thresh);
 }
 
-void DirectionalTree::postprocess()
-{
-    return;
-}
-
-Sample DirectionalTree::sample(Point2& pos)
+Sample DirectionalTree::sample_impl(Point2& pos)
 {
     // We ignore the sample we pass in and instead use the internal sample() function.
     Point2 coords = sampling.sample();
@@ -645,12 +637,32 @@ Sample DirectionalTree::sample(Point2& pos)
     return sample;
 }
 
-Float DirectionalTree::eval(Point2& pos)
+Float DirectionalTree::eval_impl(Point2& pos)
 {
     Float pdf = calc_pdf(pos);
     if (pdf <= 0) pdf = Epsilon;
 
     return pdf;
+}
+
+void DirectionalTree::wipe_impl()
+{
+    building = InternalDTree();
+}
+
+DSType DirectionalTree::type_impl()
+{
+    return DSType::DS_DTree;
+}
+
+std::string DirectionalTree::name_impl()
+{
+    return "D-Tree";
+}
+
+int DirectionalTree::memory_impl()
+{
+    return approxMemoryFootprint();
 }
 
 Float DirectionalTree::calc_pdf(const Point2& uv) const
@@ -664,26 +676,6 @@ Float DirectionalTree::calc_pdf(const Point2& uv) const
     );
 
     return pdf(directional);
-}
-
-void DirectionalTree::wipe()
-{
-    building = InternalDTree();
-}
-
-DSType DirectionalTree::type()
-{
-    return DSType::DS_DTree;
-}
-
-std::string DirectionalTree::name()
-{
-    return "D-Tree";
-}
-
-int DirectionalTree::memory()
-{
-    return approxMemoryFootprint();
 }
 
 MTS_NAMESPACE_END

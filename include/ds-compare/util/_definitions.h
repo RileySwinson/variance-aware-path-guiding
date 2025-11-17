@@ -13,6 +13,7 @@
 #include <Eigen/Core>
 
 #include <boost/algorithm/clamp.hpp>
+#include <boost/lockfree/queue.hpp>
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
 

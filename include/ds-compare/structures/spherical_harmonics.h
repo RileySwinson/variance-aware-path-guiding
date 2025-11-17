@@ -227,14 +227,12 @@ public:
     }
 
     /// Access coefficient m (in {-l, ..., l}) on band l
-    inline Float &operator()(int l, int m, bool usable = true) {
-        if (usable) return m_coeffs_usable[l * (l + 1) + m];
+    inline Float &operator()(int l, int m) {
         return m_coeffs[l*(l+1) + m];
     }
 
     /// Access coefficient m (in {-l, ..., l}) on band l
-    inline const Float &operator()(int l, int m, bool usable = true) const {
-        if (usable) return m_coeffs_usable[l * (l + 1) + m];
+    inline const Float &operator()(int l, int m) const {
         return m_coeffs[l*(l+1) + m];
     }
 
@@ -408,25 +406,25 @@ public:
 
     ~SphericalHarmonics() { };
 
-    void construct(DSArguments& init_data) override;
+    void construct_impl(DSArguments& init_data) override;
 
-    void preprocess() override;
+    void preprocess_impl() override;
 
-    void store(std::vector<Sample>& samples) override;
+    void store_impl(Sample& samples) override;
 
-    void postprocess() override;
+    void postprocess_impl(bool last_iteration = false) override;
     
-    Sample sample(Point2& pos) override;
+    Sample sample_impl(Point2& pos) override;
 
-    Float eval(Point2& pos) override;
+    Float eval_impl(Point2& pos) override;
 
-    void wipe() override;
+    void wipe_impl() override;
 
-    DSType type() override;
+    DSType type_impl() override;
 
-    std::string name() override;
+    std::string name_impl() override;
 
-    int memory() override;
+    int memory_impl() override;
 
 protected:
     /// Helper function for rotation() -- computes a diagonal block based on the previous level
@@ -437,16 +435,17 @@ protected:
 private:
     int m_bands;
     uint32_t m_num_samples = 0;
+    std::size_t m_num_samples_curr = 0; // For memory calculation only.
     Sample::Mode m_sample_mode;
-    bool m_use_offset;
+
+    std::vector<Sample> m_curr_samples;
 
     static Float* m_normalization;
     Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs;
-    Eigen::Matrix<Float, Eigen::Dynamic, 1> m_coeffs_usable;
 
     ref<SphericalHarmonicsSampler> sampler = nullptr;
 
-    void update_usable_coeffs();
+    void update_coeffs();
 };
 
 inline Float dot(const SphericalHarmonics &v1, const SphericalHarmonics &v2) {

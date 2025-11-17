@@ -19,7 +19,10 @@ public:
 	int run(int argc, char** argv)
 	{
 		/* Deal with CL arguments */
-		handle_clargs(argc, argv);
+		DSComparer::handle_clargs(argc, argv);
+
+		/* Initialize possible learning strategies */
+		DSComparer::load_strategies();
 
 		/* Register data structures */
 		DSCluster& cluster = DSCluster::get();
@@ -33,17 +36,16 @@ public:
 
 		/* Construct data structures as needed */
 		cluster.for_each([&](DataStructure* ds) {
-			ds->construct(this->args);
+			ds->construct(DSComparer::args);
 		});
 
-		/* Initialize random generator */
-		ref<Random> random = new Random();
-
-		/* Initialize error metrics storage */
+		/* Initialize error metrics & time storage */
 		StatTrak& tracker = StatTrak::get();
+		tracker.set_valid_timers("::preprocess", "::store", "::sample", "::postprocess", "::evaluate", "::total");
 
 		/* Iterate over all environment maps */
-		for (const auto& entry : boost::filesystem::recursive_directory_iterator(this->args.comparer.path))
+		auto entries = boost::filesystem::recursive_directory_iterator(DSComparer::args.comparer.path);
+		for (const auto& entry : entries)
 		{
 			if (boost::filesystem::is_directory(entry)) continue;
 
@@ -52,26 +54,31 @@ public:
 			if (!fetched_envmap) continue;
 			
 			EnvironmentMap envmap = fetched_envmap.get();
-			if (this->args.noise.envmap) envmap.noisify();
+			if (DSComparer::args.noise.envmap) envmap.noisify();
 			envmap.precompute();
 
 			/* Generate random samples and store them so they can be reused per data structure */
-			std::vector<Sample> samples;
-			uint32_t samples_learning = this->args.comparer.samples_learning;
-			uint32_t samples_guiding = this->args.comparer.samples_guiding;
-			samples.reserve(samples_learning);
+			SampleStorage samples(envmap.bitmap->getSize(), DSComparer::args.comparer.samples_learning);
 
-			uint32_t samples_base = (this->args.comparer.strategy == Sample::Strategy::Forward) 
-				? this->args.comparer.samples_start
-				: samples_learning;
-
-			for (uint32_t s_i = 0; s_i < samples_base; ++s_i)
+			if (DSComparer::args.comparer.strategy == DSLearningStrategy::Preprocess)
 			{
-				Point2 coords(random->nextFloat(), random->nextFloat());
-				Sample sample = envmap.sample(this->args.comparer.mode, coords);
-				if (this->args.noise.samples) sample.noisify();
+				for (uint32_t i = 0; i < DSComparer::args.comparer.samples_learning; ++i)
+				{
+					Point2 rng = Point2(
+						DSComparer::random->nextFloat(),
+						DSComparer::random->nextFloat()
+					);
 
-				samples.push_back(sample);
+					Sample sample = envmap.sample(DSComparer::args.comparer.mode, rng);
+
+					if (DSComparer::args.noise.samples)
+					{
+						sample.noisify();
+					}
+
+					sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
+					samples.store(sample);
+				}
 			}
 
 			/* Create folder for final output */
@@ -107,16 +114,14 @@ public:
 					{
 						px[c] = p_x;
 					}
-
-					accumulator += p_x;
-				});*/
-			//pdf_map.write(folder_path + "/pdf.exr");
+				});
+			pdf_map.write(folder_path + "/pdf.exr");*/
 
 			Log(EInfo, "Comparing data structures for envmap '%s'...", (folder_name + "/" + envmap_file_name).c_str());
 
 			/* Iterate over data structures... */
 			uint8_t curr_i = 1;
-			auto& blacklist = this->args.comparer.blacklist;
+			auto& blacklist = DSComparer::args.comparer.blacklist;
 			cluster.for_each([&](DataStructure* ds) {
 				if (ds->is_in(blacklist.begin(), blacklist.end())) return;
 
@@ -126,57 +131,8 @@ public:
 				);
 
 				tracker.follow(ds->type());
-				tracker.timer_start("store");
-
-				if (this->args.comparer.strategy == Sample::Strategy::Preprocess)
-				{
-					/* Optional: Preprocess whatever has to be preprocessed per data structure */
-					ds->preprocess();
-					/* Store samples into the data structure */
-					ds->store(samples);
-					/* Optional: Postprocess whatever has to be postprocessed per data structure */
-					ds->postprocess();
-				}
-				else if (this->args.comparer.strategy == Sample::Strategy::Forward)
-				{
-					ds->preprocess();
-
-					uint32_t samples_batch = samples_base;
-					std::vector<Sample> curr_samples = samples;
-
-					for (uint32_t i = samples_base; i < samples_learning; ++i)
-					{
-						if ((curr_samples.size() == samples_batch) && (i <= samples_learning * 0.5))
-						{
-							ds->store(curr_samples);
-							samples_batch <<= 1;
-							curr_samples.clear();
-						}
-
-						Point2 coords(random->nextFloat(), random->nextFloat());
-						Float rng = random->nextFloat();
-
-						Sample sample = (rng < this->args.comparer.chance)
-							? ds->sample(coords)
-							: envmap.sample(Sample::Mode::Sphere, coords);
-
-						if (sample.is_valid())
-						{
-							sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
-						}
-
-						curr_samples.push_back(sample);
-					}
-
-					if (!curr_samples.empty())
-					{
-						ds->store(curr_samples);
-					}
-
-					ds->postprocess();
-				}
-				
-				tracker.timer_end("store");
+				std::vector<Sample> learning_samples = samples.to_flat();
+				DSComparer::compare(DSComparer::args.comparer.strategy, ds, learning_samples, envmap);
 
 				/* Evaluate function approximation per pixel and store the results in a new envmap */
 				double d_sum = 0;
@@ -205,37 +161,34 @@ public:
 				/* Sample the base map using the approximation stored within the data structure and store the values for further MD calculation */
 				SampleStorage observations(envmap.bitmap->getSize());
 
-				tracker.timer_start("sample");
-				for (uint32_t i = 0; i < samples_guiding; ++i)
+				STATTRAK_BLOCK_TIMER("::evaluate")
 				{
-					Point2 rnd(random->nextFloat(), random->nextFloat());
-					Sample sample = ds->sample(rnd);
-
-					if (!sample.is_valid())
+					for (uint32_t i = 0; i < DSComparer::args.comparer.samples_evaluating; ++i)
 					{
-						Log(EWarn, "%s Obtained invalid sample [φ: %f, θ: %f, p: %f] -- ignoring it!",
-							(std::string(ds_counter.length() + 2, ' ') + " └").c_str(), sample.phi, sample.theta, sample.pdf
-						);
-						continue;
+						Point2 rnd(random->nextFloat(), random->nextFloat());
+						Sample sample = ds->sample(rnd);
+
+						if (!sample.is_valid())
+						{
+							Log(EWarn, "%s Obtained invalid sample [φ: %f, θ: %f, p: %f] -- ignoring it!",
+								(std::string(ds_counter.length() + 2, ' ') + " └").c_str(), sample.phi, sample.theta, sample.pdf
+							);
+							continue;
+						}
+
+						sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
+						observations.store(sample);
 					}
-
-					Point2 spherical(sample.phi, sample.theta);
-					auto uv_coords = Converter::spherical_to_uv(spherical);
-					auto im_coords = Converter::uv_to_image(uv_coords, envmap.bitmap->getSize());
-
-					sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
-					observations.store(im_coords, sample);
-				}
-				tracker.timer_end("sample");
+				};
 
 				/* Visualize output if enabled */
-				if (this->args.comparer.visualize)
+				if (DSComparer::args.comparer.visualize)
 				{
 					std::string vis_path = folder_path + "/" + std::to_string(ds->type());
 
 					envmap
 						.deep_copy(true)
-						.visualize(this->args.comparer.vis_mode, observations)
+						.visualize(DSComparer::args.comparer.vis_mode, observations)
 						.write(vis_path + "_samples.exr");
 
 					observations.write(vis_path + "_raw.csv");
@@ -246,7 +199,7 @@ public:
 				eval_map.write(envmap_path);
 
 				/* Compute metrics and store them */
-				tracker.store(MD, ErrorMetrics::MD(observations.to_flat(samples_guiding), gt_mean));
+				tracker.store(MD, ErrorMetrics::MD(observations.to_flat(), gt_mean));
 				tracker.store(RMSE, ErrorMetrics::RMSE(gt_map, eval_map));
 				tracker.store(MSE, ErrorMetrics::MSE(gt_map, eval_map));
 				tracker.store(MAE, ErrorMetrics::MAE(gt_map, eval_map));
@@ -275,7 +228,63 @@ public:
 
 	MTS_DECLARE_UTILITY()
 private:
-	DSArguments args;
+	static DSArguments args;
+	static std::unordered_map<DSLearningStrategy, std::function<void(DataStructure*, std::vector<Sample>&, EnvironmentMap&)>> strategies;
+	static ref<Random> random;
+	
+	static void compare(DSLearningStrategy strategy, DataStructure* ds, std::vector<Sample>& samples, EnvironmentMap& envmap)
+	{
+		STATTRAK_FUNCTION_TIMER("::total");
+		DSComparer::strategies[strategy](ds, samples, envmap);
+	}
+
+	static void load_strategies()
+	{
+		DSComparer::strategies.emplace(DSLearningStrategy::Preprocess, [&](DataStructure* ds, std::vector<Sample>& samples, EnvironmentMap& _) {
+			/* Optional: Preprocess whatever has to be preprocessed per data structure */
+			ds->preprocess();
+
+			/* Store samples into the data structure */
+			for (auto& sample : samples)
+			{
+				ds->store(sample);
+			}
+
+			/* Optional: Postprocess whatever has to be postprocessed per data structure */
+			ds->postprocess(true);
+		});
+
+		DSComparer::strategies.emplace(DSLearningStrategy::Forward, [&](DataStructure* ds, std::vector<Sample>& _, EnvironmentMap& envmap) {
+			uint32_t samples_batch = std::max(1u, DSComparer::args.comparer.samples_start);
+			uint32_t samples_learning = DSComparer::args.comparer.samples_learning;
+
+			ds->preprocess();
+
+			for (uint32_t i = 0; i < samples_learning; ++i)
+			{
+				if ((i == samples_batch) && (i <= samples_learning * 0.5))
+				{
+					ds->postprocess();
+					samples_batch <<= 1;
+				}
+
+				Point2 coords(DSComparer::random->nextFloat(), DSComparer::random->nextFloat());
+				Float rng = DSComparer::random->nextFloat();
+
+				Sample sample = (rng < DSComparer::args.comparer.chance)
+					? ds->sample(coords)
+					: envmap.sample(Sample::Mode::Sphere, coords);
+
+				if (sample.is_valid())
+				{
+					sample.value = envmap.get_pixel_luminance(sample.phi, sample.theta);
+					ds->store(sample);
+				}
+			}
+
+			ds->postprocess(true);
+		});
+	}
 
 	void handle_clargs(int argc, char** argv)
 	{
@@ -291,13 +300,13 @@ private:
 				("path,p", p_opt::value<std::string>(&this->args.comparer.path), "Path to envmap folder.")
 				("result-path,rp", p_opt::value<std::string>(&this->args.comparer.result_path), "Path to output folder.")
 				("samples-learning,sl", p_opt::value<uint32_t>(&this->args.comparer.samples_learning), "Envmap sample count.")
-				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.comparer.samples_guiding), "Reconstruction sample count.")
+				("samples-guiding,sg", p_opt::value<uint32_t>(&this->args.comparer.samples_evaluating), "Reconstruction sample count.")
 				("sample-mode,sm", p_opt::value<Sample::Mode>(&this->args.comparer.mode), "Envmap sampling mode.")
 				("blacklist,b", p_opt::value<std::vector<int>>(&this->args.comparer.blacklist)->multitoken(), "List of data structure indices that won't be run.")
 				("visualize,v", p_opt::value<bool>(&this->args.comparer.visualize), "Visualize samples?")
 				("vis-mode,vm", p_opt::value<EnvironmentMap::VisualizationMode>(&this->args.comparer.vis_mode), "Visualization mode for guiding samples.")
 				// Strategy
-				("strategy,s", p_opt::value<Sample::Strategy>(&this->args.comparer.strategy), "DS learning strategy.")
+				("strategy,s", p_opt::value<DSLearningStrategy>(&this->args.comparer.strategy), "DS learning strategy.")
 				("samples-start,ss", p_opt::value<uint32_t>(&this->args.comparer.samples_start), "Number of samples to start with if strategy is set to \"forward\".")
 				("chance,c", p_opt::value<Float>(&this->args.comparer.chance), "Chance to sample from the DS if strategy is set to \"forward\".")
 				// Noise
@@ -306,7 +315,6 @@ private:
 				// Spherical Harmonics
 				("sh-bands,shb", p_opt::value<int>(&this->args.sh.bands), "Number of Spherical Harmonic bands.")
 				("sh-depth,shd", p_opt::value<int>(&this->args.sh.depth), "Depth of Spherical Harmonics.")
-				("sh-use-offset,sho", p_opt::value<bool>(&this->args.sh.use_offset), "Apply offset to SHs?")
 				// DTree
 				("dt-fracloss,dtl", p_opt::value<DTreeParams::EBsdfSamplingFractionLoss>(&this->args.dt.frac_loss), "Loss function during gradient descent.")
 				("dt-dirfilter,dtf", p_opt::value<DTreeParams::EDirectionalFilter>(&this->args.dt.dir_filter), "Directional filter for splatting radiance samples.")
@@ -351,6 +359,10 @@ private:
 		}
 	}
 };
+
+DSArguments DSComparer::args;
+std::unordered_map<DSLearningStrategy, std::function<void(DataStructure*, std::vector<Sample>&, EnvironmentMap&)>> DSComparer::strategies;
+ref<Random> DSComparer::random = new Random();
 
 MTS_EXPORT_UTILITY(DSComparer, "Utility plugin for running comparison tests on a set of data structures")
 MTS_NAMESPACE_END
