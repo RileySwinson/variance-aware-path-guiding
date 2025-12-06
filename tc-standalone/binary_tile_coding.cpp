@@ -211,6 +211,7 @@ void BinaryTiling::insert(const Sample& sample, uint32_t& split_count)
         InternalNode parent;
         parent.children = { tiles, tiles + 1 };
         parent.split_direction = tile.split_direction(tracker);
+        parent.power.fill(0.0f);
 
         tile.internal = parent;
         tile.data.tile_type = TileType::Internal;
@@ -473,7 +474,7 @@ Sample BinaryTileCoding::sample(Pair<float>& pos)
         empty.phi = 2.0f * M_PI * random.x;
         empty.theta = std::acos(1.0f - 2.0f * random.y);
         empty.value = 0;
-        empty.p = INV_FOURPI;
+        empty.p = INV_FOURPI * std::sin(random.y);
 
         return empty;
     }
@@ -507,20 +508,17 @@ Sample BinaryTileCoding::sample(Pair<float>& pos)
     while (!curr_tile->is_leaf())
     {
         InternalNode& parent = curr_tile->internal;
-        BinaryTile* first = &tiling.tiles[parent.children[0]];
-        BinaryTile* second = &tiling.tiles[parent.children[1]];
+        float power_first = parent.power[0];
+        float power_second = parent.power[1];
 
-        if (first->sum == 0 && second->sum == 0)
+        if (power_first == 0 && power_second == 0)
         {
             break;
         }
 
         bool h_split = (parent.split_direction == Horizontal);
         Pair<float>& bounds = h_split ? x_bounds : y_bounds;
-        float halved = (bounds.x + bounds.y) * 0.5f;
-
-        float power_first = std::max(TC_Epsilon, parent.power[0]);
-        float power_second = std::max(TC_Epsilon, parent.power[1]);
+        float halved = (bounds.x + bounds.y) * 0.5;
 
         float random = BinaryTileCoding::random.next1D();
         float split = power_first / (power_first + power_second);
@@ -528,13 +526,13 @@ Sample BinaryTileCoding::sample(Pair<float>& pos)
         if (random < split)
         {
             bounds.y = halved;
-            curr_tile = first;
+            curr_tile = &tiling->tiles[parent.children[0]];
             tracker.sum = power_first;
         }
         else
         {
             bounds.x = halved;
-            curr_tile = second;
+            curr_tile = &tiling->tiles[parent.children[1]];
             tracker.sum = power_second;
         }
 
