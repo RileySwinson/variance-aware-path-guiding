@@ -55,7 +55,12 @@ public:
     IndependentSampler(const Properties &props) : Sampler(props) {
         /* Number of samples per pixel when used with a sampling-based integrator */
         m_sampleCount = props.getSize("sampleCount", 4);
-        m_random = new Random();
+        /* Optional fixed seed for reproducible, per-seed-distinct noise. When
+           omitted, falls back to the default-seeded RNG (deterministic). */
+        if (props.hasProperty("seed"))
+            m_random = new Random((uint64_t) props.getInteger("seed"));
+        else
+            m_random = new Random();
     }
 
     IndependentSampler(Stream *stream, InstanceManager *manager)

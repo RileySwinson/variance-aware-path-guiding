@@ -53,3 +53,14 @@ mitsuba.*.log
 .project
 .vscode
 .vs
+
+# render outputs
+*.sdt
+*.exr
+*.pfm
+sppComparison_out/
+timeSuite_out/
+*_dump/
+*_sppgen_*.xml
+*_timegen_*.xml
+*.log

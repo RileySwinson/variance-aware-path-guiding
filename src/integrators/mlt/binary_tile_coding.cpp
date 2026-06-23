@@ -1,6 +1,6 @@
-#include <ds-compare/structures/binary_tile_coding.h>
+#include "binary_tile_coding.h"
 
-MTS_NAMESPACE_BEGIN
+TC_NAMESPACE_BEGIN
 
 /* ========== */
 /* BinaryTile */
@@ -12,7 +12,7 @@ void BinaryTile::update(const Sample& sample)
 
     auto samples = this->data.sample_count;
     float value_mean = (samples > 0) ? (this->sum / samples) : 0;
-    const float contribution = sample.value / sample.pdf;
+    const float contribution = sample.value / sample.p;
     auto n = samples + 1;
 
     float dx = contribution - value_mean;
@@ -108,8 +108,8 @@ float BinaryTile::area(const BTTracker& tracker, bool transform)
         y_clamped.y = BinaryTiling::transform(y_clamped.y);
     }
 
-    double d_theta = std::cos(M_PI * y_clamped.x) - std::cos(M_PI * y_clamped.y);
-    double d_phi = 2 * M_PI * (x_clamped.y - x_clamped.x);
+    float d_theta = std::cos(M_PI * y_clamped.x) - std::cos(M_PI * y_clamped.y);
+    float d_phi = 2 * M_PI * (x_clamped.y - x_clamped.x);
 
     return d_theta * d_phi;
 }
@@ -123,24 +123,24 @@ bool BinaryTile::is_leaf() const
 /* BinaryTiling */
 /* ============ */
 
-BinaryTile& BinaryTiling::find_tile(const Point2& pos, bool find_empty)
+BinaryTile& BinaryTiling::find_tile(const Pair<float>& pos, bool find_empty)
 {
     BTTracker unused;
     return find_tile(pos, unused, find_empty);
 }
 
-BinaryTile& BinaryTiling::find_tile(const Point2& pos, BTTracker& tracker, bool find_empty)
+BinaryTile& BinaryTiling::find_tile(const Pair<float>& pos, BTTracker& tracker, bool find_empty)
 {
-    const Point2i td = BinaryTileCoding::TILE_DIMS;
+    const Pair<int> td = BinaryTileCoding::TILE_DIMS;
 
     // Find right base tile by mapping the pos within the range of the tiling to the range [0, 1]
-    Point2 pos_warped(pos.x, transform(pos.y, true));
-    auto x_warped = Converter::map(pos_warped.x).from({ this->x_bounds.x, this->x_bounds.y }).to({ 0.0, 1.0 });
-    auto y_warped = Converter::map(pos_warped.y).from({ this->y_bounds.x, this->y_bounds.y }).to({ 0.0, 1.0 });
+    Pair<float> pos_warped(pos.x, transform(pos.y, true));
+    auto x_warped = Util::map(pos_warped.x).from({ this->x_bounds.x, this->x_bounds.y }).to({ 0.0, 1.0 });
+    auto y_warped = Util::map(pos_warped.y).from({ this->y_bounds.x, this->y_bounds.y }).to({ 0.0, 1.0 });
 
-    Point2i bt_pos(
-        x_warped * td.x,
-        y_warped * td.y
+    Pair<int> bt_pos(
+        (int)(x_warped * td.x),
+        (int)(y_warped * td.y)
     );
 
     int i = (bt_pos.y * td.x) + bt_pos.x;
@@ -148,8 +148,8 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, BTTracker& tracker, bool 
 
     // Calculate planar boundary of current tile
     auto bounds = base_tile_bounds(bt_pos.x, bt_pos.y);
-    Point2 x_bounds = bounds.first;
-    Point2 y_bounds = bounds.second;
+    Pair<float> x_bounds = bounds.first;
+    Pair<float> y_bounds = bounds.second;
 
     // Iterate through tree if necessary
     while (!curr_tile->is_leaf())
@@ -158,16 +158,16 @@ BinaryTile& BinaryTiling::find_tile(const Point2& pos, BTTracker& tracker, bool 
         Direction split_dir = parent.split_direction;
         bool h_split = (split_dir == Horizontal);
 
-        Point2& bounds = h_split ? x_bounds : y_bounds;
-        Float local = h_split ? pos.x : pos.y;
-        Float split = (bounds.x + bounds.y) * 0.5;
+        Pair<float>& bounds = h_split ? x_bounds : y_bounds;
+        float local = h_split ? pos.x : pos.y;
+        float split = (bounds.x + bounds.y) * 0.5f;
 
         if (!find_empty && children_empty(*curr_tile))
         {
             break;
         }
 
-        Float split_pos = h_split ? split : transform(split);
+        float split_pos = h_split ? split : transform(split);
         bool first_child = local < split_pos;
 
         if (first_child)
@@ -194,7 +194,7 @@ void BinaryTiling::insert(const Sample& sample, uint32_t& split_count)
 {
     // Find initial tile
     BTTracker tracker;
-    Point2 uv = Converter::spherical_to_uv(Point2(sample.phi, sample.theta));
+    Pair<float> uv = Util::spherical_to_uv(Pair<float>(sample.phi, sample.theta));
     BinaryTile& tile = find_tile(uv, tracker);
 
     // Store value & update covariance
@@ -211,6 +211,7 @@ void BinaryTiling::insert(const Sample& sample, uint32_t& split_count)
         InternalNode parent;
         parent.children = { tiles, tiles + 1 };
         parent.split_direction = tile.split_direction(tracker);
+        parent.power.fill(0.0f);
 
         tile.internal = parent;
         tile.data.tile_type = TileType::Internal;
@@ -228,9 +229,8 @@ float BinaryTiling::recurse_statistics(BinaryTile& curr_tile, BTTracker tracker,
     if (curr_tile.is_leaf() || children_empty(curr_tile))
     {
         float power = curr_tile.sum * curr_tile.area(tracker, true);
-        
-        leaf_sum += curr_tile.sum;
-        
+        leaf_sum += power;
+
         return power;
     }
 
@@ -245,31 +245,31 @@ float BinaryTiling::recurse_statistics(BinaryTile& curr_tile, BTTracker tracker,
         BTTracker c_tracker = tracker;
         c_tracker.increment();
 
-        Point2& bounds = (parent.split_direction == Horizontal)
+        Pair<float>& bounds = (parent.split_direction == Horizontal)
             ? c_tracker.x_bounds
             : c_tracker.y_bounds;
 
-        Float& value = (i == 0) ? bounds.y : bounds.x;
+        float& value = (i == 0) ? bounds.y : bounds.x;
         value = (bounds.x + bounds.y) * 0.5;
-        
+
         parent.power[i] += recurse_statistics(child, c_tracker, leaf_sum);
     }
 
     return parent.power[0] + parent.power[1];
 }
 
-std::pair<Point2, Point2> BinaryTiling::base_tile_bounds(int x, int y) const
+std::pair<Pair<float>, Pair<float>> BinaryTiling::base_tile_bounds(int x, int y) const
 {
-    Point2i td = BinaryTileCoding::TILE_DIMS;
+    Pair<int> td = BinaryTileCoding::TILE_DIMS;
 
     float x_step = (this->x_bounds.y - this->x_bounds.x) / td.x;
     float y_step = (this->y_bounds.y - this->y_bounds.x) / td.y;
 
-    Point2 x_bounds(
+    Pair<float> x_bounds(
         this->x_bounds.x + (x * x_step),
         this->x_bounds.x + ((x + 1) * x_step)
     );
-    Point2 y_bounds(
+    Pair<float> y_bounds(
         this->y_bounds.x + (y * y_step),
         this->y_bounds.x + ((y + 1) * y_step)
     );
@@ -277,7 +277,7 @@ std::pair<Point2, Point2> BinaryTiling::base_tile_bounds(int x, int y) const
     return { x_bounds, y_bounds };
 }
 
-Point2i BinaryTiling::base_tile_pos(const Point2& pos)
+Pair<int> BinaryTiling::base_tile_pos(const Pair<float>& pos)
 {
     // Marginal sampling (y-dir)
     size_t y = 0;
@@ -317,7 +317,7 @@ Point2i BinaryTiling::base_tile_pos(const Point2& pos)
 
     if (x == x_len) x -= 1;
 
-    return Point2i(x, y);
+    return Pair<int>(x, y);
 }
 
 inline bool BinaryTiling::children_empty(BinaryTile& tile) const
@@ -334,7 +334,7 @@ template <typename T>
 T BinaryTiling::transform(T value, bool inverse, const std::function<T(T)>& f)
 {
     if (f) return f(value);
-    return TCParams::f<T>(BinaryTileCoding::TRANSFORM_MODE, inverse)(value);
+    return Transformation::f<T>(BinaryTileCoding::TRANSFORM_MODE, inverse)(value);
 }
 
 /* ================ */
@@ -342,31 +342,31 @@ T BinaryTiling::transform(T value, bool inverse, const std::function<T(T)>& f)
 /* ================ */
 
 RandomGen BinaryTileCoding::random = RandomGen();
-Point2i BinaryTileCoding::TILE_DIMS = Point2i(1, 1);
-float BinaryTileCoding::TILING_EXCESS = 0.2f;
+Pair<int> BinaryTileCoding::TILE_DIMS = Pair<int>(1, 1);
+float BinaryTileCoding::TILING_EXCESS = 0.1f;
 uint32_t BinaryTileCoding::MAX_DEPTH = 10;
 uint32_t BinaryTileCoding::MAX_SPLITS = UINT32_MAX;
-TTable::CI BinaryTileCoding::CI = TTable::CI::P999;
-TCParams::Transformation BinaryTileCoding::TRANSFORM_MODE = TCParams::Transformation::Spherical;
+TTable::CI BinaryTileCoding::CI = TTable::CI::P950;
+Transformation::Domain BinaryTileCoding::TRANSFORM_MODE = Transformation::Domain::Spherical;
 
-void BinaryTileCoding::construct_impl(DSArguments& init_data)
+void BinaryTileCoding::construct(const BTCArguments& args)
 {
-    SAssert(init_data.btc.tilings > 0);
-    SAssert(init_data.btc.tiles_x > 0 && init_data.btc.tiles_y > 0);
-    SAssert(init_data.btc.max_depth >= 0);
-    SAssert(init_data.btc.eagerness > -1 && init_data.btc.eagerness < 5);
+    assert(args.tilings > 0);
+    assert(args.tiles.x > 0 && args.tiles.y > 0);
+    assert(args.max_depth >= 0);
+    assert(args.eagerness > -1 && args.eagerness < 5);
 
-    BinaryTileCoding::TILE_DIMS = Point2i(init_data.btc.tiles_x, init_data.btc.tiles_y);
-    BinaryTileCoding::TILING_EXCESS = init_data.btc.excess;
-    BinaryTileCoding::MAX_DEPTH = init_data.btc.max_depth;
-    BinaryTileCoding::MAX_SPLITS = init_data.btc.max_splits;
-    BinaryTileCoding::CI = static_cast<TTable::CI>(init_data.btc.eagerness);
-    BinaryTileCoding::TRANSFORM_MODE = init_data.btc.transformation_mode;
+    BinaryTileCoding::TILE_DIMS = args.tiles;
+    BinaryTileCoding::TILING_EXCESS = args.excess;
+    BinaryTileCoding::MAX_DEPTH = args.max_depth;
+    BinaryTileCoding::MAX_SPLITS = args.max_splits;
+    BinaryTileCoding::CI = static_cast<TTable::CI>(args.eagerness);
+    BinaryTileCoding::TRANSFORM_MODE = args.transformation;
 
-    this->tilings = std::vector<BinaryTiling>(init_data.btc.tilings);
+    this->tilings = std::vector<BinaryTiling>(args.tilings);
 }
 
-void BinaryTileCoding::preprocess_impl()
+void BinaryTileCoding::preprocess()
 {
     // Allocate tiles space
     int base_tiles = TILE_DIMS.x * TILE_DIMS.y;
@@ -388,7 +388,7 @@ void BinaryTileCoding::preprocess_impl()
     // Calculate tiling offset
     auto tiling_count = this->tilings.size();
 
-    Float shift = 0.0;
+    float shift = 0.0;
     if (tiling_count > 1)
     {
         shift = TILING_EXCESS / (tiling_count - 1);
@@ -399,49 +399,25 @@ void BinaryTileCoding::preprocess_impl()
     {
         BinaryTiling& tiling = this->tilings[i];
 
-        Point2 x_range(0 - (i * shift), 1 + ((tiling_count - 1 - i) * shift)); 
-        Point2 y_range(0 - ((tiling_count - 1 - i) * shift), 1 + (i * shift));
+        Pair<float> x_range(0 - (i * shift), 1 + ((tiling_count - 1 - i) * shift));
+        Pair<float> y_range(0 - ((tiling_count - 1 - i) * shift), 1 + (i * shift));
 
         tiling.x_bounds = x_range;
         tiling.y_bounds = y_range;
     }
 }
 
-void BinaryTileCoding::store_impl(Sample& sample)
+void BinaryTileCoding::store(Sample& sample)
 {
-#if BTC_MULTITHREADING
-    auto insert = [&](BinaryTiling& tiling) {
-        for (auto& sample : samples)
-        {
-            tiling.insert(sample, this->split_count);
-        }
-    };
-    
-    std::vector<std::thread> pool;
-    for (BinaryTiling& tiling : this->tilings)
-    {
-        std::thread t(insert, std::ref(tiling));
-        pool.push_back(std::move(t));
-    }
-
-    for (auto& t : pool)
-    {
-        if (t.joinable())
-        {
-            t.join();
-        }
-    }
-#else
     for (auto& tiling : this->tilings)
     {
         tiling.insert(sample, this->split_count);
     }
-#endif
 }
 
 void BinaryTileCoding::build()
 {
-    const Point2i td = BinaryTileCoding::TILE_DIMS;
+    const Pair<int> td = BinaryTileCoding::TILE_DIMS;
     this->leaf_sum = 0.0f;
 
     for (BinaryTiling& tiling : this->tilings)
@@ -475,11 +451,11 @@ void BinaryTileCoding::build()
     }
 }
 
-void BinaryTileCoding::postprocess_impl(bool last_iteration)
+void BinaryTileCoding::postprocess(bool is_last)
 {
     build();
 
-    if (last_iteration)
+    if (is_last)
     {
         for (BinaryTiling& tiling : this->tilings)
         {
@@ -488,33 +464,33 @@ void BinaryTileCoding::postprocess_impl(bool last_iteration)
     }
 }
 
-Sample BinaryTileCoding::sample_impl(Point2& pos)
+Sample BinaryTileCoding::sample(Pair<float>& pos)
 {
     if (this->leaf_sum <= 0.0f)
     {
-        Point2 random = BinaryTileCoding::random.next2D();
+        Pair<float> random = BinaryTileCoding::random.next2D();
 
-        Sample empty = {
-            .value = 0,
-            .pdf = INV_FOURPI * std::sin(random.y),
-            .theta = std::acos(1.0f - 2.0f * random.y),
-            .phi = 2.0f * M_PI * random.x
-        };
+        Sample empty;
+        empty.phi = 2.0f * M_PI * random.x;
+        empty.theta = std::acos(1.0f - 2.0f * random.y);
+        empty.value = 0;
+        empty.p = INV_FOURPI * std::sin(random.y);
+
         return empty;
     }
 
     int tiling_count = this->tilings.size();
 
     // [1] Pick one of the tilings with equal weight
-    Float random = BinaryTileCoding::random.next1D();
-    int i = random * tiling_count;
+    float random = BinaryTileCoding::random.next1D();
+    int i = (int)(random * tiling_count);
     BinaryTiling& tiling = this->tilings[i];
 
     // [2] If there is more than one base tile, use the passed-in (ideally random) 2D position to fetch the right one
     BinaryTile* curr_tile = &tiling.tiles[0];
-    Point2 x_bounds = tiling.x_bounds;
-    Point2 y_bounds = tiling.y_bounds;
-    
+    Pair<float> x_bounds = tiling.x_bounds;
+    Pair<float> y_bounds = tiling.y_bounds;
+
     if (TILE_DIMS.x * TILE_DIMS.y > 1)
     {
         auto bt_pos = tiling.base_tile_pos(pos);
@@ -541,22 +517,22 @@ Sample BinaryTileCoding::sample_impl(Point2& pos)
         }
 
         bool h_split = (parent.split_direction == Horizontal);
-        Point2& bounds = h_split ? x_bounds : y_bounds;
-        Float halved = (bounds.x + bounds.y) * 0.5;
+        Pair<float>& bounds = h_split ? x_bounds : y_bounds;
+        float halved = (bounds.x + bounds.y) * 0.5;
 
-        Float random = BinaryTileCoding::random.next1D();
+        float random = BinaryTileCoding::random.next1D();
         float split = power_first / (power_first + power_second);
 
         if (random < split)
         {
             bounds.y = halved;
-            curr_tile = &tiling.tiles[parent.children[0]];
+            curr_tile = &tiling->tiles[parent.children[0]];
             tracker.sum = power_first;
         }
         else
         {
             bounds.x = halved;
-            curr_tile = &tiling.tiles[parent.children[1]];
+            curr_tile = &tiling->tiles[parent.children[1]];
             tracker.sum = power_second;
         }
 
@@ -565,43 +541,42 @@ Sample BinaryTileCoding::sample_impl(Point2& pos)
     }
 
     // [4] Generate random sample once in a leaf tile
-    Point2 random2d = BinaryTileCoding::random.next2D();
+    Pair<float> random2d = BinaryTileCoding::random.next2D();
 
     x_bounds = tracker.clamped(Horizontal);
     y_bounds = tracker.clamped(Vertical);
     y_bounds.x = std::cos(tiling.transform(y_bounds.x) * M_PI);
     y_bounds.y = std::cos(tiling.transform(y_bounds.y) * M_PI);
 
-    Point2 coords(
+    Pair<float> coords(
         x_bounds.x + random2d.x * (x_bounds.y - x_bounds.x),
         y_bounds.x + random2d.y * (y_bounds.y - y_bounds.x)
     );
     coords.y = std::acos(coords.y) * INV_PI;
 
-    coords.x = boost::algorithm::clamp(coords.x, 0.0, 1.0 - Epsilon);
-    coords.y = boost::algorithm::clamp(coords.y, 0.0, 1.0 - Epsilon);
+    coords.x = Util::clamp(coords.x, 0.0f, 1.0f - TC_Epsilon);
+    coords.y = Util::clamp(coords.y, 0.0f, 1.0f - TC_Epsilon);
 
     // [5] Calculate p(x) based on position
-    float prob = tracker.sum / curr_tile->area(tracker, true);
+    float prob = curr_tile->sum / curr_tile->area(tracker, true);
     for (int ti = 0; ti < tiling_count; ++ti)
     {
         if (ti == i) continue;
         tracker = BTTracker();
         BinaryTile& tile = this->tilings[ti].find_tile(coords, tracker, false);
-        prob += tracker.sum / tile.area(tracker, true);
+        prob += tile.sum / tile.area(tracker, true);
     }
-    prob = std::max(Epsilon, prob / this->leaf_sum);
 
-    Sample sample = {
-        .value = 0,
-        .pdf = prob,
-        .theta = (coords.y * M_PI),
-        .phi = (coords.x * 2 * M_PI)
-    };
+    Sample sample;
+    sample.phi = coords.x * 2 * M_PI;
+    sample.theta = coords.y * M_PI;
+    sample.value = 0;
+    sample.p = std::max(TC_Epsilon, prob / this->leaf_sum);
+
     return sample;
 }
 
-Float BinaryTileCoding::eval_impl(Point2& pos)
+float BinaryTileCoding::eval(Pair<float>& pos)
 {
     if (this->leaf_sum <= 0.0f)
     {
@@ -613,13 +588,13 @@ Float BinaryTileCoding::eval_impl(Point2& pos)
     {
         BTTracker tracker;
         BinaryTile& tile = tiling.find_tile(pos, tracker, false);
-        prob += tracker.sum / tile.area(tracker, true);
+        prob += tile.sum / tile.area(tracker, true);
     }
 
-    return std::max(Epsilon, (prob / this->leaf_sum));
+    return std::max(TC_Epsilon, (prob / this->leaf_sum));
 }
 
-void BinaryTileCoding::wipe_impl()
+void BinaryTileCoding::wipe()
 {
     this->leaf_sum = 0.0f;
     this->split_count = 0;
@@ -630,17 +605,7 @@ void BinaryTileCoding::wipe_impl()
     }
 }
 
-DSType BinaryTileCoding::type_impl()
-{
-    return DSType::DS_BinaryTileCoding;
-}
-
-std::string BinaryTileCoding::name_impl()
-{
-    return "Binary Tile Coding";
-}
-
-int BinaryTileCoding::memory_impl()
+int BinaryTileCoding::memory()
 {
     size_t total_size = sizeof(*this);
     total_size += this->tilings.capacity() * sizeof(BinaryTiling);
@@ -655,4 +620,4 @@ int BinaryTileCoding::memory_impl()
     return total_size;
 }
 
-MTS_NAMESPACE_END
+TC_NAMESPACE_END

@@ -5,6 +5,12 @@ plugins += env.SharedLibrary('direct', ['direct/direct.cpp'])
 plugins += env.SharedLibrary('path', ['path/path.cpp'])
 plugins += env.SharedLibrary('volpath', ['path/volpath.cpp'])
 plugins += env.SharedLibrary('volpath_simple', ['path/volpath_simple.cpp'])
+
+# plugins += env.SharedLibrary('guided_path', ['path/guided_path.cpp'])
+# muller's implementation broken
+
+plugins += env.SharedLibrary('guided_path', ['path/guided_path.cpp'])
+plugins += env.SharedLibrary('btc_guided_path', ['path/btc_guided_path.cpp', 'path/binary_tile_coding.cpp'])
 plugins += env.SharedLibrary('ptracer', ['ptracer/ptracer.cpp', 'ptracer/ptracer_proc.cpp'])
 
 # Photon mapping-based techniques
